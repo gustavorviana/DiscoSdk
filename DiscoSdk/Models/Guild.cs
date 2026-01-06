@@ -1,3 +1,4 @@
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.JsonConverters;
 using System.Text.Json.Serialization;
 
@@ -97,19 +98,19 @@ public class Guild
     /// Gets or sets the verification level required for the guild.
     /// </summary>
     [JsonPropertyName("verification_level")]
-    public int? VerificationLevel { get; set; }
+    public VerificationLevel? VerificationLevel { get; set; }
 
     /// <summary>
     /// Gets or sets the default message notification level.
     /// </summary>
     [JsonPropertyName("default_message_notifications")]
-    public int? DefaultMessageNotifications { get; set; }
+    public DefaultMessageNotificationLevel? DefaultMessageNotifications { get; set; }
 
     /// <summary>
     /// Gets or sets the explicit content filter level.
     /// </summary>
     [JsonPropertyName("explicit_content_filter")]
-    public int? ExplicitContentFilter { get; set; }
+    public ExplicitContentFilterLevel? ExplicitContentFilter { get; set; }
 
     /// <summary>
     /// Gets or sets the roles in the guild.
@@ -133,7 +134,7 @@ public class Guild
     /// Gets or sets the required MFA level for the guild.
     /// </summary>
     [JsonPropertyName("mfa_level")]
-    public int? MfaLevel { get; set; }
+    public MfaLevel? MfaLevel { get; set; }
 
     /// <summary>
     /// Gets or sets the application ID of the guild creator if it is bot-created.
@@ -151,7 +152,7 @@ public class Guild
     /// Gets or sets the system channel flags.
     /// </summary>
     [JsonPropertyName("system_channel_flags")]
-    public int? SystemChannelFlags { get; set; }
+    public SystemChannelFlags? SystemChannelFlags { get; set; }
 
     /// <summary>
     /// Gets or sets the rules channel ID.
@@ -193,7 +194,7 @@ public class Guild
     /// Gets or sets the premium tier.
     /// </summary>
     [JsonPropertyName("premium_tier")]
-    public int? PremiumTier { get; set; }
+    public PremiumTier? PremiumTier { get; set; }
 
     /// <summary>
     /// Gets or sets the number of boosters this guild currently has.

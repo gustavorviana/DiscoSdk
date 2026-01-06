@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Models.JsonConverters;
+﻿using DiscoSdk.Models.Enums;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;
@@ -18,7 +18,6 @@ public class InteractionOption
     /// Gets or sets the type of option.
     /// </summary>
     [JsonPropertyName("type")]
-    [JsonConverter(typeof(ApplicationCommandOptionTypeConverter))]
     public ApplicationCommandOptionType Type { get; set; }
 
     /// <summary>

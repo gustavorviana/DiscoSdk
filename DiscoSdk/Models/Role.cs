@@ -1,3 +1,4 @@
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.JsonConverters;
 using System.Text.Json.Serialization;
 
@@ -79,7 +80,7 @@ public class Role
     /// Gets or sets the role flags.
     /// </summary>
     [JsonPropertyName("flags")]
-    public int? Flags { get; set; }
+    public RoleFlags? Flags { get; set; }
 }
 
 /// <summary>

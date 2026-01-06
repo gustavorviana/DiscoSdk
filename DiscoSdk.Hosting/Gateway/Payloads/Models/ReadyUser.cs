@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using DiscoSdk.Models.Enums;
+using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Hosting.Gateway.Payloads.Models;
 
@@ -35,5 +36,5 @@ internal class ReadyUser : ICurrentUser
     public bool MfaEnabled { get; set; }
 
     [JsonPropertyName("flags")]
-    public int Flags { get; set; }
+    public UserFlags Flags { get; set; }
 }

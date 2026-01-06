@@ -1,4 +1,5 @@
 using DiscoSdk.Events;
+using DiscoSdk.Models.Enums;
 
 namespace TomoriBot;
 
@@ -12,7 +13,7 @@ internal class InteractionHandler : IInteractionCreateHandler
         var interaction = eventData.Interaction;
 
         // Only handle application commands (slash commands)
-        if (interaction.Type != 2) // APPLICATION_COMMAND
+        if (interaction.Type != InteractionType.ApplicationCommand) // APPLICATION_COMMAND
             return;
 
         if (interaction.Data == null)

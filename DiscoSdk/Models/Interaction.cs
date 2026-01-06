@@ -1,3 +1,4 @@
+using DiscoSdk.Models.Enums;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;
@@ -23,7 +24,7 @@ public class Interaction
 	/// Gets or sets the type of interaction.
 	/// </summary>
 	[JsonPropertyName("type")]
-	public int Type { get; set; }
+	public InteractionType Type { get; set; }
 
 	/// <summary>
 	/// Gets or sets the interaction data, if the interaction is of type APPLICATION_COMMAND.
@@ -107,7 +108,7 @@ public class InteractionData
 	/// Gets or sets the type of the invoked command.
 	/// </summary>
 	[JsonPropertyName("type")]
-	public int Type { get; set; }
+	public ApplicationCommandType Type { get; set; }
 
 	/// <summary>
 	/// Gets or sets the converted users.
@@ -131,7 +132,7 @@ public class InteractionData
 	/// Gets or sets the type of component.
 	/// </summary>
 	[JsonPropertyName("component_type")]
-	public int? ComponentType { get; set; }
+	public ComponentType? ComponentType { get; set; }
 
 	/// <summary>
 	/// Gets or sets the values the user selected.
@@ -175,40 +176,4 @@ public class InteractionResolved
 	[JsonPropertyName("messages")]
 	public Dictionary<string, Message>? Messages { get; set; }
 }
-/// <summary>
-/// Represents an option in an interaction.
-/// </summary>
-public class InteractionOption
-{
-	/// <summary>
-	/// Gets or sets the name of the parameter.
-	/// </summary>
-	[JsonPropertyName("name")]
-	public string Name { get; set; } = default!;
-
-	/// <summary>
-	/// Gets or sets the type of option.
-	/// </summary>
-	[JsonPropertyName("type")]
-	public int Type { get; set; }
-
-	/// <summary>
-	/// Gets or sets the value of the option.
-	/// </summary>
-	[JsonPropertyName("value")]
-	public object? Value { get; set; }
-
-	/// <summary>
-	/// Gets or sets the nested options.
-	/// </summary>
-	[JsonPropertyName("options")]
-	public List<InteractionOption>? Options { get; set; }
-
-	/// <summary>
-	/// Gets or sets whether this option is the currently focused option for autocomplete.
-	/// </summary>
-	[JsonPropertyName("focused")]
-	public bool? Focused { get; set; }
-}
-
 

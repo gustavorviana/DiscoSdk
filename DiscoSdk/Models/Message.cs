@@ -1,3 +1,4 @@
+using DiscoSdk.Models.Enums;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;
@@ -125,7 +126,7 @@ public class Message
     /// Gets or sets the type of message.
     /// </summary>
     [JsonPropertyName("type")]
-    public int Type { get; set; }
+    public MessageType Type { get; set; }
 
     /// <summary>
     /// Gets or sets the sent with Premium subscription message activity.
@@ -155,7 +156,7 @@ public class Message
     /// Gets or sets the message flags.
     /// </summary>
     [JsonPropertyName("flags")]
-    public int? Flags { get; set; }
+    public MessageFlags? Flags { get; set; }
 
     /// <summary>
     /// Gets or sets the message associated with the message_reference.
@@ -221,7 +222,7 @@ public class ChannelMention
     /// Gets or sets the type of channel.
     /// </summary>
     [JsonPropertyName("type")]
-    public int Type { get; set; }
+    public ChannelType Type { get; set; }
 
     /// <summary>
     /// Gets or sets the name of the channel.
@@ -611,7 +612,7 @@ public class MessageActivity
     /// Gets or sets the type of message activity.
     /// </summary>
     [JsonPropertyName("type")]
-    public int Type { get; set; }
+    public MessageActivityType Type { get; set; }
 
     /// <summary>
     /// Gets or sets the party ID from a Rich Presence event.
@@ -701,7 +702,7 @@ public class MessageInteraction
     /// Gets or sets the type of interaction.
     /// </summary>
     [JsonPropertyName("type")]
-    public int Type { get; set; }
+    public InteractionType Type { get; set; }
 
     /// <summary>
     /// Gets or sets the name of the application command.
@@ -731,13 +732,13 @@ public class MessageComponent
     /// Gets or sets the type of component.
     /// </summary>
     [JsonPropertyName("type")]
-    public int Type { get; set; }
+    public ComponentType Type { get; set; }
 
     /// <summary>
     /// Gets or sets the style of the component.
     /// </summary>
     [JsonPropertyName("style")]
-    public int? Style { get; set; }
+    public ButtonStyle? Style { get; set; }
 
     /// <summary>
     /// Gets or sets the label of the component.
@@ -857,7 +858,7 @@ public class StickerItem
     /// Gets or sets the type of sticker format.
     /// </summary>
     [JsonPropertyName("format_type")]
-    public int FormatType { get; set; }
+    public StickerFormatType FormatType { get; set; }
 }
 
 /// <summary>
@@ -893,7 +894,7 @@ public class Sticker
     /// Gets or sets the type of sticker format.
     /// </summary>
     [JsonPropertyName("format_type")]
-    public int FormatType { get; set; }
+    public StickerFormatType FormatType { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether this guild sticker can be used.

@@ -1,3 +1,4 @@
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.JsonConverters;
 using System.Text.Json.Serialization;
 
@@ -60,7 +61,7 @@ public class GuildMember
     /// Gets or sets the member's flags.
     /// </summary>
     [JsonPropertyName("flags")]
-    public int? Flags { get; set; }
+    public GuildMemberFlags? Flags { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the user has not yet passed the guild's Membership Screening requirements.

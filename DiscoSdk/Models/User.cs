@@ -1,3 +1,4 @@
+using DiscoSdk.Models.Enums;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;
@@ -89,18 +90,18 @@ public class User
     /// Gets or sets the user's flags.
     /// </summary>
     [JsonPropertyName("flags")]
-    public int? Flags { get; set; }
+    public UserFlags? Flags { get; set; }
 
     /// <summary>
     /// Gets or sets the user's premium type.
     /// </summary>
     [JsonPropertyName("premium_type")]
-    public int? PremiumType { get; set; }
+    public PremiumType? PremiumType { get; set; }
 
     /// <summary>
     /// Gets or sets the user's public flags.
     /// </summary>
     [JsonPropertyName("public_flags")]
-    public int? PublicFlags { get; set; }
+    public UserFlags? PublicFlags { get; set; }
 }
 

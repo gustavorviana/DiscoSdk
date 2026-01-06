@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using DiscoSdk.Models.Enums;
+using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Hosting.Gateway.Payloads.Models;
 
@@ -11,5 +12,5 @@ public sealed class ReadyApplication
     public string Id { get; set; } = default!;
 
     [JsonPropertyName("flags")]
-    public int Flags { get; set; }
+    public UserFlags Flags { get; set; }
 }

@@ -1,3 +1,4 @@
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.JsonConverters;
 using System.Text.Json.Serialization;
 
@@ -18,7 +19,7 @@ public class Channel
     /// Gets or sets the type of channel.
     /// </summary>
     [JsonPropertyName("type")]
-    public int Type { get; set; }
+    public ChannelType Type { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the guild this channel belongs to.
@@ -126,7 +127,7 @@ public class Channel
     /// Gets or sets the camera video quality mode of the voice channel.
     /// </summary>
     [JsonPropertyName("video_quality_mode")]
-    public int? VideoQualityMode { get; set; }
+    public VideoQualityMode? VideoQualityMode { get; set; }
 
     /// <summary>
     /// Gets or sets the number of messages in a thread.
@@ -169,7 +170,7 @@ public class Channel
     /// Gets or sets the channel flags.
     /// </summary>
     [JsonPropertyName("flags")]
-    public int? Flags { get; set; }
+    public ChannelFlags? Flags { get; set; }
 
     /// <summary>
     /// Gets or sets the total number of messages sent in a thread.
@@ -193,7 +194,7 @@ public class PermissionOverwrite
     /// Gets or sets the type of overwrite (0 for role, 1 for member).
     /// </summary>
     [JsonPropertyName("type")]
-    public int Type { get; set; }
+    public PermissionOverwriteType Type { get; set; }
 
     /// <summary>
     /// Gets or sets the permission bit set.
@@ -279,7 +280,7 @@ public class ThreadMember
     /// Gets or sets any user-thread settings.
     /// </summary>
     [JsonPropertyName("flags")]
-    public int Flags { get; set; }
+    public ThreadMemberFlags Flags { get; set; }
 
     /// <summary>
     /// Gets or sets additional information about the user.
