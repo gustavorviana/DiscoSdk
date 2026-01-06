@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="DiscoSdk.Hosting/DiscoSdk.Hosting.csproj" Id="496f519b-4253-4632-a450-b0988ed2c8ee" />
+  <Project Path="DiscoSdk/DiscoSdk.csproj" Id="d5a320b5-c1d5-48a3-b838-f8dfa7cb3b14" />
+  <Project Path="TomoriBot/TomoriBot.csproj" Id="92857d12-ad40-4060-8617-7b1011e47b9a" />
+</Solution>
