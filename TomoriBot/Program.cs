@@ -1,6 +1,5 @@
 ﻿using DiscoSdk.Hosting;
-using DiscoSdk.Hosting.Rest;
-using DiscoSdk.Models;
+using DiscoSdk.Models.Commands;
 using TomoriBot;
 
 Console.WriteLine("Hello, World!");
@@ -15,12 +14,14 @@ dsc.GlobalCommands.Add(new ApplicationCommand
 {
     Name = "test",
     Description = "A test command",
-    Type = ApplicationCommandType.ChatInput,
+    Type = 1, // CHAT_INPUT (slash command)
     Options = [
-        ApplicationCommandOptionBuilder
-            .Boolean("ephemeral", "An input string")
-            .WithRequired(false)
-            .Build()
+        new ApplicationCommandOption{
+            Name = "ephemeral",
+            Description = "An input string",
+            Type = 3, // STRING
+            Required = false,
+        }
     ]
 });
 

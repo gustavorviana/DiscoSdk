@@ -1,5 +1,4 @@
 using DiscoSdk.Events;
-using DiscoSdk.Hosting.Rest;
 using DiscoSdk.Models;
 using System.Text.Json;
 
@@ -8,86 +7,56 @@ namespace DiscoSdk.Hosting.Events;
 /// <summary>
 /// Dispatches Discord Gateway events to registered handlers.
 /// </summary>
-public class DiscordEventDispatcher
+public class DiscordEventDispatcher : IDiscordEventDispatcher
 {
-    private readonly List<IMessageCreateHandler> _messageCreateHandlers = [];
-    private readonly List<IMessageUpdateHandler> _messageUpdateHandlers = [];
-    private readonly List<IMessageDeleteHandler> _messageDeleteHandlers = [];
-    private readonly List<IGuildCreateHandler> _guildCreateHandlers = [];
-    private readonly List<IGuildUpdateHandler> _guildUpdateHandlers = [];
-    private readonly List<IGuildDeleteHandler> _guildDeleteHandlers = [];
-    private readonly List<IChannelCreateHandler> _channelCreateHandlers = [];
-    private readonly List<IChannelUpdateHandler> _channelUpdateHandlers = [];
-    private readonly List<IChannelDeleteHandler> _channelDeleteHandlers = [];
-    private readonly List<IMessageReactionAddHandler> _messageReactionAddHandlers = [];
-    private readonly List<IMessageReactionRemoveHandler> _messageReactionRemoveHandlers = [];
-    private readonly List<ITypingStartHandler> _typingStartHandlers = [];
-    private readonly List<IInteractionCreateHandler> _interactionCreateHandlers = [];
+    private bool _sealed = false;
+    private readonly object _lock = new();
+    private readonly List<IDiscordEventHandler> _handlers = [];
+    private readonly Dictionary<Type, HashSet<int>> _handlerIndicesByType = [];
 
     /// <summary>
-    /// Registers a message create handler.
+    /// Registers a Discord event handler.
     /// </summary>
-    public void Register(IMessageCreateHandler handler) => _messageCreateHandlers.Add(handler);
+    /// <param name="handler">The event handler to register.</param>
+    public void Register(IDiscordEventHandler handler)
+    {
+        if (_sealed)
+            throw new InvalidOperationException("Cannot register new handlers after the dispatcher has been sealed.");
 
-    /// <summary>
-    /// Registers a message update handler.
-    /// </summary>
-    public void Register(IMessageUpdateHandler handler) => _messageUpdateHandlers.Add(handler);
+        lock (_lock)
+        {
+            // Add handler to the main list and get its index
+            var index = _handlers.Count;
+            _handlers.Add(handler);
 
-    /// <summary>
-    /// Registers a message delete handler.
-    /// </summary>
-    public void Register(IMessageDeleteHandler handler) => _messageDeleteHandlers.Add(handler);
+            // Discover all implemented interfaces that derive from IDiscordEventHandler
+            var handlerType = handler.GetType();
+            var interfaces = handlerType.GetInterfaces()
+                .Where(i => i != typeof(IDiscordEventHandler) &&
+                            typeof(IDiscordEventHandler).IsAssignableFrom(i));
 
-    /// <summary>
-    /// Registers a guild create handler.
-    /// </summary>
-    public void Register(IGuildCreateHandler handler) => _guildCreateHandlers.Add(handler);
+            // Store only the handler index (not the reference) per handler type
+            foreach (var interfaceType in interfaces)
+            {
+                if (!_handlerIndicesByType.TryGetValue(interfaceType, out var indices))
+                {
+                    indices = [];
+                    _handlerIndicesByType[interfaceType] = indices;
+                }
+                indices.Add(index);
+            }
+        }
+    }
 
-    /// <summary>
-    /// Registers a guild update handler.
-    /// </summary>
-    public void Register(IGuildUpdateHandler handler) => _guildUpdateHandlers.Add(handler);
+    public void Seal()
+    {
+        _sealed = true;
+    }
 
-    /// <summary>
-    /// Registers a guild delete handler.
-    /// </summary>
-    public void Register(IGuildDeleteHandler handler) => _guildDeleteHandlers.Add(handler);
-
-    /// <summary>
-    /// Registers a channel create handler.
-    /// </summary>
-    public void Register(IChannelCreateHandler handler) => _channelCreateHandlers.Add(handler);
-
-    /// <summary>
-    /// Registers a channel update handler.
-    /// </summary>
-    public void Register(IChannelUpdateHandler handler) => _channelUpdateHandlers.Add(handler);
-
-    /// <summary>
-    /// Registers a channel delete handler.
-    /// </summary>
-    public void Register(IChannelDeleteHandler handler) => _channelDeleteHandlers.Add(handler);
-
-    /// <summary>
-    /// Registers a message reaction add handler.
-    /// </summary>
-    public void Register(IMessageReactionAddHandler handler) => _messageReactionAddHandlers.Add(handler);
-
-    /// <summary>
-    /// Registers a message reaction remove handler.
-    /// </summary>
-    public void Register(IMessageReactionRemoveHandler handler) => _messageReactionRemoveHandlers.Add(handler);
-
-    /// <summary>
-    /// Registers a typing start handler.
-    /// </summary>
-    public void Register(ITypingStartHandler handler) => _typingStartHandlers.Add(handler);
-
-    /// <summary>
-    /// Registers an interaction create handler.
-    /// </summary>
-    public void Register(IInteractionCreateHandler handler) => _interactionCreateHandlers.Add(handler);
+    public void Unseal()
+    {
+        _sealed = false;
+    }
 
     /// <summary>
     /// Processes a Gateway event based on the event type.
@@ -176,7 +145,7 @@ public class DiscordEventDispatcher
 
             var eventData = new MessageCreateEvent { Message = message };
 
-            foreach (var handler in _messageCreateHandlers)
+            foreach (var handler in GetHandlersOfType<IMessageCreateHandler>())
             {
                 try
                 {
@@ -198,7 +167,7 @@ public class DiscordEventDispatcher
         if (message == null) return;
 
         var eventData = new MessageUpdateEvent { Message = message };
-        foreach (var handler in _messageUpdateHandlers)
+        foreach (var handler in GetHandlersOfType<IMessageUpdateHandler>())
         {
             await handler.HandleAsync(eventData);
         }
@@ -213,7 +182,7 @@ public class DiscordEventDispatcher
             GuildId = payload.TryGetProperty("guild_id", out var guildId) ? guildId.GetString() : null
         };
 
-        foreach (var handler in _messageDeleteHandlers)
+        foreach (var handler in GetHandlersOfType<IMessageDeleteHandler>())
         {
             await handler.HandleAsync(eventData);
         }
@@ -225,7 +194,7 @@ public class DiscordEventDispatcher
         if (guild == null) return;
 
         var eventData = new GuildCreateEvent { Guild = guild };
-        foreach (var handler in _guildCreateHandlers)
+        foreach (var handler in GetHandlersOfType<IGuildCreateHandler>())
         {
             await handler.HandleAsync(eventData);
         }
@@ -237,7 +206,7 @@ public class DiscordEventDispatcher
         if (guild == null) return;
 
         var eventData = new GuildUpdateEvent { Guild = guild };
-        foreach (var handler in _guildUpdateHandlers)
+        foreach (var handler in GetHandlersOfType<IGuildUpdateHandler>())
         {
             await handler.HandleAsync(eventData);
         }
@@ -251,7 +220,7 @@ public class DiscordEventDispatcher
             Unavailable = payload.TryGetProperty("unavailable", out var unavailable) && unavailable.GetBoolean()
         };
 
-        foreach (var handler in _guildDeleteHandlers)
+        foreach (var handler in GetHandlersOfType<IGuildDeleteHandler>())
         {
             await handler.HandleAsync(eventData);
         }
@@ -263,7 +232,7 @@ public class DiscordEventDispatcher
         if (channel == null) return;
 
         var eventData = new ChannelCreateEvent { Channel = channel };
-        foreach (var handler in _channelCreateHandlers)
+        foreach (var handler in GetHandlersOfType<IChannelCreateHandler>())
         {
             await handler.HandleAsync(eventData);
         }
@@ -275,7 +244,7 @@ public class DiscordEventDispatcher
         if (channel == null) return;
 
         var eventData = new ChannelUpdateEvent { Channel = channel };
-        foreach (var handler in _channelUpdateHandlers)
+        foreach (var handler in GetHandlersOfType<IChannelUpdateHandler>())
         {
             await handler.HandleAsync(eventData);
         }
@@ -287,7 +256,7 @@ public class DiscordEventDispatcher
         if (channel == null) return;
 
         var eventData = new ChannelDeleteEvent { Channel = channel };
-        foreach (var handler in _channelDeleteHandlers)
+        foreach (var handler in GetHandlersOfType<IChannelDeleteHandler>())
         {
             await handler.HandleAsync(eventData);
         }
@@ -305,7 +274,7 @@ public class DiscordEventDispatcher
             Emoji = payload.GetProperty("emoji").Deserialize<Emoji>(jsonOptions) ?? new Emoji()
         };
 
-        foreach (var handler in _messageReactionAddHandlers)
+        foreach (var handler in GetHandlersOfType<IMessageReactionAddHandler>())
         {
             await handler.HandleAsync(eventData);
         }
@@ -322,7 +291,7 @@ public class DiscordEventDispatcher
             Emoji = payload.GetProperty("emoji").Deserialize<Emoji>(jsonOptions) ?? new Emoji()
         };
 
-        foreach (var handler in _messageReactionRemoveHandlers)
+        foreach (var handler in GetHandlersOfType<IMessageReactionRemoveHandler>())
         {
             await handler.HandleAsync(eventData);
         }
@@ -339,7 +308,7 @@ public class DiscordEventDispatcher
             Member = payload.TryGetProperty("member", out var member) ? member.Deserialize<GuildMember>(jsonOptions) : null
         };
 
-        foreach (var handler in _typingStartHandlers)
+        foreach (var handler in GetHandlersOfType<ITypingStartHandler>())
         {
             await handler.HandleAsync(eventData);
         }
@@ -355,7 +324,7 @@ public class DiscordEventDispatcher
 
             var eventData = new InteractionCreateEvent(client, interaction);
 
-            foreach (var handler in _interactionCreateHandlers)
+            foreach (var handler in GetHandlersOfType<IInteractionCreateHandler>())
             {
                 try
                 {
@@ -366,8 +335,24 @@ public class DiscordEventDispatcher
                 }
             }
         }
-        catch (Exception ex)
+        catch
         {
+        }
+    }
+
+    private IEnumerable<T> GetHandlersOfType<T>() where T : IDiscordEventHandler
+    {
+        if (!_sealed)
+            throw new InvalidOperationException("Cannot retrieve handlers before the dispatcher has been sealed.");
+
+        var targetType = typeof(T);
+        if (!_handlerIndicesByType.TryGetValue(targetType, out var indices))
+            yield break;
+
+        foreach (var index in indices)
+        {
+            if (_handlers[index] is T typedHandler)
+                yield return typedHandler;
         }
     }
 }

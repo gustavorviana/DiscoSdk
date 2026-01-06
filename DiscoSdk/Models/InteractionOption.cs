@@ -23,10 +23,8 @@ public class InteractionOption
 
     /// <summary>
     /// Gets or sets the value of the option.
-    /// The value is automatically converted to the appropriate type (int, bool, string, double).
     /// </summary>
     [JsonPropertyName("value")]
-    [JsonConverter(typeof(InteractionOptionValueConverter))]
     public object? Value { get; set; }
 
     /// <summary>

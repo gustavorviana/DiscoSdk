@@ -1,17 +1,21 @@
-﻿using DiscoSdk.Hosting.Events;
+﻿using DiscoSdk.Events;
+using DiscoSdk.Hosting.Events;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Payloads.Models;
+using DiscoSdk.Hosting.Rest;
+using DiscoSdk.Models.Commands;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DiscoSdk.Hosting.Rest
+namespace DiscoSdk.Hosting
 {
     /// <summary>
     /// Main client for connecting to and managing Discord Gateway connections.
     /// </summary>
     public class DiscordClient(DiscordClientConfig config)
     {
-        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(0, 1);
+        private readonly DiscordEventDispatcher _eventDispatcher = new();
+        private readonly SemaphoreSlim _semaphore = new(0, 1);
 
         /// <summary>
         /// Event raised when all shards are ready and the client is fully connected.
@@ -33,13 +37,13 @@ namespace DiscoSdk.Hosting.Rest
         private readonly List<Shard> _shards = [];
         private IdentifyGate? _gate;
         private readonly IDiscordRestClientBase _client = new DiscordRestClientBase(config.Token, new Uri("https://discord.com/api/v10"));
-        private bool _commandsRegistered = false;
+        private bool _isInitialized = false;
         private readonly HashSet<string> _knownGuildIds = [];
 
         /// <summary>
         /// Gets the event dispatcher for handling Gateway events.
         /// </summary>
-        public DiscordEventDispatcher EventDispatcher { get; } = new DiscordEventDispatcher();
+        public IDiscordEventDispatcher EventDispatcher => _eventDispatcher;
 
         /// <summary>
         /// Gets the interaction client for responding to interactions.
@@ -59,13 +63,13 @@ namespace DiscoSdk.Hosting.Rest
         /// <summary>
         /// Gets or sets the list of commands to register globally when the bot starts.
         /// </summary>
-        public List<Models.ApplicationCommand> GlobalCommands { get; } = [];
+        public List<ApplicationCommand> GlobalCommands { get; } = [];
 
         /// <summary>
         /// Gets or sets the dictionary of guild-specific commands to register when the bot starts.
         /// Key is the guild ID, value is the list of commands for that guild.
         /// </summary>
-        public Dictionary<string, List<Models.ApplicationCommand>> GuildCommands { get; } = [];
+        public Dictionary<string, List<ApplicationCommand>> GuildCommands { get; } = [];
 
         /// <summary>
         /// Gets the JSON serializer options used for deserializing Gateway events.
@@ -96,6 +100,7 @@ namespace DiscoSdk.Hosting.Rest
 
             _gate = new(gatewayInfo.SessionInfo.MaxConcurrency, TimeSpan.FromMicroseconds(gatewayInfo.SessionInfo.ResetAfter));
             _totalShards = Math.Max(config.TotalShards ?? gatewayInfo.Shards, 1);
+            _eventDispatcher.Seal();
 
             await InitShards(new Uri(gatewayInfo.Url));
             await _semaphore.WaitAsync();
@@ -109,6 +114,8 @@ namespace DiscoSdk.Hosting.Rest
         {
             _semaphore.Release();
             await ClearShardsAsync();
+            _eventDispatcher.Unseal();
+            _isInitialized = false;
         }
 
         private async Task InitShards(Uri gatewayUri)
@@ -168,7 +175,7 @@ namespace DiscoSdk.Hosting.Rest
                 Console.WriteLine($"[DEBUG] Received INTERACTION_CREATE event from shard {sender.ShardId}");
             }
 
-            await EventDispatcher.ProcessEventAsync(this, arg.EventType, arg.Payload, JsonOptions);
+            await _eventDispatcher.ProcessEventAsync(this, arg.EventType, arg.Payload, JsonOptions);
         }
 
         private Task Shard_ConnectionLost(Shard sender, Exception arg)
@@ -199,9 +206,9 @@ namespace DiscoSdk.Hosting.Rest
             Console.WriteLine($"Shard {sender.ShardId} of {User.Username} is ready.");
 
             // Register commands when all shards are ready (only once, on shard 0)
-            if (IsReady && sender.ShardId == 0 && !_commandsRegistered)
+            if (IsReady && sender.ShardId == 0 && !_isInitialized)
             {
-                _commandsRegistered = true;
+                _isInitialized = true;
                 await RegisterCommandsAsync();
             }
 

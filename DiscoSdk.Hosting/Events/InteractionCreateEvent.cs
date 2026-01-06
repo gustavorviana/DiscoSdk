@@ -1,5 +1,4 @@
 using DiscoSdk.Events;
-using DiscoSdk.Hosting.Rest;
 using DiscoSdk.Models;
 
 namespace DiscoSdk.Hosting.Events;
