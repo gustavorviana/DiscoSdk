@@ -2,6 +2,9 @@
 
 namespace DiscoSdk.Hosting.Gateway.Payloads.Models;
 
+/// <summary>
+/// Represents the user information received in the READY payload from the Discord Gateway.
+/// </summary>
 internal class ReadyUser : ICurrentUser
 {
     [JsonPropertyName("id")]

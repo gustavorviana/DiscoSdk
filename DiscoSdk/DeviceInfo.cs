@@ -2,6 +2,9 @@
 
 namespace DiscoSdk
 {
+    /// <summary>
+    /// Represents device information used for Discord Gateway identification.
+    /// </summary>
     public class DeviceInfo
     {
         public const string SdkName = "DiscoSdk";
@@ -15,6 +18,10 @@ namespace DiscoSdk
         [JsonPropertyName("device")]
         public required string Device { get; set; }
 
+        /// <summary>
+        /// Creates a default device info instance using the current environment.
+        /// </summary>
+        /// <returns>A new <see cref="DeviceInfo"/> instance with default values.</returns>
         public static DeviceInfo CreateDefault()
         {
             return new DeviceInfo

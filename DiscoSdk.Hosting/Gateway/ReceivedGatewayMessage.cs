@@ -2,16 +2,38 @@
 
 namespace DiscoSdk.Hosting.Gateway;
 
+/// <summary>
+/// Represents a message received from the Discord Gateway.
+/// </summary>
 internal class ReceivedGatewayMessage : IDisposable
 {
     private bool _disposed;
     private readonly JsonDocument _document;
 
+    /// <summary>
+    /// Gets the operation code of the message.
+    /// </summary>
     public OpCodes Opcode { get; }
+
+    /// <summary>
+    /// Gets the event type, if this is a dispatch message.
+    /// </summary>
     public string? EventType { get; }
+
+    /// <summary>
+    /// Gets the sequence number of the message, if available.
+    /// </summary>
     public long? SequenceNumber { get; }
+
+    /// <summary>
+    /// Gets the payload data of the message.
+    /// </summary>
     public JsonElement Payload { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ReceivedGatewayMessage"/> class.
+    /// </summary>
+    /// <param name="jsonMessage">The JSON string containing the gateway message.</param>
     public ReceivedGatewayMessage(string jsonMessage)
     {
         _document = JsonDocument.Parse(jsonMessage);
@@ -28,6 +50,10 @@ internal class ReceivedGatewayMessage : IDisposable
             SequenceNumber = s.GetInt64();
     }
 
+    /// <summary>
+    /// Determines whether the message has a payload.
+    /// </summary>
+    /// <returns>true if the message has a payload; otherwise, false.</returns>
     public bool HasPayload()
     {
         return Payload.ValueKind != JsonValueKind.Null;

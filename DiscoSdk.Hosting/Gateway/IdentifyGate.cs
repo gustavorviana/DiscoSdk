@@ -1,5 +1,8 @@
 ﻿namespace DiscoSdk.Hosting.Gateway;
 
+/// <summary>
+/// Rate limiter for Discord Gateway identify operations using a fixed-window throttling mechanism.
+/// </summary>
 public sealed class IdentifyGate : IDisposable
 {
     private readonly CancellationTokenSource _cancellationTokenSource = new();
@@ -13,9 +16,21 @@ public sealed class IdentifyGate : IDisposable
     private int _maxCalls;
     private int _waiters;
 
+    /// <summary>
+    /// Gets the cancellation token that is cancelled when this instance is disposed.
+    /// </summary>
     public CancellationToken Token => _cancellationTokenSource.Token;
+
+    /// <summary>
+    /// Gets a value indicating whether cancellation has been requested.
+    /// </summary>
     public bool IsCancellationRequested => _cancellationTokenSource.IsCancellationRequested;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="IdentifyGate"/> class.
+    /// </summary>
+    /// <param name="maxCalls">The maximum number of identify calls allowed in the time window.</param>
+    /// <param name="window">The time window for rate limiting. Defaults to 5 seconds if not specified.</param>
     public IdentifyGate(int maxCalls, TimeSpan? window = null)
     {
         UpdateCheckValues(maxCalls, window);
@@ -25,6 +40,11 @@ public sealed class IdentifyGate : IDisposable
         _timer = new Timer(static s => ((IdentifyGate)s!).OnWindowTick(), this, _window, _window);
     }
 
+    /// <summary>
+    /// Updates the rate limiting parameters.
+    /// </summary>
+    /// <param name="maxCalls">The maximum number of identify calls allowed in the time window.</param>
+    /// <param name="window">The time window for rate limiting. Defaults to 5 seconds if not specified.</param>
     public void UpdateCheckValues(int maxCalls, TimeSpan? window = null)
     {
         _maxCalls = Math.Max(1, maxCalls);

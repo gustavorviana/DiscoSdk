@@ -1,5 +1,8 @@
 ﻿namespace DiscoSdk;
 
+/// <summary>
+/// Represents the current authenticated user in the Discord application.
+/// </summary>
 public interface ICurrentUser
 {
     string? Avatar { get; }

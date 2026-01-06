@@ -4,16 +4,42 @@ using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Gateway;
 
+/// <summary>
+/// Represents a single shard connection to the Discord Gateway.
+/// </summary>
 internal sealed class Shard(int shardId, string token, GatewayIntent intents, IdentifyGate identifyGate, Uri gatewayUri)
 {
+    /// <summary>
+    /// Event raised when the shard successfully resumes a connection.
+    /// </summary>
     public event ShardEventHandler? OnResume;
+
+    /// <summary>
+    /// Event raised when the shard receives a READY payload from the Gateway.
+    /// </summary>
     public event ShardEventHandler<ReadyPayload>? OnReady;
+
+    /// <summary>
+    /// Event raised when the shard loses connection to the Gateway.
+    /// </summary>
     public event ShardEventHandler<Exception>? ConnectionLost;
+
+    /// <summary>
+    /// Event raised when the shard receives a dispatch message from the Gateway.
+    /// </summary>
     public event ShardEventHandler<ReceivedGatewayMessage>? OnReceiveMessage;
 
     private string? _resumeGatewayUrl = null;
     private string? _sessionId = null;
+
+    /// <summary>
+    /// Gets the shard ID.
+    /// </summary>
     public int ShardId => shardId;
+
+    /// <summary>
+    /// Gets the current status of the shard.
+    /// </summary>
     public ShardStatus Status => _status;
 
     private CancellationTokenSource? _heartbeatCts;
@@ -26,6 +52,10 @@ internal sealed class Shard(int shardId, string token, GatewayIntent intents, Id
 
     private CancellationTokenRegistration _tokenRegistration;
 
+    /// <summary>
+    /// Starts the shard and establishes a connection to the Gateway.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous start operation.</returns>
     public async Task StartAsync()
     {
         if (_status != ShardStatus.PendingHello)
@@ -38,6 +68,10 @@ internal sealed class Shard(int shardId, string token, GatewayIntent intents, Id
         _ = RunLoopAsync();
     }
 
+    /// <summary>
+    /// Stops the shard and closes the Gateway connection.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous stop operation.</returns>
     public async Task StopAsync()
     {
         try { _tokenRegistration.Dispose(); } catch { }

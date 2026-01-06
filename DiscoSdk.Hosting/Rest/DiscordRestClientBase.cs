@@ -7,6 +7,9 @@ using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Hosting.Rest;
 
+/// <summary>
+/// Base implementation for making HTTP requests to the Discord REST API.
+/// </summary>
 public class DiscordRestClientBase : IDisposable, IDiscordRestClientBase
 {
     private readonly HttpClient _http = new();
@@ -14,6 +17,12 @@ public class DiscordRestClientBase : IDisposable, IDiscordRestClientBase
     private readonly JsonSerializerOptions _json;
     private bool _disposed;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DiscordRestClientBase"/> class.
+    /// </summary>
+    /// <param name="botToken">The bot token for authentication.</param>
+    /// <param name="apiUri">The base URI of the Discord API.</param>
+    /// <exception cref="ArgumentException">Thrown when the bot token is null or whitespace.</exception>
     public DiscordRestClientBase(string botToken, Uri apiUri)
     {
         if (string.IsNullOrWhiteSpace(botToken))
@@ -32,6 +41,16 @@ public class DiscordRestClientBase : IDisposable, IDiscordRestClientBase
         };
     }
 
+    /// <summary>
+    /// Sends a JSON request to the Discord API and deserializes the response.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize the response to.</typeparam>
+    /// <param name="path">The API endpoint path.</param>
+    /// <param name="method">The HTTP method to use.</param>
+    /// <param name="body">The request body object to serialize, or null.</param>
+    /// <param name="ct">Cancellation token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The result contains the deserialized response.</returns>
+    /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
     public async Task<T> SendJsonAsync<T>(string path, HttpMethod method, object? body, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(method, path);
@@ -61,6 +80,14 @@ public class DiscordRestClientBase : IDisposable, IDiscordRestClientBase
             error?.Code);
     }
 
+    /// <summary>
+    /// Sends a request to the Discord API that expects no content in the response.
+    /// </summary>
+    /// <param name="path">The API endpoint path.</param>
+    /// <param name="method">The HTTP method to use.</param>
+    /// <param name="ct">Cancellation token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
     public async Task SendNoContentAsync(string path, HttpMethod method, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(method, path);

@@ -4,12 +4,24 @@ using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Gateway;
 
+/// <summary>
+/// Manages the WebSocket connection for a shard.
+/// </summary>
 internal class ShardSocket
 {
     private ClientWebSocket? _ws;
 
+    /// <summary>
+    /// Gets a value indicating whether the WebSocket is ready and open.
+    /// </summary>
     public bool Ready => _ws?.State == WebSocketState.Open;
 
+    /// <summary>
+    /// Connects to the Discord Gateway WebSocket endpoint.
+    /// </summary>
+    /// <param name="gatewayUri">The Gateway WebSocket URI.</param>
+    /// <param name="token">Cancellation token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous connect operation.</returns>
     public async Task ConnectAsync(Uri gatewayUri, CancellationToken token)
     {
         _ws?.Dispose();
@@ -19,6 +31,11 @@ internal class ShardSocket
         await _ws.ConnectAsync(gatewayUri, token);
     }
 
+    /// <summary>
+    /// Reads a message from the WebSocket connection.
+    /// </summary>
+    /// <param name="token">Cancellation token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous read operation. The result contains the received message, or null if parsing fails.</returns>
     public async Task<ReceivedGatewayMessage?> ReadAsync(CancellationToken token)
     {
         if (_ws == null) return null;
@@ -52,6 +69,12 @@ internal class ShardSocket
         }
     }
 
+    /// <summary>
+    /// Sends a message to the Gateway WebSocket.
+    /// </summary>
+    /// <param name="payload">The message payload to send.</param>
+    /// <param name="token">Cancellation token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous send operation.</returns>
     public async Task SendAsync(SendGatewayMessage payload, CancellationToken token)
     {
         if (_ws == null)
@@ -63,6 +86,10 @@ internal class ShardSocket
         await _ws.SendAsync(bytes, WebSocketMessageType.Text, true, token);
     }
 
+    /// <summary>
+    /// Closes the WebSocket connection gracefully.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous close operation.</returns>
     public async Task Close()
     {
         if (_ws == null)
