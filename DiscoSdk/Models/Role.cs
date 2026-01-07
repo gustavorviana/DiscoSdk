@@ -55,7 +55,7 @@ public class Role
     /// Gets or sets the role's permissions as a string (bitfield).
     /// </summary>
     [JsonPropertyName("permissions")]
-    [JsonConverter(typeof(PermissionStringConverter))]
+    [JsonConverter(typeof(SafeStringConverter))]
     public string Permissions { get; set; } = default!;
 
     /// <summary>

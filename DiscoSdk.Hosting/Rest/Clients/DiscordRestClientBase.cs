@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DiscoSdk.Hosting.Rest;
+namespace DiscoSdk.Hosting.Rest.Clients;
 
 /// <summary>
 /// Base implementation for making HTTP requests to the Discord REST API.
@@ -72,6 +72,28 @@ public class DiscordRestClientBase : IDisposable, IDiscordRestClientBase
             var data = await JsonSerializer.DeserializeAsync<T>(stream, _json, ct);
             return data ?? throw new DiscordApiException("Discord API returned empty JSON.", res.StatusCode, null);
         }
+
+        var error = await TryReadDiscordErrorAsync(res, ct);
+        throw new DiscordApiException(
+            error?.Message ?? $"Discord API error ({(int)res.StatusCode} {res.ReasonPhrase}).",
+            res.StatusCode,
+            error?.Code);
+    }
+
+    public async Task SendJsonAsync(string path, HttpMethod method, object? body, CancellationToken ct)
+    {
+        using var req = new HttpRequestMessage(method, path);
+
+        if (body is not null)
+        {
+            var json = JsonSerializer.Serialize(body, _json);
+            req.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        }
+
+        using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+
+        if (res.IsSuccessStatusCode || res.StatusCode == HttpStatusCode.NoContent)
+            return;
 
         var error = await TryReadDiscordErrorAsync(res, ct);
         throw new DiscordApiException(

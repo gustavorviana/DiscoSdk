@@ -1,4 +1,5 @@
 ﻿using DiscoSdk.Hosting.Gateway;
+using DiscoSdk.Logging;
 
 namespace DiscoSdk.Hosting
 {
@@ -21,5 +22,24 @@ namespace DiscoSdk.Hosting
         /// Gets or sets the gateway intents to subscribe to.
         /// </summary>
         public required GatewayIntent Intents { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum number of concurrent event processing operations.
+        /// Uses the managed .NET ThreadPool (similar to ASP.NET Core MaxConcurrency).
+        /// If 0 or negative, defaults to ProcessorCount * 2.
+        /// </summary>
+        public int EventProcessorMaxConcurrency { get; set; } = 0;
+
+        /// <summary>
+        /// Gets or sets the capacity of the bounded event processing queue.
+        /// When the queue is full, producers will wait (backpressure) to prevent memory growth.
+        /// Default is 100. Must be at least 1.
+        /// </summary>
+        public int EventProcessorQueueCapacity { get; set; } = 100;
+
+        /// <summary>
+        /// Gets or sets the logger instance. If null, uses NullLogger.
+        /// </summary>
+        public ILogger? Logger { get; set; }
     }
 }

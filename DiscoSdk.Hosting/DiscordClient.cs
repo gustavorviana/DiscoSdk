@@ -1,9 +1,15 @@
-﻿using DiscoSdk.Events;
+﻿using DiscoSdk.Commands;
+using DiscoSdk.Events;
+using DiscoSdk.Hosting.Commands;
 using DiscoSdk.Hosting.Events;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Payloads.Models;
+using DiscoSdk.Hosting.Guilds;
+using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Hosting.Rest;
-using DiscoSdk.Models.Commands;
+using DiscoSdk.Hosting.Rest.Clients;
+using DiscoSdk.Logging;
+using DiscoSdk.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -12,10 +18,22 @@ namespace DiscoSdk.Hosting
     /// <summary>
     /// Main client for connecting to and managing Discord Gateway connections.
     /// </summary>
-    public class DiscordClient(DiscordClientConfig config)
+    public class DiscordClient : IDiscordClient
     {
-        private readonly DiscordEventDispatcher _eventDispatcher = new();
-        private readonly SemaphoreSlim _semaphore = new(0, 1);
+        private readonly EventProcessorPool<ReceivedGatewayMessage> _eventProcessorPool;
+        private readonly ManualResetEventSlim _shutdownEvent = new(false);
+        private readonly ManualResetEventSlim _readyEvent = new(false);
+        private readonly DiscordEventDispatcher _eventDispatcher;
+        internal readonly IDiscordRestClientBase _client;
+        private readonly DiscordClientConfig _config;
+        private readonly GuildManager _guildManager;
+        private readonly List<Shard> _shards = [];
+        private bool _isInitialized = false;
+        private int _totalShards = 0;
+        private IdentifyGate? _gate;
+        private bool _isShuttingDown = false;
+
+        public ILogger Logger { get; }
 
         /// <summary>
         /// Event raised when all shards are ready and the client is fully connected.
@@ -27,49 +45,43 @@ namespace DiscoSdk.Hosting
         /// </summary>
         public event EventHandler? OnConnectionLost;
 
-        private int _totalShards = 0;
-
         /// <summary>
         /// Gets the total number of shards being used.
         /// </summary>
         public int TotalShards => _totalShards;
 
-        private readonly List<Shard> _shards = [];
-        private IdentifyGate? _gate;
-        private readonly IDiscordRestClientBase _client = new DiscordRestClientBase(config.Token, new Uri("https://discord.com/api/v10"));
-        private bool _isInitialized = false;
-        private readonly HashSet<string> _knownGuildIds = [];
-
         /// <summary>
         /// Gets the event dispatcher for handling Gateway events.
         /// </summary>
-        public IDiscordEventDispatcher EventDispatcher => _eventDispatcher;
+        public IDiscordEventRegistry EventRegistry => _eventDispatcher;
 
         /// <summary>
         /// Gets the interaction client for responding to interactions.
         /// </summary>
-        public InteractionClient InteractionClient { get; } = new InteractionClient(new DiscordRestClientBase(config.Token, new Uri("https://discord.com/api/v10")));
+        internal InteractionClient InteractionClient { get; }
 
         /// <summary>
-        /// Gets the application command client for registering commands.
+        /// Creates a new command update action that allows queuing commands and registering them all at once.
         /// </summary>
-        public ApplicationCommandClient ApplicationCommandClient { get; } = new ApplicationCommandClient(new DiscordRestClientBase(config.Token, new Uri("https://discord.com/api/v10")));
+        /// <returns>A new <see cref="CommandUpdateAction"/> instance.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when ApplicationId is not yet available.</exception>
+        public ICommandUpdateAction UpdateCommands()
+        {
+            if (string.IsNullOrEmpty(ApplicationId))
+                throw new InvalidOperationException("ApplicationId is not available yet. Wait for the bot to be ready or provide the ApplicationId manually.");
+
+            return new CommandUpdateAction(this);
+        }
+
+        /// <summary>
+        /// Gets the guild manager for managing guilds and channels.
+        /// </summary>
+        public GuildManager Guilds => _guildManager;
 
         /// <summary>
         /// Gets or sets the application ID of the bot.
         /// </summary>
         public string? ApplicationId { get; private set; }
-
-        /// <summary>
-        /// Gets or sets the list of commands to register globally when the bot starts.
-        /// </summary>
-        public List<ApplicationCommand> GlobalCommands { get; } = [];
-
-        /// <summary>
-        /// Gets or sets the dictionary of guild-specific commands to register when the bot starts.
-        /// Key is the guild ID, value is the list of commands for that guild.
-        /// </summary>
-        public Dictionary<string, List<ApplicationCommand>> GuildCommands { get; } = [];
 
         /// <summary>
         /// Gets the JSON serializer options used for deserializing Gateway events.
@@ -86,12 +98,46 @@ namespace DiscoSdk.Hosting
         public bool IsReady => _shards.All(s => s.Status == ShardStatus.Ready);
 
         /// <summary>
+        /// Gets a value indicating whether the bot has fully initialized (all guilds have been loaded).
+        /// </summary>
+        public bool IsFullyInitialized => _guildManager.IsFullyInitialized;
+
+        /// <summary>
         /// Gets the current authenticated user.
         /// </summary>
         public ICurrentUser User { get; private set; } = new ReadyUser();
 
+        public DiscordClient(DiscordClientConfig config)
+        {
+            _config = config;
+            Logger = config.Logger ?? NullLogger.Instance;
+            _eventDispatcher = new DiscordEventDispatcher(Logger);
+            _client = new DiscordRestClientBase(config.Token, new Uri("https://discord.com/api/v10"));
+            InteractionClient = new InteractionClient(_client);
+            _guildManager = new GuildManager(_client, Logger);
+
+            var maxConcurrency = config.EventProcessorMaxConcurrency > 0
+                ? config.EventProcessorMaxConcurrency
+                : Environment.ProcessorCount * 2;
+
+            var queueCapacity = Math.Max(1, config.EventProcessorQueueCapacity);
+            _eventProcessorPool = new EventProcessorPool<ReceivedGatewayMessage>(maxConcurrency, async (item) =>
+            {
+                if (item.EventType == "GUILD_CREATE")
+                {
+                    var guild = item.Deserialize<Guild>(JsonOptions);
+                    if (guild != null)
+                        _guildManager.HandleGuildCreate(guild);
+                }
+
+                await _eventDispatcher.ProcessEventAsync(this, item, JsonOptions);
+            }, Logger, queueCapacity);
+        }
+
         /// <summary>
         /// Starts the Discord client and establishes connections to the Gateway.
+        /// This method returns immediately after starting the connection process.
+        /// Use <see cref="WaitReadyAsync(CancellationToken)"/> or <see cref="WaitReadyAsync(TimeSpan)"/> to wait for the bot to be ready.
         /// </summary>
         /// <returns>A task that represents the asynchronous start operation.</returns>
         public async Task StartAsync()
@@ -99,11 +145,13 @@ namespace DiscoSdk.Hosting
             var gatewayInfo = await new DiscordRestClient(_client).GetGatewayBotInfoAsync();
 
             _gate = new(gatewayInfo.SessionInfo.MaxConcurrency, TimeSpan.FromMicroseconds(gatewayInfo.SessionInfo.ResetAfter));
-            _totalShards = Math.Max(config.TotalShards ?? gatewayInfo.Shards, 1);
-            _eventDispatcher.Seal();
+            _totalShards = Math.Max(_config.TotalShards ?? gatewayInfo.Shards, 1);
 
+            // Start event processor pool
+            _eventProcessorPool.Start();
+
+            // Start shards asynchronously without blocking
             await InitShards(new Uri(gatewayInfo.Url));
-            await _semaphore.WaitAsync();
         }
 
         /// <summary>
@@ -112,10 +160,19 @@ namespace DiscoSdk.Hosting
         /// <returns>A task that represents the asynchronous stop operation.</returns>
         public async Task StopAsync()
         {
-            _semaphore.Release();
+            if (_isShuttingDown)
+                return;
+
+            _isShuttingDown = true;
+
+            // Stop event processor pool
+            await _eventProcessorPool.StopAsync();
+
             await ClearShardsAsync();
-            _eventDispatcher.Unseal();
             _isInitialized = false;
+
+            // Signal shutdown completion
+            _shutdownEvent.Set();
         }
 
         private async Task InitShards(Uri gatewayUri)
@@ -128,7 +185,7 @@ namespace DiscoSdk.Hosting
 
             for (int i = 0; i < _totalShards; i++)
             {
-                var shard = new Shard(i, config.Token, config.Intents, _gate, gatewayUri);
+                var shard = new Shard(i, _config.Token, _config.Intents, _gate, gatewayUri);
                 _shards.Add(shard);
                 shard.OnResume += Shard_OnResume;
                 shard.OnReady += Shard_OnReady;
@@ -158,30 +215,21 @@ namespace DiscoSdk.Hosting
         }
 
         /// <summary>
-        /// Handles messages received from the Gateway and dispatches them to registered event handlers.
+        /// Handles messages received from the Gateway and enqueues them for processing.
         /// </summary>
         private async Task Shard_OnReceiveMessage(Shard sender, ReceivedGatewayMessage arg)
         {
             if (arg.Opcode != OpCodes.Dispatch || string.IsNullOrEmpty(arg.EventType))
                 return;
 
-            // Debug: Log received events (optional, can be removed later)
-            if (arg.EventType == "MESSAGE_CREATE")
-            {
-                Console.WriteLine($"[DEBUG] Received MESSAGE_CREATE event from shard {sender.ShardId}");
-            }
-            else if (arg.EventType == "INTERACTION_CREATE")
-            {
-                Console.WriteLine($"[DEBUG] Received INTERACTION_CREATE event from shard {sender.ShardId}");
-            }
+            Logger.Log(LogLevel.Trace, $"Received {arg.EventType} event from shard {sender.ShardId}");
 
-            await _eventDispatcher.ProcessEventAsync(this, arg.EventType, arg.Payload, JsonOptions);
+            await _eventProcessorPool.EnqueueAsync(arg);
         }
 
         private Task Shard_ConnectionLost(Shard sender, Exception arg)
         {
-            if (IsReady && OnReady != null)
-                OnReady(this, EventArgs.Empty);
+            OnConnectionLost?.Invoke(this, EventArgs.Empty);
 
             return Task.CompletedTask;
         }
@@ -203,17 +251,90 @@ namespace DiscoSdk.Hosting
             if (string.IsNullOrEmpty(ApplicationId))
                 ApplicationId = arg.Application.Id;
 
-            Console.WriteLine($"Shard {sender.ShardId} of {User.Username} is ready.");
+            Logger.Log(LogLevel.Information, $"Shard {sender.ShardId} of {User.Username} is ready.");
 
-            // Register commands when all shards are ready (only once, on shard 0)
+            // Initialize pending guilds list from Ready payload (only once, on shard 0)
             if (IsReady && sender.ShardId == 0 && !_isInitialized)
             {
                 _isInitialized = true;
-                await RegisterCommandsAsync();
+
+                // Initialize pending guilds from Ready payload
+                var guildIds = arg.Guilds.Select(g => g.Id).Where(id => !string.IsNullOrEmpty(id));
+                _guildManager.InitializePendingGuilds(guildIds);
             }
 
             if (IsReady && OnReady != null)
                 OnReady(this, EventArgs.Empty);
+
+            if (IsReady)
+                _readyEvent.Set();
+        }
+
+        /// <summary>
+        /// Waits for the bot to be ready (all shards connected and ready).
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token to cancel the wait operation.</param>
+        /// <returns>A task that completes when the bot is ready.</returns>
+        public async Task WaitReadyAsync(CancellationToken cancellationToken = default)
+        {
+            if (IsReady)
+                return;
+
+            await Task.Run(() => _readyEvent.Wait(cancellationToken), cancellationToken);
+        }
+
+        /// <summary>
+        /// Waits for the bot to be ready (all shards connected and ready) with a timeout.
+        /// </summary>
+        /// <param name="timeout">Maximum time to wait for the bot to be ready.</param>
+        /// <returns>A task that completes when the bot is ready or times out.</returns>
+        /// <exception cref="TimeoutException">Thrown when the timeout is reached before the bot is ready.</exception>
+        public async Task WaitReadyAsync(TimeSpan timeout)
+        {
+            if (IsReady)
+                return;
+
+            using var cts = new CancellationTokenSource(timeout);
+            try
+            {
+                await Task.Run(() => _readyEvent.Wait(cts.Token), cts.Token);
+            }
+            catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+            {
+                throw new TimeoutException($"The bot did not become ready within the specified timeout of {timeout.TotalSeconds} seconds.");
+            }
+        }
+
+        /// <summary>
+        /// Waits for the bot to shutdown.
+        /// </summary>
+        /// <param name="ct">Cancellation token to cancel the wait operation.</param>
+        /// <returns>A task that completes when the bot is shutdown.</returns>
+        public async Task WaitShutdownAsync(CancellationToken ct = default)
+        {
+            if (_isShuttingDown && _shutdownEvent.IsSet)
+                return;
+
+            await Task.Run(() => _shutdownEvent.Wait(ct), ct);
+        }
+
+        /// <summary>
+        /// Waits for the bot to shutdown with a timeout.
+        /// </summary>
+        /// <param name="timeout">Maximum time to wait for the bot to shutdown.</param>
+        /// <returns>A task that completes when the bot is shutdown or times out.</returns>
+        /// <exception cref="TimeoutException">Thrown when the timeout is reached before the bot shuts down.</exception>
+        public async Task WaitShutdownAsync(TimeSpan timeout)
+        {
+            using var cts = new CancellationTokenSource(timeout);
+            try
+            {
+                await Task.Run(() => _shutdownEvent.Wait(cts.Token), cts.Token);
+            }
+            catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+            {
+                throw new TimeoutException($"The bot did not shutdown within the specified timeout of {timeout.TotalSeconds} seconds.");
+            }
         }
 
         internal int GetGuidShard(ulong guildId)
@@ -227,47 +348,6 @@ namespace DiscoSdk.Hosting
                 throw new ArgumentOutOfRangeException(nameof(shardId), "Shard ID is out of range.");
 
             return _shards[shardId];
-        }
-
-        /// <summary>
-        /// Registers all configured application commands with Discord.
-        /// This method is called automatically when all shards are ready.
-        /// Commands not in the list will be removed (replaced by the provided list).
-        /// </summary>
-        /// <returns>A task that represents the asynchronous operation.</returns>
-        private async Task RegisterCommandsAsync()
-        {
-            if (string.IsNullOrEmpty(ApplicationId))
-            {
-                Console.WriteLine("[WARNING] Application ID not available. Commands will not be registered.");
-                return;
-            }
-
-            try
-            {
-                // Always register global commands (even if empty list, this removes all existing commands)
-                // PUT replaces ALL commands, so sending an empty list removes all commands
-                Console.WriteLine($"[COMMANDS] Registering {GlobalCommands.Count} global command(s) (removing all others)...");
-                var registered = await ApplicationCommandClient.RegisterGlobalCommandsAsync(ApplicationId, GlobalCommands);
-                Console.WriteLine($"[COMMANDS] Successfully registered {registered.Count} global command(s). All other global commands were removed.");
-
-                // Register guild-specific commands for each guild
-                // PUT replaces ALL commands for that guild, so sending an empty list removes all commands for that guild
-                foreach (var (guildId, commands) in GuildCommands)
-                {
-                    Console.WriteLine($"[COMMANDS] Registering {commands.Count} command(s) for guild {guildId} (removing all others for this guild)...");
-                    var guildRegistered = await ApplicationCommandClient.RegisterGuildCommandsAsync(ApplicationId, guildId, commands);
-                    Console.WriteLine($"[COMMANDS] Successfully registered {guildRegistered.Count} command(s) for guild {guildId}. All other commands for this guild were removed.");
-                }
-
-                // Note: Guilds not in GuildCommands dictionary will keep their existing commands
-                // To remove commands from a guild, add it to GuildCommands with an empty list
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ERROR] Failed to register commands: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-            }
         }
     }
 }

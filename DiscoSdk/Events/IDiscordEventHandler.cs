@@ -1,178 +1,130 @@
 namespace DiscoSdk.Events;
 
+public interface IDiscordEventHandler
+{
+
+}
+
 /// <summary>
 /// Base interface for Discord event handlers.
 /// </summary>
-public interface IDiscordEventHandler
+public interface IDiscordEventHandler<TEventData> : IDiscordEventHandler
 {
+    Task HandleAsync(TEventData eventData);
 }
 
 /// <summary>
 /// Interface for handling message creation events.
 /// </summary>
-public interface IMessageCreateHandler : IDiscordEventHandler
+public interface IMessageCreateHandler : IDiscordEventHandler<MessageCreateEvent>
 {
-    /// <summary>
-    /// Handles a message creation event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(MessageCreateEvent eventData);
 }
 
 /// <summary>
 /// Interface for handling message update events.
 /// </summary>
-public interface IMessageUpdateHandler : IDiscordEventHandler
+public interface IMessageUpdateHandler : IDiscordEventHandler<MessageUpdateEvent>
 {
-    /// <summary>
-    /// Handles a message update event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(MessageUpdateEvent eventData);
 }
 
 /// <summary>
 /// Interface for handling message deletion events.
 /// </summary>
-public interface IMessageDeleteHandler : IDiscordEventHandler
+public interface IMessageDeleteHandler : IDiscordEventHandler<MessageDeleteEvent>
 {
-    /// <summary>
-    /// Handles a message deletion event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(MessageDeleteEvent eventData);
 }
 
 /// <summary>
 /// Interface for handling guild creation events.
 /// </summary>
-public interface IGuildCreateHandler : IDiscordEventHandler
+public interface IGuildCreateHandler : IDiscordEventHandler<GuildCreateEvent>
 {
-    /// <summary>
-    /// Handles a guild creation event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(GuildCreateEvent eventData);
 }
 
 /// <summary>
 /// Interface for handling guild update events.
 /// </summary>
-public interface IGuildUpdateHandler : IDiscordEventHandler
+public interface IGuildUpdateHandler : IDiscordEventHandler<GuildUpdateEvent>
 {
-    /// <summary>
-    /// Handles a guild update event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(GuildUpdateEvent eventData);
 }
 
 /// <summary>
 /// Interface for handling guild deletion events.
 /// </summary>
-public interface IGuildDeleteHandler : IDiscordEventHandler
+public interface IGuildDeleteHandler : IDiscordEventHandler<GuildDeleteEvent>
 {
-    /// <summary>
-    /// Handles a guild deletion event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(GuildDeleteEvent eventData);
 }
 
 /// <summary>
 /// Interface for handling channel creation events.
 /// </summary>
-public interface IChannelCreateHandler : IDiscordEventHandler
+public interface IChannelCreateHandler : IDiscordEventHandler<ChannelCreateEvent>
 {
-    /// <summary>
-    /// Handles a channel creation event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(ChannelCreateEvent eventData);
 }
 
 /// <summary>
 /// Interface for handling channel update events.
 /// </summary>
-public interface IChannelUpdateHandler : IDiscordEventHandler
+public interface IChannelUpdateHandler : IDiscordEventHandler<ChannelUpdateEvent>
 {
-    /// <summary>
-    /// Handles a channel update event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(ChannelUpdateEvent eventData);
 }
 
 /// <summary>
 /// Interface for handling channel deletion events.
 /// </summary>
-public interface IChannelDeleteHandler : IDiscordEventHandler
+public interface IChannelDeleteHandler : IDiscordEventHandler<ChannelDeleteEvent>
 {
-    /// <summary>
-    /// Handles a channel deletion event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(ChannelDeleteEvent eventData);
 }
 
 /// <summary>
 /// Interface for handling message reaction add events.
 /// </summary>
-public interface IMessageReactionAddHandler : IDiscordEventHandler
+public interface IMessageReactionAddHandler : IDiscordEventHandler<MessageReactionAddEvent>
 {
-    /// <summary>
-    /// Handles a message reaction add event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(MessageReactionAddEvent eventData);
 }
 
 /// <summary>
 /// Interface for handling message reaction remove events.
 /// </summary>
-public interface IMessageReactionRemoveHandler : IDiscordEventHandler
+public interface IMessageReactionRemoveHandler : IDiscordEventHandler<MessageReactionRemoveEvent>
 {
-    /// <summary>
-    /// Handles a message reaction remove event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(MessageReactionRemoveEvent eventData);
 }
 
 /// <summary>
 /// Interface for handling typing start events.
 /// </summary>
-public interface ITypingStartHandler : IDiscordEventHandler
+public interface ITypingStartHandler : IDiscordEventHandler<TypingStartEvent>
 {
-    /// <summary>
-    /// Handles a typing start event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(TypingStartEvent eventData);
 }
 
 /// <summary>
 /// Interface for handling interaction creation events (slash commands, buttons, etc.).
 /// </summary>
-public interface IInteractionCreateHandler : IDiscordEventHandler
+public interface IInteractionCreateHandler : IDiscordEventHandler<IInteractionCreateEvent>
 {
-    /// <summary>
-    /// Handles an interaction creation event.
-    /// </summary>
-    /// <param name="eventData">The event data.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleAsync(IInteractionCreateEvent eventData);
+}
+
+/// <summary>
+/// Interface for handling application command interactions (slash commands only).
+/// This handler is only called when interaction.Type == InteractionType.ApplicationCommand.
+/// </summary>
+public interface IApplicationCommandHandler : IDiscordEventHandler<IInteractionCreateEvent>
+{
+}
+
+/// <summary>
+/// Interface for handling modal submission interactions.
+/// This handler is only called when interaction.Type == InteractionType.ModalSubmit.
+/// </summary>
+public interface IModalSubmitHandler : IDiscordEventHandler<IInteractionCreateEvent>
+{
+}
+
+/// <summary>
+/// Interface for handling component interactions (button clicks, select menus, etc.).
+/// This handler is only called when interaction.Type == InteractionType.MessageComponent.
+/// </summary>
+public interface IComponentInteractionHandler : IDiscordEventHandler<IInteractionCreateEvent>
+{
 }
 

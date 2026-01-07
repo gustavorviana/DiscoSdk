@@ -31,7 +31,7 @@ public class GuildMember
     /// Gets or sets the array of role object IDs.
     /// </summary>
     [JsonPropertyName("roles")]
-    public List<string> Roles { get; set; } = [];
+    public string[] Roles { get; set; } = [];
 
     /// <summary>
     /// Gets or sets when the user joined the guild.
@@ -73,7 +73,7 @@ public class GuildMember
     /// Gets or sets total permissions of the member in the channel, including overwrites.
     /// </summary>
     [JsonPropertyName("permissions")]
-    [JsonConverter(typeof(PermissionStringNullableConverter))]
+    [JsonConverter(typeof(SafeStringConverter))]
     public string? Permissions { get; set; }
 
     /// <summary>

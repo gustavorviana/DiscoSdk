@@ -1,18 +1,20 @@
 ﻿using DiscoSdk.Models;
+using DiscoSdk.Models.Messages.Components;
+using DiscoSdk.Rest.Actions;
 
-namespace DiscoSdk.Events
+namespace DiscoSdk.Events;
+
+/// <summary>
+/// Represents the event data for when an interaction is created (e.g., slash command).
+/// </summary>
+public interface IInteractionCreateEvent
 {
     /// <summary>
-    /// Represents the event data for when an interaction is created (e.g., slash command).
+    /// Gets or sets the interaction that was created.
     /// </summary>
-    public interface IInteractionCreateEvent
-    {
-        /// <summary>
-        /// Gets or sets the interaction that was created.
-        /// </summary>
-        Interaction Interaction { get; }
+    Interaction Interaction { get; }
 
-        Task DeferAsync(bool ephemeral = true, CancellationToken cancellationToken = default);
-        Task RespondAsync(string content, bool ephemeral = true, CancellationToken cancellationToken = default);
-    }
+    Task DeferAsync(bool ephemeral = true, CancellationToken cancellationToken = default);
+    ISendMessageRestAction Reply(string? content = null);
+    Task ReplyModal(ModalData modalData, CancellationToken cancellationToken = default);
 }

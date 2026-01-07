@@ -37,7 +37,7 @@ public class Channel
     /// Gets or sets the explicit permission overwrites for members and roles.
     /// </summary>
     [JsonPropertyName("permission_overwrites")]
-    public List<PermissionOverwrite>? PermissionOverwrites { get; set; }
+    public PermissionOverwrite[]? PermissionOverwrites { get; set; }
 
     /// <summary>
     /// Gets or sets the name of the channel.
@@ -85,7 +85,7 @@ public class Channel
     /// Gets or sets the recipients of the DM.
     /// </summary>
     [JsonPropertyName("recipients")]
-    public List<User>? Recipients { get; set; }
+    public User[]? Recipients { get; set; }
 
     /// <summary>
     /// Gets or sets the icon hash of the group DM.
@@ -163,7 +163,7 @@ public class Channel
     /// Gets or sets the computed permissions for the invoking user in the channel.
     /// </summary>
     [JsonPropertyName("permissions")]
-    [JsonConverter(typeof(PermissionStringNullableConverter))]
+    [JsonConverter(typeof(SafeStringConverter))]
     public string? Permissions { get; set; }
 
     /// <summary>
@@ -200,14 +200,14 @@ public class PermissionOverwrite
     /// Gets or sets the permission bit set.
     /// </summary>
     [JsonPropertyName("allow")]
-    [JsonConverter(typeof(PermissionStringConverter))]
+    [JsonConverter(typeof(SafeStringConverter))]
     public string Allow { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the permission bit set.
     /// </summary>
     [JsonPropertyName("deny")]
-    [JsonConverter(typeof(PermissionStringConverter))]
+    [JsonConverter(typeof(SafeStringConverter))]
     public string Deny { get; set; } = default!;
 }
 

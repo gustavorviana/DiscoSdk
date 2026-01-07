@@ -1,5 +1,11 @@
 using DiscoSdk.Events;
+using DiscoSdk.Hosting.Gateway;
+using DiscoSdk.Hosting.Logging;
+using DiscoSdk.Logging;
 using DiscoSdk.Models;
+using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.Messages;
+using System.Reflection;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Events;
@@ -7,22 +13,28 @@ namespace DiscoSdk.Hosting.Events;
 /// <summary>
 /// Dispatches Discord Gateway events to registered handlers.
 /// </summary>
-public class DiscordEventDispatcher : IDiscordEventDispatcher
+public class DiscordEventDispatcher : IDiscordEventRegistry
 {
-    private bool _sealed = false;
     private readonly object _lock = new();
     private readonly List<IDiscordEventHandler> _handlers = [];
     private readonly Dictionary<Type, HashSet<int>> _handlerIndicesByType = [];
+    private readonly ILogger _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DiscordEventDispatcher"/> class.
+    /// </summary>
+    /// <param name="logger">The logger instance. If null, uses NullLogger.</param>
+    public DiscordEventDispatcher(ILogger? logger = null)
+    {
+        _logger = logger ?? NullLogger.Instance;
+    }
 
     /// <summary>
     /// Registers a Discord event handler.
     /// </summary>
     /// <param name="handler">The event handler to register.</param>
-    public void Register(IDiscordEventHandler handler)
+    public void Add(IDiscordEventHandler handler)
     {
-        if (_sealed)
-            throw new InvalidOperationException("Cannot register new handlers after the dispatcher has been sealed.");
-
         lock (_lock)
         {
             // Add handler to the main list and get its index
@@ -48,16 +60,6 @@ public class DiscordEventDispatcher : IDiscordEventDispatcher
         }
     }
 
-    public void Seal()
-    {
-        _sealed = true;
-    }
-
-    public void Unseal()
-    {
-        _sealed = false;
-    }
-
     /// <summary>
     /// Processes a Gateway event based on the event type.
     /// </summary>
@@ -65,14 +67,17 @@ public class DiscordEventDispatcher : IDiscordEventDispatcher
     /// <param name="payload">The JSON payload of the event.</param>
     /// <param name="jsonOptions">The JSON serializer options to use.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public async Task ProcessEventAsync(DiscordClient client, string? eventType, JsonElement payload, JsonSerializerOptions jsonOptions)
+    internal async Task ProcessEventAsync(DiscordClient client, ReceivedGatewayMessage message, JsonSerializerOptions jsonOptions)
     {
-        if (string.IsNullOrEmpty(eventType))
+        if (string.IsNullOrEmpty(message.EventType))
             return;
+
+        using var doc = message.ToJsonDocument();
+        var payload = doc.RootElement;
 
         try
         {
-            switch (eventType)
+            switch (message.EventType)
             {
                 case "MESSAGE_CREATE":
                     await ProcessMessageCreateAsync(payload, jsonOptions);
@@ -130,8 +135,7 @@ public class DiscordEventDispatcher : IDiscordEventDispatcher
         catch (Exception ex)
         {
             // Log error but don't throw to prevent breaking the event loop
-            Console.WriteLine($"Error processing event {eventType}: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            _logger.Log(LogLevel.Error, $"Error processing event {message.EventType}", ex);
         }
     }
 
@@ -322,29 +326,58 @@ public class DiscordEventDispatcher : IDiscordEventDispatcher
             if (interaction == null)
                 return;
 
-            var eventData = new InteractionCreateEvent(client, interaction);
+            var handle = new InteractionHandle(interaction.Id, interaction.Token);
 
-            foreach (var handler in GetHandlersOfType<IInteractionCreateHandler>())
+            if (interaction.Type == InteractionType.ModalSubmit)
             {
-                try
-                {
-                    await handler.HandleAsync(eventData);
-                }
-                catch
-                {
-                }
+                await client.InteractionClient.AcknowledgeAsync(handle, Rest.Clients.InteractionClient.AcknowledgeType.ModalSubmit, CancellationToken.None);
+            }
+
+            var eventData = new InteractionCreateEvent(client, handle, interaction);
+
+            try
+            {
+                if (interaction.Type == InteractionType.ApplicationCommand)
+                    await ProcessAll<IApplicationCommandHandler>(eventData);
+
+                if (interaction.Type == InteractionType.ModalSubmit)
+                    await ProcessAll<IModalSubmitHandler>(eventData);
+
+                if (interaction.Type == InteractionType.MessageComponent)
+                    await ProcessAll<IComponentInteractionHandler>(eventData);
+
+                // Handle all interaction types with general handler
+                await ProcessAll<IInteractionCreateHandler>(eventData);
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.Error, $"Error processing handlers for interaction {interaction.Id}", ex);
             }
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.Log(LogLevel.Error, "Error processing INTERACTION_CREATE", ex);
+        }
+    }
+
+    private async Task ProcessAll<T>(object @event) where T : IDiscordEventHandler
+    {
+        foreach (var handler in GetHandlersOfType<T>())
+        {
+            try
+            {
+                var _handleAsync = handler.GetType().GetMethod("HandleAsync", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic)!;
+                await (Task)_handleAsync.Invoke(handler, [@event])!;
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.Error, $"Error in {typeof(T).Name}", ex);
+            }
         }
     }
 
     private IEnumerable<T> GetHandlersOfType<T>() where T : IDiscordEventHandler
     {
-        if (!_sealed)
-            throw new InvalidOperationException("Cannot retrieve handlers before the dispatcher has been sealed.");
-
         var targetType = typeof(T);
         if (!_handlerIndicesByType.TryGetValue(targetType, out var indices))
             yield break;

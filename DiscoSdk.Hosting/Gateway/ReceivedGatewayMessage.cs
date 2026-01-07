@@ -5,82 +5,38 @@ namespace DiscoSdk.Hosting.Gateway;
 /// <summary>
 /// Represents a message received from the Discord Gateway.
 /// </summary>
-internal class ReceivedGatewayMessage : IDisposable
+internal sealed class ReceivedGatewayMessage
 {
-    private bool _disposed;
-    private readonly JsonDocument _document;
+    public OpCodes Opcode { get; private set; }
+    public string? EventType { get; private set; }
+    public long? SequenceNumber { get; private set; }
+    public string? PayloadJson { get; private set; }
 
-    /// <summary>
-    /// Gets the operation code of the message.
-    /// </summary>
-    public OpCodes Opcode { get; }
+    private ReceivedGatewayMessage() { }
 
-    /// <summary>
-    /// Gets the event type, if this is a dispatch message.
-    /// </summary>
-    public string? EventType { get; }
-
-    /// <summary>
-    /// Gets the sequence number of the message, if available.
-    /// </summary>
-    public long? SequenceNumber { get; }
-
-    /// <summary>
-    /// Gets the payload data of the message.
-    /// </summary>
-    public JsonElement Payload { get; }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ReceivedGatewayMessage"/> class.
-    /// </summary>
-    /// <param name="jsonMessage">The JSON string containing the gateway message.</param>
-    public ReceivedGatewayMessage(string jsonMessage)
+    public static ReceivedGatewayMessage Parse(string jsonMessage)
     {
-        _document = JsonDocument.Parse(jsonMessage);
-        var root = _document.RootElement;
+        var message = new ReceivedGatewayMessage();
+        using var document = JsonDocument.Parse(jsonMessage);
 
-        if (root.TryGetProperty("d", out var d))
-            Payload = d;
+        var root = document.RootElement;
 
-        Opcode = (OpCodes)root.GetProperty("op").GetInt32();
+        message.Opcode = (OpCodes)root.GetProperty("op").GetInt32();
 
-        EventType = root.GetProperty("t").GetString();
+        if (root.TryGetProperty("t", out var t) && t.ValueKind != JsonValueKind.Null)
+            message.EventType = t.GetString();
 
         if (root.TryGetProperty("s", out var s) && s.ValueKind != JsonValueKind.Null)
-            SequenceNumber = s.GetInt64();
+            message.SequenceNumber = s.GetInt64();
+
+        if (root.TryGetProperty("d", out var d) && d.ValueKind != JsonValueKind.Null)
+            message.PayloadJson = d.GetRawText();
+
+        return message;
     }
 
-    /// <summary>
-    /// Determines whether the message has a payload.
-    /// </summary>
-    /// <returns>true if the message has a payload; otherwise, false.</returns>
-    public bool HasPayload()
-    {
-        return Payload.ValueKind != JsonValueKind.Null;
-    }
+    public bool HasPayload() => PayloadJson is not null;
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (_disposed)
-            return;
-
-        if (disposing)
-            _document.Dispose();
-
-        _disposed = true;
-    }
-
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
-
-    /// <summary>
-    /// Determines whether the specified operation code represents a system-level operation.
-    /// </summary>
-    /// <param name="opCode">The operation code to evaluate.</param>
-    /// <returns>true if the operation code corresponds to a system-level operation; otherwise, false.</returns>
     public bool IsSystem() =>
         Opcode is OpCodes.Heartbeat
         or OpCodes.Resume
@@ -88,4 +44,27 @@ internal class ReceivedGatewayMessage : IDisposable
         or OpCodes.InvalidSession
         or OpCodes.Hello
         or OpCodes.HeartbeatAck;
+
+    public T? Deserialize<T>(JsonSerializerOptions? options = null)
+    {
+        if (string.IsNullOrEmpty(PayloadJson))
+            return default;
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(PayloadJson, options);
+        }
+        catch (Exception)
+        {
+            return default;
+        }
+    }
+
+    public JsonDocument ToJsonDocument()
+    {
+        if (string.IsNullOrEmpty(PayloadJson))
+            return JsonDocument.Parse("{}");
+
+        return JsonDocument.Parse(PayloadJson);
+    }
 }

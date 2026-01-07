@@ -5,7 +5,7 @@ namespace DiscoSdk.Models.Commands;
 /// <summary>
 /// Represents a choice for an application command option.
 /// </summary>
-public class ApplicationCommandOptionChoice
+public class ApplicationCommandOptionChoice : IEquatable<ApplicationCommandOptionChoice?>
 {
     /// <summary>
     /// Gets or sets the name of the choice (1-100 characters).
@@ -24,4 +24,32 @@ public class ApplicationCommandOptionChoice
     /// </summary>
     [JsonPropertyName("value")]
     public object Value { get; set; } = default!;
+
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as ApplicationCommandOptionChoice);
+    }
+
+    public bool Equals(ApplicationCommandOptionChoice? other)
+    {
+        return other is not null &&
+               Name == other.Name &&
+               EqualityComparer<Dictionary<string, string>?>.Default.Equals(NameLocalizations, other.NameLocalizations) &&
+               EqualityComparer<object>.Default.Equals(Value, other.Value);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Name, NameLocalizations, Value);
+    }
+
+    public static bool operator ==(ApplicationCommandOptionChoice? left, ApplicationCommandOptionChoice? right)
+    {
+        return EqualityComparer<ApplicationCommandOptionChoice>.Default.Equals(left, right);
+    }
+
+    public static bool operator !=(ApplicationCommandOptionChoice? left, ApplicationCommandOptionChoice? right)
+    {
+        return !(left == right);
+    }
 }

@@ -51,7 +51,6 @@ internal class ShardSocket
 
             if (r.MessageType == WebSocketMessageType.Close)
             {
-                Console.WriteLine("Closed");
                 throw new WebSocketException("Gateway closed socket.");
             }
 
@@ -61,7 +60,7 @@ internal class ShardSocket
 
         try
         {
-            return new ReceivedGatewayMessage(sb.ToString());
+            return ReceivedGatewayMessage.Parse(sb.ToString());
         }
         catch (Exception)
         {

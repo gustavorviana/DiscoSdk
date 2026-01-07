@@ -1,4 +1,6 @@
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.JsonConverters;
+using DiscoSdk.Models.Messages;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;
@@ -12,7 +14,7 @@ public class Interaction
 	/// Gets or sets the ID of the interaction.
 	/// </summary>
 	[JsonPropertyName("id")]
-	public string Id { get; set; } = default!;
+    public string Id { get; set; } = default!;
 
 	/// <summary>
 	/// Gets or sets the application ID.
@@ -96,7 +98,8 @@ public class InteractionData
 	/// Gets or sets the ID of the invoked command.
 	/// </summary>
 	[JsonPropertyName("id")]
-	public string? Id { get; set; }
+    [JsonConverter(typeof(SafeStringConverter))]
+    public string? Id { get; set; }
 
 	/// <summary>
 	/// Gets or sets the name of the invoked command.
@@ -120,7 +123,7 @@ public class InteractionData
 	/// Gets or sets the parameters and values from the user.
 	/// </summary>
 	[JsonPropertyName("options")]
-	public List<InteractionOption>? Options { get; set; }
+	public InteractionOption[]? Options { get; set; }
 
 	/// <summary>
 	/// Gets or sets the custom ID of the component.
@@ -138,7 +141,55 @@ public class InteractionData
 	/// Gets or sets the values the user selected.
 	/// </summary>
 	[JsonPropertyName("values")]
-	public List<string>? Values { get; set; }
+	public string[]? Values { get; set; }
+
+	/// <summary>
+	/// Gets or sets the components submitted in a modal.
+	/// </summary>
+	[JsonPropertyName("components")]
+	public ModalComponent[]? Components { get; set; }
+}
+
+/// <summary>
+/// Represents a component submitted in a modal.
+/// </summary>
+public class ModalComponent
+{
+	/// <summary>
+	/// Gets or sets the type of component. Must be ActionRow (1) for modal submissions.
+	/// </summary>
+	[JsonPropertyName("type")]
+	public ComponentType Type { get; set; } = ComponentType.ActionRow;
+
+	/// <summary>
+	/// Gets or sets the components within this action row (text inputs).
+	/// </summary>
+	[JsonPropertyName("components")]
+	public ModalTextInput[]? Components { get; set; }
+}
+
+/// <summary>
+/// Represents a text input component submitted in a modal.
+/// </summary>
+public class ModalTextInput
+{
+	/// <summary>
+	/// Gets or sets the type of component. Must be TextInput (4).
+	/// </summary>
+	[JsonPropertyName("type")]
+	public ComponentType Type { get; set; } = ComponentType.TextInput;
+
+	/// <summary>
+	/// Gets or sets the custom ID of the text input.
+	/// </summary>
+	[JsonPropertyName("custom_id")]
+	public string CustomId { get; set; } = default!;
+
+	/// <summary>
+	/// Gets or sets the value entered by the user.
+	/// </summary>
+	[JsonPropertyName("value")]
+	public string Value { get; set; } = default!;
 }
 
 /// <summary>

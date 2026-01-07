@@ -116,19 +116,19 @@ public class Guild
     /// Gets or sets the roles in the guild.
     /// </summary>
     [JsonPropertyName("roles")]
-    public List<Role>? Roles { get; set; }
+    public Role[]? Roles { get; set; }
 
     /// <summary>
     /// Gets or sets the emojis in the guild.
     /// </summary>
     [JsonPropertyName("emojis")]
-    public List<Emoji>? Emojis { get; set; }
+    public Emoji[]? Emojis { get; set; }
 
     /// <summary>
     /// Gets or sets the guild's features.
     /// </summary>
     [JsonPropertyName("features")]
-    public List<string>? Features { get; set; }
+    public string[]? Features { get; set; }
 
     /// <summary>
     /// Gets or sets the required MFA level for the guild.

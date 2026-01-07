@@ -105,7 +105,7 @@ internal sealed class Shard(int shardId, string token, GatewayIntent intents, Id
     {
         while (!identifyGate.IsCancellationRequested && _socket.Ready)
         {
-            using var message = await _socket.ReadAsync(identifyGate.Token);
+            var message = await _socket.ReadAsync(identifyGate.Token);
             if (message == null) continue;
 
             if (message.IsSystem())
@@ -124,10 +124,13 @@ internal sealed class Shard(int shardId, string token, GatewayIntent intents, Id
 
     private async Task OnProcessSystemMessages(ReceivedGatewayMessage message)
     {
+        using var doc = message.ToJsonDocument();
+        var payload = doc.RootElement;
+
         switch (message.Opcode)
         {
             case OpCodes.Hello:
-                _heartbeatIntervalMs = message.Payload.GetProperty("heartbeat_interval").GetInt32();
+                _heartbeatIntervalMs = payload.GetProperty("heartbeat_interval").GetInt32();
 
                 await SetupIdentify();
                 StartHeartbeat(identifyGate.Token);
@@ -148,7 +151,7 @@ internal sealed class Shard(int shardId, string token, GatewayIntent intents, Id
                 await _socket.Close();
                 await Task.Delay(5000);
 
-                var canReconnect = message.Opcode == OpCodes.Reconnect || message.Payload.TryGetBoolean() == true;
+                var canReconnect = message.Opcode == OpCodes.Reconnect || payload.TryGetBoolean() == true;
                 if (canReconnect && !string.IsNullOrEmpty(_sessionId) && !string.IsNullOrEmpty(_resumeGatewayUrl))
                 {
                     await _socket.ConnectAsync(new Uri(_resumeGatewayUrl), identifyGate.Token);
@@ -175,7 +178,7 @@ internal sealed class Shard(int shardId, string token, GatewayIntent intents, Id
     {
         if (string.Equals(message.EventType, "READY", StringComparison.Ordinal))
         {
-            var obj = message.Payload.Deserialize<ReadyPayload>()!;
+            var obj = message.Deserialize<ReadyPayload>()!;
             _sessionId = obj.SessionId;
             _resumeGatewayUrl = obj.ResumeGatewayUrl;
             _status = ShardStatus.Ready;

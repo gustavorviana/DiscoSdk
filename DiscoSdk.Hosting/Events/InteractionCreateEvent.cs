@@ -1,32 +1,40 @@
 using DiscoSdk.Events;
+using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Models;
+using DiscoSdk.Models.Messages.Components;
+using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Events;
 
 /// <summary>
 /// Represents the event data for when an interaction is created (e.g., slash command).
 /// </summary>
-public class InteractionCreateEvent(DiscordClient client, Interaction interaction) : IInteractionCreateEvent
+internal class InteractionCreateEvent(DiscordClient client, InteractionHandle handle, Interaction interaction) : IInteractionCreateEvent
 {
-    private bool _deferred = false;
     public Interaction Interaction => interaction;
+
 
     public async Task DeferAsync(bool ephemeral = true, CancellationToken cancellationToken = default)
     {
-        if (_deferred)
+        if (handle.IsDeferred)
             return;
 
-        _deferred = true;
+        handle.IsDeferred = true;
 
-        await client.InteractionClient.DeferAsync(Interaction.Id, Interaction.Token, ephemeral, cancellationToken);
+        await client.InteractionClient.DeferAsync(handle, ephemeral, cancellationToken);
     }
 
-    public async Task RespondAsync(string content, bool ephemeral = true, CancellationToken cancellationToken = default)
+    public ISendMessageRestAction Reply(string? content = null)
     {
-        if (_deferred)
-            await client.InteractionClient.FollowUpAsync(interaction.ApplicationId, interaction.Token, content, ephemeral, cancellationToken);
-        else
-            await client.InteractionClient.RespondAsync(interaction.Id, interaction.Token, content, ephemeral, cancellationToken);
+        return new SendMessageRestAction(client, handle, Interaction.ChannelId!, content);
+    }
+
+    public async Task ReplyModal(ModalData modalData, CancellationToken cancellationToken = default)
+    {
+        if (handle.IsDeferred)
+            throw new InvalidOperationException("Cannot respond with modal after deferring the interaction.");
+
+        await client.InteractionClient.RespondWithModalAsync(handle, modalData, cancellationToken);
     }
 }
 

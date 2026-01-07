@@ -23,7 +23,7 @@ public class Emoji
     /// Gets or sets the roles allowed to use this emoji.
     /// </summary>
     [JsonPropertyName("roles")]
-    public List<string>? Roles { get; set; }
+    public string[] Roles { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the user that created this emoji.

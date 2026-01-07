@@ -1,23 +1,16 @@
 using DiscoSdk.Models.Commands;
 
-namespace DiscoSdk.Hosting.Rest;
+namespace DiscoSdk.Hosting.Rest.Clients;
 
 /// <summary>
 /// Client for registering and managing Discord application commands.
 /// </summary>
-public class ApplicationCommandClient
+/// <remarks>
+/// Initializes a new instance of the <see cref="ApplicationCommandClient"/> class.
+/// </remarks>
+/// <param name="client">The REST client base to use for requests.</param>
+internal sealed class ApplicationCommandClient(IDiscordRestClientBase client)
 {
-    private readonly IDiscordRestClientBase _client;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ApplicationCommandClient"/> class.
-    /// </summary>
-    /// <param name="client">The REST client base to use for requests.</param>
-    public ApplicationCommandClient(IDiscordRestClientBase client)
-    {
-        _client = client;
-    }
-
     /// <summary>
     /// Registers global application commands, replacing all existing global commands.
     /// </summary>
@@ -28,7 +21,7 @@ public class ApplicationCommandClient
     public async Task<List<ApplicationCommand>> RegisterGlobalCommandsAsync(string applicationId, List<ApplicationCommand> commands, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/commands";
-        return await _client.SendJsonAsync<List<ApplicationCommand>>(path, HttpMethod.Put, commands, ct);
+        return await client.SendJsonAsync<List<ApplicationCommand>>(path, HttpMethod.Put, commands, ct);
     }
 
     /// <summary>
@@ -42,7 +35,7 @@ public class ApplicationCommandClient
     public async Task<List<ApplicationCommand>> RegisterGuildCommandsAsync(string applicationId, string guildId, List<ApplicationCommand> commands, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/guilds/{guildId}/commands";
-        return await _client.SendJsonAsync<List<ApplicationCommand>>(path, HttpMethod.Put, commands, ct);
+        return await client.SendJsonAsync<List<ApplicationCommand>>(path, HttpMethod.Put, commands, ct);
     }
 
     /// <summary>
@@ -54,7 +47,7 @@ public class ApplicationCommandClient
     public async Task<List<ApplicationCommand>> GetGlobalCommandsAsync(string applicationId, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/commands";
-        return await _client.SendJsonAsync<List<ApplicationCommand>>(path, HttpMethod.Get, null, ct);
+        return await client.SendJsonAsync<List<ApplicationCommand>>(path, HttpMethod.Get, null, ct);
     }
 
     /// <summary>
@@ -67,7 +60,7 @@ public class ApplicationCommandClient
     public async Task<List<ApplicationCommand>> GetGuildCommandsAsync(string applicationId, string guildId, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/guilds/{guildId}/commands";
-        return await _client.SendJsonAsync<List<ApplicationCommand>>(path, HttpMethod.Get, null, ct);
+        return await client.SendJsonAsync<List<ApplicationCommand>>(path, HttpMethod.Get, null, ct);
     }
 
     /// <summary>
@@ -80,7 +73,7 @@ public class ApplicationCommandClient
     public async Task DeleteGlobalCommandAsync(string applicationId, string commandId, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/commands/{commandId}";
-        await _client.SendNoContentAsync(path, HttpMethod.Delete, ct);
+        await client.SendNoContentAsync(path, HttpMethod.Delete, ct);
     }
 
     /// <summary>
@@ -94,7 +87,7 @@ public class ApplicationCommandClient
     public async Task DeleteGuildCommandAsync(string applicationId, string guildId, string commandId, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/guilds/{guildId}/commands/{commandId}";
-        await _client.SendNoContentAsync(path, HttpMethod.Delete, ct);
+        await client.SendNoContentAsync(path, HttpMethod.Delete, ct);
     }
 }
 
