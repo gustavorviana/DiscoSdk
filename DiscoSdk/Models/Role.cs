@@ -13,7 +13,7 @@ public class Role
     /// Gets or sets the role's unique identifier.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; } = default!;
+    public DiscordId Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the role's name.
@@ -25,7 +25,7 @@ public class Role
     /// Gets or sets the role's color.
     /// </summary>
     [JsonPropertyName("color")]
-    public int Color { get; set; }
+    public Color Color { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the role is hoisted.
@@ -82,46 +82,3 @@ public class Role
     [JsonPropertyName("flags")]
     public RoleFlags? Flags { get; set; }
 }
-
-/// <summary>
-/// Represents tags associated with a role.
-/// </summary>
-public class RoleTags
-{
-    /// <summary>
-    /// Gets or sets the bot ID this role belongs to.
-    /// </summary>
-    [JsonPropertyName("bot_id")]
-    public string? BotId { get; set; }
-
-    /// <summary>
-    /// Gets or sets the integration ID this role belongs to.
-    /// </summary>
-    [JsonPropertyName("integration_id")]
-    public string? IntegrationId { get; set; }
-
-    /// <summary>
-    /// Gets or sets the ID of the role this role is the premium subscriber role for.
-    /// </summary>
-    [JsonPropertyName("premium_subscriber")]
-    public object? PremiumSubscriber { get; set; }
-
-    /// <summary>
-    /// Gets or sets the ID of the role this role is linked to.
-    /// </summary>
-    [JsonPropertyName("subscription_listing_id")]
-    public string? SubscriptionListingId { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether this is the guild's Booster role.
-    /// </summary>
-    [JsonPropertyName("available_for_purchase")]
-    public object? AvailableForPurchase { get; set; }
-
-    /// <summary>
-    /// Gets or sets the ID of the guild this role is linked to.
-    /// </summary>
-    [JsonPropertyName("guild_connections")]
-    public object? GuildConnections { get; set; }
-}
-

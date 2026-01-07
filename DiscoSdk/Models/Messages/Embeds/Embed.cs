@@ -42,7 +42,6 @@ public class Embed
     /// Gets or sets the color code of the embed.
     /// </summary>
     [JsonPropertyName("color")]
-    [JsonConverter(typeof(ColorConverter))]
     public Color? Color { get; set; }
 
     /// <summary>

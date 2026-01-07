@@ -1,8 +1,10 @@
-﻿namespace DiscoSdk.Hosting.Events
+﻿using DiscoSdk.Models;
+
+namespace DiscoSdk.Hosting.Events
 {
-    internal class InteractionHandle(string id, string token)
+    internal class InteractionHandle(DiscordId id, string token)
     {
-        public string Id => id;
+        public DiscordId Id => id;
         public string Token => token;
         public bool IsDeferred { get; set; }
         public bool Responded { get; set; }

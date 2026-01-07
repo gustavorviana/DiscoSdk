@@ -12,13 +12,13 @@ public class Sticker
     /// Gets or sets the ID of the sticker.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; } = default!;
+    public DiscordId Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the ID of the pack the sticker is from.
     /// </summary>
     [JsonPropertyName("pack_id")]
-    public string? PackId { get; set; }
+    public DiscordId? PackId { get; set; }
 
     /// <summary>
     /// Gets or sets the name of the sticker.
@@ -48,7 +48,7 @@ public class Sticker
     /// Gets or sets the ID of the guild that owns the sticker.
     /// </summary>
     [JsonPropertyName("guild_id")]
-    public string? GuildId { get; set; }
+    public DiscordId? GuildId { get; set; }
 
     /// <summary>
     /// Gets or sets the user that uploaded the guild sticker.

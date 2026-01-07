@@ -1,3 +1,5 @@
+using DiscoSdk.Models.Interactions;
+
 namespace DiscoSdk.Models;
 
 /// <summary>
@@ -46,6 +48,3 @@ public class ModalResponse
                 .ToDictionary(x => x.CustomId, x => x.Value);
     }
 }
-
-
-

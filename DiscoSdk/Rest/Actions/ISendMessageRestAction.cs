@@ -1,4 +1,3 @@
-using DiscoSdk.Models.Builders;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
@@ -8,7 +7,7 @@ namespace DiscoSdk.Rest.Actions;
 /// <summary>
 /// Represents a REST action for sending a message to Discord.
 /// </summary>
-public interface ISendMessageRestAction : IRestAction<Message>
+public interface ISendMessageRestAction : IRestAction<IMessage>
 {
     /// <summary>
     /// Sets the content of the message.

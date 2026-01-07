@@ -11,7 +11,7 @@ public class Attachment
     /// Gets or sets the attachment ID.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; } = default!;
+    public DiscordId Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the name of the file attached.

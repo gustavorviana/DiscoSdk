@@ -11,7 +11,7 @@ public class Emoji
     /// Gets or sets the emoji's unique identifier.
     /// </summary>
     [JsonPropertyName("id")]
-    public string? Id { get; set; }
+    public DiscordId? Id { get; set; }
 
     /// <summary>
     /// Gets or sets the emoji's name.

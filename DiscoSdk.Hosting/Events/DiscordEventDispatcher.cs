@@ -3,7 +3,9 @@ using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
+using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.Interactions;
 using DiscoSdk.Models.Messages;
 using System.Reflection;
 using System.Text.Json;
@@ -67,7 +69,7 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
     /// <param name="payload">The JSON payload of the event.</param>
     /// <param name="jsonOptions">The JSON serializer options to use.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    internal async Task ProcessEventAsync(DiscordClient client, ReceivedGatewayMessage message, JsonSerializerOptions jsonOptions)
+    internal async Task ProcessEventAsync(DiscordClient client, ReceivedGatewayMessage message)
     {
         if (string.IsNullOrEmpty(message.EventType))
             return;
@@ -80,55 +82,55 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
             switch (message.EventType)
             {
                 case "MESSAGE_CREATE":
-                    await ProcessMessageCreateAsync(payload, jsonOptions);
+                    await ProcessMessageCreateAsync(payload, client.SerializerOptions);
                     break;
 
                 case "MESSAGE_UPDATE":
-                    await ProcessMessageUpdateAsync(payload, jsonOptions);
+                    await ProcessMessageUpdateAsync(payload, client.SerializerOptions);
                     break;
 
                 case "MESSAGE_DELETE":
-                    await ProcessMessageDeleteAsync(payload, jsonOptions);
+                    await ProcessMessageDeleteAsync(payload, client.SerializerOptions);
                     break;
 
                 case "GUILD_CREATE":
-                    await ProcessGuildCreateAsync(payload, jsonOptions);
+                    await ProcessGuildCreateAsync(payload, client.SerializerOptions);
                     break;
 
                 case "GUILD_UPDATE":
-                    await ProcessGuildUpdateAsync(payload, jsonOptions);
+                    await ProcessGuildUpdateAsync(payload, client.SerializerOptions);
                     break;
 
                 case "GUILD_DELETE":
-                    await ProcessGuildDeleteAsync(payload, jsonOptions);
+                    await ProcessGuildDeleteAsync(payload, client.SerializerOptions);
                     break;
 
                 case "CHANNEL_CREATE":
-                    await ProcessChannelCreateAsync(payload, jsonOptions);
+                    await ProcessChannelCreateAsync(payload, client.SerializerOptions);
                     break;
 
                 case "CHANNEL_UPDATE":
-                    await ProcessChannelUpdateAsync(payload, jsonOptions);
+                    await ProcessChannelUpdateAsync(payload, client.SerializerOptions);
                     break;
 
                 case "CHANNEL_DELETE":
-                    await ProcessChannelDeleteAsync(payload, jsonOptions);
+                    await ProcessChannelDeleteAsync(payload, client.SerializerOptions);
                     break;
 
                 case "MESSAGE_REACTION_ADD":
-                    await ProcessMessageReactionAddAsync(payload, jsonOptions);
+                    await ProcessMessageReactionAddAsync(payload, client.SerializerOptions);
                     break;
 
                 case "MESSAGE_REACTION_REMOVE":
-                    await ProcessMessageReactionRemoveAsync(payload, jsonOptions);
+                    await ProcessMessageReactionRemoveAsync(payload, client.SerializerOptions);
                     break;
 
                 case "TYPING_START":
-                    await ProcessTypingStartAsync(payload, jsonOptions);
+                    await ProcessTypingStartAsync(payload, client.SerializerOptions);
                     break;
 
                 case "INTERACTION_CREATE":
-                    await ProcessInteractionCreateAsync(client, payload, jsonOptions);
+                    await ProcessInteractionCreateAsync(client, payload, client.SerializerOptions);
                     break;
             }
         }

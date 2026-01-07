@@ -1,9 +1,13 @@
+using DiscoSdk.Models.JsonConverters;
+using System.Text.Json.Serialization;
+
 namespace DiscoSdk.Models;
 
 /// <summary>
 /// Represents a color for Discord embeds.
 /// Colors are represented as RGB integers (0xRRGGBB format).
 /// </summary>
+[JsonConverter(typeof(ColorConverter))]
 public readonly struct Color : IEquatable<Color>
 {
 	private readonly int _value;

@@ -1,8 +1,8 @@
-using DiscoSdk.Models.Enums;
+﻿using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.JsonConverters;
 using System.Text.Json.Serialization;
 
-namespace DiscoSdk.Models;
+namespace DiscoSdk.Models.Channels;
 
 /// <summary>
 /// Represents a Discord channel.
@@ -13,7 +13,7 @@ public class Channel
     /// Gets or sets the channel's unique identifier.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; } = default!;
+    public DiscordId Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the type of channel.
@@ -25,7 +25,7 @@ public class Channel
     /// Gets or sets the ID of the guild this channel belongs to.
     /// </summary>
     [JsonPropertyName("guild_id")]
-    public string? GuildId { get; set; }
+    public DiscordId? GuildId { get; set; }
 
     /// <summary>
     /// Gets or sets the sorting position of the channel.
@@ -61,7 +61,7 @@ public class Channel
     /// Gets or sets the ID of the last message sent in this channel.
     /// </summary>
     [JsonPropertyName("last_message_id")]
-    public string? LastMessageId { get; set; }
+    public DiscordId? LastMessageId { get; set; }
 
     /// <summary>
     /// Gets or sets the bitrate of the voice channel.
@@ -97,19 +97,19 @@ public class Channel
     /// Gets or sets the ID of the creator of the group DM or thread.
     /// </summary>
     [JsonPropertyName("owner_id")]
-    public string? OwnerId { get; set; }
+    public DiscordId? OwnerId { get; set; }
 
     /// <summary>
     /// Gets or sets the application ID of the group DM creator if it is bot-created.
     /// </summary>
     [JsonPropertyName("application_id")]
-    public string? ApplicationId { get; set; }
+    public DiscordId? ApplicationId { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the parent channel for the channel.
     /// </summary>
     [JsonPropertyName("parent_id")]
-    public string? ParentId { get; set; }
+    public DiscordId? ParentId { get; set; }
 
     /// <summary>
     /// Gets or sets when the last pinned message was pinned.
@@ -178,114 +178,3 @@ public class Channel
     [JsonPropertyName("total_message_sent")]
     public int? TotalMessageSent { get; set; }
 }
-
-/// <summary>
-/// Represents a permission overwrite for a channel.
-/// </summary>
-public class PermissionOverwrite
-{
-    /// <summary>
-    /// Gets or sets the role or user ID.
-    /// </summary>
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = default!;
-
-    /// <summary>
-    /// Gets or sets the type of overwrite (0 for role, 1 for member).
-    /// </summary>
-    [JsonPropertyName("type")]
-    public PermissionOverwriteType Type { get; set; }
-
-    /// <summary>
-    /// Gets or sets the permission bit set.
-    /// </summary>
-    [JsonPropertyName("allow")]
-    [JsonConverter(typeof(SafeStringConverter))]
-    public string Allow { get; set; } = default!;
-
-    /// <summary>
-    /// Gets or sets the permission bit set.
-    /// </summary>
-    [JsonPropertyName("deny")]
-    [JsonConverter(typeof(SafeStringConverter))]
-    public string Deny { get; set; } = default!;
-}
-
-/// <summary>
-/// Represents thread metadata.
-/// </summary>
-public class ThreadMetadata
-{
-    /// <summary>
-    /// Gets or sets a value indicating whether the thread is archived.
-    /// </summary>
-    [JsonPropertyName("archived")]
-    public bool Archived { get; set; }
-
-    /// <summary>
-    /// Gets or sets the duration in minutes to automatically archive the thread after recent activity.
-    /// </summary>
-    [JsonPropertyName("auto_archive_duration")]
-    public int AutoArchiveDuration { get; set; }
-
-    /// <summary>
-    /// Gets or sets the timestamp when the thread's archive status was last changed.
-    /// </summary>
-    [JsonPropertyName("archive_timestamp")]
-    public string ArchiveTimestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the thread is locked.
-    /// </summary>
-    [JsonPropertyName("locked")]
-    public bool Locked { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether non-moderators can add other non-moderators to a thread.
-    /// </summary>
-    [JsonPropertyName("invitable")]
-    public bool? Invitable { get; set; }
-
-    /// <summary>
-    /// Gets or sets the timestamp when the thread was created.
-    /// </summary>
-    [JsonPropertyName("create_timestamp")]
-    public string? CreateTimestamp { get; set; }
-}
-
-/// <summary>
-/// Represents a thread member.
-/// </summary>
-public class ThreadMember
-{
-    /// <summary>
-    /// Gets or sets the ID of the thread.
-    /// </summary>
-    [JsonPropertyName("id")]
-    public string? Id { get; set; }
-
-    /// <summary>
-    /// Gets or sets the ID of the user.
-    /// </summary>
-    [JsonPropertyName("user_id")]
-    public string? UserId { get; set; }
-
-    /// <summary>
-    /// Gets or sets the time the user last joined the thread.
-    /// </summary>
-    [JsonPropertyName("join_timestamp")]
-    public string JoinTimestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Gets or sets any user-thread settings.
-    /// </summary>
-    [JsonPropertyName("flags")]
-    public ThreadMemberFlags Flags { get; set; }
-
-    /// <summary>
-    /// Gets or sets additional information about the user.
-    /// </summary>
-    [JsonPropertyName("member")]
-    public GuildMember? Member { get; set; }
-}
-

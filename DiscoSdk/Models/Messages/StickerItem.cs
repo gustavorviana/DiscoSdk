@@ -12,7 +12,7 @@ public class StickerItem
     /// Gets or sets the ID of the sticker.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; } = default!;
+    public DiscordId Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the name of the sticker.

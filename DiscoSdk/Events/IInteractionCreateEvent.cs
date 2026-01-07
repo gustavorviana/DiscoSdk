@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Models;
+﻿using DiscoSdk.Models.Interactions;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Rest.Actions;
 

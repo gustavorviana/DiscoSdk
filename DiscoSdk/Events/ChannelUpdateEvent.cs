@@ -1,4 +1,4 @@
-using DiscoSdk.Models;
+using DiscoSdk.Models.Channels;
 
 namespace DiscoSdk.Events;
 

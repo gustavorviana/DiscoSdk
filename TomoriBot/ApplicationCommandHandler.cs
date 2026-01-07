@@ -22,10 +22,22 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
 
         if (commandName == "test")
         {
-            await eventData
+            var ephemeral = eventData.Interaction.Data?.Options?.FirstOrDefault(o => o.Name == "ephemeral")?.Value is bool b && b;
+
+            var msg = await eventData
                 .Reply("This is a test command response.")
-                .SetEphemeral()
+                .SetEphemeral(ephemeral)
                 .SendAsync(default);
+
+            await Task.Delay(1000);
+            await msg
+                .Edit()
+                .SetContent("This message will self-destruct in 2 seconds...")
+                .SendAsync();
+
+                await Task.Delay(2000);
+                await msg.DeleteAsync();
+
             return;
         }
 
@@ -57,6 +69,8 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
                     CustomId = "view_feedback_details"
                 }
             };
+
+            await eventData.DeferAsync();
 
             // Send message with buttons
             await eventData

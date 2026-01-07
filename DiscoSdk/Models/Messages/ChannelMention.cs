@@ -12,13 +12,13 @@ public class ChannelMention
     /// Gets or sets the ID of the channel.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; } = default!;
+    public DiscordId Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the ID of the guild containing the channel.
     /// </summary>
     [JsonPropertyName("guild_id")]
-    public string GuildId { get; set; } = default!;
+    public DiscordId GuildId { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the type of channel.

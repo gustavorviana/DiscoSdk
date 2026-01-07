@@ -2,6 +2,7 @@
 using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Logging;
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.JsonConverters;
 using TomoriBot;
 
 var dsc = new DiscordClient(new DiscordClientConfig
@@ -10,7 +11,7 @@ var dsc = new DiscordClient(new DiscordClientConfig
 	Token = Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN") ?? throw new InvalidOperationException("DISCORD_BOT_TOKEN environment variable is not set."),
 	EventProcessorMaxConcurrency = 100,
 	Logger = new ConsoleLogger(LogLevel.Trace)
-});
+}, DiscoJson.Create());
 
 await dsc.StartAsync();
 

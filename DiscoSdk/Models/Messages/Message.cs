@@ -1,12 +1,8 @@
-﻿using DiscoSdk.Models.Enums;
+﻿using DiscoSdk.Models.Channels;
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace DiscoSdk.Models.Messages;
 
@@ -20,19 +16,19 @@ public class Message
     /// Gets or sets the ID of the message.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; } = default!;
+    public DiscordId Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the ID of the channel the message was sent in.
     /// </summary>
     [JsonPropertyName("channel_id")]
-    public string ChannelId { get; set; } = default!;
+    public DiscordId ChannelId { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the ID of the guild the message was sent in.
     /// </summary>
     [JsonPropertyName("guild_id")]
-    public string? GuildId { get; set; }
+    public DiscordId? GuildId { get; set; }
 
     /// <summary>
     /// Gets or sets the author of the message.
@@ -110,7 +106,7 @@ public class Message
     /// Gets or sets the reactions to the message.
     /// </summary>
     [JsonPropertyName("reactions")]
-    public  Reaction[]? Reactions { get; set; }
+    public Reaction[]? Reactions { get; set; }
 
     /// <summary>
     /// Gets or sets the nonce used for verifying a message was sent.
@@ -128,7 +124,7 @@ public class Message
     /// Gets or sets the ID of the webhook that sent this message.
     /// </summary>
     [JsonPropertyName("webhook_id")]
-    public string? WebhookId { get; set; }
+    public DiscordId? WebhookId { get; set; }
 
     /// <summary>
     /// Gets or sets the type of message.
@@ -164,7 +160,7 @@ public class Message
     /// Gets or sets the message flags.
     /// </summary>
     [JsonPropertyName("flags")]
-    public MessageFlags? Flags { get; set; }
+    public MessageFlags Flags { get; set; }
 
     /// <summary>
     /// Gets or sets the message associated with the message_reference.

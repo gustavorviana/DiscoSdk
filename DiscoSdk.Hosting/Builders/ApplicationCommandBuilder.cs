@@ -9,7 +9,6 @@ namespace DiscoSdk.Hosting.Builders;
 /// </summary>
 public class ApplicationCommandBuilder() : IApplicationCommandBuilder
 {
-    private string? _id;
     private ApplicationCommandType? _type;
     private string? _name;
     private Dictionary<string, string>? _nameLocalizations;
@@ -449,7 +448,6 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     {
         return new ApplicationCommand
         {
-            Id = _id,
             Type = _type,
             Name = _name ?? throw new InvalidOperationException("Command name is required."),
             NameLocalizations = _nameLocalizations,

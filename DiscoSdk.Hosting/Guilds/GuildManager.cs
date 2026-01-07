@@ -11,8 +11,8 @@ namespace DiscoSdk.Hosting.Guilds;
 /// </summary>
 public class GuildManager
 {
-    private readonly ConcurrentDictionary<string, Guild> _guildCache = [];
-    private readonly HashSet<string> _pendingGuilds = [];
+    private readonly ConcurrentDictionary<DiscordId, Guild> _guildCache = [];
+    private readonly HashSet<DiscordId> _pendingGuilds = [];
     private readonly IDiscordRestClientBase _client;
     private readonly ILogger _logger;
     private readonly object _lock = new();
@@ -55,24 +55,21 @@ public class GuildManager
     /// <summary>
     /// Gets a read-only dictionary of cached guilds.
     /// </summary>
-    public IReadOnlyDictionary<string, Guild> All => _guildCache;
+    public IReadOnlyDictionary<DiscordId, Guild> All => _guildCache;
 
     /// <summary>
     /// Initializes the pending guilds list from the Ready payload.
     /// </summary>
     /// <param name="guildIds">The list of guild IDs from the Ready payload.</param>
-    internal void InitializePendingGuilds(IEnumerable<string> guildIds)
+    internal void InitializePendingGuilds(IEnumerable<DiscordId> guildIds)
     {
         lock (_lock)
         {
             _pendingGuilds.Clear();
             foreach (var guildId in guildIds)
-            {
-                if (!string.IsNullOrEmpty(guildId))
-                {
+                if (!guildId.Empty)
                     _pendingGuilds.Add(guildId);
-                }
-            }
+
             _logger.Log(LogLevel.Information, $"Initialized {_pendingGuilds.Count} pending guild(s) from Ready payload.");
         }
     }
@@ -84,7 +81,7 @@ public class GuildManager
     /// <param name="jsonOptions">The JSON serializer options.</param>
     internal void HandleGuildCreate(Guild guild)
     {
-        if (guild == null || string.IsNullOrEmpty(guild.Id))
+        if (guild == null || !guild.Id.Empty)
             return;
 
         lock (_lock)
@@ -113,9 +110,9 @@ public class GuildManager
     /// <param name="guildId">The guild ID.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>The guild if found; otherwise, <c>null</c>.</returns>
-    public async Task<Guild?> GetAsync(string guildId, CancellationToken ct = default)
+    public async Task<Guild?> GetAsync(DiscordId guildId, CancellationToken ct = default)
     {
-        if (string.IsNullOrEmpty(guildId))
+        if (guildId.Empty)
             return null;
 
         // First, try to get from cache
@@ -127,7 +124,7 @@ public class GuildManager
         {
             var guild = await _client.SendJsonAsync<Guild>($"guilds/{guildId}", HttpMethod.Get, null, ct);
 
-            if (guild != null && !string.IsNullOrEmpty(guild.Id))
+            if (guild != null && !guildId.Empty)
             {
                 // Add to cache
                 _guildCache[guild.Id] = guild;

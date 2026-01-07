@@ -1,6 +1,6 @@
 using DiscoSdk.Events;
 using DiscoSdk.Hosting.Rest.Actions;
-using DiscoSdk.Models;
+using DiscoSdk.Models.Interactions;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Rest.Actions;
 
@@ -26,7 +26,7 @@ internal class InteractionCreateEvent(DiscordClient client, InteractionHandle ha
 
     public ISendMessageRestAction Reply(string? content = null)
     {
-        return new SendMessageRestAction(client, handle, Interaction.ChannelId!, content);
+        return new SendMessageRestAction(client, handle, Interaction.ChannelId!.Value, content);
     }
 
     public async Task ReplyModal(ModalData modalData, CancellationToken cancellationToken = default)

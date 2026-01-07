@@ -23,22 +23,16 @@ public class DiscordRestClientBase : IDisposable, IDiscordRestClientBase
     /// <param name="botToken">The bot token for authentication.</param>
     /// <param name="apiUri">The base URI of the Discord API.</param>
     /// <exception cref="ArgumentException">Thrown when the bot token is null or whitespace.</exception>
-    public DiscordRestClientBase(string botToken, Uri apiUri)
+    public DiscordRestClientBase(string botToken, Uri apiUri, JsonSerializerOptions jsonOptions)
     {
         if (string.IsNullOrWhiteSpace(botToken))
             throw new ArgumentException("Bot token is required.", nameof(botToken));
 
         _botToken = botToken;
-
+        _json = jsonOptions;
         _http.BaseAddress = apiUri;
         _http.DefaultRequestHeaders.UserAgent.ParseAdd($"{DeviceInfo.SdkName}/1.0");
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", _botToken);
-
-        _json = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
     }
 
     /// <summary>

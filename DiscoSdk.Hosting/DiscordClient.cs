@@ -10,6 +10,7 @@ using DiscoSdk.Hosting.Rest;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
+using DiscoSdk.Models.JsonConverters;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -32,6 +33,11 @@ namespace DiscoSdk.Hosting
         private int _totalShards = 0;
         private IdentifyGate? _gate;
         private bool _isShuttingDown = false;
+
+        /// <summary>
+        /// Gets the JSON serializer options used for deserializing Gateway events.
+        /// </summary>
+        public JsonSerializerOptions SerializerOptions { get; }
 
         public ILogger Logger { get; }
 
@@ -61,6 +67,11 @@ namespace DiscoSdk.Hosting
         internal InteractionClient InteractionClient { get; }
 
         /// <summary>
+        /// Gets the message client for message operations.
+        /// </summary>
+        internal MessageClient MessageClient { get; }
+
+        /// <summary>
         /// Creates a new command update action that allows queuing commands and registering them all at once.
         /// </summary>
         /// <returns>A new <see cref="CommandUpdateAction"/> instance.</returns>
@@ -84,15 +95,6 @@ namespace DiscoSdk.Hosting
         public string? ApplicationId { get; private set; }
 
         /// <summary>
-        /// Gets the JSON serializer options used for deserializing Gateway events.
-        /// </summary>
-        private static JsonSerializerOptions JsonOptions => new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
-
-        /// <summary>
         /// Gets a value indicating whether all shards are ready.
         /// </summary>
         public bool IsReady => _shards.All(s => s.Status == ShardStatus.Ready);
@@ -107,13 +109,15 @@ namespace DiscoSdk.Hosting
         /// </summary>
         public ICurrentUser User { get; private set; } = new ReadyUser();
 
-        public DiscordClient(DiscordClientConfig config)
+        public DiscordClient(DiscordClientConfig config, JsonSerializerOptions jsonOptions)
         {
             _config = config;
+            SerializerOptions = jsonOptions;
             Logger = config.Logger ?? NullLogger.Instance;
             _eventDispatcher = new DiscordEventDispatcher(Logger);
-            _client = new DiscordRestClientBase(config.Token, new Uri("https://discord.com/api/v10"));
-            InteractionClient = new InteractionClient(_client);
+            _client = new DiscordRestClientBase(config.Token, new Uri("https://discord.com/api/v10"), jsonOptions);
+            InteractionClient = new InteractionClient(this);
+            MessageClient = new MessageClient(_client);
             _guildManager = new GuildManager(_client, Logger);
 
             var maxConcurrency = config.EventProcessorMaxConcurrency > 0
@@ -125,12 +129,12 @@ namespace DiscoSdk.Hosting
             {
                 if (item.EventType == "GUILD_CREATE")
                 {
-                    var guild = item.Deserialize<Guild>(JsonOptions);
+                    var guild = item.Deserialize<Guild>(SerializerOptions);
                     if (guild != null)
                         _guildManager.HandleGuildCreate(guild);
                 }
 
-                await _eventDispatcher.ProcessEventAsync(this, item, JsonOptions);
+                await _eventDispatcher.ProcessEventAsync(this, item);
             }, Logger, queueCapacity);
         }
 
@@ -259,7 +263,10 @@ namespace DiscoSdk.Hosting
                 _isInitialized = true;
 
                 // Initialize pending guilds from Ready payload
-                var guildIds = arg.Guilds.Select(g => g.Id).Where(id => !string.IsNullOrEmpty(id));
+                var guildIds = arg.Guilds
+                    .Where(g => !string.IsNullOrEmpty(g.Id))
+                    .Select(g => DiscordId.TryParse(g.Id, out var id) ? id : default);
+
                 _guildManager.InitializePendingGuilds(guildIds);
             }
 

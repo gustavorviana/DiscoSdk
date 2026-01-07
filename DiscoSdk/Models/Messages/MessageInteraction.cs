@@ -12,7 +12,7 @@ public class MessageInteraction
     /// Gets or sets the ID of the interaction.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; } = default!;
+    public DiscordId Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the type of interaction.
