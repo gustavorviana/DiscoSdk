@@ -1,6 +1,7 @@
 using DiscoSdk.Models;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Requests;
+using System.Linq;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
 
@@ -167,7 +168,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 	/// <param name="userId">The ID of the user whose reaction to remove. Use "@me" for the current user.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task RemoveUserReactionAsync(DiscordId channelId, DiscordId messageId, string emoji, string userId, CancellationToken cancellationToken = default)
+	public Task RemoveUserReactionAsync(DiscordId channelId, DiscordId messageId, string emoji, DiscordId userId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -178,7 +179,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 		if (string.IsNullOrWhiteSpace(emoji))
 			throw new ArgumentException("Emoji cannot be null or empty.", nameof(emoji));
 
-		if (string.IsNullOrWhiteSpace(userId))
+		if (userId.Empty)
 			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
 		var encodedEmoji = Uri.EscapeDataString(emoji);
@@ -265,6 +266,119 @@ internal class MessageClient(IDiscordRestClientBase client)
 
 		var path = $"channels/{channelId}/messages/{messageId}/reactions";
 		return client.SendJsonAsync(path, HttpMethod.Delete, null, cancellationToken);
+	}
+
+	/// <summary>
+	/// Gets messages from the specified channel.
+	/// </summary>
+	/// <param name="channelId">The ID of the channel to get messages from.</param>
+	/// <param name="limit">Maximum number of messages to return (1-100, default 50).</param>
+	/// <param name="around">Get messages around this message ID.</param>
+	/// <param name="before">Get messages before this message ID.</param>
+	/// <param name="after">Get messages after this message ID.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>An array of messages.</returns>
+	public Task<Message[]> GetMessagesAsync(DiscordId channelId, int? limit = null, DiscordId? around = null, DiscordId? before = null, DiscordId? after = null, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		if (limit.HasValue && (limit.Value < 1 || limit.Value > 100))
+			throw new ArgumentOutOfRangeException(nameof(limit), "Limit must be between 1 and 100.");
+
+		var queryParams = new List<string>();
+
+		if (limit.HasValue)
+			queryParams.Add($"limit={limit.Value}");
+
+		if (around.HasValue)
+			queryParams.Add($"around={around.Value}");
+
+		if (before.HasValue)
+			queryParams.Add($"before={before.Value}");
+
+		if (after.HasValue)
+			queryParams.Add($"after={after.Value}");
+
+		var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
+		var path = $"channels/{channelId}/messages{query}";
+		return client.SendJsonAsync<Message[]>(path, HttpMethod.Get, null, cancellationToken);
+	}
+
+	/// <summary>
+	/// Deletes multiple messages from the specified channel in a single request.
+	/// </summary>
+	/// <param name="channelId">The ID of the channel to delete messages from.</param>
+	/// <param name="messageIds">The IDs of the messages to delete (2-100 messages).</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>A task that represents the asynchronous operation.</returns>
+	public Task BulkDeleteMessagesAsync(DiscordId channelId, DiscordId[] messageIds, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		if (messageIds == null || messageIds.Length == 0)
+			throw new ArgumentException("Message IDs cannot be null or empty.", nameof(messageIds));
+
+		if (messageIds.Length < 2 || messageIds.Length > 100)
+			throw new ArgumentOutOfRangeException(nameof(messageIds), "Must delete between 2 and 100 messages.");
+
+		var path = $"channels/{channelId}/messages/bulk-delete";
+		var request = new { messages = messageIds.Select(id => id.ToString()).ToArray() };
+		return client.SendJsonAsync(path, HttpMethod.Post, request, cancellationToken);
+	}
+
+	/// <summary>
+	/// Triggers the typing indicator in the specified channel.
+	/// </summary>
+	/// <param name="channelId">The ID of the channel to trigger typing in.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>A task that represents the asynchronous operation.</returns>
+	public Task TriggerTypingAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		var path = $"channels/{channelId}/typing";
+		return client.SendNoContentAsync(path, HttpMethod.Post, cancellationToken);
+	}
+
+	/// <summary>
+	/// Pins a message in the specified channel.
+	/// </summary>
+	/// <param name="channelId">The ID of the channel containing the message.</param>
+	/// <param name="messageId">The ID of the message to pin.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>A task that represents the asynchronous operation.</returns>
+	public Task PinAsync(DiscordId channelId, DiscordId messageId, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		if (messageId == default)
+			throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
+
+		var path = $"channels/{channelId}/pins/{messageId}";
+		return client.SendNoContentAsync(path, HttpMethod.Put, cancellationToken);
+	}
+
+	/// <summary>
+	/// Unpins a message from the specified channel.
+	/// </summary>
+	/// <param name="channelId">The ID of the channel containing the message.</param>
+	/// <param name="messageId">The ID of the message to unpin.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>A task that represents the asynchronous operation.</returns>
+	public Task UnpinAsync(DiscordId channelId, DiscordId messageId, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		if (messageId == default)
+			throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
+
+		var path = $"channels/{channelId}/pins/{messageId}";
+		return client.SendNoContentAsync(path, HttpMethod.Delete, cancellationToken);
 	}
 }
 

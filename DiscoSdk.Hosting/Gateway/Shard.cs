@@ -7,7 +7,7 @@ namespace DiscoSdk.Hosting.Gateway;
 /// <summary>
 /// Represents a single shard connection to the Discord Gateway.
 /// </summary>
-internal sealed class Shard(int shardId, string token, GatewayIntent intents, IdentifyGate identifyGate, Uri gatewayUri)
+internal sealed class Shard(int shardId, string token, DiscordIntent intents, IdentifyGate identifyGate, Uri gatewayUri)
 {
     /// <summary>
     /// Event raised when the shard successfully resumes a connection.

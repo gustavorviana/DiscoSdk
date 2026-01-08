@@ -35,62 +35,11 @@ internal class InteractionClient(DiscordClient discordClient)
         await SendCallbackAsync(interaction, data, InteractionCallbackType.ChannelMessageWithSource, cancellationToken);
     }
 
-    public async Task<Message> FollowUpAsync(InteractionHandle interaction, FollowUpMessageRequest request, CancellationToken ct = default)
+    public async Task FollowUpAsync(InteractionHandle interaction, FollowUpMessageRequest request, CancellationToken ct = default)
     {
-        if (string.IsNullOrEmpty(discordClient.ApplicationId))
-            throw new InvalidOperationException("ApplicationId is not available. The bot must be ready before sending follow-up messages.");
-        
         var id = interaction.IsDeferred ? discordClient.ApplicationId : interaction.Id.ToString();
         var path = $"webhooks/{id}/{interaction.Token}";
-        return await Client.SendJsonAsync<Message>(path, HttpMethod.Post, request, ct);
-    }
-
-    /// <summary>
-    /// Gets the original interaction response message.
-    /// </summary>
-    /// <param name="interaction">The interaction handle.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>The original interaction response message.</returns>
-    public async Task<Message> GetOriginalResponseAsync(InteractionHandle interaction, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrEmpty(discordClient.ApplicationId))
-            throw new InvalidOperationException("ApplicationId is not available. The bot must be ready before getting the original response.");
-
-        var path = $"webhooks/{discordClient.ApplicationId}/{interaction.Token}/messages/@original";
-        return await Client.SendJsonAsync<Message>(path, HttpMethod.Get, null, cancellationToken);
-    }
-
-    /// <summary>
-    /// Edits the original interaction response message.
-    /// </summary>
-    /// <param name="interaction">The interaction handle.</param>
-    /// <param name="request">The message edit request.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>The edited message.</returns>
-    public async Task<Message> EditOriginalResponseAsync(InteractionHandle interaction, MessageEditRequest request, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrEmpty(discordClient.ApplicationId))
-            throw new InvalidOperationException("ApplicationId is not available. The bot must be ready before editing the original response.");
-
-        ArgumentNullException.ThrowIfNull(request);
-
-        var path = $"webhooks/{discordClient.ApplicationId}/{interaction.Token}/messages/@original";
-        return await Client.SendJsonAsync<Message>(path, HttpMethod.Patch, request, cancellationToken);
-    }
-
-    /// <summary>
-    /// Deletes the original interaction response message.
-    /// </summary>
-    /// <param name="interaction">The interaction handle.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    public async Task DeleteOriginalResponseAsync(InteractionHandle interaction, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrEmpty(discordClient.ApplicationId))
-            throw new InvalidOperationException("ApplicationId is not available. The bot must be ready before deleting the original response.");
-
-        var path = $"webhooks/{discordClient.ApplicationId}/{interaction.Token}/messages/@original";
-        await Client.SendJsonAsync(path, HttpMethod.Delete, null, cancellationToken);
+        await Client.SendJsonAsync<object>(path, HttpMethod.Post, request, ct);
     }
 
     public async Task RespondWithModalAsync(InteractionHandle interaction, ModalData modalData, CancellationToken cancellationToken = default)
@@ -119,25 +68,54 @@ internal class InteractionClient(DiscordClient discordClient)
         await SendCallbackAsync(interaction, data, callbackType, cancellationToken);
     }
 
-    public async Task SendCallbackAsync(InteractionHandle interaction,
-        InteractionCallbackData? data,
-        InteractionCallbackType type,
-        CancellationToken cancellationToken)
-    {
-        var request = new InteractionCallbackRequest
-        {
-            Type = type,
-            Data = data
-        };
+	public async Task SendCallbackAsync(InteractionHandle interaction,
+		InteractionCallbackData? data,
+		InteractionCallbackType type,
+		CancellationToken cancellationToken)
+	{
+		var request = new InteractionCallbackRequest
+		{
+			Type = type,
+			Data = data
+		};
 
-        var path = $"interactions/{interaction.Id}/{interaction.Token}/callback";
-        await Client.SendJsonAsync<object>(path, HttpMethod.Post, request, cancellationToken);
-    }
+		var path = $"interactions/{interaction.Id}/{interaction.Token}/callback";
+		await Client.SendJsonAsync<object>(path, HttpMethod.Post, request, cancellationToken);
+	}
 
-    public enum AcknowledgeType
-    {
-        ModalSubmit,
-        Ephemeral,
-        NonEphemeral
-    }
+	/// <summary>
+	/// Edits the original interaction response message.
+	/// </summary>
+	/// <param name="interaction">The interaction handle containing the interaction ID and token.</param>
+	/// <param name="request">The message edit request.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>The edited message.</returns>
+	public async Task<Message> EditOriginalResponseAsync(InteractionHandle interaction, MessageEditRequest request, CancellationToken cancellationToken = default)
+	{
+		ArgumentNullException.ThrowIfNull(request);
+
+		var id = interaction.IsDeferred ? discordClient.ApplicationId : interaction.Id.ToString();
+		var path = $"webhooks/{id}/{interaction.Token}/messages/@original";
+		return await Client.SendJsonAsync<Message>(path, HttpMethod.Patch, request, cancellationToken);
+	}
+
+	/// <summary>
+	/// Deletes the original interaction response message.
+	/// </summary>
+	/// <param name="interaction">The interaction handle containing the interaction ID and token.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>A task that represents the asynchronous operation.</returns>
+	public async Task DeleteOriginalResponseAsync(InteractionHandle interaction, CancellationToken cancellationToken = default)
+	{
+		var id = interaction.IsDeferred ? discordClient.ApplicationId : interaction.Id.ToString();
+		var path = $"webhooks/{id}/{interaction.Token}/messages/@original";
+		await Client.SendNoContentAsync(path, HttpMethod.Delete, cancellationToken);
+	}
+
+	public enum AcknowledgeType
+	{
+		ModalSubmit,
+		Ephemeral,
+		NonEphemeral
+	}
 }

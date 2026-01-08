@@ -1,0 +1,40 @@
+using System.Text.Json.Serialization;
+
+namespace DiscoSdk.Models.Channels;
+
+/// <summary>
+/// Represents a tag that can be used in a forum channel.
+/// </summary>
+public class ForumTag
+{
+	/// <summary>
+	/// Gets or sets the ID of the tag.
+	/// </summary>
+	[JsonPropertyName("id")]
+	public DiscordId Id { get; set; } = default!;
+
+	/// <summary>
+	/// Gets or sets the name of the tag (max 20 characters).
+	/// </summary>
+	[JsonPropertyName("name")]
+	public string Name { get; set; } = default!;
+
+	/// <summary>
+	/// Gets or sets a value indicating whether this tag can only be added to or removed from threads by a member with the MANAGE_THREADS permission.
+	/// </summary>
+	[JsonPropertyName("moderated")]
+	public bool Moderated { get; set; }
+
+	/// <summary>
+	/// Gets or sets the ID of a guild's custom emoji.
+	/// </summary>
+	[JsonPropertyName("emoji_id")]
+	public DiscordId? EmojiId { get; set; }
+
+	/// <summary>
+	/// Gets or sets the unicode character of the emoji.
+	/// </summary>
+	[JsonPropertyName("emoji_name")]
+	public string? EmojiName { get; set; }
+}
+

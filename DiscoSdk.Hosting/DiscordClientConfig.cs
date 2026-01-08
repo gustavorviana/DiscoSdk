@@ -1,5 +1,4 @@
-﻿using DiscoSdk.Hosting.Gateway;
-using DiscoSdk.Logging;
+﻿using DiscoSdk.Logging;
 
 namespace DiscoSdk.Hosting
 {
@@ -21,7 +20,7 @@ namespace DiscoSdk.Hosting
         /// <summary>
         /// Gets or sets the gateway intents to subscribe to.
         /// </summary>
-        public required GatewayIntent Intents { get; set; }
+        public required DiscordIntent Intents { get; set; }
 
         /// <summary>
         /// Gets or sets the maximum number of concurrent event processing operations.

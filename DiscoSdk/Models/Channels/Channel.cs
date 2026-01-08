@@ -160,6 +160,13 @@ public class Channel
     public int? DefaultAutoArchiveDuration { get; set; }
 
     /// <summary>
+    /// Gets or sets the default forum layout view used to display posts in GUILD_FORUM channels.
+    /// Defaults to 0, which indicates a layout view has not been set by a channel admin.
+    /// </summary>
+    [JsonPropertyName("default_forum_layout")]
+    public int? DefaultForumLayout { get; set; }
+
+    /// <summary>
     /// Gets or sets the computed permissions for the invoking user in the channel.
     /// </summary>
     [JsonPropertyName("permissions")]

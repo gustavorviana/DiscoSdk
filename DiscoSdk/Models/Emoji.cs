@@ -54,5 +54,15 @@ public class Emoji
     /// </summary>
     [JsonPropertyName("available")]
     public bool? Available { get; set; }
+
+    public override string ToString()
+    {
+        if (Id.HasValue)
+            // Custom emoji: name:id format
+            return $"{Name}:{Id.Value}";
+
+        // Unicode emoji: just the name
+        return Name ?? string.Empty;
+    }
 }
 

@@ -30,6 +30,8 @@ internal class MessageWrapper : IMessage
         _message = message ?? throw new ArgumentNullException(nameof(message));
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _interactionHandle = interactionHandle;
+
+        Reactions = _message.Reactions?.Select(r => new ReactionWrapper(r, this, _client))?.ToArray() ?? [];
     }
 
     // Visual Properties
@@ -37,15 +39,22 @@ internal class MessageWrapper : IMessage
     public DiscordId ChannelId => _message.ChannelId;
     public DiscordId? GuildId => _message.GuildId;
     public User Author => _message.Author;
-    public string Content => _message.Content;
+    public string Content
+    {
+        get
+        {
+            ValidateIntent(DiscordIntent.MessageContent, "access message content");
+            return _message.Content;
+        }
+    }
     public Embed[] Embeds => _message.Embeds;
     public MessageComponent[]? Components => _message.Components;
     public Attachment[] Attachments => _message.Attachments;
-    public Reaction[]? Reactions => _message.Reactions;
+    public IReaction[] Reactions { get; }
     public string Timestamp => _message.Timestamp;
     public string? EditedTimestamp => _message.EditedTimestamp;
     public bool Pinned => _message.Pinned;
-    public MessageFlags? Flags => _message.Flags;
+    public MessageFlags Flags => _message.Flags;
     public MessageType Type => _message.Type;
 
     // Operations with Builders
@@ -75,11 +84,6 @@ internal class MessageWrapper : IMessage
         return _client.MessageClient.DeleteAsync(_message.ChannelId, _message.Id, cancellationToken);
     }
 
-    public void Delete()
-    {
-        DeleteAsync().GetAwaiter().GetResult();
-    }
-
     public async Task<IMessage> CrosspostAsync(CancellationToken cancellationToken = default)
     {
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
@@ -89,88 +93,94 @@ internal class MessageWrapper : IMessage
         return new MessageWrapper(message, _client, null);
     }
 
-    public IMessage Crosspost()
-    {
-        return CrosspostAsync().GetAwaiter().GetResult();
-    }
-
-    // Reaction Operations
     public Task AddReactionAsync(string emoji, CancellationToken cancellationToken = default)
     {
+        ValidateReactionIntent("add reactions to");
+
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("add reactions to");
 
         return _client.MessageClient.AddReactionAsync(_message.ChannelId, _message.Id, emoji, cancellationToken);
     }
 
-    public void AddReaction(string emoji)
-    {
-        AddReactionAsync(emoji).GetAwaiter().GetResult();
-    }
-
-    public Task RemoveReactionAsync(string emoji, CancellationToken cancellationToken = default)
-    {
-        if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
-            throw EphemeralMessageException.Operation("remove reactions from");
-
-        return _client.MessageClient.RemoveReactionAsync(_message.ChannelId, _message.Id, emoji, cancellationToken);
-    }
-
-    public void RemoveReaction(string emoji)
-    {
-        RemoveReactionAsync(emoji).GetAwaiter().GetResult();
-    }
-
-    public Task RemoveUserReactionAsync(string emoji, string userId, CancellationToken cancellationToken = default)
-    {
-        if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
-            throw EphemeralMessageException.Operation("remove user reactions from");
-
-        return _client.MessageClient.RemoveUserReactionAsync(_message.ChannelId, _message.Id, emoji, userId, cancellationToken);
-    }
-
-    public void RemoveUserReaction(string emoji, string userId)
-    {
-        RemoveUserReactionAsync(emoji, userId).GetAwaiter().GetResult();
-    }
-
     public Task<User[]> GetReactionsAsync(string emoji, string? after = null, int? limit = null, CancellationToken cancellationToken = default)
     {
+        ValidateReactionIntent("get reactions from");
+
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("get reactions from");
 
         return _client.MessageClient.GetReactionsAsync(_message.ChannelId, _message.Id, emoji, after, limit, cancellationToken);
     }
 
-    public User[] GetReactions(string emoji, string? after = null, int? limit = null)
-    {
-        return GetReactionsAsync(emoji, after, limit).GetAwaiter().GetResult();
-    }
-
     public Task DeleteAllReactionsForEmojiAsync(string emoji, CancellationToken cancellationToken = default)
     {
+        ValidateReactionIntent("delete reactions from");
+
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("delete reactions from");
 
         return _client.MessageClient.DeleteAllReactionsForEmojiAsync(_message.ChannelId, _message.Id, emoji, cancellationToken);
     }
 
-    public void DeleteAllReactionsForEmoji(string emoji)
+	public Task DeleteAllReactionsAsync(CancellationToken cancellationToken = default)
+	{
+		ValidateReactionIntent("delete all reactions from");
+
+		if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
+			throw EphemeralMessageException.Operation("delete all reactions from");
+
+		return _client.MessageClient.DeleteAllReactionsAsync(_message.ChannelId, _message.Id, cancellationToken);
+	}
+
+	public Task PinAsync(CancellationToken cancellationToken = default)
+	{
+		if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
+			throw EphemeralMessageException.Operation("pin");
+
+		return _client.MessageClient.PinAsync(_message.ChannelId, _message.Id, cancellationToken);
+	}
+
+	public Task UnpinAsync(CancellationToken cancellationToken = default)
+	{
+		if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
+			throw EphemeralMessageException.Operation("unpin");
+
+		return _client.MessageClient.UnpinAsync(_message.ChannelId, _message.Id, cancellationToken);
+	}
+
+    /// <summary>
+    /// Validates that the required intent is enabled.
+    /// </summary>
+    /// <param name="requiredIntent">The intent that is required.</param>
+    /// <param name="operation">The operation being performed.</param>
+    /// <exception cref="MissingIntentException">Thrown when the required intent is not enabled.</exception>
+    private void ValidateIntent(DiscordIntent requiredIntent, string operation)
     {
-        DeleteAllReactionsForEmojiAsync(emoji).GetAwaiter().GetResult();
+        if (!_client.Intents.HasFlag(requiredIntent))
+            throw new MissingIntentException(requiredIntent, operation);
     }
 
-    public Task DeleteAllReactionsAsync(CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Validates that the appropriate reaction intent is enabled based on whether the message is in a guild or DM.
+    /// </summary>
+    /// <param name="operation">The operation being performed.</param>
+    /// <exception cref="MissingIntentException">Thrown when the required intent is not enabled.</exception>
+    private void ValidateReactionIntent(string operation)
     {
-        if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
-            throw EphemeralMessageException.Operation("delete all reactions from");
-
-        return _client.MessageClient.DeleteAllReactionsAsync(_message.ChannelId, _message.Id, cancellationToken);
+        ValidateIntent(GetCurrentReactionIntent(), operation);
     }
 
-    public void DeleteAllReactions()
+    private DiscordIntent GetCurrentReactionIntent()
     {
-        DeleteAllReactionsAsync().GetAwaiter().GetResult();
+        return _message.GuildId.HasValue
+                    ? DiscordIntent.GuildMessageReactions
+                    : DiscordIntent.DirectMessageReactions;
+    }
+
+    public Channel GetChannel()
+    {
+        throw new NotSupportedException("This operation is not yet supported.");
     }
 
     public Guild? GetGuild()

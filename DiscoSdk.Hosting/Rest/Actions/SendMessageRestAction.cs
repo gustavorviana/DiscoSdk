@@ -235,9 +235,7 @@ internal class SendMessageRestAction : ISendMessageRestAction
         };
 
         await _client.InteractionClient.RespondAsync(_interactionHandle!, callbackData, cancellationToken);
-        
-        var message = await _client.InteractionClient.GetOriginalResponseAsync(_interactionHandle!, cancellationToken);
-        return new MessageWrapper(message, _client, _interactionHandle);
+        return null!;
     }
 
     private async Task<IMessage> SendFollowUpAsync(CancellationToken cancellationToken)
@@ -247,15 +245,15 @@ internal class SendMessageRestAction : ISendMessageRestAction
             flags |= MessageFlags.Ephemeral;
 
         var actionRows = EnsureActionRows();
-        var message = await _client.InteractionClient.FollowUpAsync(_interactionHandle!, new FollowUpMessageRequest
+        await _client.InteractionClient.FollowUpAsync(_interactionHandle!, new FollowUpMessageRequest
         {
-            Components = [..actionRows.OfType<MessageComponent>()],
+            Components = actionRows.OfType<MessageComponent>().ToArray(),
             Content = _content,
             Embeds = [.. _embeds],
             Flags = flags != MessageFlags.None ? flags : null
         }, cancellationToken);
 
-        return new MessageWrapper(message, _client, _interactionHandle);
+        return null!;
     }
 
     private IInteractionComponent[] EnsureActionRows()

@@ -1,7 +1,7 @@
-﻿namespace DiscoSdk.Hosting.Gateway;
+﻿namespace DiscoSdk;
 
 [Flags]
-public enum GatewayIntent
+public enum DiscordIntent
 {
     /// <summary>
     /// This intent includes no events.

@@ -10,9 +10,7 @@ using DiscoSdk.Hosting.Rest;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
-using DiscoSdk.Models.JsonConverters;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Hosting
 {
@@ -28,6 +26,11 @@ namespace DiscoSdk.Hosting
         internal readonly IDiscordRestClientBase _client;
         private readonly DiscordClientConfig _config;
         private readonly GuildManager _guildManager;
+
+        /// <summary>
+        /// Gets the gateway intents configured for this client.
+        /// </summary>
+        public DiscordIntent Intents => _config.Intents;
         private readonly List<Shard> _shards = [];
         private bool _isInitialized = false;
         private int _totalShards = 0;
