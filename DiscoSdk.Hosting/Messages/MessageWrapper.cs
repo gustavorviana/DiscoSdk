@@ -63,6 +63,10 @@ internal class MessageWrapper : IMessage
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral) && _interactionHandle == null)
             throw EphemeralMessageException.Operation("edit");
 
+        // Only allow editing messages from the bot itself
+        if (!IsBotMessage())
+            throw InsufficientPermissionException.Operation("MANAGE_MESSAGES", "edit messages from other users");
+
         return new EditMessageRestAction(_client, _message.ChannelId, _message.Id, _interactionHandle);
     }
 
@@ -189,5 +193,20 @@ internal class MessageWrapper : IMessage
             return null;
 
         return _client.Guilds.All.TryGetValue(_message.GuildId.Value, out var guild) ? guild : null;
+    }
+
+    /// <summary>
+    /// Checks if the message was sent by the bot.
+    /// </summary>
+    /// <returns>True if the message author is the bot, false otherwise.</returns>
+    private bool IsBotMessage()
+    {
+        if (string.IsNullOrEmpty(_client.User?.Id))
+            return false;
+
+        if (!DiscordId.TryParse(_client.User.Id, out var botId))
+            return false;
+
+        return _message.Author.Id == botId;
     }
 }
