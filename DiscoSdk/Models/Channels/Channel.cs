@@ -142,18 +142,6 @@ public class Channel
     public int? MemberCount { get; set; }
 
     /// <summary>
-    /// Gets or sets thread-specific fields not needed by other channels.
-    /// </summary>
-    [JsonPropertyName("thread_metadata")]
-    public ThreadMetadata? ThreadMetadata { get; set; }
-
-    /// <summary>
-    /// Gets or sets thread member object for the current user, if they have joined the thread.
-    /// </summary>
-    [JsonPropertyName("member")]
-    public ThreadMember? Member { get; set; }
-
-    /// <summary>
     /// Gets or sets the default duration for newly created threads.
     /// </summary>
     [JsonPropertyName("default_auto_archive_duration")]
@@ -170,8 +158,8 @@ public class Channel
     /// Gets or sets the computed permissions for the invoking user in the channel.
     /// </summary>
     [JsonPropertyName("permissions")]
-    [JsonConverter(typeof(SafeStringConverter))]
-    public string? Permissions { get; set; }
+    [JsonConverter(typeof(DiscordPermissionConverter))]
+    public DiscordPermission Permissions { get; set; }
 
     /// <summary>
     /// Gets or sets the channel flags.
@@ -184,4 +172,40 @@ public class Channel
     /// </summary>
     [JsonPropertyName("total_message_sent")]
     public int? TotalMessageSent { get; set; }
+
+    /// <summary>
+    /// Gets or sets the default reaction emoji shown on the add reaction button on forum posts.
+    /// </summary>
+    [JsonPropertyName("default_reaction_emoji")]
+    public DefaultReaction? DefaultReactionEmoji { get; set; }
+
+    /// <summary>
+    /// Gets or sets the default sort order type used to order posts in forum channels.
+    /// </summary>
+    [JsonPropertyName("default_sort_order")]
+    public int? DefaultSortOrder { get; set; }
+
+	/// <summary>
+	/// Gets or sets the default rate limit per user for threads in this forum channel.
+	/// </summary>
+	[JsonPropertyName("default_thread_rate_limit_per_user")]
+	public int? DefaultThreadRateLimitPerUser { get; set; }
+
+	/// <summary>
+	/// Gets or sets the thread metadata for thread channels.
+	/// </summary>
+	[JsonPropertyName("thread_metadata")]
+	public ThreadMetadata? ThreadMetadata { get; set; }
+
+	/// <summary>
+	/// Gets or sets the IDs of tags applied to a thread (for threads in forum/media channels).
+	/// </summary>
+	[JsonPropertyName("applied_tags")]
+	public DiscordId[]? AppliedTags { get; set; }
+
+	/// <summary>
+	/// Gets or sets the set of tags that can be used in a forum or media channel.
+	/// </summary>
+	[JsonPropertyName("available_tags")]
+	public ForumTag[]? AvailableTags { get; set; }
 }

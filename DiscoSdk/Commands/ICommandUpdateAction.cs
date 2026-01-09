@@ -1,12 +1,13 @@
 ﻿using DiscoSdk.Models.Builders;
 using DiscoSdk.Models.Commands;
+using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Commands;
 
 /// <summary>
 /// Represents a fluent builder for queuing and registering Discord application commands.
 /// </summary>
-public interface ICommandUpdateAction
+public interface ICommandUpdateAction : IRestAction
 {
     /// <summary>
     /// Adds a global application command to the queue using a fluent builder configuration.
@@ -43,13 +44,4 @@ public interface ICommandUpdateAction
     /// </summary>
     /// <returns>The current <see cref="ICommandUpdateAction"/> instance for method chaining.</returns>
     ICommandUpdateAction DeletePrevious();
-
-    /// <summary>
-    /// Registers all queued commands with Discord.
-    /// By default, previously registered commands are loaded and merged (only changed/new commands are sent).
-    /// If <see cref="DeletePrevious"/> was called, existing commands are not loaded and only queued commands will remain.
-    /// </summary>
-    /// <param name="ct">Cancellation token to cancel the operation.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task RegisterAsync(CancellationToken ct = default);
 }

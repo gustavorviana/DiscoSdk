@@ -84,6 +84,18 @@ internal class InteractionClient(DiscordClient discordClient)
 	}
 
 	/// <summary>
+	/// Gets the original interaction response message.
+	/// </summary>
+	/// <param name="interaction">The interaction handle containing the interaction ID and token.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>The original message.</returns>
+	public async Task<Message> GetOriginalResponseAsync(InteractionHandle interaction, CancellationToken cancellationToken = default)
+	{
+		var path = $"webhooks/{discordClient.ApplicationId}/{interaction.Token}/messages/@original";
+		return await Client.SendJsonAsync<Message>(path, HttpMethod.Get, null, cancellationToken);
+	}
+
+	/// <summary>
 	/// Edits the original interaction response message.
 	/// </summary>
 	/// <param name="interaction">The interaction handle containing the interaction ID and token.</param>
@@ -94,8 +106,7 @@ internal class InteractionClient(DiscordClient discordClient)
 	{
 		ArgumentNullException.ThrowIfNull(request);
 
-		var id = interaction.IsDeferred ? discordClient.ApplicationId : interaction.Id.ToString();
-		var path = $"webhooks/{id}/{interaction.Token}/messages/@original";
+		var path = $"webhooks/{discordClient.ApplicationId}/{interaction.Token}/messages/@original";
 		return await Client.SendJsonAsync<Message>(path, HttpMethod.Patch, request, cancellationToken);
 	}
 
@@ -107,8 +118,7 @@ internal class InteractionClient(DiscordClient discordClient)
 	/// <returns>A task that represents the asynchronous operation.</returns>
 	public async Task DeleteOriginalResponseAsync(InteractionHandle interaction, CancellationToken cancellationToken = default)
 	{
-		var id = interaction.IsDeferred ? discordClient.ApplicationId : interaction.Id.ToString();
-		var path = $"webhooks/{id}/{interaction.Token}/messages/@original";
+		var path = $"webhooks/{discordClient.ApplicationId}/{interaction.Token}/messages/@original";
 		await Client.SendNoContentAsync(path, HttpMethod.Delete, cancellationToken);
 	}
 

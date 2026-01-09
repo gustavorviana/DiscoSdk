@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace DiscoSdk.Models.Channels;
 
 /// <summary>
-/// Represents a tag that can be used in a forum channel.
+/// Represents a tag that can be applied to threads in a forum or media channel.
 /// </summary>
 public class ForumTag
 {
@@ -11,7 +11,7 @@ public class ForumTag
 	/// Gets or sets the ID of the tag.
 	/// </summary>
 	[JsonPropertyName("id")]
-	public DiscordId Id { get; set; } = default!;
+	public DiscordId? Id { get; set; }
 
 	/// <summary>
 	/// Gets or sets the name of the tag (max 20 characters).
@@ -20,7 +20,7 @@ public class ForumTag
 	public string Name { get; set; } = default!;
 
 	/// <summary>
-	/// Gets or sets a value indicating whether this tag can only be added to or removed from threads by a member with the MANAGE_THREADS permission.
+	/// Gets or sets whether this tag can only be applied to or removed from threads by members with the MANAGE_THREADS permission.
 	/// </summary>
 	[JsonPropertyName("moderated")]
 	public bool Moderated { get; set; }

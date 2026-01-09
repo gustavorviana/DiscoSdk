@@ -23,20 +23,25 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
         if (commandName == "test")
         {
             var ephemeral = eventData.Interaction.Data?.Options?.FirstOrDefault(o => o.Name == "ephemeral")?.Value is bool b && b;
-
+            await eventData.DeferAsync();
             var msg = await eventData
-                .Reply("This is a test command response.")
+                .Reply($"This is a test command response in the {eventData.Interaction.Channel.Name} channel.")
                 .SetEphemeral(ephemeral)
-                .SendAsync(default);
+                .ExecuteAsync(default);
 
             await Task.Delay(1000);
-            await msg
-                .Edit()
-                .SetContent("This message will self-destruct in 2 seconds...")
-                .SendAsync();
+            const int TIMEOUT = 5;
+            for (int i = 0; i < TIMEOUT; i++)
+            {
+                await msg
+                    .Edit()
+                    .SetContent($"This message will self-destruct in {TIMEOUT - i} seconds...")
+                    .ExecuteAsync();
 
-                await Task.Delay(2000);
-                await msg.DeleteAsync();
+                await Task.Delay(1000);
+            }
+
+            await msg.Delete().ExecuteAsync();
 
             return;
         }
@@ -77,14 +82,14 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
                 .Reply($"✅ **Feedback received!**\n\nWaiting for your action...")
                 .SetEphemeral()
                 .AddActionRow(buttons)
-                .SendAsync();
+                .ExecuteAsync();
         }
         else
         {
             // Unknown command - still respond to avoid error
             await eventData.Reply(
                 $"Command '{commandName}' not found."
-            ).SendAsync();
+            ).ExecuteAsync();
         }
     }
 }

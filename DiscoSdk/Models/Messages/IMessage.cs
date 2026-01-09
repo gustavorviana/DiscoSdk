@@ -10,22 +10,17 @@ namespace DiscoSdk.Models.Messages;
 /// <summary>
 /// Represents a Discord message with visual properties and operations.
 /// </summary>
-public interface IMessage : IDeletable
+public interface IMessage : IDeletable, IMentionable
 {
 	/// <summary>
-	/// Gets the ID of the message.
+	/// Gets the channel the message was sent in.
 	/// </summary>
-	DiscordId Id { get; }
-
-	/// <summary>
-	/// Gets the ID of the channel the message was sent in.
-	/// </summary>
-	DiscordId ChannelId { get; }
+	ITextBasedChannel Channel { get; }
 
 	/// <summary>
 	/// Gets the ID of the guild the message was sent in.
 	/// </summary>
-	DiscordId? GuildId { get; }
+	IGuild? Guild { get; }
 
 	/// <summary>
 	/// Gets the author of the message.
@@ -152,18 +147,4 @@ public interface IMessage : IDeletable
 	/// <returns>A task that represents the asynchronous operation.</returns>
 	/// <exception cref="EphemeralMessageException">Thrown when attempting to unpin an ephemeral message.</exception>
 	Task UnpinAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets the channel this message was sent in.
-    /// </summary>
-    /// <returns>The channel this message was sent in.</returns>
-    /// <exception cref="NotSupportedException">This operation is not yet supported.</exception>
-    //Channel GetChannel();
-
-    /// <summary>
-    /// Gets the guild this message was sent in.
-    /// </summary>
-    /// <returns>The guild this message was sent in, or null if the message was sent in a DM.</returns>
-    /// <exception cref="NotSupportedException">This operation is not yet supported.</exception>
-    Guild? GetGuild();
 }

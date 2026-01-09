@@ -1,0 +1,13 @@
+namespace DiscoSdk.Models.Messages;
+
+/// <summary>
+/// Represents an attached file in a message edit operation.
+/// </summary>
+public class AttachedFile
+{
+	/// <summary>
+	/// Gets or sets the attachment ID.
+	/// </summary>
+	public DiscordId Id { get; set; }
+}
+

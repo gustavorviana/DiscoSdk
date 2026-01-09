@@ -1,4 +1,3 @@
-using DiscoSdk.Models;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Channels;

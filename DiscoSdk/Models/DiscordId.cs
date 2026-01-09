@@ -3,12 +3,50 @@ using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;
 
+/// <summary>
+/// Represents a Discord Snowflake ID (64-bit unsigned integer).
+/// All Discord IDs (users, channels, guilds, messages, roles, etc.) must use this type.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Discord IDs are 64-bit unsigned integers (snowflakes) that uniquely identify resources in Discord.
+/// This struct provides type safety and additional functionality for working with Discord IDs.
+/// </para>
+/// <para>
+/// <strong>Important:</strong> All methods and properties that accept or return Discord IDs must use <see cref="DiscordId"/>,
+/// not <see cref="ulong"/>, <see cref="string"/>, or any other type. This ensures type safety and consistency across the SDK.
+/// </para>
+/// <para>
+/// The struct includes:
+/// - Automatic JSON serialization/deserialization
+/// - Conversion to/from <see cref="ulong"/> when needed
+/// - Methods to extract creation timestamp and snowflake components
+/// - Comparison and equality operators
+/// </para>
+/// </remarks>
+/// <example>
+/// <code>
+/// // Creating a DiscordId from a string
+/// var userId = DiscordId.Parse("123456789012345678");
+/// 
+/// // Creating from ulong
+/// var channelId = (DiscordId)987654321098765432UL;
+/// 
+/// // Using in API calls
+/// await channel.SendMessage()
+///     .SetContent("Hello")
+///     .SendAsync();
+/// </code>
+/// </example>
 [JsonConverter(typeof(JsonConverters.DiscordIdConverter))]
 public readonly struct DiscordId(ulong value) : IEquatable<DiscordId>, IComparable<DiscordId>
 {
-    private const long DiscordEpoch = 1420070400000L; // 2015-01-01T00:00:00Z
+	private const long DiscordEpoch = 1420070400000L; // 2015-01-01T00:00:00Z
 
-    public bool Empty => value == 0;
+	/// <summary>
+	/// Gets a value indicating whether this Discord ID is empty (zero).
+	/// </summary>
+	public bool Empty => value == 0;
 
     public static DiscordId Parse(string value)
     {

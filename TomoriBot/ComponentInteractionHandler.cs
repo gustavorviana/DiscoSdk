@@ -25,21 +25,21 @@ internal class ComponentInteractionHandler : IComponentInteractionHandler
                 await eventData.Reply(
                     "✅ **Feedback approved!**\n\nThe feedback has been approved successfully."
                 ).SetEphemeral()
-                .SendAsync();
+                .ExecuteAsync();
                 break;
 
             case "reject_feedback":
                 await eventData.Reply(
                     "❌ **Feedback rejected.**\n\nThe feedback has been rejected."
                 ).SetEphemeral()
-                .SendAsync();
+                .ExecuteAsync();
                 break;
 
             case "view_feedback_details":
                 await eventData.Reply(
                     "📋 **Feedback Details**\n\nHere are the details of the feedback..."
                 ).SetEphemeral()
-                .SendAsync();
+                .ExecuteAsync();
                 break;
 
             default:
@@ -47,7 +47,7 @@ internal class ComponentInteractionHandler : IComponentInteractionHandler
                 await eventData.Reply(
                     $"Unknown component: {componentCustomId}"
                 ).SetEphemeral()
-                .SendAsync();
+                .ExecuteAsync();
                 break;
         }
     }

@@ -1,6 +1,8 @@
 using DiscoSdk.Events;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Logging;
+using DiscoSdk.Hosting.Wrappers;
+using DiscoSdk.Hosting.Wrappers.Channels;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
@@ -9,6 +11,7 @@ using DiscoSdk.Models.Interactions;
 using DiscoSdk.Models.Messages;
 using System.Reflection;
 using System.Text.Json;
+using System.Threading;
 
 namespace DiscoSdk.Hosting.Events;
 
@@ -331,11 +334,14 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
             var handle = new InteractionHandle(interaction.Id, interaction.Token);
 
             if (interaction.Type == InteractionType.ModalSubmit)
-            {
                 await client.InteractionClient.AcknowledgeAsync(handle, Rest.Clients.InteractionClient.AcknowledgeType.ModalSubmit, CancellationToken.None);
-            }
 
-            var eventData = new InteractionCreateEvent(client, handle, interaction);
+            var channel = interaction.ChannelId is not null ? await client.GetChannel<ITextBasedChannel>(interaction.ChannelId.Value).ExecuteAsync() : null;
+            var guild = channel is IGuildChannelBase guildChannel ? guildChannel.Guild : null;
+            var member = guild is not null && interaction.Member is not null ? new GuildMemberWrapper(interaction.Member, guild, client) : null;
+
+            var interactionWrapper = new InteractionWrapper(interaction, client, handle, channel, member);
+            var eventData = new InteractionCreateEvent(client, handle, interactionWrapper);
 
             try
             {
@@ -348,7 +354,6 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
                 if (interaction.Type == InteractionType.MessageComponent)
                     await ProcessAll<IComponentInteractionHandler>(eventData);
 
-                // Handle all interaction types with general handler
                 await ProcessAll<IInteractionCreateHandler>(eventData);
             }
             catch (Exception ex)
@@ -391,4 +396,3 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         }
     }
 }
-

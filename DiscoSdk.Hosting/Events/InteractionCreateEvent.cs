@@ -9,9 +9,9 @@ namespace DiscoSdk.Hosting.Events;
 /// <summary>
 /// Represents the event data for when an interaction is created (e.g., slash command).
 /// </summary>
-internal class InteractionCreateEvent(DiscordClient client, InteractionHandle handle, Interaction interaction) : IInteractionCreateEvent
+internal class InteractionCreateEvent(DiscordClient client, InteractionHandle handle, IInteraction interaction) : IInteractionCreateEvent
 {
-    public Interaction Interaction => interaction;
+    public IInteraction Interaction => interaction;
 
 
     public async Task DeferAsync(bool ephemeral = true, CancellationToken cancellationToken = default)
@@ -26,15 +26,12 @@ internal class InteractionCreateEvent(DiscordClient client, InteractionHandle ha
 
     public ISendMessageRestAction Reply(string? content = null)
     {
-        return new SendMessageRestAction(client, handle, Interaction.ChannelId!.Value, content);
+        return Interaction.Reply(content);
     }
 
-    public async Task ReplyModal(ModalData modalData, CancellationToken cancellationToken = default)
+    public IRestAction ReplyModal(ModalData modalData)
     {
-        if (handle.IsDeferred)
-            throw new InvalidOperationException("Cannot respond with modal after deferring the interaction.");
-
-        await client.InteractionClient.RespondWithModalAsync(handle, modalData, cancellationToken);
+        return Interaction.ReplyModal(modalData);
     }
 }
 

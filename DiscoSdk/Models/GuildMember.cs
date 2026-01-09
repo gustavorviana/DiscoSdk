@@ -73,8 +73,8 @@ public class GuildMember
     /// Gets or sets total permissions of the member in the channel, including overwrites.
     /// </summary>
     [JsonPropertyName("permissions")]
-    [JsonConverter(typeof(SafeStringConverter))]
-    public string? Permissions { get; set; }
+    [JsonConverter(typeof(DiscordPermissionConverter))]
+    public DiscordPermission Permissions { get; set; }
 
     /// <summary>
     /// Gets or sets when the user's timeout will expire.

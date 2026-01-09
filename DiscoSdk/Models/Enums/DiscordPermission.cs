@@ -246,4 +246,3 @@ public enum DiscordPermission : ulong
 	/// </summary>
 	SendVoiceMessages = 1UL << 46
 }
-

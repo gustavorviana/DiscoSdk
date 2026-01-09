@@ -5,16 +5,12 @@ namespace DiscoSdk.Models.Channels;
 /// <summary>
 /// Represents the base interface for all Discord channels.
 /// </summary>
-public interface IChannel
+public interface IChannel : IMentionable, IDeletable
 {
-	/// <summary>
-	/// Gets the unique identifier of the channel.
-	/// </summary>
-	DiscordId Id { get; }
+    string Name { get; }
 
-	/// <summary>
-	/// Gets the type of the channel.
-	/// </summary>
-	ChannelType Type { get; }
+    /// <summary>
+    /// Gets the type of the channel.
+    /// </summary>
+    ChannelType Type { get; }
 }
-

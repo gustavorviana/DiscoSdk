@@ -1,3 +1,4 @@
+using DiscoSdk.Models;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
@@ -72,5 +73,7 @@ public interface ISendMessageRestAction : IRestAction<IMessage>
     /// <param name="ephemeral">True if the message should be ephemeral, false otherwise.</param>
     /// <returns>The current <see cref="ISendMessageRestAction"/> instance.</returns>
     ISendMessageRestAction SetEphemeral(bool ephemeral = true);
-}
 
+
+    ISendMessageRestAction SetStickers(IEnumerable<DiscordId> stickers);
+}

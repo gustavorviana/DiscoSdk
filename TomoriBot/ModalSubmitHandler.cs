@@ -33,7 +33,7 @@ internal class ModalSubmitHandler : IModalSubmitHandler
             await eventData.Reply(
                 $"✅ **Feedback received!**\n\nThank you for your feedback: {feedback}"
             ).SetEphemeral()
-            .SendAsync();
+            .ExecuteAsync();
         }
     }
 }

@@ -1,6 +1,9 @@
 ﻿using DiscoSdk.Commands;
 using DiscoSdk.Events;
 using DiscoSdk.Logging;
+using DiscoSdk.Models;
+using DiscoSdk.Models.Channels;
+using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk;
 
@@ -24,4 +27,18 @@ public interface IDiscordClient
     Task WaitReadyAsync(TimeSpan timeout);
     Task WaitShutdownAsync(CancellationToken ct = default);
     Task WaitShutdownAsync(TimeSpan timeout);
+
+    /// <summary>
+    /// Gets a channel by its ID from the Discord API.
+    /// </summary>
+    /// <param name="channelId">The ID of the channel to retrieve.</param>
+    /// <returns>The channel as its most specific type, or null if not found.</returns>
+    IRestAction<IChannel?> GetChannel(DiscordId channelId);
+
+    /// <summary>
+    /// Gets a channel by its ID from the Discord API.
+    /// </summary>
+    /// <param name="channelId">The ID of the channel to retrieve.</param>
+    /// <returns>The channel as its most specific type, or null if not found.</returns>
+    IRestAction<TChannel?> GetChannel<TChannel>(DiscordId channelId) where TChannel : IChannel;
 }

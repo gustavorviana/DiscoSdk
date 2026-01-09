@@ -35,7 +35,7 @@ await dsc.UpdateCommands()
         .WithType(ApplicationCommandType.ChatInput)
     )
     .DeletePrevious()
-    .RegisterAsync();
+    .ExecuteAsync();
 
 // Register message handler (for regular messages)
 dsc.EventRegistry.Add(new MsgTest());

@@ -32,4 +32,3 @@ public sealed class InsufficientPermissionException : UnauthorizedAccessExceptio
 		return new InsufficientPermissionException($"Cannot {operation}. The bot requires the {requiredPermission} permission.", operation);
 	}
 }
-

@@ -1,7 +1,6 @@
 using DiscoSdk.Models;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Requests;
-using System.Linq;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
 
@@ -379,6 +378,74 @@ internal class MessageClient(IDiscordRestClientBase client)
 
 		var path = $"channels/{channelId}/pins/{messageId}";
 		return client.SendNoContentAsync(path, HttpMethod.Delete, cancellationToken);
+	}
+
+	/// <summary>
+	/// Gets all pinned messages in the specified channel.
+	/// </summary>
+	/// <param name="channelId">The ID of the channel to get pinned messages from.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>An array of pinned messages.</returns>
+	public Task<Message[]> GetPinnedMessagesAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		var path = $"channels/{channelId}/pins";
+		return client.SendJsonAsync<Message[]>(path, HttpMethod.Get, null, cancellationToken);
+	}
+
+	/// <summary>
+	/// Ends a poll by its message ID.
+	/// </summary>
+	/// <param name="channelId">The ID of the channel containing the poll message.</param>
+	/// <param name="messageId">The ID of the message containing the poll.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>The updated message with the poll ended.</returns>
+	public Task<Message> EndPollAsync(DiscordId channelId, DiscordId messageId, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		if (messageId == default)
+			throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
+
+		var path = $"channels/{channelId}/polls/{messageId}/expire";
+		return client.SendJsonAsync<Message>(path, HttpMethod.Post, null, cancellationToken);
+	}
+
+	/// <summary>
+	/// Gets poll voters by message ID and answer ID.
+	/// </summary>
+	/// <param name="channelId">The ID of the channel containing the poll message.</param>
+	/// <param name="messageId">The ID of the message containing the poll.</param>
+	/// <param name="answerId">The ID of the poll answer.</param>
+	/// <param name="after">Get voters after this user ID.</param>
+	/// <param name="limit">Maximum number of voters to return (1-100, default 25).</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>An array of users who voted for the specified answer.</returns>
+	public Task<User[]> GetPollVotersAsync(DiscordId channelId, DiscordId messageId, ulong answerId, string? after = null, int? limit = null, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		if (messageId == default)
+			throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
+
+		if (limit.HasValue && (limit.Value < 1 || limit.Value > 100))
+			throw new ArgumentOutOfRangeException(nameof(limit), "Limit must be between 1 and 100.");
+
+		var queryParams = new List<string>();
+
+		if (after != null)
+			queryParams.Add($"after={Uri.EscapeDataString(after)}");
+
+		if (limit.HasValue)
+			queryParams.Add($"limit={limit.Value}");
+
+		var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
+		var path = $"channels/{channelId}/polls/{messageId}/answers/{answerId}{query}";
+		return client.SendJsonAsync<User[]>(path, HttpMethod.Get, null, cancellationToken);
 	}
 }
 

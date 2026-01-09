@@ -12,9 +12,9 @@ public interface IInteractionCreateEvent
     /// <summary>
     /// Gets or sets the interaction that was created.
     /// </summary>
-    Interaction Interaction { get; }
+    IInteraction Interaction { get; }
 
     Task DeferAsync(bool ephemeral = true, CancellationToken cancellationToken = default);
     ISendMessageRestAction Reply(string? content = null);
-    Task ReplyModal(ModalData modalData, CancellationToken cancellationToken = default);
+    IRestAction ReplyModal(ModalData modalData);
 }

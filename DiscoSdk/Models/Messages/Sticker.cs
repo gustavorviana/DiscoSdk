@@ -6,13 +6,15 @@ namespace DiscoSdk.Models.Messages;
 /// <summary>
 /// Represents a sticker.
 /// </summary>
-public class Sticker
+public class Sticker : IWithDiscordIdentity
 {
     /// <summary>
     /// Gets or sets the ID of the sticker.
     /// </summary>
     [JsonPropertyName("id")]
     public DiscordId Id { get; set; } = default!;
+
+    public DateTimeOffset CreatedAt => Id.CreatedAt;
 
     /// <summary>
     /// Gets or sets the ID of the pack the sticker is from.

@@ -1,16 +1,9 @@
-using DiscoSdk.Rest.Actions;
-
 namespace DiscoSdk.Models.Channels;
 
 /// <summary>
-/// Represents a Discord guild voice channel.
+/// Represents a voice channel in a Discord guild.
 /// </summary>
-public interface IGuildVoiceChannel : IGuildChannel, IVoiceBasedChannel
+public interface IGuildVoiceChannel : IVideoChannel
 {
-	/// <summary>
-	/// Creates a builder for editing this channel.
-	/// </summary>
-	/// <returns>An <see cref="IEditGuildVoiceChannelRestAction"/> instance for editing the channel.</returns>
-	IEditGuildVoiceChannelRestAction Edit();
 }
 

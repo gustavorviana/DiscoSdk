@@ -1,7 +1,8 @@
 using DiscoSdk.Hosting.Events;
-using DiscoSdk.Hosting.Messages;
 using DiscoSdk.Hosting.Rest.Models;
+using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
+using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
@@ -15,18 +16,19 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// Implementation of <see cref="ISendMessageRestAction"/> for sending messages to Discord.
 /// Supports both regular channel messages and interaction responses.
 /// </summary>
-internal class SendMessageRestAction : ISendMessageRestAction
+internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAction
 {
     private readonly InteractionHandle? _interactionHandle;
     private readonly List<MessageComponent> _components = [];
     private MessageReference? _messageReference;
+    private readonly ITextBasedChannel _channel;
     private AllowedMentions? _allowedMentions;
     private readonly List<Embed> _embeds = [];
     private readonly DiscordClient _client;
-    private readonly DiscordId _channelId;
     private string? _content;
     private bool _ephemeral;
     private bool _tts;
+    private List<DiscordId>? _stickers;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SendMessageRestAction"/> class for regular channel messages.
@@ -34,11 +36,11 @@ internal class SendMessageRestAction : ISendMessageRestAction
     /// <param name="client">The REST client base to use for requests.</param>
     /// <param name="channelId">The ID of the channel to send the message to.</param>
     /// <param name="content">The initial message content.</param>
-    public SendMessageRestAction(DiscordClient client, InteractionHandle? interactionHandle, DiscordId channelId, string? content)
+    public SendMessageRestAction(DiscordClient client, InteractionHandle? interactionHandle, ITextBasedChannel channel, string? content)
     {
-        _channelId = channelId == default ? throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId)) : channelId;
-        _interactionHandle = interactionHandle;
+        _channel = channel ?? throw new ArgumentException(nameof(channel));
         _client = client ?? throw new ArgumentNullException(nameof(client));
+        _interactionHandle = interactionHandle;
         _content = content;
     }
 
@@ -174,7 +176,14 @@ internal class SendMessageRestAction : ISendMessageRestAction
     }
 
     /// <inheritdoc />
-    public Task<IMessage> SendAsync(CancellationToken cancellationToken = default)
+    public ISendMessageRestAction SetStickers(IEnumerable<DiscordId> stickers)
+    {
+        _stickers = stickers?.ToList();
+        return this;
+    }
+
+    /// <inheritdoc />
+    public override Task<IMessage> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(_content) && _embeds.Count == 0)
             throw new InvalidOperationException("Message must have either content or at least one embed.");
@@ -213,11 +222,12 @@ internal class SendMessageRestAction : ISendMessageRestAction
             Components = [.. _components],
             MessageReference = _messageReference,
             AllowedMentions = _allowedMentions,
-            Flags = _ephemeral ? MessageFlags.Ephemeral : null
+            Flags = _ephemeral ? MessageFlags.Ephemeral : null,
+            StickerIds = _stickers?.Select(s => s.ToString()).ToArray()
         };
 
-        var message = await _client.MessageClient.CreateAsync(_channelId, request, cancellationToken);
-        return new MessageWrapper(message, _client, _interactionHandle);
+        var message = await _client.MessageClient.CreateAsync(_channel.Id, request, cancellationToken);
+        return new MessageWrapper(_channel, message, _client, _interactionHandle);
     }
 
     private async Task<IMessage> SendInteractionResponseAsync(CancellationToken cancellationToken)
@@ -235,7 +245,8 @@ internal class SendMessageRestAction : ISendMessageRestAction
         };
 
         await _client.InteractionClient.RespondAsync(_interactionHandle!, callbackData, cancellationToken);
-        return null!;
+        var message = await _client.InteractionClient.GetOriginalResponseAsync(_interactionHandle!, cancellationToken);
+        return new MessageWrapper(_channel, message, _client, EnsureInteractionHandle());
     }
 
     private async Task<IMessage> SendFollowUpAsync(CancellationToken cancellationToken)
@@ -253,7 +264,13 @@ internal class SendMessageRestAction : ISendMessageRestAction
             Flags = flags != MessageFlags.None ? flags : null
         }, cancellationToken);
 
-        return null!;
+        var message = await _client.InteractionClient.GetOriginalResponseAsync(_interactionHandle!, cancellationToken);
+        return new MessageWrapper(_channel, message, _client, EnsureInteractionHandle());
+    }
+
+    private InteractionHandle? EnsureInteractionHandle()
+    {
+        return _interactionHandle is not null && (_ephemeral || _interactionHandle!.IsDeferred) ? _interactionHandle : null;
     }
 
     private IInteractionComponent[] EnsureActionRows()

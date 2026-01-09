@@ -1,15 +1,17 @@
 ﻿using DiscoSdk.Commands;
 using DiscoSdk.Events;
-using DiscoSdk.Hosting.Commands;
 using DiscoSdk.Hosting.Events;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Payloads.Models;
-using DiscoSdk.Hosting.Guilds;
 using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Hosting.Rest;
+using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Rest.Clients;
+using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
+using DiscoSdk.Models.Channels;
+using DiscoSdk.Rest.Actions;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting
@@ -75,6 +77,26 @@ namespace DiscoSdk.Hosting
         internal MessageClient MessageClient { get; }
 
         /// <summary>
+        /// Gets the channel client for channel operations.
+        /// </summary>
+        internal ChannelClient ChannelClient { get; }
+
+        /// <summary>
+        /// Gets the invite client for invite operations.
+        /// </summary>
+        internal InviteClient InviteClient { get; }
+
+        /// <summary>
+        /// Gets the role client for role operations.
+        /// </summary>
+        internal RoleClient RoleClient { get; }
+
+        /// <summary>
+        /// Gets the guild client for guild operations.
+        /// </summary>
+        internal GuildClient GuildClient { get; }
+
+        /// <summary>
         /// Creates a new command update action that allows queuing commands and registering them all at once.
         /// </summary>
         /// <returns>A new <see cref="CommandUpdateAction"/> instance.</returns>
@@ -121,7 +143,11 @@ namespace DiscoSdk.Hosting
             _client = new DiscordRestClientBase(config.Token, new Uri("https://discord.com/api/v10"), jsonOptions);
             InteractionClient = new InteractionClient(this);
             MessageClient = new MessageClient(_client);
-            _guildManager = new GuildManager(_client, Logger);
+            ChannelClient = new ChannelClient(_client, MessageClient);
+            InviteClient = new InviteClient(_client);
+            RoleClient = new RoleClient(_client);
+            GuildClient = new GuildClient(_client);
+            _guildManager = new GuildManager(this, Logger);
 
             var maxConcurrency = config.EventProcessorMaxConcurrency > 0
                 ? config.EventProcessorMaxConcurrency
@@ -358,6 +384,39 @@ namespace DiscoSdk.Hosting
                 throw new ArgumentOutOfRangeException(nameof(shardId), "Shard ID is out of range.");
 
             return _shards[shardId];
+        }
+
+        public IRestAction<TChannel?> GetChannel<TChannel>(DiscordId channelId) where TChannel : IChannel
+        {
+            return RestAction<TChannel?>.Create(async cancellationToken =>
+            {
+                var channel = await GetChannel(channelId).ExecuteAsync(cancellationToken);
+                if (channel is not TChannel tChannel)
+                    throw new InvalidCastException($"Channel '{channelId}' is not a '{typeof(TChannel).Name}'.");
+
+                return tChannel;
+            });
+        }
+
+        /// <inheritdoc />
+        public IRestAction<IChannel?> GetChannel(DiscordId channelId)
+        {
+            if (channelId == default)
+                throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+            return RestAction<IChannel?>.Create(async cancellationToken =>
+            {
+                var channel = await ChannelClient.GetAsync(channelId, cancellationToken);
+                if (channel == null)
+                    return null;
+
+                // Get the guild if the channel belongs to a guild
+                IGuild? guild = null;
+                if (channel.GuildId.HasValue && !channel.GuildId.Value.Empty)
+                    guild = await _guildManager.GetAsync(channel.GuildId.Value, cancellationToken);
+
+                return Wrappers.Channels.ChannelWrapper.ToSpecificType(channel, guild, this);
+            });
         }
     }
 }

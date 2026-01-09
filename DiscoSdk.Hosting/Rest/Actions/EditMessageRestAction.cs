@@ -1,6 +1,7 @@
 using DiscoSdk.Hosting.Events;
-using DiscoSdk.Hosting.Messages;
+using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
+using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
@@ -13,10 +14,10 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <summary>
 /// Implementation of <see cref="IEditMessageRestAction"/> for editing messages in Discord.
 /// </summary>
-internal class EditMessageRestAction : IEditMessageRestAction
+internal class EditMessageRestAction : RestAction<IMessage>, IEditMessageRestAction
 {
     private readonly DiscordClient _client;
-    private readonly DiscordId _channelId;
+    private readonly ITextBasedChannel _channel;
     private readonly DiscordId _messageId;
     private string? _content;
     private readonly List<Embed> _embeds = [];
@@ -31,12 +32,12 @@ internal class EditMessageRestAction : IEditMessageRestAction
     /// <param name="client">The Discord client.</param>
     /// <param name="channelId">The ID of the channel containing the message.</param>
     /// <param name="messageId">The ID of the message to edit.</param>
-    public EditMessageRestAction(DiscordClient client, DiscordId channelId, DiscordId messageId, InteractionHandle? interactionHandle)
+    public EditMessageRestAction(DiscordClient client, ITextBasedChannel channel, DiscordId messageId, InteractionHandle? interactionHandle)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _interactionHandle = interactionHandle;
-        _channelId = channelId;
         _messageId = messageId;
+        _channel = channel;
 
     }
 
@@ -124,7 +125,7 @@ internal class EditMessageRestAction : IEditMessageRestAction
     }
 
     /// <inheritdoc />
-    public async Task<IMessage> SendAsync(CancellationToken cancellationToken = default)
+    public override async Task<IMessage> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(_content) && _embeds.Count == 0)
             throw new InvalidOperationException("Message must have either content or at least one embed.");
@@ -140,11 +141,11 @@ internal class EditMessageRestAction : IEditMessageRestAction
 
         Message message;
         if (_interactionHandle == null)
-            message = await _client.MessageClient.EditAsync(_channelId, _messageId, request, cancellationToken);
+            message = await _client.MessageClient.EditAsync(_channel.Id, _messageId, request, cancellationToken);
         else
             message = await _client.InteractionClient.EditOriginalResponseAsync(_interactionHandle, request, cancellationToken);
 
-        return new MessageWrapper(message, _client, _interactionHandle);
+        return new MessageWrapper(_channel, message, _client, _interactionHandle);
     }
 }
 

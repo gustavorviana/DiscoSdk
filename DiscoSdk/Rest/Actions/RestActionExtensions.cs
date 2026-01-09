@@ -11,10 +11,10 @@ public static class RestActionExtensions
     /// </summary>
     /// <returns>The result of the operation.</returns>
     /// <remarks>
-    /// Use this method with caution as it blocks the thread. Prefer <see cref="ExecuteAsync"/> when possible.
+    /// Use this method with caution as it blocks the thread. Prefer <see cref="Execute"/> when possible.
     /// </remarks>
-    public static T Send<T>(this IRestAction<T> action)
+    public static T Execute<T>(this IRestAction<T> action)
     {
-        return action.SendAsync().GetAwaiter().GetResult();
+        return action.ExecuteAsync().GetAwaiter().GetResult();
     }
 }
