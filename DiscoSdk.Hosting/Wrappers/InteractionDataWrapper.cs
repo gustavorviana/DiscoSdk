@@ -39,7 +39,7 @@ internal class InteractionDataWrapper(InteractionData data, ITextBasedChannel ch
             IMember[] members = [];
             IUser[] users = [];
 
-            var channels = data.Resolved.Channels?.Values.Select(x => new ChannelUnionWrapper(x, guild, client))?.ToArray() ?? [];
+            var channels = data.Resolved.Channels?.Values.Select(x => new GuildChannelUnionWrapper(x, guild, client))?.ToArray() ?? [];
 
             if (guild is not null)
             {

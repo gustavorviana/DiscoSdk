@@ -4,6 +4,8 @@ using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
+using DiscoSdk.Utils;
+using Channel = DiscoSdk.Models.Channels.Channel;
 
 namespace DiscoSdk.Hosting.Wrappers;
 
@@ -38,7 +40,7 @@ internal class GuildWrapper : IGuild
 
     public DiscordId? OwnerId => _guild.OwnerId;
 
-    public int? Permissions => _guild.Permissions;
+    public DiscordPermission Permissions => (DiscordPermission)(_guild.Permissions ?? 0);
 
     public string? Region => _guild.Region;
 
@@ -121,36 +123,129 @@ internal class GuildWrapper : IGuild
         return new MemberPaginationAction(_client, this);
     }
 
+    public IRestAction<IMember?> GetMember(DiscordId userId)
+    {
+        return RestAction<IMember?>.Create(async cancellationToken =>
+        {
+            var member = await _client.GuildClient.GetMemberAsync(_guild.Id, userId, cancellationToken);
+            if (member == null)
+                return null;
+
+            return new GuildMemberWrapper(member, this, _client);
+        });
+    }
+
     public IBanPaginationAction GetBans() => throw new NotSupportedException();
+
+    public IRestAction<Ban?> GetBan(DiscordId userId)
+    {
+        return RestAction<Ban?>.Create(async cancellationToken =>
+        {
+            var ban = await _client.GuildClient.GetBanAsync(_guild.Id, userId, cancellationToken);
+            return ban;
+        });
+    }
 
     public IAuditLogPaginationAction GetAuditLogs() => throw new NotSupportedException();
 
-    public IRestAction<IGuildChannel?> GetChannel(DiscordId channelId)
+    public IRestAction<IGuildChannelUnion?> GetChannel(DiscordId channelId)
     {
-        return RestAction<IGuildChannel?>.Create(async cancellationToken =>
+        return RestAction<IGuildChannelUnion?>.Create(async cancellationToken =>
         {
-            var channel = await _client.ChannelClient.GetAsync(channelId, cancellationToken);
+            var channel = await GetRawChannel(channelId, cancellationToken);
             if (channel == null)
                 return null;
 
             if (channel.GuildId != _guild.Id)
                 return null;
 
-            return ChannelWrapper.ToSpecificType(channel, this, _client) as IGuildChannel;
+            return new GuildChannelUnionWrapper(channel, this, _client);
         });
     }
 
-    public IRestAction<IReadOnlyList<IGuildChannel>> GetChannels()
+    public IRestAction<IGuildVoiceChannel?> GetAfkChannel()
     {
-        return RestAction<IReadOnlyList<IGuildChannel>>.Create(async cancellationToken =>
+        if (!AfkChannelId.HasValue)
+            return RestAction<IGuildVoiceChannel?>.FromResult(null);
+
+        return RestAction<IGuildVoiceChannel?>.Create(async cancellationToken =>
+        {
+            var channel = await GetRawChannel(AfkChannelId.Value, cancellationToken);
+            if (channel == null)
+                return null;
+
+            if (channel.GuildId != _guild.Id)
+                return null;
+
+            return new GuildVoiceChannelWrapper(channel, this, _client);
+        });
+    }
+
+    public IRestAction<IGuildTextChannel?> GetSystemChannel()
+    {
+        return GetChannelAction(SystemChannelId);
+    }
+
+    public IRestAction<IGuildTextChannel?> GetRulesChannel()
+    {
+        return GetChannelAction(RulesChannelId);
+    }
+
+    public IRestAction<IGuildTextChannel?> GetPublicUpdatesChannel()
+    {
+        return GetChannelAction(PublicUpdatesChannelId);
+    }
+
+    private IRestAction<IGuildTextChannel?> GetChannelAction(DiscordId? channelId)
+    {
+        if (channelId == null)
+            return RestAction<IGuildTextChannel?>.FromResult(null);
+
+        return RestAction<IGuildTextChannel?>.Create(async cancellationToken =>
+        {
+            var channel = await GetRawChannel(channelId.Value, cancellationToken);
+            if (channel == null)
+                return null;
+
+            return new GuildTextChannelWrapper(channel, this, _client);
+        });
+    }
+
+    private async Task<Channel> GetRawChannel(DiscordId channelId, CancellationToken cancellationToken)
+    {
+        return await _client.ChannelClient.GetAsync(channelId, cancellationToken);
+    }
+
+    public IRestAction<IReadOnlyList<IGuildChannelUnion>> GetChannels()
+    {
+        return RestAction<IReadOnlyList<IGuildChannelUnion>>.Create(async cancellationToken =>
         {
             var channels = await _client.GuildClient.GetChannelsAsync(_guild.Id, cancellationToken);
-            return channels
+
+            return [.. channels.Select(ch => new GuildChannelUnionWrapper(ch, this, _client))];
+        });
+    }
+
+    public IRestAction<IReadOnlyList<IGuildTextChannel>> GetTextChannels()
+    {
+        return RestAction<IReadOnlyList<IGuildTextChannel>>.Create(async cancellationToken =>
+        {
+            var channels = await _client.GuildClient.GetChannelsAsync(_guild.Id, cancellationToken);
+            return [..channels
+                .Where(x => ChannelTypeUtils.IsText(x.Type))
                 .Select(ch => ChannelWrapper.ToSpecificType(ch, this, _client))
-                .Where(c => c is IGuildChannel)
-                .Cast<IGuildChannel>()
-                .ToList()
-                .AsReadOnly();
+                .OfType<IGuildTextChannel>()];
+        });
+    }
+
+    public IRestAction<IReadOnlyList<IGuildVoiceChannel>> GetVoiceChannels()
+    {
+        return RestAction<IReadOnlyList<IGuildVoiceChannel>>.Create(async cancellationToken =>
+        {
+            var channels = await _client.GuildClient.GetChannelsAsync(_guild.Id, cancellationToken);
+            return [..channels
+                .Where(x => ChannelTypeUtils.IsVoice(x.Type))
+                .Select(ch => new GuildVoiceChannelWrapper(ch, this, _client))];
         });
     }
 

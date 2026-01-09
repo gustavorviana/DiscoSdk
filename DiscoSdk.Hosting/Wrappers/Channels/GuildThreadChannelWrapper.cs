@@ -1,8 +1,11 @@
 using DiscoSdk.Hosting.Rest.Actions;
+using DiscoSdk.Hosting.Utils;
+using DiscoSdk.Hosting.Wrappers.Managers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
+using System;
 
 namespace DiscoSdk.Hosting.Wrappers.Channels;
 
@@ -11,6 +14,8 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 /// </summary>
 internal class GuildThreadChannelWrapper : TextBasedChannelWrapper, IGuildThreadChannel
 {
+    public int Position => _channel.Position ?? 0;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="GuildThreadChannelWrapper"/> class.
     /// </summary>
@@ -19,10 +24,8 @@ internal class GuildThreadChannelWrapper : TextBasedChannelWrapper, IGuildThread
     public GuildThreadChannelWrapper(Channel channel, IGuild guild, DiscordClient client)
         : base(channel, client)
     {
-        _guild = guild;
+        Guild = guild;
     }
-
-    private readonly IGuild _guild;
 
     public int? MessageCount => _channel.MessageCount;
 
@@ -33,6 +36,10 @@ internal class GuildThreadChannelWrapper : TextBasedChannelWrapper, IGuildThread
     public DiscordId? OwnerId => _channel.OwnerId;
     public ThreadMetadata? Metadata => _channel.ThreadMetadata;
     public DiscordId[]? AppliedTags => _channel.AppliedTags;
+
+    public IGuild Guild { get; }
+
+    public bool Nsfw => _channel.Nsfw == true;
 
     public IRestAction<IGuildThreadChannel> JoinThread()
     {
@@ -120,7 +127,42 @@ internal class GuildThreadChannelWrapper : TextBasedChannelWrapper, IGuildThread
                 return null;
 
             var parent = await _client.ChannelClient.GetAsync(_channel.ParentId.Value, cancellationToken);
-            return new ChannelUnionWrapper(parent, _guild, _client);
+            return new GuildChannelUnionWrapper(parent, Guild, _client);
         });
+    }
+
+    public IRestAction<IMember[]> GetMembers()
+    {
+        return RestAction<IMember[]>.Create(async cancellationToken =>
+        {
+            var guildMembers = await Guild.GetMembers().ExecuteAsync(cancellationToken);
+            var permissionContainer = GetPermissionContainer();
+
+            return [.. guildMembers.Where(x => GetPermission(x).HasFlag(DiscordPermission.ViewChannel))];
+        });
+    }
+
+    public ICreateInviteAction CreateInvite()
+    {
+        return new CreateInviteAction(_client, this);
+    }
+
+    public IRestAction<IReadOnlyList<IInvite>> RetrieveInvites()
+    {
+        return RestAction<IReadOnlyList<IInvite>>.Create(async cancellationToken =>
+        {
+            var invites = await _client.InviteClient.GetChannelInvitesAsync(_channel.Id, cancellationToken);
+            return invites.Select(invite => new InviteWrapper(invite, this, _client)).Cast<IInvite>().ToList().AsReadOnly();
+        });
+    }
+
+    public DiscordPermission GetPermission(IMember member)
+    {
+        return new ChannelPermissionCalculator(Guild, GetPermissionContainer()).GetPermission(member);
+    }
+
+    public IThreadChannelManager GetManager()
+    {
+        return new ThreadChannelManagerWrapper(Id, _client.ChannelClient);
     }
 }

@@ -1,6 +1,9 @@
+using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Rest.Actions;
+using DiscoSdk.Hosting.Wrappers.Managers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Rest.Actions;
 
@@ -26,13 +29,36 @@ internal class GuildNewsChannelWrapper(Channel channel, IGuild guild, DiscordCli
         });
     }
 
-    public IRestAction<FollowedChannel> FollowToChannel(DiscordId targetChannelId)
+    public IRestAction<FollowedChannel> Follow(DiscordId targetChannelId)
     {
         return RestAction<FollowedChannel>.Create(async cancellationToken =>
         {
-            var path = $"channels/{Id}/followers";
-            var request = new { webhook_channel_id = targetChannelId.ToString() };
-            return await _client._client.SendJsonAsync<FollowedChannel>(path, HttpMethod.Post, request, cancellationToken);
+            return await _client.ChannelClient.FollowAsync(Id, targetChannelId, cancellationToken);
         });
+    }
+
+    public IRestAction<FollowedChannel> Follow(IGuildTextChannel targetChannel)
+    {
+        ArgumentNullException.ThrowIfNull(targetChannel);
+
+        return RestAction<FollowedChannel>.Create(async cancellationToken =>
+        {
+            var selfMember = await Guild.GetMember(DiscordId.Parse(_client.User.Id)).ExecuteAsync(cancellationToken) 
+            ?? throw new InvalidOperationException("Cannot get self member from guild.");
+
+            var permission = targetChannel.GetPermission(selfMember);
+            if (!permission.HasFlag(DiscordPermission.ViewChannel))
+                throw new InsufficientPermissionException("Cannot access target channel.", "VIEW_CHANNEL");
+
+            if (!permission.HasFlag(DiscordPermission.ManageWebhooks))
+                throw InsufficientPermissionException.Operation("MANAGE_WEBHOOKS", "follow announcement channel");
+
+            return await Follow(targetChannel.Id).ExecuteAsync(cancellationToken);
+        });
+    }
+
+    public INewsChannelManager GetManager()
+    {
+        return new NewsChannelManagerWrapper(Id, _client.ChannelClient);
     }
 }

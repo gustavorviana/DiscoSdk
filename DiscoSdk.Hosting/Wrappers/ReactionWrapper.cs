@@ -51,7 +51,7 @@ internal class ReactionWrapper : IReaction
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("remove reactions from");
 
-        return new RestAction(cancellationToken =>
+        return RestAction.Create(cancellationToken =>
         {
             if (Me)
                 return _client.MessageClient.RemoveReactionAsync(_message.Channel.Id, _message.Id, Emoji.ToString()!, cancellationToken);

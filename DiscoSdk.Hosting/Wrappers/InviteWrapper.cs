@@ -13,7 +13,7 @@ namespace DiscoSdk.Hosting.Wrappers;
 /// </remarks>
 /// <param name="invite">The invite instance to wrap.</param>
 /// <param name="client">The Discord client for performing operations.</param>
-internal class InviteWrapper(Invite invite, IGuildChannel channel, DiscordClient client) : IInvite
+internal class InviteWrapper(Invite invite, IGuildChannelBase channel, DiscordClient client) : IInvite
 {
     private readonly Invite _invite = invite ?? throw new ArgumentNullException(nameof(invite));
     private readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
@@ -100,6 +100,6 @@ internal class InviteWrapper(Invite invite, IGuildChannel channel, DiscordClient
     /// <inheritdoc />
     public IRestAction Delete()
     {
-        return new RestAction(cancellationToken => _client.InviteClient.DeleteAsync(Code, cancellationToken));
+        return RestAction.Create(cancellationToken => _client.InviteClient.DeleteAsync(Code, cancellationToken));
     }
 }

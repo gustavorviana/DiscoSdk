@@ -29,7 +29,7 @@ public interface IGuild
 
     DiscordId? OwnerId { get; }
 
-    int? Permissions { get; }
+    DiscordPermission Permissions { get; }
 
     string? Region { get; }
 
@@ -190,6 +190,17 @@ public interface IGuild
     IMemberPaginationAction GetMembers();
 
     /// <summary>
+    /// Gets a REST action to retrieve a member by their user ID in this guild.
+    /// </summary>
+    /// <param name="userId">The ID of the user to retrieve.</param>
+    /// <returns>A REST action that can be executed to retrieve the member.</returns>
+    /// <remarks>
+    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+    /// Returns null if the user is not a member of this guild.
+    /// </remarks>
+    IRestAction<IMember?> GetMember(DiscordId userId);
+
+    /// <summary>
     /// Creates a REST action to get banned members of this guild with pagination.
     /// </summary>
     /// <returns>A REST action that can be configured and executed to retrieve banned members.</returns>
@@ -197,6 +208,17 @@ public interface IGuild
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
     IBanPaginationAction GetBans();
+
+    /// <summary>
+    /// Gets a REST action to retrieve a ban by user ID in this guild.
+    /// </summary>
+    /// <param name="userId">The ID of the user to retrieve the ban for.</param>
+    /// <returns>A REST action that can be executed to retrieve the ban.</returns>
+    /// <remarks>
+    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+    /// Returns null if the user is not banned from this guild.
+    /// </remarks>
+    IRestAction<Ban?> GetBan(DiscordId userId);
 
     /// <summary>
     /// Creates a REST action to get audit logs of this guild with pagination.
@@ -215,7 +237,47 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IRestAction<IGuildChannel?> GetChannel(DiscordId channelId);
+    IRestAction<IGuildChannelUnion?> GetChannel(DiscordId channelId);
+
+    /// <summary>
+    /// Gets a REST action to retrieve the AFK channel of this guild.
+    /// </summary>
+    /// <returns>A REST action that can be executed to retrieve the AFK channel.</returns>
+    /// <remarks>
+    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+    /// Returns null if no AFK channel is configured.
+    /// </remarks>
+    IRestAction<IGuildVoiceChannel?> GetAfkChannel();
+
+    /// <summary>
+    /// Gets a REST action to retrieve the system channel of this guild.
+    /// </summary>
+    /// <returns>A REST action that can be executed to retrieve the system channel.</returns>
+    /// <remarks>
+    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+    /// Returns null if no system channel is configured.
+    /// </remarks>
+    IRestAction<IGuildTextChannel?> GetSystemChannel();
+
+    /// <summary>
+    /// Gets a REST action to retrieve the rules channel of this guild.
+    /// </summary>
+    /// <returns>A REST action that can be executed to retrieve the rules channel.</returns>
+    /// <remarks>
+    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+    /// Returns null if no rules channel is configured.
+    /// </remarks>
+    IRestAction<IGuildTextChannel?> GetRulesChannel();
+
+    /// <summary>
+    /// Gets a REST action to retrieve the public updates channel of this guild.
+    /// </summary>
+    /// <returns>A REST action that can be executed to retrieve the public updates channel.</returns>
+    /// <remarks>
+    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+    /// Returns null if no public updates channel is configured.
+    /// </remarks>
+    IRestAction<IGuildTextChannel?> GetPublicUpdatesChannel();
 
     /// <summary>
     /// Gets a REST action to retrieve all channels in this guild.
@@ -224,7 +286,25 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IRestAction<IReadOnlyList<IGuildChannel>> GetChannels();
+    IRestAction<IReadOnlyList<IGuildChannelUnion>> GetChannels();
+
+    /// <summary>
+    /// Gets a REST action to retrieve all text channels in this guild.
+    /// </summary>
+    /// <returns>A REST action that can be executed to retrieve text channels.</returns>
+    /// <remarks>
+    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+    /// </remarks>
+    IRestAction<IReadOnlyList<IGuildTextChannel>> GetTextChannels();
+
+    /// <summary>
+    /// Gets a REST action to retrieve all voice channels in this guild.
+    /// </summary>
+    /// <returns>A REST action that can be executed to retrieve voice channels.</returns>
+    /// <remarks>
+    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+    /// </remarks>
+    IRestAction<IReadOnlyList<IGuildVoiceChannel>> GetVoiceChannels();
 
     /// <summary>
     /// Gets a REST action to retrieve all roles in this guild.

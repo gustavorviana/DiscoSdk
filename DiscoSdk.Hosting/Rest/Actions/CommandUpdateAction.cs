@@ -10,7 +10,7 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <summary>
 /// Represents a fluent builder for queuing and registering Discord application commands.
 /// </summary>
-internal class CommandUpdateAction(DiscordClient client) : ICommandUpdateAction
+internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandUpdateAction
 {
     private readonly ApplicationCommandClient _applicationCommandClient = new(client._client);
 
@@ -18,7 +18,7 @@ internal class CommandUpdateAction(DiscordClient client) : ICommandUpdateAction
     private readonly Dictionary<string, List<ApplicationCommand>> _guildCommands = [];
     private bool _deletePrevious = false;
 
-    
+
     public ICommandUpdateAction AddGlobal(params ApplicationCommand[] commands)
     {
         ArgumentNullException.ThrowIfNull(commands);
@@ -54,7 +54,7 @@ internal class CommandUpdateAction(DiscordClient client) : ICommandUpdateAction
     {
         if (string.IsNullOrEmpty(guildId))
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
-        
+
         var command = BuildCommand(configure);
 
         if (!_guildCommands.ContainsKey(guildId))
@@ -79,7 +79,7 @@ internal class CommandUpdateAction(DiscordClient client) : ICommandUpdateAction
     }
 
 
-    public async Task ExecuteAsync(CancellationToken cancellationToken = default)
+    public override async Task ExecuteAsync(CancellationToken cancellationToken = default)
     {
         try
         {

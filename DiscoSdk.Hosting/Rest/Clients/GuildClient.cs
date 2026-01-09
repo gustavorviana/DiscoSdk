@@ -1,5 +1,6 @@
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Rest;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
 
@@ -39,6 +40,58 @@ internal class GuildClient(IDiscordRestClientBase client)
 	}
 
 	/// <summary>
+	/// Gets a specific member in the specified guild by user ID.
+	/// </summary>
+	/// <param name="guildId">The ID of the guild.</param>
+	/// <param name="userId">The ID of the user.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>The guild member, or null if the user is not a member of the guild.</returns>
+	public async Task<GuildMember?> GetMemberAsync(DiscordId guildId, DiscordId userId, CancellationToken cancellationToken = default)
+	{
+		if (guildId == default)
+			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
+
+		if (userId == default)
+			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
+
+		var path = $"guilds/{guildId}/members/{userId}";
+		try
+		{
+			return await client.SendJsonAsync<GuildMember>(path, HttpMethod.Get, null, cancellationToken);
+		}
+		catch (DiscordApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+		{
+			return null;
+		}
+	}
+
+	/// <summary>
+	/// Gets a specific ban in the specified guild by user ID.
+	/// </summary>
+	/// <param name="guildId">The ID of the guild.</param>
+	/// <param name="userId">The ID of the banned user.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>The ban information, or null if the user is not banned from the guild.</returns>
+	public async Task<Ban?> GetBanAsync(DiscordId guildId, DiscordId userId, CancellationToken cancellationToken = default)
+	{
+		if (guildId == default)
+			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
+
+		if (userId == default)
+			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
+
+		var path = $"guilds/{guildId}/bans/{userId}";
+		try
+		{
+			return await client.SendJsonAsync<Ban>(path, HttpMethod.Get, null, cancellationToken);
+		}
+		catch (DiscordApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+		{
+			return null;
+		}
+	}
+
+	/// <summary>
 	/// Gets a list of channels in the specified guild.
 	/// </summary>
 	/// <param name="guildId">The ID of the guild.</param>
@@ -66,6 +119,68 @@ internal class GuildClient(IDiscordRestClientBase client)
 
 		var path = $"guilds/{guildId}/roles";
 		return client.SendJsonAsync<Role[]>(path, HttpMethod.Get, null, cancellationToken);
+	}
+
+	/// <summary>
+	/// Gets a guild by its ID.
+	/// </summary>
+	/// <param name="guildId">The ID of the guild.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>The guild, or null if not found.</returns>
+	public async Task<Guild?> GetAsync(DiscordId guildId, CancellationToken cancellationToken = default)
+	{
+		if (guildId == default)
+			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
+
+		var path = $"guilds/{guildId}";
+		try
+		{
+			return await client.SendJsonAsync<Guild>(path, HttpMethod.Get, null, cancellationToken);
+		}
+		catch (DiscordApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+		{
+			return null;
+		}
+	}
+
+	/// <summary>
+	/// Requests to speak in a stage channel.
+	/// </summary>
+	/// <param name="guildId">The ID of the guild.</param>
+	/// <param name="channelId">The ID of the stage channel.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>A task that represents the asynchronous operation.</returns>
+	public Task RequestToSpeakAsync(DiscordId guildId, DiscordId channelId, CancellationToken cancellationToken = default)
+	{
+		if (guildId == default)
+			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
+
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		var path = $"guilds/{guildId}/voice-states/@me";
+		var request = new { channel_id = channelId.ToString(), request_to_speak_timestamp = DateTimeOffset.UtcNow.ToString("o") };
+		return client.SendJsonAsync<object>(path, HttpMethod.Patch, request, cancellationToken);
+	}
+
+	/// <summary>
+	/// Cancels the request to speak in a stage channel.
+	/// </summary>
+	/// <param name="guildId">The ID of the guild.</param>
+	/// <param name="channelId">The ID of the stage channel.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>A task that represents the asynchronous operation.</returns>
+	public Task CancelRequestToSpeakAsync(DiscordId guildId, DiscordId channelId, CancellationToken cancellationToken = default)
+	{
+		if (guildId == default)
+			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
+
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		var path = $"guilds/{guildId}/voice-states/@me";
+		var request = new { channel_id = channelId.ToString(), request_to_speak_timestamp = (string?)null };
+		return client.SendJsonAsync<object>(path, HttpMethod.Patch, request, cancellationToken);
 	}
 }
 

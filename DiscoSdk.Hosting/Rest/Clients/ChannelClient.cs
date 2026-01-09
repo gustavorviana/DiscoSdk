@@ -111,6 +111,26 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	}
 
 	/// <summary>
+	/// Follows an announcement channel to send messages to a target channel.
+	/// </summary>
+	/// <param name="channelId">The ID of the announcement channel to follow.</param>
+	/// <param name="targetChannelId">The ID of the target channel to follow to.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>The followed channel information.</returns>
+	public Task<FollowedChannel> FollowAsync(DiscordId channelId, DiscordId targetChannelId, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		if (targetChannelId == default)
+			throw new ArgumentException("Target channel ID cannot be null or empty.", nameof(targetChannelId));
+
+		var path = $"channels/{channelId}/followers";
+		var request = new { webhook_channel_id = targetChannelId.ToString() };
+		return client.SendJsonAsync<FollowedChannel>(path, HttpMethod.Post, request, cancellationToken);
+	}
+
+	/// <summary>
 	/// Triggers the typing indicator in the specified channel.
 	/// </summary>
 	/// <param name="channelId">The ID of the channel to trigger typing in.</param>

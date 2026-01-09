@@ -99,7 +99,7 @@ internal class MessageWrapper : IMessage
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral) && _interactionHandle == null)
             throw EphemeralMessageException.Operation("delete");
 
-        return new RestAction(cancellationToken =>
+        return RestAction.Create(cancellationToken =>
         {
             if (_interactionHandle != null)
                 return _client.InteractionClient.DeleteOriginalResponseAsync(_interactionHandle, cancellationToken);
@@ -127,7 +127,7 @@ internal class MessageWrapper : IMessage
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("add reactions to");
 
-        return new RestAction(cancellationToken =>
+        return RestAction.Create(cancellationToken =>
             _client.MessageClient.AddReactionAsync(_message.ChannelId, _message.Id, emoji, cancellationToken));
     }
 
@@ -149,7 +149,7 @@ internal class MessageWrapper : IMessage
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("delete reactions from");
 
-        return new RestAction(cancellationToken =>
+        return RestAction.Create(cancellationToken =>
             _client.MessageClient.DeleteAllReactionsForEmojiAsync(_message.ChannelId, _message.Id, emoji, cancellationToken));
     }
 
@@ -160,7 +160,7 @@ internal class MessageWrapper : IMessage
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("delete all reactions from");
 
-        return new RestAction(cancellationToken =>
+        return RestAction.Create(cancellationToken =>
             _client.MessageClient.DeleteAllReactionsAsync(_message.ChannelId, _message.Id, cancellationToken));
     }
 
@@ -169,7 +169,7 @@ internal class MessageWrapper : IMessage
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("pin");
 
-        return new RestAction(cancellationToken =>
+        return RestAction.Create(cancellationToken =>
             _client.MessageClient.PinAsync(_message.ChannelId, _message.Id, cancellationToken));
     }
 
@@ -178,7 +178,7 @@ internal class MessageWrapper : IMessage
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("unpin");
 
-        return new RestAction(cancellationToken =>
+        return RestAction.Create(cancellationToken =>
             _client.MessageClient.UnpinAsync(_message.ChannelId, _message.Id, cancellationToken));
     }
 

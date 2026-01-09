@@ -6,7 +6,7 @@ namespace DiscoSdk.Models.Channels;
 /// <summary>
 /// Represents a thread channel in a Discord guild.
 /// </summary>
-public interface IGuildThreadChannel : ITextBasedChannel
+public interface IGuildThreadChannel : IGuildChannel, IGuildMessageChannel
 {
     /// <summary>
     /// Gets the parent channel for this thread.
@@ -97,5 +97,13 @@ public interface IGuildThreadChannel : ITextBasedChannel
     /// </summary>
     /// <returns>A REST action that can be executed to unlock the thread.</returns>
     IRestAction<IGuildThreadChannel> UnlockThread();
-}
 
+	/// <summary>
+	/// Gets a manager to edit this thread channel.
+	/// </summary>
+	/// <returns>A manager that can be configured and executed to edit the thread.</returns>
+	/// <remarks>
+	/// The manager is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+	/// </remarks>
+	IThreadChannelManager GetManager();
+}

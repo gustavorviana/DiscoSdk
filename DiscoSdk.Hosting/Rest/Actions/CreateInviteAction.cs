@@ -14,7 +14,7 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// </remarks>
 /// <param name="client">The Discord client.</param>
 /// <param name="channelId">The ID of the channel to create an invite for.</param>
-internal class CreateInviteAction(DiscordClient client, IGuildChannel channel) : RestAction<IInvite>, ICreateInviteAction
+internal class CreateInviteAction(DiscordClient client, IGuildChannelBase channel) : RestAction<IInvite>, ICreateInviteAction
 {
 	private readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
 	private int? _maxAge;

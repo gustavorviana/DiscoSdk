@@ -136,7 +136,7 @@ internal class RoleWrapper(Role role, IGuild guild, DiscordClient client) : IRol
 		if (IsPublicRole)
 			throw new InvalidOperationException("Cannot modify position of the @everyone role.");
 
-		return new RestAction(async cancellationToken =>
+		return RestAction.Create(async cancellationToken =>
 		{
 			var request = new[]
 			{
@@ -172,7 +172,7 @@ internal class RoleWrapper(Role role, IGuild guild, DiscordClient client) : IRol
 		if (IsPublicRole)
 			throw new InvalidOperationException("Cannot delete the @everyone role.");
 
-		return new RestAction(cancellationToken => _client.RoleClient.DeleteAsync(_guild.Id, _role.Id, cancellationToken));
+		return RestAction.Create(cancellationToken => _client.RoleClient.DeleteAsync(_guild.Id, _role.Id, cancellationToken));
 	}
 }
 

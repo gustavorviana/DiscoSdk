@@ -1,4 +1,5 @@
 using DiscoSdk.Hosting.Rest.Actions;
+using DiscoSdk.Hosting.Wrappers.Managers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
@@ -34,6 +35,11 @@ internal class GuildTextChannelWrapper : GuildTextBasedChannelWrapper, IGuildTex
     public Task DeleteAllReactionsAsync(DiscordId messageId, CancellationToken cancellationToken = default)
     {
         return _client.MessageClient.DeleteAllReactionsAsync(_channel.Id, messageId, cancellationToken);
+    }
+
+    public ITextChannelManager GetManager()
+    {
+        return new TextChannelManagerWrapper(Id, _client.ChannelClient);
     }
 
     /// <inheritdoc />

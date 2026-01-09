@@ -1,12 +1,9 @@
-using DiscoSdk.Models.Messages;
-using DiscoSdk.Rest.Actions;
-
 namespace DiscoSdk.Models.Channels;
 
 /// <summary>
 /// Extension methods for <see cref="IGuildTextChannelBase"/>.
 /// </summary>
-public static class IGuildTextChannelExtensions
+public static class GuildTextChannelExtensions
 {
 	/// <summary>
 	/// Removes a reaction from a message by its ID for a specific user.

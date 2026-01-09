@@ -112,7 +112,7 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
 
         try
         {
-            var guild = await client._client.SendJsonAsync<Guild>($"guilds/{guildId}", HttpMethod.Get, null, ct);
+            var guild = await client.GuildClient.GetAsync(guildId, ct);
 
             if (guild != null && !guildId.Empty)
             {

@@ -44,7 +44,7 @@ internal class InteractionWrapper(Interaction interaction,
 
     public IRestAction Defer(bool ephemeral = false)
     {
-        return new RestAction(async cancellationToken =>
+        return RestAction.Create(async cancellationToken =>
         {
             if (handle.IsDeferred)
                 return;
@@ -85,6 +85,6 @@ internal class InteractionWrapper(Interaction interaction,
 
     public IRestAction Delete()
     {
-        return new RestAction(cancellationToken => _client.InteractionClient.DeleteOriginalResponseAsync(handle, cancellationToken));
+        return RestAction.Create(cancellationToken => _client.InteractionClient.DeleteOriginalResponseAsync(handle, cancellationToken));
     }
 }

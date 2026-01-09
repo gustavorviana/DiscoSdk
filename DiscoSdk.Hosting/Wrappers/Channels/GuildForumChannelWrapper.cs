@@ -1,4 +1,5 @@
 using DiscoSdk.Hosting.Rest.Actions;
+using DiscoSdk.Hosting.Wrappers.Managers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
@@ -31,6 +32,11 @@ internal class GuildForumChannelWrapper : GuildChannelWrapperBase, IGuildForumCh
     public int? DefaultForumLayout => _channel.DefaultForumLayout;
 
     /// <inheritdoc />
+    public ForumLayout DefaultLayout => _channel.DefaultForumLayout.HasValue
+        ? (ForumLayout)_channel.DefaultForumLayout.Value
+        : ForumLayout.DefaultView;
+
+    /// <inheritdoc />
     public int? DefaultThreadRateLimitPerUser => _channel.DefaultThreadRateLimitPerUser;
 
     /// <inheritdoc />
@@ -47,6 +53,11 @@ internal class GuildForumChannelWrapper : GuildChannelWrapperBase, IGuildForumCh
     public ICreateIThreadChannelAction CreateThreadChannel(string name, DiscordId messageId, bool isPrivate)
     {
         return new CreateThreadChannelAction(_client, this, name, messageId, isPrivate);
+    }
+
+    public IForumChannelManager GetManager()
+    {
+        return new ForumChannelManagerWrapper(Id, _client.ChannelClient);
     }
 
     /// <inheritdoc />

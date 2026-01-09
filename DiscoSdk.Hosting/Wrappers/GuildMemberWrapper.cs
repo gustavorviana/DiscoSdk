@@ -35,10 +35,6 @@ internal class GuildMemberWrapper(GuildMember member, IGuild guild, DiscordClien
     /// <inheritdoc />
     public string Name => EffectiveName;
 
-    /// <inheritdoc />
-    public ChannelType Type => ChannelType.Dm; // Members don't have a real channel type, but IChannel requires it
-
-    // IPermissionHolder (inherits from IMentionable, already implemented above)
 
     // IMember properties
     /// <inheritdoc />
@@ -322,4 +318,3 @@ internal class GuildMemberWrapper(GuildMember member, IGuild guild, DiscordClien
         throw new NotImplementedException("ModifyFlagsAsync is not yet implemented.");
     }
 }
-
