@@ -1,7 +1,5 @@
 using DiscoSdk.Events;
-using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Models.Interactions;
-using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Events;
@@ -9,19 +7,14 @@ namespace DiscoSdk.Hosting.Events;
 /// <summary>
 /// Represents the event data for when an interaction is created (e.g., slash command).
 /// </summary>
-internal class InteractionCreateEvent(DiscordClient client, InteractionHandle handle, IInteraction interaction) : IInteractionCreateEvent
+internal class InteractionCreateEvent(IInteraction interaction) : IInteractionCreateEvent
 {
     public IInteraction Interaction => interaction;
 
 
-    public async Task DeferAsync(bool ephemeral = true, CancellationToken cancellationToken = default)
+    public IRestAction Defer(bool ephemeral = true)
     {
-        if (handle.IsDeferred)
-            return;
-
-        handle.IsDeferred = true;
-
-        await client.InteractionClient.DeferAsync(handle, ephemeral, cancellationToken);
+        return interaction.Defer(ephemeral);
     }
 
     public ISendMessageRestAction Reply(string? content = null)
@@ -29,9 +22,8 @@ internal class InteractionCreateEvent(DiscordClient client, InteractionHandle ha
         return Interaction.Reply(content);
     }
 
-    public IRestAction ReplyModal(ModalData modalData)
+    public IReplyModalRestAction ReplyModal()
     {
-        return Interaction.ReplyModal(modalData);
+        return Interaction.ReplyModal();
     }
 }
-

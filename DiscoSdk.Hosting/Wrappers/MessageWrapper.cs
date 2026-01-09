@@ -108,69 +108,78 @@ internal class MessageWrapper : IMessage
         });
     }
 
-    public async Task<IMessage> CrosspostAsync(CancellationToken cancellationToken = default)
+    public IRestAction<IMessage> Crosspost()
     {
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("crosspost");
 
-        var message = await _client.MessageClient.CrosspostAsync(_message.ChannelId, _message.Id, cancellationToken);
-        return new MessageWrapper(Channel, message, _client, null);
+        return RestAction<IMessage>.Create(async cancellationToken =>
+        {
+            var message = await _client.MessageClient.CrosspostAsync(_message.ChannelId, _message.Id, cancellationToken);
+            return new MessageWrapper(Channel, message, _client, null);
+        });
     }
 
-    public Task AddReactionAsync(string emoji, CancellationToken cancellationToken = default)
+    public IRestAction AddReaction(string emoji)
     {
         ValidateReactionIntent("add reactions to");
 
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("add reactions to");
 
-        return _client.MessageClient.AddReactionAsync(_message.ChannelId, _message.Id, emoji, cancellationToken);
+        return new RestAction(cancellationToken =>
+            _client.MessageClient.AddReactionAsync(_message.ChannelId, _message.Id, emoji, cancellationToken));
     }
 
-    public Task<User[]> GetReactionsAsync(string emoji, string? after = null, int? limit = null, CancellationToken cancellationToken = default)
+    public IRestAction<User[]> GetReactions(string emoji, string? after = null, int? limit = null)
     {
         ValidateReactionIntent("get reactions from");
 
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("get reactions from");
 
-        return _client.MessageClient.GetReactionsAsync(_message.ChannelId, _message.Id, emoji, after, limit, cancellationToken);
+        return RestAction<User[]>.Create(cancellationToken =>
+            _client.MessageClient.GetReactionsAsync(_message.ChannelId, _message.Id, emoji, after, limit, cancellationToken));
     }
 
-    public Task DeleteAllReactionsForEmojiAsync(string emoji, CancellationToken cancellationToken = default)
+    public IRestAction DeleteAllReactionsForEmoji(string emoji)
     {
         ValidateReactionIntent("delete reactions from");
 
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("delete reactions from");
 
-        return _client.MessageClient.DeleteAllReactionsForEmojiAsync(_message.ChannelId, _message.Id, emoji, cancellationToken);
+        return new RestAction(cancellationToken =>
+            _client.MessageClient.DeleteAllReactionsForEmojiAsync(_message.ChannelId, _message.Id, emoji, cancellationToken));
     }
 
-    public Task DeleteAllReactionsAsync(CancellationToken cancellationToken = default)
+    public IRestAction DeleteAllReactions()
     {
         ValidateReactionIntent("delete all reactions from");
 
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("delete all reactions from");
 
-        return _client.MessageClient.DeleteAllReactionsAsync(_message.ChannelId, _message.Id, cancellationToken);
+        return new RestAction(cancellationToken =>
+            _client.MessageClient.DeleteAllReactionsAsync(_message.ChannelId, _message.Id, cancellationToken));
     }
 
-    public Task PinAsync(CancellationToken cancellationToken = default)
+    public IRestAction Pin()
     {
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("pin");
 
-        return _client.MessageClient.PinAsync(_message.ChannelId, _message.Id, cancellationToken);
+        return new RestAction(cancellationToken =>
+            _client.MessageClient.PinAsync(_message.ChannelId, _message.Id, cancellationToken));
     }
 
-    public Task UnpinAsync(CancellationToken cancellationToken = default)
+    public IRestAction Unpin()
     {
         if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("unpin");
 
-        return _client.MessageClient.UnpinAsync(_message.ChannelId, _message.Id, cancellationToken);
+        return new RestAction(cancellationToken =>
+            _client.MessageClient.UnpinAsync(_message.ChannelId, _message.Id, cancellationToken));
     }
 
     /// <summary>

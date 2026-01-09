@@ -341,7 +341,7 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
             var member = guild is not null && interaction.Member is not null ? new GuildMemberWrapper(interaction.Member, guild, client) : null;
 
             var interactionWrapper = new InteractionWrapper(interaction, client, handle, channel, member);
-            var eventData = new InteractionCreateEvent(client, handle, interactionWrapper);
+            var eventData = new InteractionCreateEvent(interactionWrapper);
 
             try
             {

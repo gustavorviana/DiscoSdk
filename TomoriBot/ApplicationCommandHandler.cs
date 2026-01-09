@@ -23,7 +23,7 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
         if (commandName == "test")
         {
             var ephemeral = eventData.Interaction.Data?.Options?.FirstOrDefault(o => o.Name == "ephemeral")?.Value is bool b && b;
-            await eventData.DeferAsync();
+            await eventData.Defer().ExecuteAsync();
             var msg = await eventData
                 .Reply($"This is a test command response in the {eventData.Interaction.Channel.Name} channel.")
                 .SetEphemeral(ephemeral)
@@ -75,7 +75,7 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
                 }
             };
 
-            await eventData.DeferAsync();
+            await eventData.Defer().ExecuteAsync();
 
             // Send message with buttons
             await eventData
@@ -93,4 +93,3 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
         }
     }
 }
-

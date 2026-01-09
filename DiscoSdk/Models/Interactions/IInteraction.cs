@@ -104,13 +104,14 @@ public interface IInteraction
 	/// <summary>
 	/// Creates a REST action to reply to this interaction with a modal dialog.
 	/// </summary>
-	/// <param name="modalData">The modal data to display.</param>
-	/// <returns>A REST action that can be executed to reply with the modal.</returns>
+	/// <returns>A REST action that can be configured and executed to reply with the modal.</returns>
 	/// <remarks>
 	/// The action is not executed immediately. Call <see cref="IRestAction.ExecuteAsync"/> to execute it.
+	/// Use <see cref="IReplyModalRestAction.SetCustomId"/>, <see cref="IReplyModalRestAction.SetTitle"/>, and
+	/// <see cref="IReplyModalRestAction.AddActionRow"/> to configure the modal before executing.
 	/// </remarks>
 	/// <exception cref="InvalidOperationException">Thrown if the interaction has already been deferred or responded to.</exception>
-	IRestAction ReplyModal(ModalData modalData);
+	IReplyModalRestAction ReplyModal();
 
 	/// <summary>
 	/// Creates a REST action to edit the original interaction response message.

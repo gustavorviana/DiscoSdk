@@ -1,5 +1,4 @@
 ﻿using DiscoSdk.Models.Interactions;
-using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Events;
@@ -14,7 +13,7 @@ public interface IInteractionCreateEvent
     /// </summary>
     IInteraction Interaction { get; }
 
-    Task DeferAsync(bool ephemeral = true, CancellationToken cancellationToken = default);
+    IRestAction Defer(bool ephemeral = true);
     ISendMessageRestAction Reply(string? content = null);
-    IRestAction ReplyModal(ModalData modalData);
+    IReplyModalRestAction ReplyModal();
 }

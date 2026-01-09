@@ -27,7 +27,6 @@ internal class InteractionWrapper(Interaction interaction,
 {
     private readonly Interaction _interaction = interaction ?? throw new ArgumentNullException(nameof(interaction));
     private readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
-    private readonly InteractionHandle _handle = handle ?? throw new ArgumentNullException(nameof(handle));
 
     public DiscordId Id => _interaction.Id;
     public DiscordId ApplicationId => _interaction.ApplicationId;
@@ -47,11 +46,11 @@ internal class InteractionWrapper(Interaction interaction,
     {
         return new RestAction(async cancellationToken =>
         {
-            if (_handle.IsDeferred)
+            if (handle.IsDeferred)
                 return;
 
-            _handle.IsDeferred = true;
-            await _client.InteractionClient.DeferAsync(_handle, ephemeral, cancellationToken);
+            handle.IsDeferred = true;
+            await _client.InteractionClient.DeferAsync(handle, ephemeral, cancellationToken);
         });
     }
 
@@ -60,17 +59,12 @@ internal class InteractionWrapper(Interaction interaction,
         if (!_interaction.ChannelId.HasValue)
             throw new InvalidOperationException("Cannot reply to interaction without a channel ID.");
 
-        return new SendMessageRestAction(_client, _handle, channel!, content);
+        return new SendMessageRestAction(_client, handle, channel!, content);
     }
 
-    public IRestAction ReplyModal(ModalData modalData)
+    public IReplyModalRestAction ReplyModal()
     {
-        ArgumentNullException.ThrowIfNull(modalData);
-
-        if (_handle.IsDeferred)
-            throw new InvalidOperationException("Cannot respond with modal after deferring the interaction.");
-
-        return new RestAction(cancellationToken => _client.InteractionClient.RespondWithModalAsync(_handle, modalData, cancellationToken));
+        return new ReplyModalRestAction(_client, handle);
     }
 
     public IEditMessageRestAction Edit()
@@ -78,7 +72,7 @@ internal class InteractionWrapper(Interaction interaction,
         if (!_interaction.ChannelId.HasValue)
             throw new InvalidOperationException("Cannot edit interaction response without a channel ID.");
 
-        return new EditMessageRestAction(_client, channel!, default, _handle);
+        return new EditMessageRestAction(_client, channel!, default, handle);
     }
 
     public ISendMessageRestAction FollowUp(string? content = null)
@@ -86,11 +80,11 @@ internal class InteractionWrapper(Interaction interaction,
         if (!_interaction.ChannelId.HasValue)
             throw new InvalidOperationException("Cannot send follow-up to interaction without a channel ID.");
 
-        return new SendMessageRestAction(_client, _handle, channel!, content);
+        return new SendMessageRestAction(_client, handle, channel!, content);
     }
 
     public IRestAction Delete()
     {
-        return new RestAction(cancellationToken => _client.InteractionClient.DeleteOriginalResponseAsync(_handle, cancellationToken));
+        return new RestAction(cancellationToken => _client.InteractionClient.DeleteOriginalResponseAsync(handle, cancellationToken));
     }
 }
