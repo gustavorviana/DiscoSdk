@@ -26,6 +26,6 @@ public interface ICreateEmojiAction : IRestAction<Emoji>
 	/// </summary>
 	/// <param name="roleIds">The role IDs that can use this emoji.</param>
 	/// <returns>The current <see cref="ICreateEmojiAction"/> instance.</returns>
-	ICreateEmojiAction SetRoles(params DiscordId[] roleIds);
+	ICreateEmojiAction SetRoles(params Snowflake[] roleIds);
 }
 

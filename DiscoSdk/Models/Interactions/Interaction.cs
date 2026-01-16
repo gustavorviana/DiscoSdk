@@ -14,13 +14,13 @@ public class Interaction
     /// Gets or sets the ID of the interaction.
     /// </summary>
     [JsonPropertyName("id")]
-    public DiscordId Id { get; set; } = default!;
+    public Snowflake Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the application ID.
     /// </summary>
     [JsonPropertyName("application_id")]
-    public DiscordId ApplicationId { get; set; } = default!;
+    public Snowflake ApplicationId { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the type of interaction.
@@ -38,13 +38,13 @@ public class Interaction
     /// Gets or sets the guild ID where the interaction was triggered.
     /// </summary>
     [JsonPropertyName("guild_id")]
-    public DiscordId? GuildId { get; set; }
+    public Snowflake? GuildId { get; set; }
 
     /// <summary>
     /// Gets or sets the channel ID where the interaction was triggered.
     /// </summary>
     [JsonPropertyName("channel_id")]
-    public DiscordId? ChannelId { get; set; }
+    public Snowflake? ChannelId { get; set; }
 
     /// <summary>
     /// Gets or sets the member who triggered the interaction.

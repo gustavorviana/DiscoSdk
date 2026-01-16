@@ -24,7 +24,7 @@ internal class GuildMediaChannelWrapper(Channel channel, IGuild guild, DiscordCl
     public ChannelFlags? Flags => _channel.Flags;
     public int DefaultThreadSlowmode => _channel.DefaultThreadRateLimitPerUser ?? 0;
 
-    public ICreateIThreadChannelAction CreateThreadChannel(string name, DiscordId messageId, bool isPrivate)
+    public ICreateIThreadChannelAction CreateThreadChannel(string name, Snowflake messageId, bool isPrivate)
     {
         return new CreateThreadChannelAction(_client, this, name, messageId, isPrivate);
     }

@@ -21,7 +21,7 @@ public interface IChannelManager<TSelf> : IManager<TSelf> where TSelf : IChannel
 	/// </summary>
 	/// <param name="parentId">The ID of the parent category, or null to remove from category.</param>
 	/// <returns>The current <see cref="IChannelManager{TSelf}"/> instance.</returns>
-	TSelf SetParent(DiscordId? parentId);
+	TSelf SetParent(Snowflake? parentId);
 
 	/// <summary>
 	/// Sets the position of the channel.

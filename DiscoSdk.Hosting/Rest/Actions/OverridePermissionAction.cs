@@ -14,7 +14,7 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <param name="client">The Discord client.</param>
 /// <param name="channelId">The ID of the channel.</param>
 /// <param name="holderId">The ID of the permission holder (user or role).</param>
-internal class OverridePermissionAction(DiscordClient client, DiscordId channelId, DiscordId holderId) : RestAction<PermissionOverride>, OverrideIPermissionAction
+internal class OverridePermissionAction(DiscordClient client, Snowflake channelId, Snowflake holderId) : RestAction<PermissionOverride>, OverrideIPermissionAction
 {
 	private readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
     private DiscordPermission? _allow;

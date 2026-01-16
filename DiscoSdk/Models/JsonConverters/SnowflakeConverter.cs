@@ -4,12 +4,12 @@ using System.Text.Json.Serialization;
 namespace DiscoSdk.Models.JsonConverters;
 
 /// <summary>
-/// JSON converter for <see cref="DiscordId"/> that serializes/deserializes to/from string.
+/// JSON converter for <see cref="Snowflake"/> that serializes/deserializes to/from string.
 /// </summary>
-public class DiscordIdConverter : JsonConverter<DiscordId>
+public class SnowflakeConverter : JsonConverter<Snowflake>
 {
     /// <inheritdoc />
-    public override DiscordId Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override Snowflake Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.Null)
             return default;
@@ -20,20 +20,20 @@ public class DiscordIdConverter : JsonConverter<DiscordId>
             if (string.IsNullOrWhiteSpace(value))
                 return default;
 
-            return DiscordId.TryParse(value, out var id) ? id : default;
+            return Snowflake.TryParse(value, out var id) ? id : default;
         }
 
         if (reader.TokenType == JsonTokenType.Number)
         {
             var value = reader.GetUInt64();
-            return new DiscordId(value);
+            return new Snowflake(value);
         }
 
         return default;
     }
 
     /// <inheritdoc />
-    public override void Write(Utf8JsonWriter writer, DiscordId value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, Snowflake value, JsonSerializerOptions options)
     {
         writer.WriteStringValue(value.ToString());
     }

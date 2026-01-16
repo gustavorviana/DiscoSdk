@@ -12,7 +12,7 @@ public class AuditLogEntry
 	/// Gets or sets the ID of the entry.
 	/// </summary>
 	[JsonPropertyName("id")]
-	public DiscordId Id { get; set; } = default!;
+	public Snowflake Id { get; set; } = default!;
 
 	/// <summary>
 	/// Gets or sets the ID of the affected entity (webhook, user, role, etc.).
@@ -24,7 +24,7 @@ public class AuditLogEntry
 	/// Gets or sets the ID of the user who made the changes.
 	/// </summary>
 	[JsonPropertyName("user_id")]
-	public DiscordId? UserId { get; set; }
+	public Snowflake? UserId { get; set; }
 
 	/// <summary>
 	/// Gets or sets the type of action that occurred.

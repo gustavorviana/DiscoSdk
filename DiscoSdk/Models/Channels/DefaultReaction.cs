@@ -11,7 +11,7 @@ public class DefaultReaction
 	/// Gets or sets the ID of a guild's custom emoji.
 	/// </summary>
 	[JsonPropertyName("emoji_id")]
-	public DiscordId? EmojiId { get; set; }
+	public Snowflake? EmojiId { get; set; }
 
 	/// <summary>
 	/// Gets or sets the unicode character of the emoji.

@@ -17,7 +17,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="channelId">The ID of the channel to retrieve.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The channel, or null if not found.</returns>
-	public Task<Channel> GetAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task<Channel> GetAsync(Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -33,7 +33,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="request">The channel edit request.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The edited channel.</returns>
-	public Task<Channel> EditAsync(DiscordId channelId, object request, CancellationToken cancellationToken = default)
+	public Task<Channel> EditAsync(Snowflake channelId, object request, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -50,7 +50,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="channelId">The ID of the channel to delete.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The deleted channel.</returns>
-	public Task DeleteAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task DeleteAsync(Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -69,7 +69,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="after">Get messages after this message ID.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>An array of messages.</returns>
-	public Task<Message[]> GetMessagesAsync(DiscordId channelId, int? limit = null, DiscordId? around = null, DiscordId? before = null, DiscordId? after = null, CancellationToken cancellationToken = default)
+	public Task<Message[]> GetMessagesAsync(Snowflake channelId, int? limit = null, Snowflake? around = null, Snowflake? before = null, Snowflake? after = null, CancellationToken cancellationToken = default)
 	{
 		return messageClient.GetMessagesAsync(channelId, limit, around, before, after, cancellationToken);
 	}
@@ -81,7 +81,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="messageId">The ID of the message to retrieve.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The message, or null if not found.</returns>
-	public Task<Message> GetMessageAsync(DiscordId channelId, DiscordId messageId, CancellationToken cancellationToken = default)
+	public Task<Message> GetMessageAsync(Snowflake channelId, Snowflake messageId, CancellationToken cancellationToken = default)
 	{
 		return messageClient.GetAsync(channelId, messageId, cancellationToken);
 	}
@@ -93,7 +93,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="messageId">The ID of the message to delete.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task DeleteMessageAsync(DiscordId channelId, DiscordId messageId, CancellationToken cancellationToken = default)
+	public Task DeleteMessageAsync(Snowflake channelId, Snowflake messageId, CancellationToken cancellationToken = default)
 	{
 		return messageClient.DeleteAsync(channelId, messageId, cancellationToken);
 	}
@@ -105,7 +105,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="messageIds">The IDs of the messages to delete (2-100 messages).</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task BulkDeleteMessagesAsync(DiscordId channelId, DiscordId[] messageIds, CancellationToken cancellationToken = default)
+	public Task BulkDeleteMessagesAsync(Snowflake channelId, Snowflake[] messageIds, CancellationToken cancellationToken = default)
 	{
 		return messageClient.BulkDeleteMessagesAsync(channelId, messageIds, cancellationToken);
 	}
@@ -117,7 +117,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="targetChannelId">The ID of the target channel to follow to.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The followed channel information.</returns>
-	public Task<FollowedChannel> FollowAsync(DiscordId channelId, DiscordId targetChannelId, CancellationToken cancellationToken = default)
+	public Task<FollowedChannel> FollowAsync(Snowflake channelId, Snowflake targetChannelId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -136,7 +136,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="channelId">The ID of the channel to trigger typing in.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task TriggerTypingAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task TriggerTypingAsync(Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		return messageClient.TriggerTypingAsync(channelId, cancellationToken);
 	}
@@ -147,7 +147,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="channelId">The ID of the thread.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task JoinThreadAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task JoinThreadAsync(Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -162,7 +162,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="channelId">The ID of the thread.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task LeaveThreadAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task LeaveThreadAsync(Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -178,7 +178,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="userId">The ID of the user to add.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task AddThreadMemberAsync(DiscordId channelId, DiscordId userId, CancellationToken cancellationToken = default)
+	public Task AddThreadMemberAsync(Snowflake channelId, Snowflake userId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -197,7 +197,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="userId">The ID of the user to remove.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task RemoveThreadMemberAsync(DiscordId channelId, DiscordId userId, CancellationToken cancellationToken = default)
+	public Task RemoveThreadMemberAsync(Snowflake channelId, Snowflake userId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -216,7 +216,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="userId">The ID of the user to get the thread member for.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The thread member, or null if not found.</returns>
-	public Task<ThreadMember?> GetThreadMemberAsync(DiscordId channelId, DiscordId userId, CancellationToken cancellationToken = default)
+	public Task<ThreadMember?> GetThreadMemberAsync(Snowflake channelId, Snowflake userId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -237,7 +237,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="withMember">Whether to include guild member data.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>An array of thread members.</returns>
-	public Task<ThreadMember[]> GetThreadMembersAsync(DiscordId channelId, int? limit = null, DiscordId? after = null, bool? withMember = null, CancellationToken cancellationToken = default)
+	public Task<ThreadMember[]> GetThreadMembersAsync(Snowflake channelId, int? limit = null, Snowflake? after = null, bool? withMember = null, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -267,7 +267,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="channelId">The ID of the thread to archive.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task ArchiveThreadAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task ArchiveThreadAsync(Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -283,7 +283,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="channelId">The ID of the thread to unarchive.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task UnarchiveThreadAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task UnarchiveThreadAsync(Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -299,7 +299,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="channelId">The ID of the thread to lock.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task LockThreadAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task LockThreadAsync(Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -315,7 +315,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="channelId">The ID of the thread to unlock.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task UnlockThreadAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task UnlockThreadAsync(Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -331,7 +331,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="channelId">The ID of the channel to get active threads from.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>An object containing active threads.</returns>
-	public async Task<Channel[]> GetActiveThreadsAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	public async Task<Channel[]> GetActiveThreadsAsync(Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -349,7 +349,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="limit">Maximum number of threads to return (1-100, default 50).</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>An object containing archived threads.</returns>
-	public async Task<Channel[]> GetPublicArchivedThreadsAsync(DiscordId channelId, string? before = null, int? limit = null, CancellationToken cancellationToken = default)
+	public async Task<Channel[]> GetPublicArchivedThreadsAsync(Snowflake channelId, string? before = null, int? limit = null, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -379,7 +379,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="limit">Maximum number of threads to return (1-100, default 50).</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>An object containing archived threads.</returns>
-	public async Task<Channel[]> GetPrivateArchivedThreadsAsync(DiscordId channelId, string? before = null, int? limit = null, CancellationToken cancellationToken = default)
+	public async Task<Channel[]> GetPrivateArchivedThreadsAsync(Snowflake channelId, string? before = null, int? limit = null, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -408,7 +408,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="request">The forum post creation request.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The created forum post response containing the message.</returns>
-	public Task<ForumPost> CreateForumPostAsync(DiscordId channelId, object request, CancellationToken cancellationToken = default)
+	public Task<ForumPost> CreateForumPostAsync(Snowflake channelId, object request, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -427,7 +427,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="request">The thread creation request.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The created thread channel.</returns>
-	public Task<Channel> CreateThreadFromMessageAsync(DiscordId channelId, DiscordId messageId, object request, CancellationToken cancellationToken = default)
+	public Task<Channel> CreateThreadFromMessageAsync(Snowflake channelId, Snowflake messageId, object request, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));

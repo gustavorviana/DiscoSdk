@@ -30,7 +30,7 @@ internal class GuildWrapper : IGuild
             _channels.Add(channel);
     }
 
-    public DiscordId Id => _guild.Id;
+    public Snowflake Id => _guild.Id;
 
     public string Name => _guild.Name;
 
@@ -44,19 +44,19 @@ internal class GuildWrapper : IGuild
 
     public bool? Owner => _guild.Owner;
 
-    public DiscordId? OwnerId => _guild.OwnerId;
+    public Snowflake? OwnerId => _guild.OwnerId;
 
     public DiscordPermission Permissions => (DiscordPermission)(_guild.Permissions ?? 0);
 
     public string? Region => _guild.Region;
 
-    public DiscordId? AfkChannelId => _guild.AfkChannelId;
+    public Snowflake? AfkChannelId => _guild.AfkChannelId;
 
     public int? AfkTimeout => _guild.AfkTimeout;
 
     public bool? WidgetEnabled => _guild.WidgetEnabled;
 
-    public DiscordId? WidgetChannelId => _guild.WidgetChannelId;
+    public Snowflake? WidgetChannelId => _guild.WidgetChannelId;
 
     public VerificationLevel? VerificationLevel => _guild.VerificationLevel;
 
@@ -72,13 +72,13 @@ internal class GuildWrapper : IGuild
 
     public MfaLevel? MfaLevel => _guild.MfaLevel;
 
-    public DiscordId? ApplicationId => _guild.ApplicationId;
+    public Snowflake? ApplicationId => _guild.ApplicationId;
 
-    public DiscordId? SystemChannelId => _guild.SystemChannelId;
+    public Snowflake? SystemChannelId => _guild.SystemChannelId;
 
     public SystemChannelFlags? SystemChannelFlags => _guild.SystemChannelFlags;
 
-    public DiscordId? RulesChannelId => _guild.RulesChannelId;
+    public Snowflake? RulesChannelId => _guild.RulesChannelId;
 
     public int? MaxPresences => _guild.MaxPresences;
 
@@ -96,7 +96,7 @@ internal class GuildWrapper : IGuild
 
     public string? PreferredLocale => _guild.PreferredLocale;
 
-    public DiscordId? PublicUpdatesChannelId => _guild.PublicUpdatesChannelId;
+    public Snowflake? PublicUpdatesChannelId => _guild.PublicUpdatesChannelId;
 
     public int? MaxVideoChannelUsers => _guild.MaxVideoChannelUsers;
 
@@ -118,18 +118,18 @@ internal class GuildWrapper : IGuild
 
     public ICreateEmojiAction CreateEmoji(string name, byte[] image) => throw new NotSupportedException();
 
-    public IBanMemberAction BanMember(DiscordId userId, int deleteMessageDays = 0) => throw new NotSupportedException();
+    public IBanMemberAction BanMember(Snowflake userId, int deleteMessageDays = 0) => throw new NotSupportedException();
 
-    public IRestAction UnbanMember(DiscordId userId) => throw new NotSupportedException();
+    public IRestAction UnbanMember(Snowflake userId) => throw new NotSupportedException();
 
-    public IRestAction KickMember(DiscordId userId) => throw new NotSupportedException();
+    public IRestAction KickMember(Snowflake userId) => throw new NotSupportedException();
 
     public IMemberPaginationAction GetMembers()
     {
         return new MemberPaginationAction(_client, this);
     }
 
-    public IRestAction<IMember?> GetMember(DiscordId userId)
+    public IRestAction<IMember?> GetMember(Snowflake userId)
     {
         return RestAction<IMember?>.Create(async cancellationToken =>
         {
@@ -143,7 +143,7 @@ internal class GuildWrapper : IGuild
 
     public IBanPaginationAction GetBans() => throw new NotSupportedException();
 
-    public IRestAction<Ban?> GetBan(DiscordId userId)
+    public IRestAction<Ban?> GetBan(Snowflake userId)
     {
         return RestAction<Ban?>.Create(async cancellationToken =>
         {
@@ -154,7 +154,7 @@ internal class GuildWrapper : IGuild
 
     public IAuditLogPaginationAction GetAuditLogs() => throw new NotSupportedException();
 
-    public IGuildChannelUnion? GetChannel(DiscordId channelId)
+    public IGuildChannelUnion? GetChannel(Snowflake channelId)
     {
         if (!_channels.TryGetValue(new Channel { Id = Id }, out var channel))
             return null;
@@ -185,7 +185,7 @@ internal class GuildWrapper : IGuild
         return GetTextChannel(PublicUpdatesChannelId);
     }
 
-    private IGuildTextChannel? GetTextChannel(DiscordId? channelId)
+    private IGuildTextChannel? GetTextChannel(Snowflake? channelId)
     {
         var channel = GetRawChannelById(channelId);
         if (channel == null)
@@ -197,7 +197,7 @@ internal class GuildWrapper : IGuild
         return new GuildTextChannelWrapper(channel, this, _client);
     }
 
-    private Channel? GetRawChannelById(DiscordId? channelId)
+    private Channel? GetRawChannelById(Snowflake? channelId)
     {
         lock (_updateLock)
         {
@@ -261,9 +261,9 @@ internal class GuildWrapper : IGuild
 
     public IRestAction<IReadOnlyList<IInvite>> GetInvites() => throw new NotSupportedException();
 
-    public IRestAction<int> GetPruneCount(int days, params DiscordId[] includeRoles) => throw new NotSupportedException();
+    public IRestAction<int> GetPruneCount(int days, params Snowflake[] includeRoles) => throw new NotSupportedException();
 
-    public IBeginPruneAction BeginPrune(int days, params DiscordId[] includeRoles) => throw new NotSupportedException();
+    public IBeginPruneAction BeginPrune(int days, params Snowflake[] includeRoles) => throw new NotSupportedException();
 
     public IRestAction<IReadOnlyList<VoiceRegion>> GetVoiceRegions() => throw new NotSupportedException();
 
@@ -307,7 +307,7 @@ internal class GuildWrapper : IGuild
         }
     }
 
-    internal void OnChannelDelete(DiscordId id)
+    internal void OnChannelDelete(Snowflake id)
     {
         lock (_updateLock)
             _channels.Remove(new Channel { Id = id });

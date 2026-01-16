@@ -12,7 +12,7 @@ public class GuildWidgetMember
 	/// Gets or sets the user's unique identifier.
 	/// </summary>
 	[JsonPropertyName("id")]
-	public DiscordId? Id { get; set; }
+	public Snowflake? Id { get; set; }
 
 	/// <summary>
 	/// Gets or sets the user's username.

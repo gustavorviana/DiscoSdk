@@ -26,7 +26,7 @@ public class PermissionOverride
 	/// <summary>
 	/// Gets the ID of the role or member this override applies to.
 	/// </summary>
-	public DiscordId Id => _overwrite.Id;
+	public Snowflake Id => _overwrite.Id;
 
 	/// <summary>
 	/// Gets the type of this permission override.

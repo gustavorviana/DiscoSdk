@@ -16,8 +16,8 @@ namespace DiscoSdk.Hosting.Wrappers;
 /// <param name="logger">The logger instance. If null, uses NullLogger.</param>
 public class GuildManager(DiscordClient client, ILogger? logger = null)
 {
-    private readonly ConcurrentDictionary<DiscordId, IGuild> _guildCache = [];
-    private readonly HashSet<DiscordId> _pendingGuilds = [];
+    private readonly ConcurrentDictionary<Snowflake, IGuild> _guildCache = [];
+    private readonly HashSet<Snowflake> _pendingGuilds = [];
     private readonly object _lock = new();
     private readonly ILogger _logger = logger ?? NullLogger.Instance;
 
@@ -48,13 +48,13 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
     /// <summary>
     /// Gets a read-only dictionary of cached guilds.
     /// </summary>
-    public IReadOnlyDictionary<DiscordId, IGuild> All => _guildCache;
+    public IReadOnlyDictionary<Snowflake, IGuild> All => _guildCache;
 
     /// <summary>
     /// Initializes the pending guilds list from the Ready payload.
     /// </summary>
     /// <param name="guildIds">The list of guild IDs from the Ready payload.</param>
-    internal void InitializePendingGuilds(IEnumerable<DiscordId> guildIds)
+    internal void InitializePendingGuilds(IEnumerable<Snowflake> guildIds)
     {
         lock (_lock)
         {
@@ -103,7 +103,7 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
             (guild as GuildWrapper)?.OnUpdate(guildUpdate);
     }
 
-    internal void HandleGuildDelete(DiscordId guildId)
+    internal void HandleGuildDelete(Snowflake guildId)
     {
         _guildCache.Remove(guildId, out _);
     }
@@ -138,7 +138,7 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
     /// <param name="guildId">The guild ID.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>The guild if found; otherwise, <c>null</c>.</returns>
-    public async Task<IGuild?> GetAsync(DiscordId guildId, CancellationToken ct = default)
+    public async Task<IGuild?> GetAsync(Snowflake guildId, CancellationToken ct = default)
     {
         if (guildId.Empty)
             return null;

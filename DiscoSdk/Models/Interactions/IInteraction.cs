@@ -10,7 +10,7 @@ namespace DiscoSdk.Models.Interactions;
 /// Represents a Discord interaction with all its properties and available actions.
 /// </summary>
 /// <remarks>
-/// All Discord IDs must be of type <see cref="DiscordId"/>.
+/// All Discord IDs must be of type <see cref="Snowflake"/>.
 /// All methods that perform server actions return <see cref="IRestAction"/> or <see cref="IRestAction{T}"/>.
 /// </remarks>
 public interface IInteraction
@@ -18,12 +18,12 @@ public interface IInteraction
 	/// <summary>
 	/// Gets the ID of the interaction.
 	/// </summary>
-	DiscordId Id { get; }
+	Snowflake Id { get; }
 
 	/// <summary>
 	/// Gets the application ID.
 	/// </summary>
-	DiscordId ApplicationId { get; }
+	Snowflake ApplicationId { get; }
 
 	/// <summary>
 	/// Gets the type of interaction.

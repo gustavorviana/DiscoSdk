@@ -40,7 +40,7 @@ public interface IInvite : IDeletable
 	/// <summary>
 	/// Gets the ID of the target application for this invite, if applicable.
 	/// </summary>
-	DiscordId? TargetApplicationId { get; }
+	Snowflake? TargetApplicationId { get; }
 
 	/// <summary>
 	/// Gets the approximate number of times this invite has been used.

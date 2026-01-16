@@ -19,7 +19,7 @@ internal class UserWrapper : IUser
 	}
 
 	/// <inheritdoc />
-	public DiscordId Id => _user.Id;
+	public Snowflake Id => _user.Id;
 
 	/// <inheritdoc />
 	public DateTimeOffset CreatedAt => _user.Id.CreatedAt;

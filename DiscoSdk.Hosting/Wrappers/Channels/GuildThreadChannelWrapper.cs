@@ -33,9 +33,9 @@ internal class GuildThreadChannelWrapper : TextBasedChannelWrapper, IGuildThread
     public int? MemberCount => _channel.MemberCount;
     public int? TotalMessageSent => _channel.TotalMessageSent;
     public ThreadAutoArchiveDuration? AutoArchiveDuration => _channel.ThreadMetadata?.AutoArchiveDuration;
-    public DiscordId? OwnerId => _channel.OwnerId;
+    public Snowflake? OwnerId => _channel.OwnerId;
     public ThreadMetadata? Metadata => _channel.ThreadMetadata;
-    public DiscordId[]? AppliedTags => _channel.AppliedTags;
+    public Snowflake[]? AppliedTags => _channel.AppliedTags;
 
     public IGuild Guild { get; }
 
@@ -59,7 +59,7 @@ internal class GuildThreadChannelWrapper : TextBasedChannelWrapper, IGuildThread
         });
     }
 
-    public IRestAction<IGuildThreadChannel> AddThreadMember(DiscordId userId)
+    public IRestAction<IGuildThreadChannel> AddThreadMember(Snowflake userId)
     {
         if (userId == default)
             throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
@@ -71,7 +71,7 @@ internal class GuildThreadChannelWrapper : TextBasedChannelWrapper, IGuildThread
         });
     }
 
-    public IRestAction<IGuildThreadChannel> RemoveThreadMember(DiscordId userId)
+    public IRestAction<IGuildThreadChannel> RemoveThreadMember(Snowflake userId)
     {
         if (userId == default)
             throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));

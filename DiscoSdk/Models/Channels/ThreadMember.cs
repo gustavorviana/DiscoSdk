@@ -12,13 +12,13 @@ public class ThreadMember
 	/// Gets or sets the ID of the thread.
 	/// </summary>
 	[JsonPropertyName("id")]
-	public DiscordId? Id { get; set; }
+	public Snowflake? Id { get; set; }
 
 	/// <summary>
 	/// Gets or sets the ID of the user.
 	/// </summary>
 	[JsonPropertyName("user_id")]
-	public DiscordId? UserId { get; set; }
+	public Snowflake? UserId { get; set; }
 
 	/// <summary>
 	/// Gets or sets when the user joined the thread.

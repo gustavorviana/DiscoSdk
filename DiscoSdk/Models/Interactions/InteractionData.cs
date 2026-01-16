@@ -14,7 +14,7 @@ public class InteractionData
     /// Gets or sets the ID of the invoked command.
     /// </summary>
     [JsonPropertyName("id")]
-    public DiscordId? Id { get; set; }
+    public Snowflake? Id { get; set; }
 
     /// <summary>
     /// Gets or sets the name of the invoked command.

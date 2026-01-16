@@ -10,7 +10,7 @@ namespace DiscoSdk.Hosting.Wrappers.Managers;
 /// <typeparam name="TSelf">The type of the implementing class, used for method chaining.</typeparam>
 internal abstract class MessageChannelManagerWrapper<TSelf> : ChannelManagerWrapper<TSelf>, IMessageChannelManager<TSelf> where TSelf : MessageChannelManagerWrapper<TSelf>, IMessageChannelManager<TSelf>
 {
-	protected MessageChannelManagerWrapper(DiscordId channelId, ChannelClient channelClient)
+	protected MessageChannelManagerWrapper(Snowflake channelId, ChannelClient channelClient)
 		: base(channelId, channelClient)
 	{
 	}

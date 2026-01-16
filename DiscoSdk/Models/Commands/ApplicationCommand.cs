@@ -13,7 +13,7 @@ public class ApplicationCommand : IEquatable<ApplicationCommand?>
     /// Gets or sets the unique ID of the command.
     /// </summary>
     [JsonPropertyName("id")]
-    public DiscordId? Id { get; set; }
+    public Snowflake? Id { get; set; }
 
     /// <summary>
     /// Gets or sets the type of command.

@@ -22,7 +22,7 @@ internal class ChannelWrapper(Channel channel, DiscordClient client) : IChannel
     protected readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
 
     /// <inheritdoc />
-    public DiscordId Id => _channel.Id;
+    public Snowflake Id => _channel.Id;
 
     /// <inheritdoc />
     public DateTimeOffset CreatedAt => _channel.Id.CreatedAt;

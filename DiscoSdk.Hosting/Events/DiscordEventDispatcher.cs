@@ -197,7 +197,7 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
 
     private async Task ProcessGuildDeleteAsync(JsonElement payload)
     {
-        DiscordId.TryParse(payload.GetProperty("id").GetString(), out var snowflake);
+        Snowflake.TryParse(payload.GetProperty("id").GetString(), out var snowflake);
         var eventData = new GuildDeleteEvent
         {
             Id = snowflake,

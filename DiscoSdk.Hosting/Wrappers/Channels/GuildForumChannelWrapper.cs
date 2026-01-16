@@ -50,7 +50,7 @@ internal class GuildForumChannelWrapper : GuildChannelWrapperBase, IGuildForumCh
     public int DefaultThreadSlowmode => _channel.DefaultThreadRateLimitPerUser ?? 0;
 
     /// <inheritdoc />
-    public ICreateIThreadChannelAction CreateThreadChannel(string name, DiscordId messageId, bool isPrivate)
+    public ICreateIThreadChannelAction CreateThreadChannel(string name, Snowflake messageId, bool isPrivate)
     {
         return new CreateThreadChannelAction(_client, this, name, messageId, isPrivate);
     }

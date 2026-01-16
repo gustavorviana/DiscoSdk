@@ -9,10 +9,10 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 internal class ReactionPaginationAction : RestAction<User[]>, IReactionPaginationAction
 {
 	private readonly DiscordClient _client;
-	private readonly DiscordId _channelId;
-	private readonly DiscordId _messageId;
+	private readonly Snowflake _channelId;
+	private readonly Snowflake _messageId;
 	private readonly string _emoji;
-	private DiscordId? _after;
+	private Snowflake? _after;
 	private int? _limit;
 
 	/// <summary>
@@ -23,7 +23,7 @@ internal class ReactionPaginationAction : RestAction<User[]>, IReactionPaginatio
 	/// <param name="messageId">The ID of the message.</param>
 	/// <param name="emoji">The emoji to get reactions for.</param>
 	/// <param name="reactionType">Optional reaction type filter.</param>
-	public ReactionPaginationAction(DiscordClient client, DiscordId channelId, DiscordId messageId, Emoji emoji)
+	public ReactionPaginationAction(DiscordClient client, Snowflake channelId, Snowflake messageId, Emoji emoji)
 	{
 		_client = client ?? throw new ArgumentNullException(nameof(client));
 		_channelId = channelId;
@@ -31,7 +31,7 @@ internal class ReactionPaginationAction : RestAction<User[]>, IReactionPaginatio
 		_emoji = emoji.ToString();
 	}
 
-    public IReactionPaginationAction After(DiscordId userId)
+    public IReactionPaginationAction After(Snowflake userId)
     {
 		_after = userId;
         return this;

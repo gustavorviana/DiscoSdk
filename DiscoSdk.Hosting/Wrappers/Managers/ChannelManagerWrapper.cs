@@ -11,11 +11,11 @@ namespace DiscoSdk.Hosting.Wrappers.Managers;
 /// <typeparam name="TSelf">The type of the implementing class, used for method chaining.</typeparam>
 internal abstract class ChannelManagerWrapper<TSelf> : ManagerWrapper<TSelf>, IChannelManager<TSelf> where TSelf : ChannelManagerWrapper<TSelf>, IChannelManager<TSelf>
 {
-	protected readonly DiscordId _channelId;
+	protected readonly Snowflake _channelId;
 	protected readonly ChannelClient _channelClient;
 	protected readonly Dictionary<string, object?> _changes = [];
 
-	protected ChannelManagerWrapper(DiscordId channelId, ChannelClient channelClient)
+	protected ChannelManagerWrapper(Snowflake channelId, ChannelClient channelClient)
 	{
 		_channelId = channelId;
 		_channelClient = channelClient;
@@ -31,7 +31,7 @@ internal abstract class ChannelManagerWrapper<TSelf> : ManagerWrapper<TSelf>, IC
 	}
 
 	/// <inheritdoc />
-	public TSelf SetParent(DiscordId? parentId)
+	public TSelf SetParent(Snowflake? parentId)
 	{
 		_changes["parent_id"] = parentId?.ToString();
 		MarkAsModified("parent_id");

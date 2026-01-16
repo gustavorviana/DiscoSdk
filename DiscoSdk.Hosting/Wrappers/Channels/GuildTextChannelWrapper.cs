@@ -32,7 +32,7 @@ internal class GuildTextChannelWrapper : GuildTextBasedChannelWrapper, IGuildTex
     }
 
     /// <inheritdoc />
-    public Task DeleteAllReactionsAsync(DiscordId messageId, CancellationToken cancellationToken = default)
+    public Task DeleteAllReactionsAsync(Snowflake messageId, CancellationToken cancellationToken = default)
     {
         return _client.MessageClient.DeleteAllReactionsAsync(_channel.Id, messageId, cancellationToken);
     }
@@ -43,13 +43,13 @@ internal class GuildTextChannelWrapper : GuildTextBasedChannelWrapper, IGuildTex
     }
 
     /// <inheritdoc />
-    public Task RemoveReactionAsync(DiscordId messageId, Emoji emoji, CancellationToken cancellationToken = default)
+    public Task RemoveReactionAsync(Snowflake messageId, Emoji emoji, CancellationToken cancellationToken = default)
     {
         return _client.MessageClient.RemoveReactionAsync(_channel.Id, messageId, emoji.ToString(), cancellationToken);
     }
 
     /// <inheritdoc />
-    public ISendMessageRestAction SendStickers(IEnumerable<DiscordId> stickers)
+    public ISendMessageRestAction SendStickers(IEnumerable<Snowflake> stickers)
     {
         return new SendMessageRestAction(_client, null, this, null).SetStickers(stickers);
     }

@@ -48,7 +48,7 @@ public class Invite
 	/// Gets or sets the ID of the target application for this invite, if applicable.
 	/// </summary>
 	[JsonPropertyName("target_application_id")]
-	public DiscordId? TargetApplicationId { get; set; }
+	public Snowflake? TargetApplicationId { get; set; }
 
 	/// <summary>
 	/// Gets or sets the approximate number of times this invite has been used.

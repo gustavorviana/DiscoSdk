@@ -41,7 +41,7 @@ public interface IEditGuildRestAction : IRestAction<IGuild>
 	/// </summary>
 	/// <param name="channelId">The AFK channel ID, or null to remove it.</param>
 	/// <returns>The current <see cref="IEditGuildRestAction"/> instance.</returns>
-	IEditGuildRestAction SetAfkChannelId(DiscordId? channelId);
+	IEditGuildRestAction SetAfkChannelId(Snowflake? channelId);
 
 	/// <summary>
 	/// Sets the AFK timeout in seconds.
@@ -111,7 +111,7 @@ public interface IEditGuildRestAction : IRestAction<IGuild>
 	/// </summary>
 	/// <param name="channelId">The system channel ID, or null to remove it.</param>
 	/// <returns>The current <see cref="IEditGuildRestAction"/> instance.</returns>
-	IEditGuildRestAction SetSystemChannelId(DiscordId? channelId);
+	IEditGuildRestAction SetSystemChannelId(Snowflake? channelId);
 
 	/// <summary>
 	/// Sets the system channel flags.
@@ -125,14 +125,14 @@ public interface IEditGuildRestAction : IRestAction<IGuild>
 	/// </summary>
 	/// <param name="channelId">The rules channel ID, or null to remove it.</param>
 	/// <returns>The current <see cref="IEditGuildRestAction"/> instance.</returns>
-	IEditGuildRestAction SetRulesChannelId(DiscordId? channelId);
+	IEditGuildRestAction SetRulesChannelId(Snowflake? channelId);
 
 	/// <summary>
 	/// Sets the public updates channel ID.
 	/// </summary>
 	/// <param name="channelId">The public updates channel ID, or null to remove it.</param>
 	/// <returns>The current <see cref="IEditGuildRestAction"/> instance.</returns>
-	IEditGuildRestAction SetPublicUpdatesChannelId(DiscordId? channelId);
+	IEditGuildRestAction SetPublicUpdatesChannelId(Snowflake? channelId);
 
 	/// <summary>
 	/// Sets the preferred locale.
@@ -160,5 +160,5 @@ public interface IEditGuildRestAction : IRestAction<IGuild>
 	/// </summary>
 	/// <param name="channelId">The safety alerts channel ID, or null to remove it.</param>
 	/// <returns>The current <see cref="IEditGuildRestAction"/> instance.</returns>
-	IEditGuildRestAction SetSafetyAlertsChannelId(DiscordId? channelId);
+	IEditGuildRestAction SetSafetyAlertsChannelId(Snowflake? channelId);
 }

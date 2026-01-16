@@ -8,7 +8,7 @@ public interface IWithDiscordIdentity
 	/// <summary>
 	/// Gets the unique identifier of the entity.
 	/// </summary>
-	DiscordId Id { get; }
+	Snowflake Id { get; }
 
 	/// <summary>
 	/// Gets the date and time when this entity was created.

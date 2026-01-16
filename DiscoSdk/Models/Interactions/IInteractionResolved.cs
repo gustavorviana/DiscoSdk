@@ -7,7 +7,7 @@ namespace DiscoSdk.Models.Interactions;
 /// Represents resolved data from an interaction, containing users, members, roles, channels, and messages.
 /// </summary>
 /// <remarks>
-/// All Discord IDs in the dictionary keys must be of type <see cref="DiscordId"/> (as strings).
+/// All Discord IDs in the dictionary keys must be of type <see cref="Snowflake"/> (as strings).
 /// </remarks>
 public interface IInteractionResolved
 {

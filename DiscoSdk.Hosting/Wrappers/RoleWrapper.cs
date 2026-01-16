@@ -24,7 +24,7 @@ internal class RoleWrapper(Role role, IGuild guild, DiscordClient client) : IRol
 
     // IMentionable / IWithDiscordIdentity
     /// <inheritdoc />
-    public DiscordId Id => _role.Id;
+    public Snowflake Id => _role.Id;
 
     /// <inheritdoc />
     public DateTimeOffset CreatedAt => _role.Id.CreatedAt;

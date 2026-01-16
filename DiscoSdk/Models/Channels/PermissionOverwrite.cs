@@ -14,7 +14,7 @@ public class PermissionOverwrite
     /// Gets or sets the role or user ID.
     /// </summary>
     [JsonPropertyName("id")]
-    public DiscordId Id { get; set; } = default!;
+    public Snowflake Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the type of overwrite (0 for role, 1 for member).

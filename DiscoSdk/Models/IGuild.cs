@@ -8,7 +8,7 @@ namespace DiscoSdk.Models;
 /// Represents a Discord guild (server) with all its properties and available actions.
 /// </summary>
 /// <remarks>
-/// All Discord IDs must be of type <see cref="DiscordId"/>.
+/// All Discord IDs must be of type <see cref="Snowflake"/>.
 /// All methods that perform server actions return <see cref="IRestAction"/> or <see cref="IRestAction{T}"/>.
 /// </remarks>
 public interface IGuild
@@ -16,7 +16,7 @@ public interface IGuild
     /// <summary>
     /// Gets the unique identifier of this guild.
     /// </summary>
-    DiscordId Id { get; }
+    Snowflake Id { get; }
 
     /// <summary>
     /// Gets the name of this guild.
@@ -51,7 +51,7 @@ public interface IGuild
     /// <summary>
     /// Gets the ID of the owner of this guild.
     /// </summary>
-    DiscordId? OwnerId { get; }
+    Snowflake? OwnerId { get; }
 
     /// <summary>
     /// Gets the permissions for the current user in this guild.
@@ -66,7 +66,7 @@ public interface IGuild
     /// <summary>
     /// Gets the ID of the AFK channel, or null if no AFK channel is configured.
     /// </summary>
-    DiscordId? AfkChannelId { get; }
+    Snowflake? AfkChannelId { get; }
 
     /// <summary>
     /// Gets the AFK timeout in seconds, or null if not set.
@@ -81,7 +81,7 @@ public interface IGuild
     /// <summary>
     /// Gets the ID of the channel used for the guild widget, or null if not set.
     /// </summary>
-    DiscordId? WidgetChannelId { get; }
+    Snowflake? WidgetChannelId { get; }
 
     /// <summary>
     /// Gets the verification level required for this guild.
@@ -121,12 +121,12 @@ public interface IGuild
     /// <summary>
     /// Gets the application ID of the guild creator if it is bot-created, or null otherwise.
     /// </summary>
-    DiscordId? ApplicationId { get; }
+    Snowflake? ApplicationId { get; }
 
     /// <summary>
     /// Gets the ID of the system channel where system messages are sent, or null if not configured.
     /// </summary>
-    DiscordId? SystemChannelId { get; }
+    Snowflake? SystemChannelId { get; }
 
     /// <summary>
     /// Gets the system channel flags that control which system messages are sent to the system channel.
@@ -136,7 +136,7 @@ public interface IGuild
     /// <summary>
     /// Gets the ID of the rules channel, or null if not configured.
     /// </summary>
-    DiscordId? RulesChannelId { get; }
+    Snowflake? RulesChannelId { get; }
 
     /// <summary>
     /// Gets the maximum number of presences for this guild, or null if not set.
@@ -181,7 +181,7 @@ public interface IGuild
     /// <summary>
     /// Gets the ID of the channel where guild notices are posted, or null if not configured.
     /// </summary>
-    DiscordId? PublicUpdatesChannelId { get; }
+    Snowflake? PublicUpdatesChannelId { get; }
 
     /// <summary>
     /// Gets the maximum number of users in a video channel, or null if not set.
@@ -272,7 +272,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IBanMemberAction BanMember(DiscordId userId, int deleteMessageDays = 0);
+    IBanMemberAction BanMember(Snowflake userId, int deleteMessageDays = 0);
 
     /// <summary>
     /// Creates a REST action to unban a user from this guild.
@@ -282,7 +282,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IRestAction UnbanMember(DiscordId userId);
+    IRestAction UnbanMember(Snowflake userId);
 
     /// <summary>
     /// Creates a REST action to kick a member from this guild.
@@ -292,7 +292,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IRestAction KickMember(DiscordId userId);
+    IRestAction KickMember(Snowflake userId);
 
     /// <summary>
     /// Creates a REST action to get members of this guild with pagination.
@@ -312,7 +312,7 @@ public interface IGuild
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// Returns null if the user is not a member of this guild.
     /// </remarks>
-    IRestAction<IMember?> GetMember(DiscordId userId);
+    IRestAction<IMember?> GetMember(Snowflake userId);
 
     /// <summary>
     /// Creates a REST action to get banned members of this guild with pagination.
@@ -332,7 +332,7 @@ public interface IGuild
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// Returns null if the user is not banned from this guild.
     /// </remarks>
-    IRestAction<Ban?> GetBan(DiscordId userId);
+    IRestAction<Ban?> GetBan(Snowflake userId);
 
     /// <summary>
     /// Creates a REST action to get audit logs of this guild with pagination.
@@ -348,7 +348,7 @@ public interface IGuild
     /// </summary>
     /// <param name="channelId">The ID of the channel to retrieve.</param>
     /// <returns>The channel if found, or null if the channel does not exist in this guild.</returns>
-    IGuildChannelUnion? GetChannel(DiscordId channelId);
+    IGuildChannelUnion? GetChannel(Snowflake channelId);
 
     /// <summary>
     /// Gets the AFK channel of this guild.
@@ -428,7 +428,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IRestAction<int> GetPruneCount(int days, params DiscordId[] includeRoles);
+    IRestAction<int> GetPruneCount(int days, params Snowflake[] includeRoles);
 
     /// <summary>
     /// Creates a REST action to begin a prune operation on this guild.
@@ -439,7 +439,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IBeginPruneAction BeginPrune(int days, params DiscordId[] includeRoles);
+    IBeginPruneAction BeginPrune(int days, params Snowflake[] includeRoles);
 
     /// <summary>
     /// Gets a REST action to retrieve voice regions available for this guild.

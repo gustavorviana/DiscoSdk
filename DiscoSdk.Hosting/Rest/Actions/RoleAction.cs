@@ -14,10 +14,10 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <param name="client">The Discord client.</param>
 /// <param name="guildId">The ID of the guild to create/edit the role in.</param>
 /// <param name="roleId">The ID of the role to edit, or null if creating a new role.</param>
-internal class RoleAction(DiscordClient client, IGuild guild, DiscordId? roleId = null) : RestAction<IRole>, IRoleAction
+internal class RoleAction(DiscordClient client, IGuild guild, Snowflake? roleId = null) : RestAction<IRole>, IRoleAction
 {
 	private readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
-	private readonly DiscordId? _roleId = roleId;
+	private readonly Snowflake? _roleId = roleId;
 
 	private string? _name;
 	private DiscordPermission? _permissions;

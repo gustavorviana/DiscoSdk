@@ -13,21 +13,21 @@ public interface IMessagePaginationAction : IPaginationAction<IMessage, IMessage
 	/// </summary>
 	/// <param name="messageId">The message ID to get history around.</param>
 	/// <returns>The current <see cref="IMessagePaginationAction"/> instance.</returns>
-	IMessagePaginationAction Around(DiscordId messageId);
+	IMessagePaginationAction Around(Snowflake messageId);
 
 	/// <summary>
 	/// Gets history after a specific message.
 	/// </summary>
 	/// <param name="messageId">The message ID to get history after.</param>
 	/// <returns>The current <see cref="IMessagePaginationAction"/> instance.</returns>
-	IMessagePaginationAction After(DiscordId messageId);
+	IMessagePaginationAction After(Snowflake messageId);
 
 	/// <summary>
 	/// Gets history before a specific message.
 	/// </summary>
 	/// <param name="messageId">The message ID to get history before.</param>
 	/// <returns>The current <see cref="IMessagePaginationAction"/> instance.</returns>
-	IMessagePaginationAction Before(DiscordId messageId);
+	IMessagePaginationAction Before(Snowflake messageId);
 
 	/// <summary>
 	/// Gets history from the beginning of the channel.

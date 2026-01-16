@@ -18,7 +18,7 @@ internal class GuildClient(IDiscordRestClientBase client)
 	/// <param name="after">Get members after this user ID.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>An array of guild members.</returns>
-	public Task<GuildMember[]> GetMembersAsync(DiscordId guildId, int? limit = null, DiscordId? after = null, CancellationToken cancellationToken = default)
+	public Task<GuildMember[]> GetMembersAsync(Snowflake guildId, int? limit = null, Snowflake? after = null, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -46,7 +46,7 @@ internal class GuildClient(IDiscordRestClientBase client)
 	/// <param name="userId">The ID of the user.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The guild member, or null if the user is not a member of the guild.</returns>
-	public async Task<GuildMember?> GetMemberAsync(DiscordId guildId, DiscordId userId, CancellationToken cancellationToken = default)
+	public async Task<GuildMember?> GetMemberAsync(Snowflake guildId, Snowflake userId, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -72,7 +72,7 @@ internal class GuildClient(IDiscordRestClientBase client)
 	/// <param name="userId">The ID of the banned user.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The ban information, or null if the user is not banned from the guild.</returns>
-	public async Task<Ban?> GetBanAsync(DiscordId guildId, DiscordId userId, CancellationToken cancellationToken = default)
+	public async Task<Ban?> GetBanAsync(Snowflake guildId, Snowflake userId, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -97,7 +97,7 @@ internal class GuildClient(IDiscordRestClientBase client)
 	/// <param name="guildId">The ID of the guild.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>An array of channels.</returns>
-	public Task<Channel[]> GetChannelsAsync(DiscordId guildId, CancellationToken cancellationToken = default)
+	public Task<Channel[]> GetChannelsAsync(Snowflake guildId, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -112,7 +112,7 @@ internal class GuildClient(IDiscordRestClientBase client)
 	/// <param name="guildId">The ID of the guild.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>An array of roles.</returns>
-	public Task<Role[]> GetRolesAsync(DiscordId guildId, CancellationToken cancellationToken = default)
+	public Task<Role[]> GetRolesAsync(Snowflake guildId, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -127,7 +127,7 @@ internal class GuildClient(IDiscordRestClientBase client)
 	/// <param name="guildId">The ID of the guild.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The guild, or null if not found.</returns>
-	public async Task<Guild?> GetAsync(DiscordId guildId, CancellationToken cancellationToken = default)
+	public async Task<Guild?> GetAsync(Snowflake guildId, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -150,7 +150,7 @@ internal class GuildClient(IDiscordRestClientBase client)
 	/// <param name="channelId">The ID of the stage channel.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task RequestToSpeakAsync(DiscordId guildId, DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task RequestToSpeakAsync(Snowflake guildId, Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -170,7 +170,7 @@ internal class GuildClient(IDiscordRestClientBase client)
 	/// <param name="channelId">The ID of the stage channel.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task CancelRequestToSpeakAsync(DiscordId guildId, DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task CancelRequestToSpeakAsync(Snowflake guildId, Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));

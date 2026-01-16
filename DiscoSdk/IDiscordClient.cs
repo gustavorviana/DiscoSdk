@@ -33,12 +33,12 @@ public interface IDiscordClient
     /// </summary>
     /// <param name="channelId">The ID of the channel to retrieve.</param>
     /// <returns>The channel as its most specific type, or null if not found.</returns>
-    IRestAction<IChannel?> GetChannel(DiscordId channelId);
+    IRestAction<IChannel?> GetChannel(Snowflake channelId);
 
     /// <summary>
     /// Gets a channel by its ID from the Discord API.
     /// </summary>
     /// <param name="channelId">The ID of the channel to retrieve.</param>
     /// <returns>The channel as its most specific type, or null if not found.</returns>
-    IRestAction<TChannel?> GetChannel<TChannel>(DiscordId channelId) where TChannel : IChannel;
+    IRestAction<TChannel?> GetChannel<TChannel>(Snowflake channelId) where TChannel : IChannel;
 }

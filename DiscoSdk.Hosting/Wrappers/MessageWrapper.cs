@@ -36,7 +36,7 @@ internal class MessageWrapper : IMessage
     }
 
     // Visual Properties
-    public DiscordId Id => _message.Id;
+    public Snowflake Id => _message.Id;
 
     /// <inheritdoc />
     public DateTimeOffset CreatedAt => _message.Id.CreatedAt;
@@ -225,7 +225,7 @@ internal class MessageWrapper : IMessage
         if (string.IsNullOrEmpty(_client.User?.Id))
             return false;
 
-        if (!DiscordId.TryParse(_client.User.Id, out var botId))
+        if (!Snowflake.TryParse(_client.User.Id, out var botId))
             return false;
 
         return _message.Author.Id == botId;

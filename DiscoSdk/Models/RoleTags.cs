@@ -11,13 +11,13 @@ public class RoleTags
     /// Gets or sets the bot ID this role belongs to.
     /// </summary>
     [JsonPropertyName("bot_id")]
-    public DiscordId? BotId { get; set; }
+    public Snowflake? BotId { get; set; }
 
     /// <summary>
     /// Gets or sets the integration ID this role belongs to.
     /// </summary>
     [JsonPropertyName("integration_id")]
-    public DiscordId? IntegrationId { get; set; }
+    public Snowflake? IntegrationId { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the role this role is the premium subscriber role for.
@@ -29,7 +29,7 @@ public class RoleTags
     /// Gets or sets the ID of the role this role is linked to.
     /// </summary>
     [JsonPropertyName("subscription_listing_id")]
-    public DiscordId? SubscriptionListingId { get; set; }
+    public Snowflake? SubscriptionListingId { get; set; }
 
     /// <summary>
     /// Gets or sets whether this is the guild's Booster role.

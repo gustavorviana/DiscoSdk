@@ -12,7 +12,7 @@ public class Sticker : IWithDiscordIdentity
     /// Gets or sets the ID of the sticker.
     /// </summary>
     [JsonPropertyName("id")]
-    public DiscordId Id { get; set; } = default!;
+    public Snowflake Id { get; set; } = default!;
 
     public DateTimeOffset CreatedAt => Id.CreatedAt;
 
@@ -20,7 +20,7 @@ public class Sticker : IWithDiscordIdentity
     /// Gets or sets the ID of the pack the sticker is from.
     /// </summary>
     [JsonPropertyName("pack_id")]
-    public DiscordId? PackId { get; set; }
+    public Snowflake? PackId { get; set; }
 
     /// <summary>
     /// Gets or sets the name of the sticker.
@@ -50,7 +50,7 @@ public class Sticker : IWithDiscordIdentity
     /// Gets or sets the ID of the guild that owns the sticker.
     /// </summary>
     [JsonPropertyName("guild_id")]
-    public DiscordId? GuildId { get; set; }
+    public Snowflake? GuildId { get; set; }
 
     /// <summary>
     /// Gets or sets the user that uploaded the guild sticker.

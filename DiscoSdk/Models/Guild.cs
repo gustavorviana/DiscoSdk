@@ -14,7 +14,7 @@ public class Guild
     /// Gets or sets the guild's unique identifier.
     /// </summary>
     [JsonPropertyName("id")]
-    public DiscordId Id { get; set; } = default!;
+    public Snowflake Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the guild's name.
@@ -56,7 +56,7 @@ public class Guild
     /// Gets or sets the ID of the guild owner.
     /// </summary>
     [JsonPropertyName("owner_id")]
-    public DiscordId? OwnerId { get; set; }
+    public Snowflake? OwnerId { get; set; }
 
     /// <summary>
     /// Gets or sets the permissions for the current user in the guild.
@@ -75,7 +75,7 @@ public class Guild
     /// Gets or sets the ID of the AFK channel.
     /// </summary>
     [JsonPropertyName("afk_channel_id")]
-    public DiscordId? AfkChannelId { get; set; }
+    public Snowflake? AfkChannelId { get; set; }
 
     /// <summary>
     /// Gets or sets the AFK timeout in seconds.
@@ -93,7 +93,7 @@ public class Guild
     /// Gets or sets the channel ID for the guild widget.
     /// </summary>
     [JsonPropertyName("widget_channel_id")]
-    public DiscordId? WidgetChannelId { get; set; }
+    public Snowflake? WidgetChannelId { get; set; }
 
     /// <summary>
     /// Gets or sets the verification level required for the guild.
@@ -141,13 +141,13 @@ public class Guild
     /// Gets or sets the application ID of the guild creator if it is bot-created.
     /// </summary>
     [JsonPropertyName("application_id")]
-    public DiscordId? ApplicationId { get; set; }
+    public Snowflake? ApplicationId { get; set; }
 
     /// <summary>
     /// Gets or sets the system channel ID.
     /// </summary>
     [JsonPropertyName("system_channel_id")]
-    public DiscordId? SystemChannelId { get; set; }
+    public Snowflake? SystemChannelId { get; set; }
 
     /// <summary>
     /// Gets or sets the system channel flags.
@@ -159,7 +159,7 @@ public class Guild
     /// Gets or sets the rules channel ID.
     /// </summary>
     [JsonPropertyName("rules_channel_id")]
-    public DiscordId? RulesChannelId { get; set; }
+    public Snowflake? RulesChannelId { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum number of presences for the guild.
@@ -213,7 +213,7 @@ public class Guild
     /// Gets or sets the ID of the channel where guild notices are posted.
     /// </summary>
     [JsonPropertyName("public_updates_channel_id")]
-    public DiscordId? PublicUpdatesChannelId { get; set; }
+    public Snowflake? PublicUpdatesChannelId { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum number of users in a video channel.

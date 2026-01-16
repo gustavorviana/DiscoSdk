@@ -6,7 +6,7 @@ public interface IThreadContainer : IGuildChannel
 {
     int DefaultThreadSlowmode { get; }
 
-    ICreateIThreadChannelAction CreateThreadChannel(string name, DiscordId messageId, bool isPrivate);
+    ICreateIThreadChannelAction CreateThreadChannel(string name, Snowflake messageId, bool isPrivate);
 
     IThreadChannelPaginationAction GetThreadChannels();
 }

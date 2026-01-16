@@ -16,7 +16,7 @@ public interface ICreateIThreadChannelAction : IRestAction<IGuildThreadChannel>
 	/// </summary>
 	/// <param name="tagIds">The IDs of the tags to apply.</param>
 	/// <returns>The current <see cref="ICreateIThreadChannelAction"/> instance.</returns>
-	ICreateIThreadChannelAction SetAppliedTags(params DiscordId[] tagIds);
+	ICreateIThreadChannelAction SetAppliedTags(params Snowflake[] tagIds);
 
 	/// <summary>
 	/// Sets the auto-archive duration for the thread.
@@ -75,7 +75,7 @@ public interface ICreateIThreadChannelAction : IRestAction<IGuildThreadChannel>
 	/// </summary>
 	/// <param name="stickerIds">The IDs of stickers to send with the message (max 3).</param>
 	/// <returns>The current <see cref="ICreateIThreadChannelAction"/> instance.</returns>
-	ICreateIThreadChannelAction SetMessageStickers(params DiscordId[] stickerIds);
+	ICreateIThreadChannelAction SetMessageStickers(params Snowflake[] stickerIds);
 
 	/// <summary>
 	/// Sets the message flags for the initial message in forum posts.

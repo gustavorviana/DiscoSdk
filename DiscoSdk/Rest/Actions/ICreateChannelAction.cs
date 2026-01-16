@@ -63,7 +63,7 @@ public interface ICreateChannelAction : IRestAction<IGuildChannel>
     /// </summary>
     /// <param name="parentId">The parent category channel ID, or null to not set it.</param>
     /// <returns>The current <see cref="ICreateChannelAction"/> instance.</returns>
-    ICreateChannelAction SetParentId(DiscordId? parentId);
+    ICreateChannelAction SetParentId(Snowflake? parentId);
 
     /// <summary>
     /// Sets the channel's position.

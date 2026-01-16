@@ -36,7 +36,7 @@ public interface IGuildThreadChannel : IGuildChannel, IGuildMessageChannel
     /// <summary>
     /// Gets the ID of the user who started the thread.
     /// </summary>
-    DiscordId? OwnerId { get; }
+    Snowflake? OwnerId { get; }
 
     /// <summary>
     /// Gets the thread metadata containing thread-specific information.
@@ -46,7 +46,7 @@ public interface IGuildThreadChannel : IGuildChannel, IGuildMessageChannel
     /// <summary>
     /// Gets the IDs of the tags applied to this thread (for threads in forum/media channels).
     /// </summary>
-    DiscordId[]? AppliedTags { get; }
+    Snowflake[]? AppliedTags { get; }
 
     /// <summary>
     /// Joins this thread.
@@ -65,14 +65,14 @@ public interface IGuildThreadChannel : IGuildChannel, IGuildMessageChannel
     /// </summary>
     /// <param name="userId">The ID of the user to add to the thread.</param>
     /// <returns>A REST action that can be executed to add the member to the thread.</returns>
-    IRestAction<IGuildThreadChannel> AddThreadMember(DiscordId userId);
+    IRestAction<IGuildThreadChannel> AddThreadMember(Snowflake userId);
 
     /// <summary>
     /// Removes a member from this thread.
     /// </summary>
     /// <param name="userId">The ID of the user to remove from the thread.</param>
     /// <returns>A REST action that can be executed to remove the member from the thread.</returns>
-    IRestAction<IGuildThreadChannel> RemoveThreadMember(DiscordId userId);
+    IRestAction<IGuildThreadChannel> RemoveThreadMember(Snowflake userId);
 
     /// <summary>
     /// Archives this thread.

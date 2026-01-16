@@ -10,7 +10,7 @@ public class GuildDeleteEvent
     /// <summary>
     /// Gets or sets the ID of the guild that was deleted or became unavailable.
     /// </summary>
-    public DiscordId Id { get; set; }
+    public Snowflake Id { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the guild is unavailable.

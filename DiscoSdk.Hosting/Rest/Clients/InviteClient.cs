@@ -15,7 +15,7 @@ internal class InviteClient(IDiscordRestClientBase client)
 	/// <param name="request">The invite creation request.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The created invite.</returns>
-	public Task<Invite> CreateAsync(DiscordId channelId, object request, CancellationToken cancellationToken = default)
+	public Task<Invite> CreateAsync(Snowflake channelId, object request, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -32,7 +32,7 @@ internal class InviteClient(IDiscordRestClientBase client)
 	/// <param name="channelId">The ID of the channel to get invites for.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>An array of invites for the channel.</returns>
-	public Task<Invite[]> GetChannelInvitesAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task<Invite[]> GetChannelInvitesAsync(Snowflake channelId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));

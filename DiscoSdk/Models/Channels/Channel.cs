@@ -13,7 +13,7 @@ public class Channel
     /// Gets or sets the channel's unique identifier.
     /// </summary>
     [JsonPropertyName("id")]
-    public DiscordId Id { get; set; } = default!;
+    public Snowflake Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the type of channel.
@@ -25,7 +25,7 @@ public class Channel
     /// Gets or sets the ID of the guild this channel belongs to.
     /// </summary>
     [JsonPropertyName("guild_id")]
-    public DiscordId? GuildId { get; set; }
+    public Snowflake? GuildId { get; set; }
 
     /// <summary>
     /// Gets or sets the sorting position of the channel.
@@ -61,7 +61,7 @@ public class Channel
     /// Gets or sets the ID of the last message sent in this channel.
     /// </summary>
     [JsonPropertyName("last_message_id")]
-    public DiscordId? LastMessageId { get; set; }
+    public Snowflake? LastMessageId { get; set; }
 
     /// <summary>
     /// Gets or sets the bitrate of the voice channel.
@@ -97,19 +97,19 @@ public class Channel
     /// Gets or sets the ID of the creator of the group DM or thread.
     /// </summary>
     [JsonPropertyName("owner_id")]
-    public DiscordId? OwnerId { get; set; }
+    public Snowflake? OwnerId { get; set; }
 
     /// <summary>
     /// Gets or sets the application ID of the group DM creator if it is bot-created.
     /// </summary>
     [JsonPropertyName("application_id")]
-    public DiscordId? ApplicationId { get; set; }
+    public Snowflake? ApplicationId { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the parent channel for the channel.
     /// </summary>
     [JsonPropertyName("parent_id")]
-    public DiscordId? ParentId { get; set; }
+    public Snowflake? ParentId { get; set; }
 
     /// <summary>
     /// Gets or sets when the last pinned message was pinned.
@@ -201,7 +201,7 @@ public class Channel
 	/// Gets or sets the IDs of tags applied to a thread (for threads in forum/media channels).
 	/// </summary>
 	[JsonPropertyName("applied_tags")]
-	public DiscordId[]? AppliedTags { get; set; }
+	public Snowflake[]? AppliedTags { get; set; }
 
 	/// <summary>
 	/// Gets or sets the set of tags that can be used in a forum or media channel.

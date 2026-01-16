@@ -9,11 +9,11 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 internal class PollVotersPaginationAction : RestAction<User[]>, IPollVotersPaginationAction
 {
 	private readonly DiscordClient _client;
-	private readonly DiscordId _channelId;
-	private readonly DiscordId _messageId;
+	private readonly Snowflake _channelId;
+	private readonly Snowflake _messageId;
 	private readonly ulong _answerId;
 	private int? _limit;
-	private DiscordId? _after;
+	private Snowflake? _after;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="PollVotersPaginationAction"/> class.
@@ -22,7 +22,7 @@ internal class PollVotersPaginationAction : RestAction<User[]>, IPollVotersPagin
 	/// <param name="channelId">The ID of the channel containing the poll message.</param>
 	/// <param name="messageId">The ID of the message containing the poll.</param>
 	/// <param name="answerId">The ID of the poll answer.</param>
-	public PollVotersPaginationAction(DiscordClient client, DiscordId channelId, DiscordId messageId, ulong answerId)
+	public PollVotersPaginationAction(DiscordClient client, Snowflake channelId, Snowflake messageId, ulong answerId)
 	{
 		_client = client ?? throw new ArgumentNullException(nameof(client));
 		_channelId = channelId;
@@ -30,7 +30,7 @@ internal class PollVotersPaginationAction : RestAction<User[]>, IPollVotersPagin
 		_answerId = answerId;
 	}
 
-    public IPollVotersPaginationAction After(DiscordId userId)
+    public IPollVotersPaginationAction After(Snowflake userId)
     {
 		_after = userId;
         return this;

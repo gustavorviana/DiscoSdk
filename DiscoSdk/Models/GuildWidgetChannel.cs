@@ -11,7 +11,7 @@ public class GuildWidgetChannel
 	/// Gets or sets the channel's unique identifier.
 	/// </summary>
 	[JsonPropertyName("id")]
-	public DiscordId Id { get; set; } = default!;
+	public Snowflake Id { get; set; } = default!;
 
 	/// <summary>
 	/// Gets or sets the channel's name.

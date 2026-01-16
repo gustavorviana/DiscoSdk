@@ -16,19 +16,19 @@ public class Message
     /// Gets or sets the ID of the message.
     /// </summary>
     [JsonPropertyName("id")]
-    public DiscordId Id { get; set; } = default!;
+    public Snowflake Id { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the ID of the channel the message was sent in.
     /// </summary>
     [JsonPropertyName("channel_id")]
-    public DiscordId ChannelId { get; set; } = default!;
+    public Snowflake ChannelId { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the ID of the guild the message was sent in.
     /// </summary>
     [JsonPropertyName("guild_id")]
-    public DiscordId? GuildId { get; set; }
+    public Snowflake? GuildId { get; set; }
 
     /// <summary>
     /// Gets or sets the author of the message.
@@ -124,7 +124,7 @@ public class Message
     /// Gets or sets the ID of the webhook that sent this message.
     /// </summary>
     [JsonPropertyName("webhook_id")]
-    public DiscordId? WebhookId { get; set; }
+    public Snowflake? WebhookId { get; set; }
 
     /// <summary>
     /// Gets or sets the type of message.

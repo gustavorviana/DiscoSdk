@@ -18,7 +18,7 @@ internal class EditMessageRestAction : RestAction<IMessage>, IEditMessageRestAct
 {
     private readonly DiscordClient _client;
     private readonly ITextBasedChannel _channel;
-    private readonly DiscordId _messageId;
+    private readonly Snowflake _messageId;
     private string? _content;
     private readonly List<Embed> _embeds = [];
     private readonly List<MessageComponent> _components = [];
@@ -32,7 +32,7 @@ internal class EditMessageRestAction : RestAction<IMessage>, IEditMessageRestAct
     /// <param name="client">The Discord client.</param>
     /// <param name="channelId">The ID of the channel containing the message.</param>
     /// <param name="messageId">The ID of the message to edit.</param>
-    public EditMessageRestAction(DiscordClient client, ITextBasedChannel channel, DiscordId messageId, InteractionHandle? interactionHandle)
+    public EditMessageRestAction(DiscordClient client, ITextBasedChannel channel, Snowflake messageId, InteractionHandle? interactionHandle)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _interactionHandle = interactionHandle;

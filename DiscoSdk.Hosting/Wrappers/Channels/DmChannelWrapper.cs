@@ -14,7 +14,7 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 internal class DmChannelWrapper(Channel channel, DiscordClient client) : TextBasedChannelWrapper(channel, client), IDmChannel
 {
     /// <inheritdoc />
-    public DiscordId? OwnerId => _channel.OwnerId;
+    public Snowflake? OwnerId => _channel.OwnerId;
 
     public override string Name => _channel.Recipients?.FirstOrDefault()?.GlobalName ?? base.Name;
 }

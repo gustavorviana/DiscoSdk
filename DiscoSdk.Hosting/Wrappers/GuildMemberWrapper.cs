@@ -26,7 +26,7 @@ internal class GuildMemberWrapper(GuildMember member, IGuild guild, DiscordClien
 
     // IMentionable / IWithDiscordIdentity
     /// <inheritdoc />
-    public DiscordId Id => _member.User?.Id ?? default;
+    public Snowflake Id => _member.User?.Id ?? default;
 
     /// <inheritdoc />
     public DateTimeOffset CreatedAt => Id.CreatedAt;
@@ -133,7 +133,7 @@ internal class GuildMemberWrapper(GuildMember member, IGuild guild, DiscordClien
                 {
                     foreach (var roleIdStr in _member.Roles)
                     {
-                        if (DiscordId.TryParse(roleIdStr, out var roleId))
+                        if (Snowflake.TryParse(roleIdStr, out var roleId))
                         {
                             var role = _guild.Roles.FirstOrDefault(r => r.Id == roleId);
                             if (role != null)
@@ -160,7 +160,7 @@ internal class GuildMemberWrapper(GuildMember member, IGuild guild, DiscordClien
                 {
                     foreach (var roleIdStr in _member.Roles)
                     {
-                        if (DiscordId.TryParse(roleIdStr, out var roleId))
+                        if (Snowflake.TryParse(roleIdStr, out var roleId))
                         {
                             var role = _guild.Roles.FirstOrDefault(r => r.Id == roleId);
                             if (role != null)

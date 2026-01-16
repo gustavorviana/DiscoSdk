@@ -2,9 +2,9 @@
 
 namespace DiscoSdk.Hosting.Events
 {
-    internal class InteractionHandle(DiscordId id, string token)
+    internal class InteractionHandle(Snowflake id, string token)
     {
-        public DiscordId Id => id;
+        public Snowflake Id => id;
         public string Token => token;
         public bool IsDeferred { get; set; }
         public bool Responded { get; set; }

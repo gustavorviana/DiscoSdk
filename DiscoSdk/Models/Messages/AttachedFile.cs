@@ -8,6 +8,6 @@ public class AttachedFile
 	/// <summary>
 	/// Gets or sets the attachment ID.
 	/// </summary>
-	public DiscordId Id { get; set; }
+	public Snowflake Id { get; set; }
 }
 

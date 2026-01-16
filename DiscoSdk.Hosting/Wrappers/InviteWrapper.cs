@@ -37,7 +37,7 @@ internal class InviteWrapper(Invite invite, IGuildChannelBase channel, DiscordCl
     public IUser? TargetUser { get; } = invite.TargetUser != null ? new UserWrapper(invite.TargetUser) : null;
 
     /// <inheritdoc />
-    public DiscordId? TargetApplicationId => _invite.TargetApplicationId;
+    public Snowflake? TargetApplicationId => _invite.TargetApplicationId;
 
     /// <inheritdoc />
     public int? ApproximatePresenceCount => _invite.ApproximatePresenceCount;

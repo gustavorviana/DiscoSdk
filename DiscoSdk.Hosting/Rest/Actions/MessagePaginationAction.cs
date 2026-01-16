@@ -14,9 +14,9 @@ internal class MessagePaginationAction : RestAction<IMessage[]>, IMessagePaginat
 	private readonly DiscordClient _client;
 	private readonly ITextBasedChannel _channel;
 	private int? _limit;
-	private DiscordId? _around;
-	private DiscordId? _before;
-	private DiscordId? _after;
+	private Snowflake? _around;
+	private Snowflake? _before;
+	private Snowflake? _after;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="MessagePaginationAction"/> class.
@@ -40,7 +40,7 @@ internal class MessagePaginationAction : RestAction<IMessage[]>, IMessagePaginat
 	}
 
 	/// <inheritdoc />
-	public IMessagePaginationAction Around(DiscordId messageId)
+	public IMessagePaginationAction Around(Snowflake messageId)
 	{
 		_around = messageId;
 		_before = null;
@@ -49,7 +49,7 @@ internal class MessagePaginationAction : RestAction<IMessage[]>, IMessagePaginat
 	}
 
 	/// <inheritdoc />
-	public IMessagePaginationAction After(DiscordId messageId)
+	public IMessagePaginationAction After(Snowflake messageId)
 	{
 		_after = messageId;
 		_around = null;
@@ -58,7 +58,7 @@ internal class MessagePaginationAction : RestAction<IMessage[]>, IMessagePaginat
 	}
 
 	/// <inheritdoc />
-	public IMessagePaginationAction Before(DiscordId messageId)
+	public IMessagePaginationAction Before(Snowflake messageId)
 	{
 		_before = messageId;
 		_around = null;

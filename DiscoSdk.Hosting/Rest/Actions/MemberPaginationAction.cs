@@ -16,7 +16,7 @@ internal class MemberPaginationAction(DiscordClient client, IGuild guild) : Rest
 {
 	private readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
     private int? _limit;
-	private DiscordId? _after;
+	private Snowflake? _after;
 
     /// <inheritdoc />
     public IMemberPaginationAction Limit(int limit)
@@ -29,7 +29,7 @@ internal class MemberPaginationAction(DiscordClient client, IGuild guild) : Rest
 	}
 
 	/// <inheritdoc />
-	public IMemberPaginationAction After(DiscordId userId)
+	public IMemberPaginationAction After(Snowflake userId)
 	{
 		_after = userId;
 		return this;

@@ -28,8 +28,8 @@ internal class InteractionWrapper(Interaction interaction,
     private readonly Interaction _interaction = interaction ?? throw new ArgumentNullException(nameof(interaction));
     private readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
 
-    public DiscordId Id => _interaction.Id;
-    public DiscordId ApplicationId => _interaction.ApplicationId;
+    public Snowflake Id => _interaction.Id;
+    public Snowflake ApplicationId => _interaction.ApplicationId;
     public InteractionType Type => _interaction.Type;
     public IInteractionData? Data { get; } = interaction.Data is not null && channel is not null ? new InteractionDataWrapper(interaction.Data, channel, client) : null;
     public IGuild? Guild => channel is IGuildChannel gChannel ? gChannel.Guild : null;

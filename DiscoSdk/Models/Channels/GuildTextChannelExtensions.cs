@@ -14,7 +14,7 @@ public static class GuildTextChannelExtensions
 	/// <param name="user">The user whose reaction to remove.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public static Task RemoveReactionByIdAsync(this IGuildTextChannelBase channel, DiscordId messageId, Emoji emoji, IUser user, CancellationToken cancellationToken = default)
+	public static Task RemoveReactionByIdAsync(this IGuildTextChannelBase channel, Snowflake messageId, Emoji emoji, IUser user, CancellationToken cancellationToken = default)
 	{
 		// This would need to be implemented in the concrete class
 		// For now, we'll just call the base method
@@ -28,7 +28,7 @@ public static class GuildTextChannelExtensions
 	/// <param name="messageIds">The collection of message IDs to delete.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public static Task DeleteMessagesByIdsAsync(this IGuildTextChannelBase channel, IEnumerable<DiscordId> messageIds, CancellationToken cancellationToken = default)
+	public static Task DeleteMessagesByIdsAsync(this IGuildTextChannelBase channel, IEnumerable<Snowflake> messageIds, CancellationToken cancellationToken = default)
 	{
 		return channel.BulkDeleteMessagesAsync(messageIds.ToArray(), cancellationToken);
 	}

@@ -55,7 +55,7 @@ internal class InteractionDataWrapper(InteractionData data, ITextBasedChannel ch
     }
 
     /// <inheritdoc />
-    public DiscordId? Id => _data.Id;
+    public Snowflake? Id => _data.Id;
 
     /// <inheritdoc />
     public string Name => _data.Name;

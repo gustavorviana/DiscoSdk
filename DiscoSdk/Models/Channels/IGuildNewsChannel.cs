@@ -25,7 +25,7 @@ public interface IGuildNewsChannel : IGuildChannel, IGuildMessageChannel
 	/// <remarks>
 	/// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
 	/// </remarks>
-	IRestAction<IMessage> CrosspostMessage(DiscordId messageId);
+	IRestAction<IMessage> CrosspostMessage(Snowflake messageId);
 
 	/// <summary>
 	/// Follows this announcement channel to send messages to a target channel.
@@ -35,7 +35,7 @@ public interface IGuildNewsChannel : IGuildChannel, IGuildMessageChannel
 	/// <remarks>
 	/// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
 	/// </remarks>
-	IRestAction<FollowedChannel> Follow(DiscordId targetChannelId);
+	IRestAction<FollowedChannel> Follow(Snowflake targetChannelId);
 
 	/// <summary>
 	/// Follows this announcement channel to send messages to a target channel.

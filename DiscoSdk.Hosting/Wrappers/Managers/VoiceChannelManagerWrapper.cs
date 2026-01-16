@@ -10,7 +10,7 @@ namespace DiscoSdk.Hosting.Wrappers.Managers;
 /// </summary>
 internal class VoiceChannelManagerWrapper : ChannelManagerWrapper<VoiceChannelManagerWrapper>, IVoiceChannelManager
 {
-	public VoiceChannelManagerWrapper(DiscordId channelId, ChannelClient channelClient)
+	public VoiceChannelManagerWrapper(Snowflake channelId, ChannelClient channelClient)
 		: base(channelId, channelClient)
 	{
 	}
@@ -42,7 +42,7 @@ internal class VoiceChannelManagerWrapper : ChannelManagerWrapper<VoiceChannelMa
     IVoiceChannelManager IChannelManager<IVoiceChannelManager>.SetName(string name)
         => SetName(name);
 
-    IVoiceChannelManager IChannelManager<IVoiceChannelManager>.SetParent(DiscordId? parentId)
+    IVoiceChannelManager IChannelManager<IVoiceChannelManager>.SetParent(Snowflake? parentId)
         => SetParent(parentId);
 
     IVoiceChannelManager IChannelManager<IVoiceChannelManager>.SetPosition(int position)

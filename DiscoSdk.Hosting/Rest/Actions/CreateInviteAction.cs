@@ -22,7 +22,7 @@ internal class CreateInviteAction(DiscordClient client, IGuildChannelBase channe
 	private bool? _temporary;
 	private bool? _unique;
 	private ulong? _targetApplicationId;
-	private DiscordId? _targetStreamUserId;
+	private Snowflake? _targetStreamUserId;
 	private Func<bool>? _check;
 
 	/// <inheritdoc />
@@ -90,7 +90,7 @@ internal class CreateInviteAction(DiscordClient client, IGuildChannelBase channe
 	/// <inheritdoc />
 	public ICreateInviteAction SetTargetStream(ulong userId)
 	{
-		_targetStreamUserId = new DiscordId(userId);
+		_targetStreamUserId = new Snowflake(userId);
 		_targetApplicationId = null;
 		return this;
 	}
@@ -98,7 +98,7 @@ internal class CreateInviteAction(DiscordClient client, IGuildChannelBase channe
 	/// <inheritdoc />
 	public ICreateInviteAction SetTargetStream(string userId)
 	{
-		if (DiscordId.TryParse(userId, out var id))
+		if (Snowflake.TryParse(userId, out var id))
 		{
 			_targetStreamUserId = id;
 			_targetApplicationId = null;

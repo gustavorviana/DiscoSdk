@@ -13,14 +13,14 @@ public interface IAuditLogPaginationAction : IPaginationAction<AuditLogEntry, IA
 	/// </summary>
 	/// <param name="entryId">The entry ID to get audit logs before.</param>
 	/// <returns>The current <see cref="IAuditLogPaginationAction"/> instance.</returns>
-	IAuditLogPaginationAction Before(DiscordId entryId);
+	IAuditLogPaginationAction Before(Snowflake entryId);
 
 	/// <summary>
 	/// Filters audit logs by the user ID who made the changes.
 	/// </summary>
 	/// <param name="userId">The user ID to filter by, or null to remove the filter.</param>
 	/// <returns>The current <see cref="IAuditLogPaginationAction"/> instance.</returns>
-	IAuditLogPaginationAction SetUserId(DiscordId? userId);
+	IAuditLogPaginationAction SetUserId(Snowflake? userId);
 
 	/// <summary>
 	/// Filters audit logs by the action type.

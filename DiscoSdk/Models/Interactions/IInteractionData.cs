@@ -7,14 +7,14 @@ namespace DiscoSdk.Models.Interactions;
 /// Represents interaction data for application commands, message components, and modals.
 /// </summary>
 /// <remarks>
-/// All Discord IDs must be of type <see cref="DiscordId"/>.
+/// All Discord IDs must be of type <see cref="Snowflake"/>.
 /// </remarks>
 public interface IInteractionData
 {
 	/// <summary>
 	/// Gets the ID of the invoked command (for application commands).
 	/// </summary>
-	DiscordId? Id { get; }
+	Snowflake? Id { get; }
 
 	/// <summary>
 	/// Gets the name of the invoked command (for application commands).

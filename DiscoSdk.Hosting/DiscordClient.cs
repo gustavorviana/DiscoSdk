@@ -287,7 +287,7 @@ namespace DiscoSdk.Hosting
                 // Initialize pending guilds from Ready payload
                 var guildIds = arg.Guilds
                     .Where(g => !string.IsNullOrEmpty(g.Id))
-                    .Select(g => DiscordId.TryParse(g.Id, out var id) ? id : default);
+                    .Select(g => Snowflake.TryParse(g.Id, out var id) ? id : default);
 
                 GuildManager.InitializePendingGuilds(guildIds);
             }
@@ -379,7 +379,7 @@ namespace DiscoSdk.Hosting
             return _shards[shardId];
         }
 
-        public IRestAction<TChannel?> GetChannel<TChannel>(DiscordId channelId) where TChannel : IChannel
+        public IRestAction<TChannel?> GetChannel<TChannel>(Snowflake channelId) where TChannel : IChannel
         {
             return RestAction<TChannel?>.Create(async cancellationToken =>
             {
@@ -392,7 +392,7 @@ namespace DiscoSdk.Hosting
         }
 
         /// <inheritdoc />
-        public IRestAction<IChannel?> GetChannel(DiscordId channelId)
+        public IRestAction<IChannel?> GetChannel(Snowflake channelId)
         {
             if (channelId == default)
                 throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));

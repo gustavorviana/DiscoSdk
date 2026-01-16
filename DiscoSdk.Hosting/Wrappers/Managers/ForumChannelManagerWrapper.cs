@@ -10,7 +10,7 @@ namespace DiscoSdk.Hosting.Wrappers.Managers;
 /// </summary>
 internal class ForumChannelManagerWrapper : MessageChannelManagerWrapper<ForumChannelManagerWrapper>, IForumChannelManager
 {
-    public ForumChannelManagerWrapper(DiscordId channelId, ChannelClient channelClient)
+    public ForumChannelManagerWrapper(Snowflake channelId, ChannelClient channelClient)
         : base(channelId, channelClient)
     {
     }
@@ -91,7 +91,7 @@ internal class ForumChannelManagerWrapper : MessageChannelManagerWrapper<ForumCh
     IForumChannelManager IChannelManager<IForumChannelManager>.SetName(string name)
         => SetName(name);
 
-    IForumChannelManager IChannelManager<IForumChannelManager>.SetParent(DiscordId? parentId)
+    IForumChannelManager IChannelManager<IForumChannelManager>.SetParent(Snowflake? parentId)
         => SetParent(parentId);
 
     IForumChannelManager IChannelManager<IForumChannelManager>.SetPosition(int position)

@@ -7,5 +7,5 @@ namespace DiscoSdk.Rest.Actions;
 /// </summary>
 public interface IReactionPaginationAction : IPaginationAction<User, IReactionPaginationAction>
 {
-    IReactionPaginationAction After(DiscordId userId);
+    IReactionPaginationAction After(Snowflake userId);
 }

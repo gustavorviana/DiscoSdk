@@ -28,7 +28,7 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
     private string? _content;
     private bool _ephemeral;
     private bool _tts;
-    private List<DiscordId>? _stickers;
+    private List<Snowflake>? _stickers;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SendMessageRestAction"/> class for regular channel messages.
@@ -176,7 +176,7 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
     }
 
     /// <inheritdoc />
-    public ISendMessageRestAction SetStickers(IEnumerable<DiscordId> stickers)
+    public ISendMessageRestAction SetStickers(IEnumerable<Snowflake> stickers)
     {
         _stickers = stickers?.ToList();
         return this;

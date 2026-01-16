@@ -23,7 +23,7 @@ public class AuditLogOptions
 	/// Gets or sets the channel in which entities were targeted.
 	/// </summary>
 	[JsonPropertyName("channel_id")]
-	public DiscordId? ChannelId { get; set; }
+	public Snowflake? ChannelId { get; set; }
 
 	/// <summary>
 	/// Gets or sets the number of entities that were targeted.
@@ -35,7 +35,7 @@ public class AuditLogOptions
 	/// Gets or sets the ID of the overwritten entity.
 	/// </summary>
 	[JsonPropertyName("id")]
-	public DiscordId? Id { get; set; }
+	public Snowflake? Id { get; set; }
 
 	/// <summary>
 	/// Gets or sets the type of overwritten entity ("member" or "role").

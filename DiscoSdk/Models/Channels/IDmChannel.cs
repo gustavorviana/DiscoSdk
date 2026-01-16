@@ -8,5 +8,5 @@ public interface IDmChannel : ITextBasedChannel
     /// <summary>
     /// Gets the ID of the creator of the DM.
     /// </summary>
-    DiscordId? OwnerId { get; }
+    Snowflake? OwnerId { get; }
 }

@@ -11,7 +11,7 @@ public class WelcomeScreenChannel
 	/// Gets or sets the channel's unique identifier.
 	/// </summary>
 	[JsonPropertyName("channel_id")]
-	public DiscordId ChannelId { get; set; } = default!;
+	public Snowflake ChannelId { get; set; } = default!;
 
 	/// <summary>
 	/// Gets or sets the description shown for the channel.

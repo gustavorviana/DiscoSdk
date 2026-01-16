@@ -11,7 +11,7 @@ public class ForumTag
 	/// Gets or sets the ID of the tag.
 	/// </summary>
 	[JsonPropertyName("id")]
-	public DiscordId? Id { get; set; }
+	public Snowflake? Id { get; set; }
 
 	/// <summary>
 	/// Gets or sets the name of the tag (max 20 characters).
@@ -29,7 +29,7 @@ public class ForumTag
 	/// Gets or sets the ID of a guild's custom emoji.
 	/// </summary>
 	[JsonPropertyName("emoji_id")]
-	public DiscordId? EmojiId { get; set; }
+	public Snowflake? EmojiId { get; set; }
 
 	/// <summary>
 	/// Gets or sets the unicode character of the emoji.

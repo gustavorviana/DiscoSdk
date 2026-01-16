@@ -11,12 +11,12 @@ public class FollowedChannel
 	/// Gets or sets the ID of the target channel.
 	/// </summary>
 	[JsonPropertyName("channel_id")]
-	public DiscordId ChannelId { get; set; }
+	public Snowflake ChannelId { get; set; }
 
 	/// <summary>
 	/// Gets or sets the ID of the webhook created for the target channel.
 	/// </summary>
 	[JsonPropertyName("webhook_id")]
-	public DiscordId WebhookId { get; set; }
+	public Snowflake WebhookId { get; set; }
 }
 

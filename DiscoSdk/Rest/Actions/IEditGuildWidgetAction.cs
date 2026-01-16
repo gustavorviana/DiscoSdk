@@ -19,6 +19,6 @@ public interface IEditGuildWidgetAction : IRestAction<GuildWidget>
 	/// </summary>
 	/// <param name="channelId">The channel ID, or null to remove the channel.</param>
 	/// <returns>The current <see cref="IEditGuildWidgetAction"/> instance.</returns>
-	IEditGuildWidgetAction SetChannelId(DiscordId? channelId);
+	IEditGuildWidgetAction SetChannelId(Snowflake? channelId);
 }
 

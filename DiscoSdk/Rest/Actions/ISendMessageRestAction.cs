@@ -75,5 +75,5 @@ public interface ISendMessageRestAction : IRestAction<IMessage>
     ISendMessageRestAction SetEphemeral(bool ephemeral = true);
 
 
-    ISendMessageRestAction SetStickers(IEnumerable<DiscordId> stickers);
+    ISendMessageRestAction SetStickers(IEnumerable<Snowflake> stickers);
 }

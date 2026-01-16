@@ -10,7 +10,7 @@ namespace DiscoSdk.Hosting.Wrappers.Managers;
 /// </summary>
 internal class GuildChannelManagerWrapper : ChannelManagerWrapper<GuildChannelManagerWrapper>, IGuildChannelManager
 {
-	public GuildChannelManagerWrapper(DiscordId channelId, ChannelClient channelClient)
+	public GuildChannelManagerWrapper(Snowflake channelId, ChannelClient channelClient)
 		: base(channelId, channelClient)
 	{
 	}
@@ -33,7 +33,7 @@ internal class GuildChannelManagerWrapper : ChannelManagerWrapper<GuildChannelMa
     IGuildChannelManager IChannelManager<IGuildChannelManager>.SetName(string name)
         => SetName(name);
 
-    IGuildChannelManager IChannelManager<IGuildChannelManager>.SetParent(DiscordId? parentId)
+    IGuildChannelManager IChannelManager<IGuildChannelManager>.SetParent(Snowflake? parentId)
         => SetParent(parentId);
 
     IGuildChannelManager IChannelManager<IGuildChannelManager>.SetPosition(int position)

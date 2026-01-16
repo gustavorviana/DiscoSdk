@@ -13,7 +13,7 @@ namespace DiscoSdk.Models;
 /// This struct provides type safety and additional functionality for working with Discord IDs.
 /// </para>
 /// <para>
-/// <strong>Important:</strong> All methods and properties that accept or return Discord IDs must use <see cref="DiscordId"/>,
+/// <strong>Important:</strong> All methods and properties that accept or return Discord IDs must use <see cref="Snowflake"/>,
 /// not <see cref="ulong"/>, <see cref="string"/>, or any other type. This ensures type safety and consistency across the SDK.
 /// </para>
 /// <para>
@@ -38,8 +38,8 @@ namespace DiscoSdk.Models;
 ///     .SendAsync();
 /// </code>
 /// </example>
-[JsonConverter(typeof(JsonConverters.DiscordIdConverter))]
-public readonly struct DiscordId(ulong value) : IEquatable<DiscordId>, IComparable<DiscordId>
+[JsonConverter(typeof(JsonConverters.SnowflakeConverter))]
+public readonly struct Snowflake(ulong value) : IEquatable<Snowflake>, IComparable<Snowflake>
 {
 	private const long DiscordEpoch = 1420070400000L; // 2015-01-01T00:00:00Z
 
@@ -48,12 +48,12 @@ public readonly struct DiscordId(ulong value) : IEquatable<DiscordId>, IComparab
 	/// </summary>
 	public bool Empty => value == 0;
 
-    public static DiscordId Parse(string value)
+    public static Snowflake Parse(string value)
     {
-        return new DiscordId(ulong.Parse(value, CultureInfo.InvariantCulture));
+        return new Snowflake(ulong.Parse(value, CultureInfo.InvariantCulture));
     }
 
-    public static bool TryParse(string? value, out DiscordId snowflake)
+    public static bool TryParse(string? value, out Snowflake snowflake)
     {
         if (string.IsNullOrEmpty(value))
         {
@@ -63,7 +63,7 @@ public readonly struct DiscordId(ulong value) : IEquatable<DiscordId>, IComparab
 
         if (ulong.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var v))
         {
-            snowflake = new DiscordId(v);
+            snowflake = new Snowflake(v);
             return true;
         }
 
@@ -92,14 +92,14 @@ public readonly struct DiscordId(ulong value) : IEquatable<DiscordId>, IComparab
         return value.ToString(CultureInfo.InvariantCulture);
     }
 
-    public bool Equals(DiscordId other)
+    public bool Equals(Snowflake other)
     {
         return value == other.Value;
     }
 
     public override bool Equals(object? obj)
     {
-        return obj is DiscordId other && Equals(other);
+        return obj is Snowflake other && Equals(other);
     }
 
     public override int GetHashCode()
@@ -107,37 +107,37 @@ public readonly struct DiscordId(ulong value) : IEquatable<DiscordId>, IComparab
         return value.GetHashCode();
     }
 
-    public int CompareTo(DiscordId other)
+    public int CompareTo(Snowflake other)
     {
         return value.CompareTo(other.Value);
     }
 
-    public static implicit operator ulong(DiscordId snowflake)
+    public static implicit operator ulong(Snowflake snowflake)
     {
         return snowflake.Value;
     }
 
-    public static explicit operator DiscordId(ulong value)
+    public static explicit operator Snowflake(ulong value)
     {
-        return new DiscordId(value);
+        return new Snowflake(value);
     }
 
-    public static bool operator ==(DiscordId left, DiscordId right)
+    public static bool operator ==(Snowflake left, Snowflake right)
     {
         return left.Equals(right);
     }
 
-    public static bool operator !=(DiscordId left, DiscordId right)
+    public static bool operator !=(Snowflake left, Snowflake right)
     {
         return !left.Equals(right);
     }
 
-    public static bool operator <(DiscordId left, DiscordId right)
+    public static bool operator <(Snowflake left, Snowflake right)
     {
         return left.Value < right.Value;
     }
 
-    public static bool operator >(DiscordId left, DiscordId right)
+    public static bool operator >(Snowflake left, Snowflake right)
     {
         return left.Value > right.Value;
     }

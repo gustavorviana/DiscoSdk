@@ -17,16 +17,16 @@ internal class CreateThreadChannelAction : RestAction<IGuildThreadChannel>, ICre
 	private readonly DiscordClient _client;
 	private readonly IGuildChannel _channel;
 	private readonly string _name;
-	private readonly DiscordId? _messageId;
+	private readonly Snowflake? _messageId;
 	private int? _autoArchiveDuration;
 	private int? _rateLimitPerUser;
-	private DiscordId[]? _appliedTags;
+	private Snowflake[]? _appliedTags;
 	private bool? _invitable;
 	private string? _messageContent;
 	private readonly List<Embed> _messageEmbeds = [];
 	private List<MessageComponent>? _messageComponents;
 	private AllowedMentions? _messageAllowedMentions;
-	private List<DiscordId>? _messageStickerIds;
+	private List<Snowflake>? _messageStickerIds;
 	private MessageFlags? _messageFlags;
 
 	/// <summary>
@@ -37,7 +37,7 @@ internal class CreateThreadChannelAction : RestAction<IGuildThreadChannel>, ICre
 	/// <param name="name">The name of the thread.</param>
 	/// <param name="messageId">The ID of the message to create the thread from.</param>
 	/// <param name="isPrivate">Whether the thread should be private. This parameter is currently not used by the Discord API directly.</param>
-	public CreateThreadChannelAction(DiscordClient client, IGuildChannel channel, string name, DiscordId messageId, bool isPrivate)
+	public CreateThreadChannelAction(DiscordClient client, IGuildChannel channel, string name, Snowflake messageId, bool isPrivate)
 	{
 		_client = client ?? throw new ArgumentNullException(nameof(client));
 		_channel = channel;
@@ -86,7 +86,7 @@ internal class CreateThreadChannelAction : RestAction<IGuildThreadChannel>, ICre
 	/// </summary>
 	/// <param name="tagIds">The IDs of the tags to apply.</param>
 	/// <returns>The current <see cref="ICreateIThreadChannelAction"/> instance.</returns>
-	public ICreateIThreadChannelAction SetAppliedTags(params DiscordId[] tagIds)
+	public ICreateIThreadChannelAction SetAppliedTags(params Snowflake[] tagIds)
 	{
 		_appliedTags = tagIds;
 		return this;
@@ -176,7 +176,7 @@ internal class CreateThreadChannelAction : RestAction<IGuildThreadChannel>, ICre
 	}
 
 	/// <inheritdoc />
-	public ICreateIThreadChannelAction SetMessageStickers(params DiscordId[] stickerIds)
+	public ICreateIThreadChannelAction SetMessageStickers(params Snowflake[] stickerIds)
 	{
 		if (stickerIds == null || stickerIds.Length == 0)
 		{
