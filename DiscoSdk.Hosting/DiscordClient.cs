@@ -4,6 +4,7 @@ using DiscoSdk.Hosting.Events;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Payloads.Models;
 using DiscoSdk.Hosting.Logging;
+using DiscoSdk.Hosting.Repositories;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Hosting.Wrappers;
@@ -66,35 +67,14 @@ namespace DiscoSdk.Hosting
         /// </summary>
         public IDiscordEventRegistry EventRegistry => _eventDispatcher;
 
-        /// <summary>
-        /// Gets the interaction client for responding to interactions.
-        /// </summary>
         internal InteractionClient InteractionClient { get; }
-
-        /// <summary>
-        /// Gets the message client for message operations.
-        /// </summary>
         internal MessageClient MessageClient { get; }
-
-        /// <summary>
-        /// Gets the channel client for channel operations.
-        /// </summary>
         internal ChannelClient ChannelClient { get; }
-
-        /// <summary>
-        /// Gets the invite client for invite operations.
-        /// </summary>
         internal InviteClient InviteClient { get; }
-
-        /// <summary>
-        /// Gets the role client for role operations.
-        /// </summary>
         internal RoleClient RoleClient { get; }
-
-        /// <summary>
-        /// Gets the guild client for guild operations.
-        /// </summary>
         internal GuildClient GuildClient { get; }
+        internal UserRepository UserRepository { get; }
+        internal DmChannelRepository DmRepository { get; }
 
         /// <summary>
         /// Creates a new command update action that allows queuing commands and registering them all at once.
@@ -147,7 +127,9 @@ namespace DiscoSdk.Hosting
             InviteClient = new InviteClient(HttpClient);
             RoleClient = new RoleClient(HttpClient);
             GuildClient = new GuildClient(HttpClient);
+            UserRepository = new UserRepository(this);
             GuildManager = new GuildManager(this, Logger);
+            DmRepository = new DmChannelRepository(this);
 
             var maxConcurrency = config.EventProcessorMaxConcurrency > 0
                 ? config.EventProcessorMaxConcurrency
@@ -427,6 +409,21 @@ namespace DiscoSdk.Hosting
                 }
                 return TimeSpan.FromMilliseconds(stopwatch.ElapsedMilliseconds);
             });
+        }
+
+        /// <inheritdoc />
+        public IRestAction<IDmChannel> OpenDm(Snowflake userId)
+        {
+            if (userId == default)
+                throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
+
+            return DmRepository.OpenDm(userId);
+        }
+
+        /// <inheritdoc />
+        public IRestAction<IUser?> GetUser(Snowflake userId)
+        {
+            return UserRepository.Get(userId);
         }
     }
 }

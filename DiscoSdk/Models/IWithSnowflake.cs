@@ -3,7 +3,7 @@ namespace DiscoSdk.Models;
 /// <summary>
 /// Represents a Discord entity that has a unique identifier and a creation date.
 /// </summary>
-public interface IWithDiscordIdentity
+public interface IWithSnowflake
 {
 	/// <summary>
 	/// Gets the unique identifier of the entity.

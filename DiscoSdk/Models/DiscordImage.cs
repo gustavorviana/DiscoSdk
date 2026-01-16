@@ -1,12 +1,12 @@
-﻿using System.Net.Mime;
+﻿namespace DiscoSdk.Models;
 
-namespace DiscoSdk.Models;
-
-public class DiscordImage(byte[] buffer, string? type = null)
+public class DiscordImage(byte[] buffer, string? extension = null)
 {
-    public byte[] Buffer => buffer;
+    public byte[] Buffer { get; } = buffer;
 
-    public string ImageType { get; } = type ?? GetImageType(buffer);
+    public string ImageType => "image/" + Extension;
+
+    public string Extension { get; } = string.IsNullOrEmpty(extension) ? GetImageExtension(buffer) : extension;
 
     public string ToBase64()
     {
@@ -21,26 +21,26 @@ public class DiscordImage(byte[] buffer, string? type = null)
     public static DiscordImage? FromBase64(string? value)
     {
         if (string.IsNullOrEmpty(value))
-             return null;
+            return null;
 
         var bytes = Convert.FromBase64String(value);
         return new DiscordImage(bytes);
     }
 
-    private static string GetImageType(byte[] buffer)
+    private static string GetImageExtension(byte[] buffer)
     {
         if (buffer.Length >= 2)
         {
             // JPEG: FF D8
             if (buffer[0] == 0xFF && buffer[1] == 0xD8)
-                return MediaTypeNames.Image.Jpeg;
+                return "jpeg";
         }
 
         if (buffer.Length >= 3)
         {
             // GIF: "GIF"
             if (buffer[0] == 0x47 && buffer[1] == 0x49 && buffer[2] == 0x46)
-                return MediaTypeNames.Image.Gif;
+                return "gif";
         }
 
         if (buffer.Length >= 8)
@@ -54,7 +54,7 @@ public class DiscordImage(byte[] buffer, string? type = null)
                 buffer[5] == 0x0A &&
                 buffer[6] == 0x1A &&
                 buffer[7] == 0x0A)
-                return MediaTypeNames.Image.Png;
+                return "png";
         }
 
         throw new InvalidOperationException("Unsupported image format. Only PNG, JPEG and GIF are allowed.");

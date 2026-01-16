@@ -6,7 +6,7 @@ namespace DiscoSdk.Models.Messages;
 /// <summary>
 /// Represents a sticker.
 /// </summary>
-public class Sticker : IWithDiscordIdentity
+public class Sticker : IWithSnowflake
 {
     /// <summary>
     /// Gets or sets the ID of the sticker.

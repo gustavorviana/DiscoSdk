@@ -29,50 +29,48 @@ public interface ITextBasedChannel : IChannel
 	/// </summary>
 	DateTimeOffset? LastPinTimestamp { get; }
 
-	/// <summary>
-	/// Gets a message by its ID from this channel.
-	/// </summary>
-	/// <param name="messageId">The ID of the message to retrieve.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>The message, or null if not found.</returns>
-	Task<IMessage?> GetMessageAsync(Snowflake messageId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Gets a message by its ID from this channel.
+    /// </summary>
+    /// <param name="messageId">The ID of the message to retrieve.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>The message, or null if not found.</returns>
+    IRestAction<IMessage?> GetMessageAsync(Snowflake messageId, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Deletes a message from this channel.
 	/// </summary>
 	/// <param name="messageId">The ID of the message to delete.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A task that represents the asynchronous operation.</returns>
-	Task DeleteMessageAsync(Snowflake messageId, CancellationToken cancellationToken = default);
+	IRestAction DeleteMessageAsync(Snowflake messageId, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Deletes multiple messages from this channel in a single request.
 	/// </summary>
 	/// <param name="messageIds">The IDs of the messages to delete (2-100 messages).</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A task that represents the asynchronous operation.</returns>
-	Task BulkDeleteMessagesAsync(Snowflake[] messageIds, CancellationToken cancellationToken = default);
+	IRestAction BulkDeleteMessagesAsync(Snowflake[] messageIds, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Purges (deletes) multiple messages by their IDs.
 	/// </summary>
 	/// <param name="messageIds">The IDs of the messages to purge.</param>
 	/// <returns>An array of tasks representing the deletion operations.</returns>
-	Task PurgeMessagesByIdAsync(params Snowflake[] messageIds);
+	IRestAction PurgeMessagesByIdAsync(params Snowflake[] messageIds);
 
 	/// <summary>
 	/// Purges (deletes) multiple messages.
 	/// </summary>
 	/// <param name="messages">The messages to purge.</param>
 	/// <returns>An array of tasks representing the deletion operations.</returns>
-	Task PurgeMessagesAsync(params IMessage[] messages);
+	IRestAction PurgeMessagesAsync(params IMessage[] messages);
 
 	/// <summary>
 	/// Purges (deletes) multiple messages.
 	/// </summary>
 	/// <param name="messages">The collection of messages to purge.</param>
 	/// <returns>An array of tasks representing the deletion operations.</returns>
-	Task PurgeMessagesAsync(IEnumerable<IMessage> messages);
+	IRestAction PurgeMessagesAsync(IEnumerable<IMessage> messages);
 
 	/// <summary>
 	/// Sends a message to this channel.
@@ -84,8 +82,7 @@ public interface ITextBasedChannel : IChannel
 	/// Triggers the typing indicator in this channel.
 	/// </summary>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A task that represents the asynchronous operation.</returns>
-	Task TriggerTypingAsync(CancellationToken cancellationToken = default);
+	IRestAction TriggerTypingAsync(CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Gets an iterable message pagination action for this channel.
@@ -99,8 +96,7 @@ public interface ITextBasedChannel : IChannel
 	/// <param name="messageId">The ID of the message.</param>
 	/// <param name="emoji">The emoji to react with.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A task that represents the asynchronous operation.</returns>
-	Task AddReactionByIdAsync(Snowflake messageId, Emoji emoji, CancellationToken cancellationToken = default);
+	IRestAction AddReactionByIdAsync(Snowflake messageId, Emoji emoji, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Removes a reaction from a message by its ID.
@@ -108,8 +104,7 @@ public interface ITextBasedChannel : IChannel
 	/// <param name="messageId">The ID of the message.</param>
 	/// <param name="emoji">The emoji to remove the reaction for.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A task that represents the asynchronous operation.</returns>
-	Task RemoveReactionByIdAsync(Snowflake messageId, Emoji emoji, CancellationToken cancellationToken = default);
+	IRestAction RemoveReactionByIdAsync(Snowflake messageId, Emoji emoji, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Retrieves users who reacted with a specific emoji to a message.
@@ -133,16 +128,14 @@ public interface ITextBasedChannel : IChannel
 	/// </summary>
 	/// <param name="messageId">The ID of the message to pin.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A task that represents the asynchronous operation.</returns>
-	Task PinMessageByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default);
+	IRestAction PinMessageByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Unpins a message by its ID.
 	/// </summary>
 	/// <param name="messageId">The ID of the message to unpin.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A task that represents the asynchronous operation.</returns>
-	Task UnpinMessageByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default);
+	IRestAction UnpinMessageByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Retrieves all pinned messages in this channel.
@@ -163,7 +156,7 @@ public interface ITextBasedChannel : IChannel
 	/// <param name="messageId">The ID of the message containing the poll.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation. The result contains the updated message.</returns>
-	Task<IMessage> EndPollByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default);
+	IRestAction<IMessage> EndPollByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Retrieves poll voters by message ID and answer ID.

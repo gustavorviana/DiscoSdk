@@ -26,53 +26,77 @@ internal class TextBasedChannelWrapper(Channel channel, DiscordClient client)
         ? DateTimeOffset.Parse(_channel.LastPinTimestamp)
         : null;
 
-    public async Task<IMessage[]> GetMessagesAsync(int? limit = null, Snowflake? around = null, Snowflake? before = null, Snowflake? after = null, CancellationToken cancellationToken = default)
+    public IRestAction<IMessage[]> GetMessagesAsync(int? limit = null, Snowflake? around = null, Snowflake? before = null, Snowflake? after = null, CancellationToken cancellationToken = default)
     {
-        var messages = await _client.ChannelClient.GetMessagesAsync(_channel.Id, limit, around, before, after, cancellationToken);
-        return [.. messages.Select(m => new MessageWrapper(this, m, _client, null)).Cast<IMessage>()];
-    }
-
-    public async Task<IMessage?> GetMessageAsync(Snowflake messageId, CancellationToken cancellationToken = default)
-    {
-        try
+        return RestAction<IMessage[]>.Create(async cancellationToken =>
         {
-            var message = await _client.ChannelClient.GetMessageAsync(_channel.Id, messageId, cancellationToken);
-            return new MessageWrapper(this, message, _client, null);
-        }
-        catch
+            var messages = await _client.ChannelClient.GetMessagesAsync(_channel.Id, limit, around, before, after, cancellationToken);
+            return [.. messages.Select(m => new MessageWrapper(this, m, _client, null)).Cast<IMessage>()];
+        });
+    }
+
+    public IRestAction<IMessage?> GetMessageAsync(Snowflake messageId, CancellationToken cancellationToken = default)
+    {
+        return RestAction<IMessage?>.Create(async cancellationToken =>
         {
-            return null;
-        }
+            try
+            {
+                var message = await _client.ChannelClient.GetMessageAsync(_channel.Id, messageId, cancellationToken);
+                return new MessageWrapper(this, message, _client, null);
+            }
+            catch
+            {
+                return null;
+            }
+        });
     }
 
-    public Task DeleteMessageAsync(Snowflake messageId, CancellationToken cancellationToken = default)
+    public IRestAction DeleteMessageAsync(Snowflake messageId, CancellationToken cancellationToken = default)
     {
-        return _client.ChannelClient.DeleteMessageAsync(_channel.Id, messageId, cancellationToken);
+        return RestAction.Create(cancellationToken =>
+        {
+            return _client.ChannelClient.DeleteMessageAsync(_channel.Id, messageId, cancellationToken);
+        });
     }
 
-    public Task BulkDeleteMessagesAsync(Snowflake[] messageIds, CancellationToken cancellationToken = default)
+    public IRestAction BulkDeleteMessagesAsync(Snowflake[] messageIds, CancellationToken cancellationToken = default)
     {
-        return _client.ChannelClient.BulkDeleteMessagesAsync(_channel.Id, messageIds, cancellationToken);
+        return RestAction.Create(cancellationToken =>
+        {
+            return _client.ChannelClient.BulkDeleteMessagesAsync(_channel.Id, messageIds, cancellationToken);
+        });
     }
 
-    public Task TriggerTypingAsync(CancellationToken cancellationToken = default)
+    public IRestAction TriggerTypingAsync(CancellationToken cancellationToken = default)
     {
-        return _client.ChannelClient.TriggerTypingAsync(_channel.Id, cancellationToken);
+        return RestAction.Create(cancellationToken =>
+        {
+            return _client.ChannelClient.TriggerTypingAsync(_channel.Id, cancellationToken);
+        });
     }
 
-    public Task PurgeMessagesByIdAsync(params Snowflake[] messageIds)
+    public IRestAction PurgeMessagesByIdAsync(params Snowflake[] messageIds)
     {
-        return Task.WhenAll(messageIds.Select(id => DeleteMessageAsync(id)));
+        return RestAction.Create(cancellationToken =>
+        {
+            return Task.WhenAll(messageIds.Select(id => DeleteMessageAsync(id).ExecuteAsync(cancellationToken)));
+        });
     }
 
-    public Task PurgeMessagesAsync(params IMessage[] messages)
+    public IRestAction PurgeMessagesAsync(params IMessage[] messages)
     {
-        return Task.WhenAll(messages.Select(m => DeleteMessageAsync(m.Id)));
+        return RestAction.Create(async cancellationToken =>
+        {
+            await Task.WhenAll(messages.Select(m => DeleteMessageAsync(m.Id).ExecuteAsync(cancellationToken)));
+        });
     }
 
-    public Task PurgeMessagesAsync(IEnumerable<IMessage> messages)
+    public IRestAction PurgeMessagesAsync(IEnumerable<IMessage> messages)
     {
-        return Task.WhenAll(messages.Select(m => DeleteMessageAsync(m.Id)));
+        return RestAction.Create(async cancellationToken =>
+        {
+            await Task.WhenAll(messages.Select(m => DeleteMessageAsync(m.Id).ExecuteAsync(cancellationToken)));
+        });
     }
 
     public ISendMessageRestAction SendMessage()
@@ -85,14 +109,20 @@ internal class TextBasedChannelWrapper(Channel channel, DiscordClient client)
         return new MessagePaginationAction(_client, this);
     }
 
-    public Task AddReactionByIdAsync(Snowflake messageId, Emoji emoji, CancellationToken cancellationToken = default)
+    public IRestAction AddReactionByIdAsync(Snowflake messageId, Emoji emoji, CancellationToken cancellationToken = default)
     {
-        return _client.MessageClient.AddReactionAsync(_channel.Id, messageId, emoji.ToString(), cancellationToken);
+        return RestAction.Create(cancellationToken =>
+        {
+            return _client.MessageClient.AddReactionAsync(_channel.Id, messageId, emoji.ToString(), cancellationToken);
+        });
     }
 
-    public Task RemoveReactionByIdAsync(Snowflake messageId, Emoji emoji, CancellationToken cancellationToken = default)
+    public IRestAction RemoveReactionByIdAsync(Snowflake messageId, Emoji emoji, CancellationToken cancellationToken = default)
     {
-        return _client.MessageClient.RemoveReactionAsync(_channel.Id, messageId, emoji.ToString(), cancellationToken);
+        return RestAction.Create(cancellationToken =>
+        {
+            return _client.MessageClient.RemoveReactionAsync(_channel.Id, messageId, emoji.ToString(), cancellationToken);
+        });
     }
 
     public IReactionPaginationAction RetrieveReactionUsersById(Snowflake messageId, Emoji emoji)
@@ -105,14 +135,20 @@ internal class TextBasedChannelWrapper(Channel channel, DiscordClient client)
         return new ReactionPaginationAction(_client, _channel.Id, messageId, emoji);
     }
 
-    public Task PinMessageByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default)
+    public IRestAction PinMessageByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default)
     {
-        return _client.MessageClient.PinAsync(_channel.Id, messageId, cancellationToken);
+        return RestAction.Create(cancellationToken =>
+        {
+            return _client.MessageClient.PinAsync(_channel.Id, messageId, cancellationToken);
+        });
     }
 
-    public Task UnpinMessageByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default)
+    public IRestAction UnpinMessageByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default)
     {
-        return _client.MessageClient.UnpinAsync(_channel.Id, messageId, cancellationToken);
+        return RestAction.Create(cancellationToken =>
+        {
+            return _client.MessageClient.UnpinAsync(_channel.Id, messageId, cancellationToken);
+        });
     }
 
     public IRestAction<IMessage[]> RetrievePinnedMessages()
@@ -129,10 +165,13 @@ internal class TextBasedChannelWrapper(Channel channel, DiscordClient client)
         return new EditMessageRestAction(_client, this, messageId, null);
     }
 
-    public async Task<IMessage> EndPollByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default)
+    public IRestAction<IMessage> EndPollByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default)
     {
-        var message = await _client.MessageClient.EndPollAsync(_channel.Id, messageId, cancellationToken);
-        return new MessageWrapper(this, message, _client, null);
+        return RestAction<IMessage>.Create(async cancellationToken =>
+        {
+            var message = await _client.MessageClient.EndPollAsync(_channel.Id, messageId, cancellationToken);
+            return new MessageWrapper(this, message, _client, null);
+        });
     }
 
     public IPollVotersPaginationAction RetrievePollVotersById(Snowflake messageId, ulong answerId)

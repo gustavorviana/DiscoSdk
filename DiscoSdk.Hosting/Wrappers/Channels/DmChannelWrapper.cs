@@ -1,5 +1,7 @@
+using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Wrappers.Channels;
 
@@ -14,7 +16,16 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 internal class DmChannelWrapper(Channel channel, DiscordClient client) : TextBasedChannelWrapper(channel, client), IDmChannel
 {
     /// <inheritdoc />
-    public Snowflake? OwnerId => _channel.OwnerId;
+    public Snowflake OwnerId => _channel.OwnerId ?? default;
 
     public override string Name => _channel.Recipients?.FirstOrDefault()?.GlobalName ?? base.Name;
+
+    public override IRestAction Delete()
+    {
+        return RestAction.Create(async cancellationToken =>
+        {
+            await base.Delete().ExecuteAsync(cancellationToken);
+            _client.DmRepository.Close(OwnerId);
+        });
+    }
 }

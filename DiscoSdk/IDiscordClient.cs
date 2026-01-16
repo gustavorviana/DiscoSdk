@@ -53,4 +53,25 @@ public interface IDiscordClient
     /// This measures the round-trip time to the Discord API by making a simple request.
     /// </remarks>
     IRestAction<TimeSpan> Ping();
+
+    /// <summary>
+    /// Gets a REST action to create or get a direct message channel with the specified user.
+    /// </summary>
+    /// <param name="userId">The ID of the user to create a DM with.</param>
+    /// <returns>A REST action that can be executed to get or create the DM channel.</returns>
+    /// <remarks>
+    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+    /// </remarks>
+    IRestAction<IDmChannel> OpenDm(Snowflake userId);
+
+    /// <summary>
+    /// Gets a REST action to retrieve a user by their ID from the Discord API.
+    /// </summary>
+    /// <param name="userId">The ID of the user to retrieve.</param>
+    /// <returns>A REST action that can be executed to retrieve the user.</returns>
+    /// <remarks>
+    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+    /// Returns null if the user is not found.
+    /// </remarks>
+    IRestAction<IUser?> GetUser(Snowflake userId);
 }

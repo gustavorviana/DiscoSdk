@@ -27,7 +27,7 @@ public interface IUser : IMentionable
 	/// <summary>
 	/// Gets the user's avatar hash.
 	/// </summary>
-	string? Avatar { get; }
+	DiscordImage? Avatar { get; }
 
 	/// <summary>
 	/// Gets a value indicating whether the user is a bot.
@@ -44,10 +44,10 @@ public interface IUser : IMentionable
 	/// </summary>
 	bool MfaEnabled { get; }
 
-	/// <summary>
-	/// Gets the user's banner hash.
-	/// </summary>
-	string? Banner { get; }
+    /// <summary>
+    /// Gets the user's banner hash.
+    /// </summary>
+    DiscordImage? Banner { get; }
 
 	/// <summary>
 	/// Gets the user's accent color.
@@ -106,5 +106,5 @@ public interface IUser : IMentionable
 	/// <remarks>
 	/// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
 	/// </remarks>
-	IRestAction<IDmChannel> CreateDM();
+	IRestAction<IDmChannel> OpenPrivateChannel();
 }
