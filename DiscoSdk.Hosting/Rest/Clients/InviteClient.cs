@@ -23,7 +23,7 @@ internal class InviteClient(IDiscordRestClientBase client)
 		ArgumentNullException.ThrowIfNull(request);
 
 		var path = $"channels/{channelId}/invites";
-		return client.SendJsonAsync<Invite>(path, HttpMethod.Post, request, cancellationToken);
+		return client.SendAsync<Invite>(path, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -38,7 +38,7 @@ internal class InviteClient(IDiscordRestClientBase client)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
 		var path = $"channels/{channelId}/invites";
-		return client.SendJsonAsync<Invite[]>(path, HttpMethod.Get, null, cancellationToken);
+		return client.SendAsync<Invite[]>(path, HttpMethod.Get, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -53,6 +53,6 @@ internal class InviteClient(IDiscordRestClientBase client)
 			throw new ArgumentException("Invite code cannot be null or empty.", nameof(code));
 
 		var path = $"invites/{code}";
-		return client.SendNoContentAsync(path, HttpMethod.Delete, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
 	}
 }

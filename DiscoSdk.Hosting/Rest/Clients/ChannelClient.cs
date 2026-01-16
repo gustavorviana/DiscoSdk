@@ -23,7 +23,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
 		var path = $"channels/{channelId}";
-		return client.SendJsonAsync<Channel>(path, HttpMethod.Get, null, cancellationToken);
+		return client.SendAsync<Channel>(path, HttpMethod.Get, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -41,7 +41,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 		ArgumentNullException.ThrowIfNull(request);
 
 		var path = $"channels/{channelId}";
-		return client.SendJsonAsync<Channel>(path, HttpMethod.Patch, request, cancellationToken);
+		return client.SendAsync<Channel>(path, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -56,7 +56,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
 		var path = $"channels/{channelId}";
-		return client.SendNoContentAsync(path, HttpMethod.Delete, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
 	}
 
 	/// <summary>
@@ -127,7 +127,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 
 		var path = $"channels/{channelId}/followers";
 		var request = new { webhook_channel_id = targetChannelId.ToString() };
-		return client.SendJsonAsync<FollowedChannel>(path, HttpMethod.Post, request, cancellationToken);
+		return client.SendAsync<FollowedChannel>(path, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -153,7 +153,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
 		var path = $"channels/{channelId}/thread-members/@me";
-		return client.SendNoContentAsync(path, HttpMethod.Put, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Put, cancellationToken);
 	}
 
 	/// <summary>
@@ -168,7 +168,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
 		var path = $"channels/{channelId}/thread-members/@me";
-		return client.SendNoContentAsync(path, HttpMethod.Delete, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
 	}
 
 	/// <summary>
@@ -187,7 +187,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
 		var path = $"channels/{channelId}/thread-members/{userId}";
-		return client.SendNoContentAsync(path, HttpMethod.Put, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Put, cancellationToken);
 	}
 
 	/// <summary>
@@ -206,7 +206,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
 		var path = $"channels/{channelId}/thread-members/{userId}";
-		return client.SendNoContentAsync(path, HttpMethod.Delete, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
 	}
 
 	/// <summary>
@@ -225,7 +225,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
 		var path = $"channels/{channelId}/thread-members/{userId}";
-		return client.SendJsonAsync<ThreadMember>(path, HttpMethod.Get, null, cancellationToken);
+		return client.SendAsync<ThreadMember>(path, HttpMethod.Get, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -258,7 +258,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 
 		var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
 		var path = $"channels/{channelId}/thread-members{query}";
-		return client.SendJsonAsync<ThreadMember[]>(path, HttpMethod.Get, null, cancellationToken);
+		return client.SendAsync<ThreadMember[]>(path, HttpMethod.Get, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -274,7 +274,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 
 		var path = $"channels/{channelId}";
 		var request = new { archived = true };
-		return client.SendJsonAsync(path, HttpMethod.Patch, request, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -290,7 +290,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 
 		var path = $"channels/{channelId}";
 		var request = new { archived = false };
-		return client.SendJsonAsync(path, HttpMethod.Patch, request, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -306,7 +306,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 
 		var path = $"channels/{channelId}";
 		var request = new { locked = true };
-		return client.SendJsonAsync(path, HttpMethod.Patch, request, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -322,7 +322,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 
 		var path = $"channels/{channelId}";
 		var request = new { locked = false };
-		return client.SendJsonAsync(path, HttpMethod.Patch, request, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -337,7 +337,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
 		var path = $"channels/{channelId}/threads/active";
-		var response = await client.SendJsonAsync<ThreadsResponse>(path, HttpMethod.Get, null, cancellationToken);
+		var response = await client.SendAsync<ThreadsResponse>(path, HttpMethod.Get, null, cancellationToken);
 		return response.Threads;
 	}
 
@@ -367,7 +367,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 
 		var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
 		var path = $"channels/{channelId}/threads/archived/public{query}";
-		var response = await client.SendJsonAsync<ThreadsResponse>(path, HttpMethod.Get, null, cancellationToken);
+		var response = await client.SendAsync<ThreadsResponse>(path, HttpMethod.Get, null, cancellationToken);
 		return response.Threads;
 	}
 
@@ -397,7 +397,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 
 		var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
 		var path = $"channels/{channelId}/threads/archived/private{query}";
-		var response = await client.SendJsonAsync<ThreadsResponse>(path, HttpMethod.Get, null, cancellationToken);
+		var response = await client.SendAsync<ThreadsResponse>(path, HttpMethod.Get, null, cancellationToken);
 		return response.Threads;
 	}
 
@@ -416,7 +416,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 		ArgumentNullException.ThrowIfNull(request);
 
 		var path = $"channels/{channelId}/threads";
-		return client.SendJsonAsync<ForumPost>(path, HttpMethod.Post, request, cancellationToken);
+		return client.SendAsync<ForumPost>(path, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -438,7 +438,7 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 		ArgumentNullException.ThrowIfNull(request);
 
 		var path = $"channels/{channelId}/messages/{messageId}/threads";
-		return client.SendJsonAsync<Channel>(path, HttpMethod.Post, request, cancellationToken);
+		return client.SendAsync<Channel>(path, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>

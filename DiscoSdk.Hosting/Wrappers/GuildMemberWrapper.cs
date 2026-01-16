@@ -43,7 +43,8 @@ internal class GuildMemberWrapper(GuildMember member, IGuild guild, DiscordClien
         get
         {
             if (_user == null && _member.User != null)
-                _user = new UserWrapper(_member.User);
+                _user = new UserWrapper(_member.User, client);
+
             return _user ?? throw new InvalidOperationException("Member has no user data.");
         }
     }

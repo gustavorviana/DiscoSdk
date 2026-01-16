@@ -35,25 +35,25 @@ public class Emoji
     /// Gets or sets a value indicating whether this emoji must be wrapped in colons.
     /// </summary>
     [JsonPropertyName("require_colons")]
-    public bool? RequireColons { get; set; }
+    public bool RequireColons { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether this emoji is managed.
     /// </summary>
     [JsonPropertyName("managed")]
-    public bool? Managed { get; set; }
+    public bool Managed { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether this emoji is animated.
     /// </summary>
     [JsonPropertyName("animated")]
-    public bool? Animated { get; set; }
+    public bool Animated { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether this emoji is available.
     /// </summary>
     [JsonPropertyName("available")]
-    public bool? Available { get; set; }
+    public bool Available { get; set; }
 
     public override string ToString()
     {

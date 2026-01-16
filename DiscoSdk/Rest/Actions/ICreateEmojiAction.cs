@@ -5,7 +5,7 @@ namespace DiscoSdk.Rest.Actions;
 /// <summary>
 /// Represents a REST action for creating a Discord emoji.
 /// </summary>
-public interface ICreateEmojiAction : IRestAction<Emoji>
+public interface ICreateEmojiAction : IRestAction<IEmoji>
 {
 	/// <summary>
 	/// Sets the name of the emoji.
@@ -17,9 +17,9 @@ public interface ICreateEmojiAction : IRestAction<Emoji>
 	/// <summary>
 	/// Sets the image data for the emoji.
 	/// </summary>
-	/// <param name="image">The image data as a byte array.</param>
+	/// <param name="image">The image data.</param>
 	/// <returns>The current <see cref="ICreateEmojiAction"/> instance.</returns>
-	ICreateEmojiAction SetImage(byte[] image);
+	ICreateEmojiAction SetImage(DiscordImage image);
 
 	/// <summary>
 	/// Sets the roles that can use this emoji.

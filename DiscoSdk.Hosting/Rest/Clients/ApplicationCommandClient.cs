@@ -21,7 +21,7 @@ internal sealed class ApplicationCommandClient(IDiscordRestClientBase client)
     public async Task<List<ApplicationCommand>> RegisterGlobalCommandsAsync(string applicationId, List<ApplicationCommand> commands, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/commands";
-        return await client.SendJsonAsync<List<ApplicationCommand>>(path, HttpMethod.Put, commands, ct);
+        return await client.SendAsync<List<ApplicationCommand>>(path, HttpMethod.Put, commands, ct);
     }
 
     /// <summary>
@@ -35,7 +35,7 @@ internal sealed class ApplicationCommandClient(IDiscordRestClientBase client)
     public async Task<List<ApplicationCommand>> RegisterGuildCommandsAsync(string applicationId, string guildId, List<ApplicationCommand> commands, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/guilds/{guildId}/commands";
-        return await client.SendJsonAsync<List<ApplicationCommand>>(path, HttpMethod.Put, commands, ct);
+        return await client.SendAsync<List<ApplicationCommand>>(path, HttpMethod.Put, commands, ct);
     }
 
     /// <summary>
@@ -47,7 +47,7 @@ internal sealed class ApplicationCommandClient(IDiscordRestClientBase client)
     public async Task<List<ApplicationCommand>> GetGlobalCommandsAsync(string applicationId, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/commands";
-        return await client.SendJsonAsync<List<ApplicationCommand>>(path, HttpMethod.Get, null, ct);
+        return await client.SendAsync<List<ApplicationCommand>>(path, HttpMethod.Get, null, ct);
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ internal sealed class ApplicationCommandClient(IDiscordRestClientBase client)
     public async Task<List<ApplicationCommand>> GetGuildCommandsAsync(string applicationId, string guildId, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/guilds/{guildId}/commands";
-        return await client.SendJsonAsync<List<ApplicationCommand>>(path, HttpMethod.Get, null, ct);
+        return await client.SendAsync<List<ApplicationCommand>>(path, HttpMethod.Get, null, ct);
     }
 
     /// <summary>
@@ -73,7 +73,7 @@ internal sealed class ApplicationCommandClient(IDiscordRestClientBase client)
     public async Task DeleteGlobalCommandAsync(string applicationId, string commandId, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/commands/{commandId}";
-        await client.SendNoContentAsync(path, HttpMethod.Delete, ct);
+        await client.SendAsync(path, HttpMethod.Delete, ct);
     }
 
     /// <summary>
@@ -87,7 +87,7 @@ internal sealed class ApplicationCommandClient(IDiscordRestClientBase client)
     public async Task DeleteGuildCommandAsync(string applicationId, string guildId, string commandId, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/guilds/{guildId}/commands/{commandId}";
-        await client.SendNoContentAsync(path, HttpMethod.Delete, ct);
+        await client.SendAsync(path, HttpMethod.Delete, ct);
     }
 }
 

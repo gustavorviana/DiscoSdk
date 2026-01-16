@@ -28,13 +28,13 @@ internal class InviteWrapper(Invite invite, IGuildChannelBase channel, DiscordCl
     public IGuild Guild => channel.Guild;
 
     /// <inheritdoc />
-    public IUser? Inviter { get; } = invite.Inviter != null ? new UserWrapper(invite.Inviter) : null;
+    public IUser? Inviter { get; } = invite.Inviter != null ? new UserWrapper(invite.Inviter, client) : null;
 
     /// <inheritdoc />
     public int? TargetType => _invite.TargetType;
 
     /// <inheritdoc />
-    public IUser? TargetUser { get; } = invite.TargetUser != null ? new UserWrapper(invite.TargetUser) : null;
+    public IUser? TargetUser { get; } = invite.TargetUser != null ? new UserWrapper(invite.TargetUser, client) : null;
 
     /// <inheritdoc />
     public Snowflake? TargetApplicationId => _invite.TargetApplicationId;

@@ -50,4 +50,3 @@ public class AuditLogEntry
 	[JsonPropertyName("reason")]
 	public string? Reason { get; set; }
 }
-

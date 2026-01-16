@@ -112,19 +112,9 @@ public interface IMember : IPermissionHolder
 	string? AvatarUrl { get; }
 
 	/// <summary>
-	/// Gets the avatar of this member, or null if they don't have a guild avatar.
-	/// </summary>
-	ImageProxy? Avatar => AvatarUrl != null ? new ImageProxy(AvatarUrl) : null;
-
-	/// <summary>
 	/// Gets the effective avatar URL of this member (guild avatar if available, otherwise user avatar).
 	/// </summary>
 	string EffectiveAvatarUrl => AvatarUrl ?? User.EffectiveAvatarUrl;
-
-	/// <summary>
-	/// Gets the effective avatar of this member (guild avatar if available, otherwise user avatar).
-	/// </summary>
-	ImageProxy EffectiveAvatar => Avatar ?? User.EffectiveAvatar;
 
 	/// <summary>
 	/// Gets the roles of this member, sorted by position.

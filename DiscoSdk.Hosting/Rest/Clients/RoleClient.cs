@@ -23,7 +23,7 @@ internal class RoleClient(IDiscordRestClientBase client)
 		ArgumentNullException.ThrowIfNull(request);
 
 		var path = $"guilds/{guildId}/roles";
-		return client.SendJsonAsync<Role>(path, HttpMethod.Post, request, cancellationToken);
+		return client.SendAsync<Role>(path, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -45,7 +45,7 @@ internal class RoleClient(IDiscordRestClientBase client)
 		ArgumentNullException.ThrowIfNull(request);
 
 		var path = $"guilds/{guildId}/roles/{roleId}";
-		return client.SendJsonAsync<Role>(path, HttpMethod.Patch, request, cancellationToken);
+		return client.SendAsync<Role>(path, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -64,7 +64,7 @@ internal class RoleClient(IDiscordRestClientBase client)
 			throw new ArgumentException("Role ID cannot be null or empty.", nameof(roleId));
 
 		var path = $"guilds/{guildId}/roles/{roleId}";
-		return client.SendJsonAsync<object>(path, HttpMethod.Delete, null, cancellationToken);
+		return client.SendAsync<object>(path, HttpMethod.Delete, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -82,7 +82,7 @@ internal class RoleClient(IDiscordRestClientBase client)
 		ArgumentNullException.ThrowIfNull(request);
 
 		var path = $"guilds/{guildId}/roles";
-		return client.SendJsonAsync<Role[]>(path, HttpMethod.Patch, request, cancellationToken);
+		return client.SendAsync<Role[]>(path, HttpMethod.Patch, request, cancellationToken);
 	}
 }
 

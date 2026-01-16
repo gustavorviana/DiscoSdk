@@ -28,7 +28,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 		ArgumentNullException.ThrowIfNull(request);
 
 		var path = $"channels/{channelId}/messages";
-		return client.SendJsonAsync<Message>(path, HttpMethod.Post, request, cancellationToken);
+		return client.SendAsync<Message>(path, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -47,7 +47,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 			throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
 
 		var path = $"channels/{channelId}/messages/{messageId}";
-		return client.SendJsonAsync<Message>(path, HttpMethod.Get, null, cancellationToken);
+		return client.SendAsync<Message>(path, HttpMethod.Get, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -69,7 +69,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 		ArgumentNullException.ThrowIfNull(request);
 
 		var path = $"channels/{channelId}/messages/{messageId}";
-		return client.SendJsonAsync<Message>(path, HttpMethod.Patch, request, cancellationToken);
+		return client.SendAsync<Message>(path, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -88,7 +88,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 			throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
 
 		var path = $"channels/{channelId}/messages/{messageId}";
-		return client.SendJsonAsync(path, HttpMethod.Delete, null, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Delete, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -107,7 +107,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 			throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
 
 		var path = $"channels/{channelId}/messages/{messageId}/crosspost";
-		return client.SendJsonAsync<Message>(path, HttpMethod.Post, null, cancellationToken);
+		return client.SendAsync<Message>(path, HttpMethod.Post, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -131,7 +131,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 
 		var encodedEmoji = Uri.EscapeDataString(emoji);
 		var path = $"channels/{channelId}/messages/{messageId}/reactions/{encodedEmoji}/@me";
-		return client.SendJsonAsync(path, HttpMethod.Put, null, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Put, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -155,7 +155,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 
 		var encodedEmoji = Uri.EscapeDataString(emoji);
 		var path = $"channels/{channelId}/messages/{messageId}/reactions/{encodedEmoji}/@me";
-		return client.SendJsonAsync(path, HttpMethod.Delete, null, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Delete, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -183,7 +183,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 
 		var encodedEmoji = Uri.EscapeDataString(emoji);
 		var path = $"channels/{channelId}/messages/{messageId}/reactions/{encodedEmoji}/{userId}";
-		return client.SendJsonAsync(path, HttpMethod.Delete, null, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Delete, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -221,7 +221,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 
 		var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
 		var path = $"channels/{channelId}/messages/{messageId}/reactions/{encodedEmoji}{query}";
-		return client.SendJsonAsync<User[]>(path, HttpMethod.Get, null, cancellationToken);
+		return client.SendAsync<User[]>(path, HttpMethod.Get, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -245,7 +245,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 
 		var encodedEmoji = Uri.EscapeDataString(emoji);
 		var path = $"channels/{channelId}/messages/{messageId}/reactions/{encodedEmoji}";
-		return client.SendJsonAsync(path, HttpMethod.Delete, null, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Delete, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -264,7 +264,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 			throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
 
 		var path = $"channels/{channelId}/messages/{messageId}/reactions";
-		return client.SendJsonAsync(path, HttpMethod.Delete, null, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Delete, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -301,7 +301,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 
 		var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
 		var path = $"channels/{channelId}/messages{query}";
-		return client.SendJsonAsync<Message[]>(path, HttpMethod.Get, null, cancellationToken);
+		return client.SendAsync<Message[]>(path, HttpMethod.Get, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -324,7 +324,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 
 		var path = $"channels/{channelId}/messages/bulk-delete";
 		var request = new { messages = messageIds.Select(id => id.ToString()).ToArray() };
-		return client.SendJsonAsync(path, HttpMethod.Post, request, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -339,7 +339,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
 		var path = $"channels/{channelId}/typing";
-		return client.SendNoContentAsync(path, HttpMethod.Post, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Post, cancellationToken);
 	}
 
 	/// <summary>
@@ -358,7 +358,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 			throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
 
 		var path = $"channels/{channelId}/pins/{messageId}";
-		return client.SendNoContentAsync(path, HttpMethod.Put, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Put, cancellationToken);
 	}
 
 	/// <summary>
@@ -377,7 +377,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 			throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
 
 		var path = $"channels/{channelId}/pins/{messageId}";
-		return client.SendNoContentAsync(path, HttpMethod.Delete, cancellationToken);
+		return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
 	}
 
 	/// <summary>
@@ -392,7 +392,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
 		var path = $"channels/{channelId}/pins";
-		return client.SendJsonAsync<Message[]>(path, HttpMethod.Get, null, cancellationToken);
+		return client.SendAsync<Message[]>(path, HttpMethod.Get, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -411,7 +411,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 			throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
 
 		var path = $"channels/{channelId}/polls/{messageId}/expire";
-		return client.SendJsonAsync<Message>(path, HttpMethod.Post, null, cancellationToken);
+		return client.SendAsync<Message>(path, HttpMethod.Post, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -445,7 +445,7 @@ internal class MessageClient(IDiscordRestClientBase client)
 
 		var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
 		var path = $"channels/{channelId}/polls/{messageId}/answers/{answerId}{query}";
-		return client.SendJsonAsync<User[]>(path, HttpMethod.Get, null, cancellationToken);
+		return client.SendAsync<User[]>(path, HttpMethod.Get, null, cancellationToken);
 	}
 }
 

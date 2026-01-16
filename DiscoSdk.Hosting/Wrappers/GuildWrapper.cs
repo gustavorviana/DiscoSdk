@@ -10,9 +10,6 @@ using Channel = DiscoSdk.Models.Channels.Channel;
 
 namespace DiscoSdk.Hosting.Wrappers;
 
-/// <summary>
-/// Wrapper that implements <see cref="IGuild"/> for a <see cref="Guild"/> instance.
-/// </summary>
 internal class GuildWrapper : IGuild
 {
     private readonly HashSet<Channel> _channels = new(new ChannelEqualityComparerById());
@@ -24,7 +21,7 @@ internal class GuildWrapper : IGuild
     {
         _guild = guild ?? throw new ArgumentNullException(nameof(guild));
         _client = client ?? throw new ArgumentNullException(nameof(client));
-        Roles = guild.Roles?.Select(x => new RoleWrapper(x, this, client))?.ToArray() ?? [];
+        RefreshProperties();
 
         foreach (var channel in _channels)
             _channels.Add(channel);
@@ -34,13 +31,11 @@ internal class GuildWrapper : IGuild
 
     public string Name => _guild.Name;
 
-    public string? Icon => _guild.Icon;
+    public DiscordImage? Icon { get; private set; }
 
-    public string? IconHash => _guild.IconHash;
+    public DiscordImage? Splash { get; private set; }
 
-    public string? Splash => _guild.Splash;
-
-    public string? DiscoverySplash => _guild.DiscoverySplash;
+    public DiscordImage? DiscoverySplash { get; private set; }
 
     public bool? Owner => _guild.Owner;
 
@@ -64,9 +59,9 @@ internal class GuildWrapper : IGuild
 
     public ExplicitContentFilterLevel? ExplicitContentFilter => _guild.ExplicitContentFilter;
 
-    public IRole[] Roles { get; private set; }
+    public IRole[] Roles { get; private set; } = [];
 
-    public Emoji[]? Emojis => _guild.Emojis;
+    public IEmoji[]? Emojis { get; private set; } = [];
 
     public string[]? Features => _guild.Features;
 
@@ -88,7 +83,7 @@ internal class GuildWrapper : IGuild
 
     public string? Description => _guild.Description;
 
-    public string? Banner => _guild.Banner;
+    public DiscordImage? Banner { get; private set; }
 
     public PremiumTier? PremiumTier => _guild.PremiumTier;
 
@@ -106,23 +101,62 @@ internal class GuildWrapper : IGuild
 
     public bool? Unavailable => _guild.Unavailable;
 
-    public IEditGuildRestAction Edit() => throw new NotSupportedException();
+    public IEditGuildAction Edit()
+    {
+        return new EditGuildAction(_client, this);
+    }
 
-    public IRestAction Delete() => throw new NotSupportedException();
+    public IRestAction Delete()
+    {
+        return RestAction.Create(async cancellationToken =>
+        {
+            await _client.GuildClient.DeleteAsync(_guild.Id, cancellationToken);
+        });
+    }
 
-    public IRestAction Leave() => throw new NotSupportedException();
+    public IRestAction Leave()
+    {
+        return RestAction.Create(async cancellationToken =>
+        {
+            await _client.GuildClient.LeaveAsync(_guild.Id, cancellationToken);
+        });
+    }
 
-    public ICreateChannelAction CreateChannel(string name, ChannelType type) => throw new NotSupportedException();
+    public ICreateChannelAction CreateChannel(string name, ChannelType type)
+    {
+        return new CreateChannelAction(_client, this, name, type);
+    }
 
-    public IRoleAction CreateRole() => throw new NotSupportedException();
+    public IRoleAction CreateRole()
+    {
+        return new RoleAction(_client, this);
+    }
 
-    public ICreateEmojiAction CreateEmoji(string name, byte[] image) => throw new NotSupportedException();
+    public ICreateEmojiAction CreateEmoji(string name, DiscordImage image)
+    {
+        return new CreateEmojiAction(_client, this, name, image);
+    }
 
-    public IBanMemberAction BanMember(Snowflake userId, int deleteMessageDays = 0) => throw new NotSupportedException();
+    public IBanMemberAction BanMember(Snowflake userId, int deleteMessageDays = 0)
+    {
+        return new BanMemberAction(_client, _guild.Id, userId, deleteMessageDays);
+    }
 
-    public IRestAction UnbanMember(Snowflake userId) => throw new NotSupportedException();
+    public IRestAction UnbanMember(Snowflake userId)
+    {
+        return RestAction.Create(async cancellationToken =>
+        {
+            await _client.GuildClient.UnbanMemberAsync(_guild.Id, userId, cancellationToken);
+        });
+    }
 
-    public IRestAction KickMember(Snowflake userId) => throw new NotSupportedException();
+    public IRestAction KickMember(Snowflake userId)
+    {
+        return RestAction.Create(async cancellationToken =>
+        {
+            await _client.GuildClient.KickMemberAsync(_guild.Id, userId, cancellationToken);
+        });
+    }
 
     public IMemberPaginationAction GetMembers()
     {
@@ -141,18 +175,22 @@ internal class GuildWrapper : IGuild
         });
     }
 
-    public IBanPaginationAction GetBans() => throw new NotSupportedException();
-
-    public IRestAction<Ban?> GetBan(Snowflake userId)
+    public IRestAction<IBan?> GetBan(Snowflake userId)
     {
-        return RestAction<Ban?>.Create(async cancellationToken =>
+        return RestAction<IBan?>.Create(async cancellationToken =>
         {
             var ban = await _client.GuildClient.GetBanAsync(_guild.Id, userId, cancellationToken);
-            return ban;
+            if (ban == null)
+                return null;
+
+            return new BanWrapper(ban, _client);
         });
     }
 
-    public IAuditLogPaginationAction GetAuditLogs() => throw new NotSupportedException();
+    public IAuditLogPaginationAction GetAuditLogs()
+    {
+        return new AuditLogPaginationAction(_client, this);
+    }
 
     public IGuildChannelUnion? GetChannel(Snowflake channelId)
     {
@@ -257,27 +295,93 @@ internal class GuildWrapper : IGuild
         });
     }
 
-    public IRestAction<IReadOnlyList<Emoji>> GetEmojis() => throw new NotSupportedException();
+    public IRestAction<IReadOnlyList<IInvite>> GetInvites()
+    {
+        return RestAction<IReadOnlyList<IInvite>>.Create(async cancellationToken =>
+        {
+            var invites = await _client.GuildClient.GetInvitesAsync(_guild.Id, cancellationToken);
+            var result = new List<IInvite>();
 
-    public IRestAction<IReadOnlyList<IInvite>> GetInvites() => throw new NotSupportedException();
+            foreach (var invite in invites)
+            {
+                if (invite.Channel?.Id == null)
+                    continue;
 
-    public IRestAction<int> GetPruneCount(int days, params Snowflake[] includeRoles) => throw new NotSupportedException();
+                var channel = GetChannel(invite.Channel.Id);
+                if (channel is IGuildChannelBase guildChannel)
+                    result.Add(new InviteWrapper(invite, guildChannel, _client));
+            }
 
-    public IBeginPruneAction BeginPrune(int days, params Snowflake[] includeRoles) => throw new NotSupportedException();
+            return [..result];
+        });
+    }
 
-    public IRestAction<IReadOnlyList<VoiceRegion>> GetVoiceRegions() => throw new NotSupportedException();
+    public IRestAction<int> GetPruneCount(int days, params Snowflake[] includeRoles)
+    {
+        return RestAction<int>.Create(async cancellationToken =>
+        {
+            return await _client.GuildClient.GetPruneCountAsync(_guild.Id, days, includeRoles, cancellationToken);
+        });
+    }
 
-    public IRestAction<GuildPreview> GetPreview() => throw new NotSupportedException();
+    public IRestAction<int> BeginPrune(int days, params Snowflake[] includeRoles)
+    {
+        return RestAction<int>.Create(async cancellationToken =>
+        {
+            return await _client.GuildClient.BeginPruneAsync(_guild.Id, days, includeRoles, cancellationToken);
+        });
+    }
 
-    public IRestAction<GuildWidget> GetWidget() => throw new NotSupportedException();
+    public IRestAction<IReadOnlyList<VoiceRegion>> GetVoiceRegions()
+    {
+        return RestAction<IReadOnlyList<VoiceRegion>>.Create(async cancellationToken =>
+        {
+            var regions = await _client.GuildClient.GetVoiceRegionsAsync(_guild.Id, cancellationToken);
+            return [..regions];
+        });
+    }
 
-    public IEditGuildWidgetAction EditWidget() => throw new NotSupportedException();
+    public IRestAction<GuildPreview> GetPreview()
+    {
+        return RestAction<GuildPreview>.Create(async cancellationToken =>
+        {
+            return await _client.GuildClient.GetPreviewAsync(_guild.Id, cancellationToken);
+        });
+    }
 
-    public IRestAction<WelcomeScreen> GetWelcomeScreen() => throw new NotSupportedException();
+    public IRestAction<GuildWidget> GetWidget()
+    {
+        return RestAction<GuildWidget>.Create(async cancellationToken =>
+        {
+            return await _client.GuildClient.GetWidgetAsync(_guild.Id, cancellationToken);
+        });
+    }
 
-    public IEditWelcomeScreenAction EditWelcomeScreen() => throw new NotSupportedException();
+    public IEditGuildWidgetAction EditWidget()
+    {
+        return new EditGuildWidgetAction(_client, this);
+    }
 
-    public IRestAction<string?> GetVanityUrl() => throw new NotSupportedException();
+    public IRestAction<WelcomeScreen> GetWelcomeScreen()
+    {
+        return RestAction<WelcomeScreen>.Create(async cancellationToken =>
+        {
+            return await _client.GuildClient.GetWelcomeScreenAsync(_guild.Id, cancellationToken);
+        });
+    }
+
+    public IEditWelcomeScreenAction EditWelcomeScreen()
+    {
+        return new EditWelcomeScreenAction(_client, this);
+    }
+
+    public IRestAction<VanityUrl?> GetVanityUrl()
+    {
+        return RestAction<VanityUrl?>.Create(async token =>
+        {
+            return await _client.GuildClient.GetVanityUrlAsync(Id, token);
+        });
+    }
 
     public IRestAction<Stream> GetWidgetImage(string? style = null) => throw new NotSupportedException();
 
@@ -287,6 +391,7 @@ internal class GuildWrapper : IGuild
         {
             guild.Channels = _guild.Channels;
             _guild = guild;
+            LoadImages();
         }
     }
 
@@ -311,5 +416,20 @@ internal class GuildWrapper : IGuild
     {
         lock (_updateLock)
             _channels.Remove(new Channel { Id = id });
+    }
+
+    private void RefreshProperties()
+    {
+        Emojis = _guild.Emojis?.Select(x => new EmojiWrapper(x, this, _client))?.ToArray() ?? [];
+        Roles = _guild.Roles?.Select(x => new RoleWrapper(x, this, _client))?.ToArray() ?? [];
+        LoadImages();
+    }
+
+    private void LoadImages()
+    {
+        Icon = DiscordImage.FromBase64(_guild.Icon);
+        Splash = DiscordImage.FromBase64(_guild.Splash);
+        DiscoverySplash = DiscordImage.FromBase64(_guild.DiscoverySplash);
+        Banner = DiscordImage.FromBase64(_guild.Banner);
     }
 }

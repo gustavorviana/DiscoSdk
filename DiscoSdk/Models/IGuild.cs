@@ -24,24 +24,19 @@ public interface IGuild
     string Name { get; }
 
     /// <summary>
-    /// Gets the icon hash of this guild, or null if no icon is set.
+    /// Gets the icon of this guild, returned when in the template object.
     /// </summary>
-    string? Icon { get; }
+    DiscordImage? Icon { get; }
 
     /// <summary>
-    /// Gets the icon hash of this guild, returned when in the template object.
+    /// Gets the splash of this guild, or null if no splash is set.
     /// </summary>
-    string? IconHash { get; }
+    DiscordImage? Splash { get; }
 
     /// <summary>
-    /// Gets the splash hash of this guild, or null if no splash is set.
+    /// Gets the discovery splash of this guild, or null if no discovery splash is set.
     /// </summary>
-    string? Splash { get; }
-
-    /// <summary>
-    /// Gets the discovery splash hash of this guild, or null if no discovery splash is set.
-    /// </summary>
-    string? DiscoverySplash { get; }
+    DiscordImage? DiscoverySplash { get; }
 
     /// <summary>
     /// Gets a value indicating whether the current user is the owner of this guild.
@@ -106,7 +101,7 @@ public interface IGuild
     /// <summary>
     /// Gets the emojis in this guild, or null if not available.
     /// </summary>
-    Emoji[]? Emojis { get; }
+    IEmoji[]? Emojis { get; }
 
     /// <summary>
     /// Gets the enabled features of this guild, or null if not available.
@@ -159,9 +154,9 @@ public interface IGuild
     string? Description { get; }
 
     /// <summary>
-    /// Gets the banner hash of this guild, or null if no banner is set.
+    /// Gets the banner of this guild, or null if no banner is set.
     /// </summary>
-    string? Banner { get; }
+    DiscordImage? Banner { get; }
 
     /// <summary>
     /// Gets the premium tier (boost level) of this guild.
@@ -212,7 +207,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IEditGuildRestAction Edit();
+    IEditGuildAction Edit();
 
     /// <summary>
     /// Gets a REST action for deleting this guild.
@@ -261,7 +256,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    ICreateEmojiAction CreateEmoji(string name, byte[] image);
+    ICreateEmojiAction CreateEmoji(string name, DiscordImage image);
 
     /// <summary>
     /// Creates a REST action to ban a member from this guild.
@@ -315,15 +310,6 @@ public interface IGuild
     IRestAction<IMember?> GetMember(Snowflake userId);
 
     /// <summary>
-    /// Creates a REST action to get banned members of this guild with pagination.
-    /// </summary>
-    /// <returns>A REST action that can be configured and executed to retrieve banned members.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IBanPaginationAction GetBans();
-
-    /// <summary>
     /// Gets a REST action to retrieve a ban by user ID in this guild.
     /// </summary>
     /// <param name="userId">The ID of the user to retrieve the ban for.</param>
@@ -332,7 +318,7 @@ public interface IGuild
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// Returns null if the user is not banned from this guild.
     /// </remarks>
-    IRestAction<Ban?> GetBan(Snowflake userId);
+    IRestAction<IBan?> GetBan(Snowflake userId);
 
     /// <summary>
     /// Creates a REST action to get audit logs of this guild with pagination.
@@ -402,15 +388,6 @@ public interface IGuild
     IRestAction<IReadOnlyList<IRole>> GetRoles();
 
     /// <summary>
-    /// Gets a REST action to retrieve all emojis in this guild.
-    /// </summary>
-    /// <returns>A REST action that can be executed to retrieve emojis.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<IReadOnlyList<Emoji>> GetEmojis();
-
-    /// <summary>
     /// Gets a REST action to retrieve all invites in this guild.
     /// </summary>
     /// <returns>A REST action that can be executed to retrieve invites.</returns>
@@ -439,7 +416,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IBeginPruneAction BeginPrune(int days, params Snowflake[] includeRoles);
+    IRestAction<int> BeginPrune(int days, params Snowflake[] includeRoles);
 
     /// <summary>
     /// Gets a REST action to retrieve voice regions available for this guild.
@@ -502,7 +479,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IRestAction<string?> GetVanityUrl();
+    IRestAction<VanityUrl?> GetVanityUrl();
 
     /// <summary>
     /// Gets a REST action to retrieve the widget image of this guild.

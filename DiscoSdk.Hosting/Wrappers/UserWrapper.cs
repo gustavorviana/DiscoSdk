@@ -5,21 +5,16 @@ namespace DiscoSdk.Hosting.Wrappers;
 /// <summary>
 /// Wrapper that implements <see cref="IUser"/> for a <see cref="User"/> instance.
 /// </summary>
-internal class UserWrapper : IUser
+/// <remarks>
+/// Initializes a new instance of the <see cref="UserWrapper"/> class.
+/// </remarks>
+/// <param name="user">The user instance to wrap.</param>
+internal class UserWrapper(User user, DiscordClient client) : IUser
 {
-	private readonly User _user;
+	private readonly User _user = user ?? throw new ArgumentNullException(nameof(user));
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="UserWrapper"/> class.
-	/// </summary>
-	/// <param name="user">The user instance to wrap.</param>
-	public UserWrapper(User user)
-	{
-		_user = user ?? throw new ArgumentNullException(nameof(user));
-	}
-
-	/// <inheritdoc />
-	public Snowflake Id => _user.Id;
+    /// <inheritdoc />
+    public Snowflake Id => _user.Id;
 
 	/// <inheritdoc />
 	public DateTimeOffset CreatedAt => _user.Id.CreatedAt;
@@ -40,7 +35,4 @@ internal class UserWrapper : IUser
 			return $"https://cdn.discordapp.com/embed/avatars/{discriminator % 5}.png";
 		}
 	}
-
-	/// <inheritdoc />
-	public ImageProxy EffectiveAvatar => new ImageProxy(EffectiveAvatarUrl);
 }

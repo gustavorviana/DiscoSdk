@@ -39,7 +39,7 @@ internal class InteractionClient(DiscordClient discordClient)
     {
         var id = interaction.IsDeferred ? discordClient.ApplicationId : interaction.Id.ToString();
         var path = $"webhooks/{id}/{interaction.Token}";
-        await Client.SendJsonAsync<object>(path, HttpMethod.Post, request, ct);
+        await Client.SendAsync<object>(path, HttpMethod.Post, request, ct);
     }
 
     public async Task RespondWithModalAsync(InteractionHandle interaction, ModalData modalData, CancellationToken cancellationToken = default)
@@ -80,7 +80,7 @@ internal class InteractionClient(DiscordClient discordClient)
 		};
 
 		var path = $"interactions/{interaction.Id}/{interaction.Token}/callback";
-		await Client.SendJsonAsync<object>(path, HttpMethod.Post, request, cancellationToken);
+		await Client.SendAsync<object>(path, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -92,7 +92,7 @@ internal class InteractionClient(DiscordClient discordClient)
 	public async Task<Message> GetOriginalResponseAsync(InteractionHandle interaction, CancellationToken cancellationToken = default)
 	{
 		var path = $"webhooks/{discordClient.ApplicationId}/{interaction.Token}/messages/@original";
-		return await Client.SendJsonAsync<Message>(path, HttpMethod.Get, null, cancellationToken);
+		return await Client.SendAsync<Message>(path, HttpMethod.Get, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -107,7 +107,7 @@ internal class InteractionClient(DiscordClient discordClient)
 		ArgumentNullException.ThrowIfNull(request);
 
 		var path = $"webhooks/{discordClient.ApplicationId}/{interaction.Token}/messages/@original";
-		return await Client.SendJsonAsync<Message>(path, HttpMethod.Patch, request, cancellationToken);
+		return await Client.SendAsync<Message>(path, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -119,7 +119,7 @@ internal class InteractionClient(DiscordClient discordClient)
 	public async Task DeleteOriginalResponseAsync(InteractionHandle interaction, CancellationToken cancellationToken = default)
 	{
 		var path = $"webhooks/{discordClient.ApplicationId}/{interaction.Token}/messages/@original";
-		await Client.SendNoContentAsync(path, HttpMethod.Delete, cancellationToken);
+		await Client.SendAsync(path, HttpMethod.Delete, cancellationToken);
 	}
 
 	public enum AcknowledgeType

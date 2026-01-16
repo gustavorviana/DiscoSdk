@@ -7,25 +7,37 @@ namespace DiscoSdk.Rest.Actions;
 /// </summary>
 public interface IEditWelcomeScreenAction : IRestAction<WelcomeScreen>
 {
-	/// <summary>
-	/// Sets whether the welcome screen is enabled.
-	/// </summary>
-	/// <param name="enabled">True to enable the welcome screen, false to disable it.</param>
-	/// <returns>The current <see cref="IEditWelcomeScreenAction"/> instance.</returns>
-	IEditWelcomeScreenAction SetEnabled(bool enabled);
+    /// <summary>
+    /// Enables or disables the welcome screen.
+    /// </summary>
+    /// <param name="enabled">Whether the welcome screen should be enabled.</param>
+    /// <returns>The current <see cref="IEditWelcomeScreenAction"/> instance.</returns>
+    IEditWelcomeScreenAction SetEnabled(bool enabled);
 
-	/// <summary>
-	/// Sets the description of the welcome screen.
-	/// </summary>
-	/// <param name="description">The description, or null to remove it.</param>
-	/// <returns>The current <see cref="IEditWelcomeScreenAction"/> instance.</returns>
-	IEditWelcomeScreenAction SetDescription(string? description);
+    /// <summary>
+    /// Sets the welcome screen description.
+    /// </summary>
+    /// <param name="description">The description to display.</param>
+    /// <returns>The current <see cref="IEditWelcomeScreenAction"/> instance.</returns>
+    IEditWelcomeScreenAction SetDescription(string? description);
 
-	/// <summary>
-	/// Sets the welcome channels.
-	/// </summary>
-	/// <param name="channels">The welcome channels, or null to remove them.</param>
-	/// <returns>The current <see cref="IEditWelcomeScreenAction"/> instance.</returns>
-	IEditWelcomeScreenAction SetWelcomeChannels(WelcomeScreenChannel[]? channels);
+    /// <summary>
+    /// Clears all configured welcome channels.
+    /// </summary>
+    /// <returns>The current <see cref="IEditWelcomeScreenAction"/> instance.</returns>
+    IEditWelcomeScreenAction ClearChannels();
+
+    /// <summary>
+    /// Adds or replaces a welcome channel entry.
+    /// </summary>
+    /// <param name="channelId">The channel id.</param>
+    /// <param name="description">The channel description.</param>
+    /// <param name="emojiId">Optional emoji id.</param>
+    /// <param name="emojiName">Optional emoji name.</param>
+    /// <returns>The current <see cref="IEditWelcomeScreenAction"/> instance.</returns>
+    IEditWelcomeScreenAction AddChannel(
+        Snowflake channelId,
+        string? description = null,
+        Snowflake? emojiId = null,
+        string? emojiName = null);
 }
-

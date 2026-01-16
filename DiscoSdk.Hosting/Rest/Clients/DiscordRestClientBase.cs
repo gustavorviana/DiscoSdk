@@ -35,6 +35,11 @@ public class DiscordRestClientBase : IDisposable, IDiscordRestClientBase
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", _botToken);
     }
 
+    public Task<T> SendAsync<T>(string path, HttpMethod method, CancellationToken ct)
+    {
+        return SendAsync<T>(path, method, null, ct);
+    }
+
     /// <summary>
     /// Sends a JSON request to the Discord API and deserializes the response.
     /// </summary>
@@ -45,7 +50,7 @@ public class DiscordRestClientBase : IDisposable, IDiscordRestClientBase
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains the deserialized response.</returns>
     /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
-    public async Task<T> SendJsonAsync<T>(string path, HttpMethod method, object? body, CancellationToken ct)
+    public async Task<T> SendAsync<T>(string path, HttpMethod method, object? body, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(method, path);
 
@@ -74,7 +79,7 @@ public class DiscordRestClientBase : IDisposable, IDiscordRestClientBase
             error?.Code);
     }
 
-    public async Task SendJsonAsync(string path, HttpMethod method, object? body, CancellationToken ct)
+    public async Task SendAsync(string path, HttpMethod method, object? body, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(method, path);
 
@@ -104,7 +109,7 @@ public class DiscordRestClientBase : IDisposable, IDiscordRestClientBase
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
-    public async Task SendNoContentAsync(string path, HttpMethod method, CancellationToken ct)
+    public async Task SendAsync(string path, HttpMethod method, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(method, path);
         using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);

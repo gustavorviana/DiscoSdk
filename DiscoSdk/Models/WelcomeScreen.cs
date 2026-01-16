@@ -19,4 +19,3 @@ public class WelcomeScreen
 	[JsonPropertyName("welcome_channels")]
 	public WelcomeScreenChannel[]? WelcomeChannels { get; set; }
 }
-
