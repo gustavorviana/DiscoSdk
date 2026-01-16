@@ -28,7 +28,15 @@ public abstract class RestAction<T> : IRestAction<T>
 
     public T Execute()
     {
-        return ExecuteAsync().GetAwaiter().GetResult();
+        try
+        {
+
+            return ExecuteAsync().GetAwaiter().GetResult();
+        }
+        catch (AggregateException ex)
+        {
+            throw ex.GetBaseException();
+        }
     }
 }
 
@@ -41,7 +49,15 @@ public abstract class RestAction : IRestAction
 
     public void Execute()
     {
-        ExecuteAsync().GetAwaiter().GetResult();
+        try
+        {
+
+            ExecuteAsync().GetAwaiter().GetResult();
+        }
+        catch (AggregateException ex)
+        {
+            throw ex.GetBaseException();
+        }
     }
 
     public abstract Task ExecuteAsync(CancellationToken cancellationToken = default);
