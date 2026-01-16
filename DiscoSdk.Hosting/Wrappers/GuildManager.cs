@@ -1,6 +1,7 @@
 using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
+using DiscoSdk.Models.Channels;
 using System.Collections.Concurrent;
 
 namespace DiscoSdk.Hosting.Wrappers;
@@ -94,6 +95,41 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
                 }
             }
         }
+    }
+
+    internal void HandleGuildUpdate(Guild guildUpdate)
+    {
+        if (_guildCache.TryGetValue(guildUpdate.Id, out var guild))
+            (guild as GuildWrapper)?.OnUpdate(guildUpdate);
+    }
+
+    internal void HandleGuildDelete(DiscordId guildId)
+    {
+        _guildCache.Remove(guildId, out _);
+    }
+
+    internal void HandleChannelCreate(Channel channel)
+    {
+        if (channel.GuildId == null || !_guildCache.TryGetValue(channel.GuildId.Value, out var guild))
+            return;
+
+        (guild as GuildWrapper)?.OnChannelAdd(channel);
+    }
+
+    internal void HandleChannelUpdate(Channel channel)
+    {
+        if (channel.GuildId == null || !_guildCache.TryGetValue(channel.GuildId.Value, out var guild))
+            return;
+
+        (guild as GuildWrapper)?.OnChannelUpdate(channel);
+    }
+
+    internal void HandleChannelDelete(Channel channel)
+    {
+        if (channel.GuildId == null || !_guildCache.TryGetValue(channel.GuildId.Value, out var guild))
+            return;
+
+        (guild as GuildWrapper)?.OnChannelDelete(channel.Id);
     }
 
     /// <summary>

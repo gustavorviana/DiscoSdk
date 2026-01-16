@@ -1,3 +1,4 @@
+using DiscoSdk.Hosting.EqualityComparers;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Wrappers.Channels;
 using DiscoSdk.Models;
@@ -14,14 +15,19 @@ namespace DiscoSdk.Hosting.Wrappers;
 /// </summary>
 internal class GuildWrapper : IGuild
 {
-    private readonly Guild _guild;
+    private readonly HashSet<Channel> _channels = new(new ChannelEqualityComparerById());
+    private readonly object _updateLock = new();
     private readonly DiscordClient _client;
+    private Guild _guild;
 
     public GuildWrapper(Guild guild, DiscordClient client)
     {
         _guild = guild ?? throw new ArgumentNullException(nameof(guild));
         _client = client ?? throw new ArgumentNullException(nameof(client));
         Roles = guild.Roles?.Select(x => new RoleWrapper(x, this, client))?.ToArray() ?? [];
+
+        foreach (var channel in _channels)
+            _channels.Add(channel);
     }
 
     public DiscordId Id => _guild.Id;
@@ -148,105 +154,94 @@ internal class GuildWrapper : IGuild
 
     public IAuditLogPaginationAction GetAuditLogs() => throw new NotSupportedException();
 
-    public IRestAction<IGuildChannelUnion?> GetChannel(DiscordId channelId)
+    public IGuildChannelUnion? GetChannel(DiscordId channelId)
     {
-        return RestAction<IGuildChannelUnion?>.Create(async cancellationToken =>
+        if (!_channels.TryGetValue(new Channel { Id = Id }, out var channel))
+            return null;
+
+        return new GuildChannelUnionWrapper(channel, this, _client);
+    }
+
+    public IGuildVoiceChannel? GetAfkChannel()
+    {
+        if (!AfkChannelId.HasValue || GetRawChannelById(AfkChannelId.Value) is not { } channel)
+            return null;
+
+        return new GuildVoiceChannelWrapper(channel, this, _client);
+    }
+
+    public IGuildTextChannel? GetSystemChannel()
+    {
+        return GetTextChannel(SystemChannelId);
+    }
+
+    public IGuildTextChannel? GetRulesChannel()
+    {
+        return GetTextChannel(RulesChannelId);
+    }
+
+    public IGuildTextChannel? GetPublicUpdatesChannel()
+    {
+        return GetTextChannel(PublicUpdatesChannelId);
+    }
+
+    private IGuildTextChannel? GetTextChannel(DiscordId? channelId)
+    {
+        var channel = GetRawChannelById(channelId);
+        if (channel == null)
+            return null;
+
+        if (!ChannelTypeUtils.IsText(channel.Type))
+            throw new InvalidCastException();
+
+        return new GuildTextChannelWrapper(channel, this, _client);
+    }
+
+    private Channel? GetRawChannelById(DiscordId? channelId)
+    {
+        lock (_updateLock)
         {
-            var channel = await GetRawChannel(channelId, cancellationToken);
-            if (channel == null)
+            if (channelId == null)
                 return null;
 
-            if (channel.GuildId != _guild.Id)
+            if (!_channels.TryGetValue(new Channel { Id = channelId.Value }, out var channel))
                 return null;
 
-            return new GuildChannelUnionWrapper(channel, this, _client);
-        });
+            return channel;
+        }
     }
 
-    public IRestAction<IGuildVoiceChannel?> GetAfkChannel()
+    public IReadOnlyList<IGuildChannelUnion> GetChannels()
     {
-        if (!AfkChannelId.HasValue)
-            return RestAction<IGuildVoiceChannel?>.FromResult(null);
-
-        return RestAction<IGuildVoiceChannel?>.Create(async cancellationToken =>
+        lock (_updateLock)
         {
-            var channel = await GetRawChannel(AfkChannelId.Value, cancellationToken);
-            if (channel == null)
-                return null;
-
-            if (channel.GuildId != _guild.Id)
-                return null;
-
-            return new GuildVoiceChannelWrapper(channel, this, _client);
-        });
+            return [.. _guild
+                .Channels
+                .Select(ch => new GuildChannelUnionWrapper(ch, this, _client))];
+        }
     }
 
-    public IRestAction<IGuildTextChannel?> GetSystemChannel()
+    public IReadOnlyList<IGuildTextChannel> GetTextChannels()
     {
-        return GetChannelAction(SystemChannelId);
-    }
-
-    public IRestAction<IGuildTextChannel?> GetRulesChannel()
-    {
-        return GetChannelAction(RulesChannelId);
-    }
-
-    public IRestAction<IGuildTextChannel?> GetPublicUpdatesChannel()
-    {
-        return GetChannelAction(PublicUpdatesChannelId);
-    }
-
-    private IRestAction<IGuildTextChannel?> GetChannelAction(DiscordId? channelId)
-    {
-        if (channelId == null)
-            return RestAction<IGuildTextChannel?>.FromResult(null);
-
-        return RestAction<IGuildTextChannel?>.Create(async cancellationToken =>
+        lock (_updateLock)
         {
-            var channel = await GetRawChannel(channelId.Value, cancellationToken);
-            if (channel == null)
-                return null;
-
-            return new GuildTextChannelWrapper(channel, this, _client);
-        });
-    }
-
-    private async Task<Channel> GetRawChannel(DiscordId channelId, CancellationToken cancellationToken)
-    {
-        return await _client.ChannelClient.GetAsync(channelId, cancellationToken);
-    }
-
-    public IRestAction<IReadOnlyList<IGuildChannelUnion>> GetChannels()
-    {
-        return RestAction<IReadOnlyList<IGuildChannelUnion>>.Create(async cancellationToken =>
-        {
-            var channels = await _client.GuildClient.GetChannelsAsync(_guild.Id, cancellationToken);
-
-            return [.. channels.Select(ch => new GuildChannelUnionWrapper(ch, this, _client))];
-        });
-    }
-
-    public IRestAction<IReadOnlyList<IGuildTextChannel>> GetTextChannels()
-    {
-        return RestAction<IReadOnlyList<IGuildTextChannel>>.Create(async cancellationToken =>
-        {
-            var channels = await _client.GuildClient.GetChannelsAsync(_guild.Id, cancellationToken);
-            return [..channels
+            return [.._guild
+                .Channels
                 .Where(x => ChannelTypeUtils.IsText(x.Type))
                 .Select(ch => ChannelWrapper.ToSpecificType(ch, this, _client))
                 .OfType<IGuildTextChannel>()];
-        });
+        }
     }
 
-    public IRestAction<IReadOnlyList<IGuildVoiceChannel>> GetVoiceChannels()
+    public IReadOnlyList<IGuildVoiceChannel> GetVoiceChannels()
     {
-        return RestAction<IReadOnlyList<IGuildVoiceChannel>>.Create(async cancellationToken =>
+        lock (_updateLock)
         {
-            var channels = await _client.GuildClient.GetChannelsAsync(_guild.Id, cancellationToken);
-            return [..channels
+            return [.._guild
+                .Channels
                 .Where(x => ChannelTypeUtils.IsVoice(x.Type))
                 .Select(ch => new GuildVoiceChannelWrapper(ch, this, _client))];
-        });
+        }
     }
 
     public IRestAction<IReadOnlyList<IRole>> GetRoles()
@@ -285,6 +280,36 @@ internal class GuildWrapper : IGuild
     public IRestAction<string?> GetVanityUrl() => throw new NotSupportedException();
 
     public IRestAction<Stream> GetWidgetImage(string? style = null) => throw new NotSupportedException();
+
+    internal void OnUpdate(Guild guild)
+    {
+        lock (_updateLock)
+        {
+            guild.Channels = _guild.Channels;
+            _guild = guild;
+        }
+    }
+
+    internal void OnChannelAdd(Channel channel)
+    {
+        lock (_updateLock)
+        {
+            _channels.Add(channel);
+        }
+    }
+
+    internal void OnChannelUpdate(Channel channel)
+    {
+        lock (_updateLock)
+        {
+            _channels.Remove(channel);
+            _channels.Add(channel);
+        }
+    }
+
+    internal void OnChannelDelete(DiscordId id)
+    {
+        lock (_updateLock)
+            _channels.Remove(new Channel { Id = id });
+    }
 }
-
-

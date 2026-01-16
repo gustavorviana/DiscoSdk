@@ -1,17 +1,14 @@
 using DiscoSdk.Events;
 using DiscoSdk.Hosting.Gateway;
-using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Hosting.Wrappers;
-using DiscoSdk.Hosting.Wrappers.Channels;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Interactions;
 using DiscoSdk.Models.Messages;
-using System.Reflection;
+using System;
 using System.Text.Json;
-using System.Threading;
 
 namespace DiscoSdk.Hosting.Events;
 
@@ -20,18 +17,18 @@ namespace DiscoSdk.Hosting.Events;
 /// </summary>
 public class DiscordEventDispatcher : IDiscordEventRegistry
 {
-    private readonly object _lock = new();
     private readonly List<IDiscordEventHandler> _handlers = [];
     private readonly Dictionary<Type, HashSet<int>> _handlerIndicesByType = [];
-    private readonly ILogger _logger;
+    private readonly DiscordClient _discordClient;
+    private readonly object _lock = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DiscordEventDispatcher"/> class.
     /// </summary>
     /// <param name="logger">The logger instance. If null, uses NullLogger.</param>
-    public DiscordEventDispatcher(ILogger? logger = null)
+    public DiscordEventDispatcher(DiscordClient discordClient)
     {
-        _logger = logger ?? NullLogger.Instance;
+        _discordClient = discordClient;
     }
 
     /// <summary>
@@ -70,9 +67,9 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
     /// </summary>
     /// <param name="eventType">The type of the event.</param>
     /// <param name="payload">The JSON payload of the event.</param>
-    /// <param name="jsonOptions">The JSON serializer options to use.</param>
+    /// <param name="_discordClient.SerializerOptions">The JSON serializer options to use.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    internal async Task ProcessEventAsync(DiscordClient client, ReceivedGatewayMessage message)
+    internal async Task ProcessEventAsync(ReceivedGatewayMessage message)
     {
         if (string.IsNullOrEmpty(message.EventType))
             return;
@@ -85,68 +82,68 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
             switch (message.EventType)
             {
                 case "MESSAGE_CREATE":
-                    await ProcessMessageCreateAsync(payload, client.SerializerOptions);
+                    await ProcessMessageCreateAsync(payload);
                     break;
 
                 case "MESSAGE_UPDATE":
-                    await ProcessMessageUpdateAsync(payload, client.SerializerOptions);
+                    await ProcessMessageUpdateAsync(payload);
                     break;
 
                 case "MESSAGE_DELETE":
-                    await ProcessMessageDeleteAsync(payload, client.SerializerOptions);
+                    await ProcessMessageDeleteAsync(payload);
                     break;
 
                 case "GUILD_CREATE":
-                    await ProcessGuildCreateAsync(payload, client.SerializerOptions);
+                    await ProcessGuildCreateAsync(payload);
                     break;
 
                 case "GUILD_UPDATE":
-                    await ProcessGuildUpdateAsync(payload, client.SerializerOptions);
+                    await ProcessGuildUpdateAsync(payload);
                     break;
 
                 case "GUILD_DELETE":
-                    await ProcessGuildDeleteAsync(payload, client.SerializerOptions);
+                    await ProcessGuildDeleteAsync(payload);
                     break;
 
                 case "CHANNEL_CREATE":
-                    await ProcessChannelCreateAsync(payload, client.SerializerOptions);
+                    await ProcessChannelCreateAsync(payload);
                     break;
 
                 case "CHANNEL_UPDATE":
-                    await ProcessChannelUpdateAsync(payload, client.SerializerOptions);
+                    await ProcessChannelUpdateAsync(payload);
                     break;
 
                 case "CHANNEL_DELETE":
-                    await ProcessChannelDeleteAsync(payload, client.SerializerOptions);
+                    await ProcessChannelDeleteAsync(payload);
                     break;
 
                 case "MESSAGE_REACTION_ADD":
-                    await ProcessMessageReactionAddAsync(payload, client.SerializerOptions);
+                    await ProcessMessageReactionAddAsync(payload);
                     break;
 
                 case "MESSAGE_REACTION_REMOVE":
-                    await ProcessMessageReactionRemoveAsync(payload, client.SerializerOptions);
+                    await ProcessMessageReactionRemoveAsync(payload);
                     break;
 
                 case "TYPING_START":
-                    await ProcessTypingStartAsync(payload, client.SerializerOptions);
+                    await ProcessTypingStartAsync(payload);
                     break;
 
                 case "INTERACTION_CREATE":
-                    await ProcessInteractionCreateAsync(client, payload, client.SerializerOptions);
+                    await ProcessInteractionCreateAsync(payload);
                     break;
             }
         }
         catch (Exception ex)
         {
             // Log error but don't throw to prevent breaking the event loop
-            _logger.Log(LogLevel.Error, $"Error processing event {message.EventType}", ex);
+            _discordClient.Logger.Log(LogLevel.Error, $"Error processing event {message.EventType}", ex);
         }
     }
 
-    private async Task ProcessMessageCreateAsync(JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessMessageCreateAsync(JsonElement payload)
     {
-        var message = payload.Deserialize<Message>(jsonOptions);
+        var message = payload.Deserialize<Message>(_discordClient.SerializerOptions);
         if (message == null)
             return;
 
@@ -155,16 +152,16 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         await ProcessAll<IMessageCreateHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessMessageUpdateAsync(JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessMessageUpdateAsync(JsonElement payload)
     {
-        var message = payload.Deserialize<Message>(jsonOptions);
+        var message = payload.Deserialize<Message>(_discordClient.SerializerOptions);
         if (message == null) return;
 
         var eventData = new MessageUpdateEvent { Message = message };
         await ProcessAll<IMessageUpdateHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessMessageDeleteAsync(JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessMessageDeleteAsync(JsonElement payload)
     {
         var eventData = new MessageDeleteEvent
         {
@@ -176,63 +173,74 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         await ProcessAll<IMessageDeleteHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessGuildCreateAsync(JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessGuildCreateAsync(JsonElement payload)
     {
-        var guild = payload.Deserialize<Guild>(jsonOptions);
+        var guild = payload.Deserialize<Guild>(_discordClient.SerializerOptions);
         if (guild == null) return;
+
+        _discordClient.GuildManager.HandleGuildCreate(guild);
 
         var eventData = new GuildCreateEvent { Guild = guild };
         await ProcessAll<IGuildCreateHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessGuildUpdateAsync(JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessGuildUpdateAsync(JsonElement payload)
     {
-        var guild = payload.Deserialize<Guild>(jsonOptions);
+        var guild = payload.Deserialize<Guild>(_discordClient.SerializerOptions);
         if (guild == null) return;
+
+        _discordClient.GuildManager.HandleGuildUpdate(guild);
 
         var eventData = new GuildUpdateEvent { Guild = guild };
         await ProcessAll<IGuildUpdateHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessGuildDeleteAsync(JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessGuildDeleteAsync(JsonElement payload)
     {
+        DiscordId.TryParse(payload.GetProperty("id").GetString(), out var snowflake);
         var eventData = new GuildDeleteEvent
         {
-            Id = payload.GetProperty("id").GetString() ?? string.Empty,
+            Id = snowflake,
             Unavailable = payload.TryGetProperty("unavailable", out var unavailable) && unavailable.GetBoolean()
         };
 
+        _discordClient.GuildManager.HandleGuildDelete(eventData.Id);
         await ProcessAll<IGuildDeleteHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessChannelCreateAsync(JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessChannelCreateAsync(JsonElement payload)
     {
-        var channel = payload.Deserialize<Channel>(jsonOptions);
+        var channel = payload.Deserialize<Channel>(_discordClient.SerializerOptions);
         if (channel == null) return;
+
+        _discordClient.GuildManager.HandleChannelCreate(channel);
 
         var eventData = new ChannelCreateEvent { Channel = channel };
         await ProcessAll<IChannelCreateHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessChannelUpdateAsync(JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessChannelUpdateAsync(JsonElement payload)
     {
-        var channel = payload.Deserialize<Channel>(jsonOptions);
+        var channel = payload.Deserialize<Channel>(_discordClient.SerializerOptions);
         if (channel == null) return;
+
+        _discordClient.GuildManager.HandleChannelUpdate(channel);
 
         var eventData = new ChannelUpdateEvent { Channel = channel };
         await ProcessAll<IChannelUpdateHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessChannelDeleteAsync(JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessChannelDeleteAsync(JsonElement payload)
     {
-        var channel = payload.Deserialize<Channel>(jsonOptions);
+        var channel = payload.Deserialize<Channel>(_discordClient.SerializerOptions);
         if (channel == null) return;
 
+        _discordClient.GuildManager.HandleChannelDelete(channel);
         var eventData = new ChannelDeleteEvent { Channel = channel };
         await ProcessAll<IChannelDeleteHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessMessageReactionAddAsync(JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessMessageReactionAddAsync(JsonElement payload)
     {
         var eventData = new MessageReactionAddEvent
         {
@@ -240,14 +248,14 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
             ChannelId = payload.GetProperty("channel_id").GetString() ?? string.Empty,
             MessageId = payload.GetProperty("message_id").GetString() ?? string.Empty,
             GuildId = payload.TryGetProperty("guild_id", out var guildId) ? guildId.GetString() : null,
-            Member = payload.TryGetProperty("member", out var member) ? member.Deserialize<GuildMember>(jsonOptions) : null,
-            Emoji = payload.GetProperty("emoji").Deserialize<Emoji>(jsonOptions) ?? new Emoji()
+            Member = payload.TryGetProperty("member", out var member) ? member.Deserialize<GuildMember>(_discordClient.SerializerOptions) : null,
+            Emoji = payload.GetProperty("emoji").Deserialize<Emoji>(_discordClient.SerializerOptions) ?? new Emoji()
         };
 
         await ProcessAll<IMessageReactionAddHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessMessageReactionRemoveAsync(JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessMessageReactionRemoveAsync(JsonElement payload)
     {
         var eventData = new MessageReactionRemoveEvent
         {
@@ -255,13 +263,13 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
             ChannelId = payload.GetProperty("channel_id").GetString() ?? string.Empty,
             MessageId = payload.GetProperty("message_id").GetString() ?? string.Empty,
             GuildId = payload.TryGetProperty("guild_id", out var guildId) ? guildId.GetString() : null,
-            Emoji = payload.GetProperty("emoji").Deserialize<Emoji>(jsonOptions) ?? new Emoji()
+            Emoji = payload.GetProperty("emoji").Deserialize<Emoji>(_discordClient.SerializerOptions) ?? new Emoji()
         };
 
         await ProcessAll<IMessageReactionRemoveHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessTypingStartAsync(JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessTypingStartAsync(JsonElement payload)
     {
         var eventData = new TypingStartEvent
         {
@@ -269,30 +277,30 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
             GuildId = payload.TryGetProperty("guild_id", out var guildId) ? guildId.GetString() : null,
             UserId = payload.GetProperty("user_id").GetString() ?? string.Empty,
             Timestamp = payload.GetProperty("timestamp").GetInt32(),
-            Member = payload.TryGetProperty("member", out var member) ? member.Deserialize<GuildMember>(jsonOptions) : null
+            Member = payload.TryGetProperty("member", out var member) ? member.Deserialize<GuildMember>(_discordClient.SerializerOptions) : null
         };
 
         await ProcessAll<ITypingStartHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessInteractionCreateAsync(DiscordClient client, JsonElement payload, JsonSerializerOptions jsonOptions)
+    private async Task ProcessInteractionCreateAsync(JsonElement payload)
     {
         try
         {
-            var interaction = payload.Deserialize<Interaction>(jsonOptions);
+            var interaction = payload.Deserialize<Interaction>(_discordClient.SerializerOptions);
             if (interaction == null)
                 return;
 
             var handle = new InteractionHandle(interaction.Id, interaction.Token);
 
             if (interaction.Type == InteractionType.ModalSubmit)
-                await client.InteractionClient.AcknowledgeAsync(handle, Rest.Clients.InteractionClient.AcknowledgeType.ModalSubmit, CancellationToken.None);
+                await _discordClient.InteractionClient.AcknowledgeAsync(handle, Rest.Clients.InteractionClient.AcknowledgeType.ModalSubmit, CancellationToken.None);
 
-            var channel = interaction.ChannelId is not null ? await client.GetChannel<ITextBasedChannel>(interaction.ChannelId.Value).ExecuteAsync() : null;
+            var channel = interaction.ChannelId is not null ? await _discordClient.GetChannel<ITextBasedChannel>(interaction.ChannelId.Value).ExecuteAsync() : null;
             var guild = channel is IGuildChannelBase guildChannel ? guildChannel.Guild : null;
-            var member = guild is not null && interaction.Member is not null ? new GuildMemberWrapper(interaction.Member, guild, client) : null;
+            var member = guild is not null && interaction.Member is not null ? new GuildMemberWrapper(interaction.Member, guild, _discordClient) : null;
 
-            var interactionWrapper = new InteractionWrapper(interaction, client, handle, channel, member);
+            var interactionWrapper = new InteractionWrapper(interaction, _discordClient, handle, channel, member);
             var eventData = new InteractionCreateEvent(interactionWrapper);
 
             try
@@ -310,12 +318,12 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.Error, $"Error processing handlers for interaction {interaction.Id}", ex);
+                _discordClient.Logger.Log(LogLevel.Error, $"Error processing handlers for interaction {interaction.Id}", ex);
             }
         }
         catch (Exception ex)
         {
-            _logger.Log(LogLevel.Error, "Error processing INTERACTION_CREATE", ex);
+            _discordClient.Logger.Log(LogLevel.Error, "Error processing INTERACTION_CREATE", ex);
         }
     }
 
@@ -329,7 +337,7 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.Error, $"Error in {typeof(T).Name}", ex);
+                _discordClient.Logger.Log(LogLevel.Error, $"Error in {typeof(T).Name}", ex);
             }
         }
     }

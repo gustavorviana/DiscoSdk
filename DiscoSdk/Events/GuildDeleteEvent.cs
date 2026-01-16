@@ -1,3 +1,5 @@
+using DiscoSdk.Models;
+
 namespace DiscoSdk.Events;
 
 /// <summary>
@@ -8,7 +10,7 @@ public class GuildDeleteEvent
     /// <summary>
     /// Gets or sets the ID of the guild that was deleted or became unavailable.
     /// </summary>
-    public string Id { get; set; } = default!;
+    public DiscordId Id { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the guild is unavailable.

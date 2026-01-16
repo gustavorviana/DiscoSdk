@@ -50,13 +50,13 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 	/// <param name="channelId">The ID of the channel to delete.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The deleted channel.</returns>
-	public Task<Channel> DeleteAsync(DiscordId channelId, CancellationToken cancellationToken = default)
+	public Task DeleteAsync(DiscordId channelId, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
 		var path = $"channels/{channelId}";
-		return client.SendJsonAsync<Channel>(path, HttpMethod.Delete, null, cancellationToken);
+		return client.SendNoContentAsync(path, HttpMethod.Delete, cancellationToken);
 	}
 
 	/// <summary>

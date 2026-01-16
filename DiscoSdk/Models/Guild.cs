@@ -1,3 +1,4 @@
+using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.JsonConverters;
 using System.Text.Json.Serialization;
@@ -237,5 +238,11 @@ public class Guild
     /// </summary>
     [JsonPropertyName("unavailable")]
     public bool? Unavailable { get; set; }
-}
 
+    /// <summary>
+    /// Gets or sets all channels received in the GUILD_CREATE event payload.
+    /// This includes all channel types: text, voice, thread, forum, media, stage, news, etc.
+    /// </summary>
+    [JsonPropertyName("channels")]
+    public Channel[] Channels { get; set; } = [];
+}

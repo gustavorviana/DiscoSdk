@@ -27,7 +27,7 @@ namespace DiscoSdk.Hosting
         private readonly DiscordEventDispatcher _eventDispatcher;
         internal readonly IDiscordRestClientBase _client;
         private readonly DiscordClientConfig _config;
-        private readonly GuildManager _guildManager;
+        internal GuildManager GuildManager { get; }
 
         /// <summary>
         /// Gets the gateway intents configured for this client.
@@ -112,7 +112,7 @@ namespace DiscoSdk.Hosting
         /// <summary>
         /// Gets the guild manager for managing guilds and channels.
         /// </summary>
-        public GuildManager Guilds => _guildManager;
+        public GuildManager Guilds => GuildManager;
 
         /// <summary>
         /// Gets or sets the application ID of the bot.
@@ -127,7 +127,7 @@ namespace DiscoSdk.Hosting
         /// <summary>
         /// Gets a value indicating whether the bot has fully initialized (all guilds have been loaded).
         /// </summary>
-        public bool IsFullyInitialized => _guildManager.IsFullyInitialized;
+        public bool IsFullyInitialized => GuildManager.IsFullyInitialized;
 
         /// <summary>
         /// Gets the current authenticated user.
@@ -139,7 +139,7 @@ namespace DiscoSdk.Hosting
             _config = config;
             SerializerOptions = jsonOptions;
             Logger = config.Logger ?? NullLogger.Instance;
-            _eventDispatcher = new DiscordEventDispatcher(Logger);
+            _eventDispatcher = new DiscordEventDispatcher(this);
             _client = new DiscordRestClientBase(config.Token, new Uri("https://discord.com/api/v10"), jsonOptions);
             InteractionClient = new InteractionClient(this);
             MessageClient = new MessageClient(_client);
@@ -147,7 +147,7 @@ namespace DiscoSdk.Hosting
             InviteClient = new InviteClient(_client);
             RoleClient = new RoleClient(_client);
             GuildClient = new GuildClient(_client);
-            _guildManager = new GuildManager(this, Logger);
+            GuildManager = new GuildManager(this, Logger);
 
             var maxConcurrency = config.EventProcessorMaxConcurrency > 0
                 ? config.EventProcessorMaxConcurrency
@@ -156,14 +156,7 @@ namespace DiscoSdk.Hosting
             var queueCapacity = Math.Max(1, config.EventProcessorQueueCapacity);
             _eventProcessorPool = new EventProcessorPool<ReceivedGatewayMessage>(maxConcurrency, async (item) =>
             {
-                if (item.EventType == "GUILD_CREATE")
-                {
-                    var guild = item.Deserialize<Guild>(SerializerOptions);
-                    if (guild != null)
-                        _guildManager.HandleGuildCreate(guild);
-                }
-
-                await _eventDispatcher.ProcessEventAsync(this, item);
+                await _eventDispatcher.ProcessEventAsync(item);
             }, Logger, queueCapacity);
         }
 
@@ -296,7 +289,7 @@ namespace DiscoSdk.Hosting
                     .Where(g => !string.IsNullOrEmpty(g.Id))
                     .Select(g => DiscordId.TryParse(g.Id, out var id) ? id : default);
 
-                _guildManager.InitializePendingGuilds(guildIds);
+                GuildManager.InitializePendingGuilds(guildIds);
             }
 
             if (IsReady && OnReady != null)
@@ -413,7 +406,7 @@ namespace DiscoSdk.Hosting
                 // Get the guild if the channel belongs to a guild
                 IGuild? guild = null;
                 if (channel.GuildId.HasValue && !channel.GuildId.Value.Empty)
-                    guild = await _guildManager.GetAsync(channel.GuildId.Value, cancellationToken);
+                    guild = await GuildManager.GetAsync(channel.GuildId.Value, cancellationToken);
 
                 return Wrappers.Channels.ChannelWrapper.ToSpecificType(channel, guild, this);
             });

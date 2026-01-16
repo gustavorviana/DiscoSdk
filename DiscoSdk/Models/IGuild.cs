@@ -13,80 +13,194 @@ namespace DiscoSdk.Models;
 /// </remarks>
 public interface IGuild
 {
+    /// <summary>
+    /// Gets the unique identifier of this guild.
+    /// </summary>
     DiscordId Id { get; }
 
+    /// <summary>
+    /// Gets the name of this guild.
+    /// </summary>
     string Name { get; }
 
+    /// <summary>
+    /// Gets the icon hash of this guild, or null if no icon is set.
+    /// </summary>
     string? Icon { get; }
 
+    /// <summary>
+    /// Gets the icon hash of this guild, returned when in the template object.
+    /// </summary>
     string? IconHash { get; }
 
+    /// <summary>
+    /// Gets the splash hash of this guild, or null if no splash is set.
+    /// </summary>
     string? Splash { get; }
 
+    /// <summary>
+    /// Gets the discovery splash hash of this guild, or null if no discovery splash is set.
+    /// </summary>
     string? DiscoverySplash { get; }
 
+    /// <summary>
+    /// Gets a value indicating whether the current user is the owner of this guild.
+    /// </summary>
     bool? Owner { get; }
 
+    /// <summary>
+    /// Gets the ID of the owner of this guild.
+    /// </summary>
     DiscordId? OwnerId { get; }
 
+    /// <summary>
+    /// Gets the permissions for the current user in this guild.
+    /// </summary>
     DiscordPermission Permissions { get; }
 
+    /// <summary>
+    /// Gets the voice region ID for this guild, or null if not set.
+    /// </summary>
     string? Region { get; }
 
+    /// <summary>
+    /// Gets the ID of the AFK channel, or null if no AFK channel is configured.
+    /// </summary>
     DiscordId? AfkChannelId { get; }
 
+    /// <summary>
+    /// Gets the AFK timeout in seconds, or null if not set.
+    /// </summary>
     int? AfkTimeout { get; }
 
+    /// <summary>
+    /// Gets a value indicating whether the guild widget is enabled.
+    /// </summary>
     bool? WidgetEnabled { get; }
 
+    /// <summary>
+    /// Gets the ID of the channel used for the guild widget, or null if not set.
+    /// </summary>
     DiscordId? WidgetChannelId { get; }
 
+    /// <summary>
+    /// Gets the verification level required for this guild.
+    /// </summary>
     VerificationLevel? VerificationLevel { get; }
 
+    /// <summary>
+    /// Gets the default message notification level for this guild.
+    /// </summary>
     DefaultMessageNotificationLevel? DefaultMessageNotifications { get; }
 
+    /// <summary>
+    /// Gets the explicit content filter level for this guild.
+    /// </summary>
     ExplicitContentFilterLevel? ExplicitContentFilter { get; }
 
+    /// <summary>
+    /// Gets the roles in this guild, or null if not available.
+    /// </summary>
     IRole[]? Roles { get; }
 
+    /// <summary>
+    /// Gets the emojis in this guild, or null if not available.
+    /// </summary>
     Emoji[]? Emojis { get; }
 
+    /// <summary>
+    /// Gets the enabled features of this guild, or null if not available.
+    /// </summary>
     string[]? Features { get; }
 
+    /// <summary>
+    /// Gets the required MFA level for this guild.
+    /// </summary>
     MfaLevel? MfaLevel { get; }
 
+    /// <summary>
+    /// Gets the application ID of the guild creator if it is bot-created, or null otherwise.
+    /// </summary>
     DiscordId? ApplicationId { get; }
 
+    /// <summary>
+    /// Gets the ID of the system channel where system messages are sent, or null if not configured.
+    /// </summary>
     DiscordId? SystemChannelId { get; }
 
+    /// <summary>
+    /// Gets the system channel flags that control which system messages are sent to the system channel.
+    /// </summary>
     SystemChannelFlags? SystemChannelFlags { get; }
 
+    /// <summary>
+    /// Gets the ID of the rules channel, or null if not configured.
+    /// </summary>
     DiscordId? RulesChannelId { get; }
 
+    /// <summary>
+    /// Gets the maximum number of presences for this guild, or null if not set.
+    /// </summary>
     int? MaxPresences { get; }
 
+    /// <summary>
+    /// Gets the maximum number of members for this guild, or null if not set.
+    /// </summary>
     int? MaxMembers { get; }
 
+    /// <summary>
+    /// Gets the vanity URL code for this guild, or null if not set.
+    /// </summary>
     string? VanityUrlCode { get; }
 
+    /// <summary>
+    /// Gets the description of this guild, or null if not set.
+    /// </summary>
     string? Description { get; }
 
+    /// <summary>
+    /// Gets the banner hash of this guild, or null if no banner is set.
+    /// </summary>
     string? Banner { get; }
 
+    /// <summary>
+    /// Gets the premium tier (boost level) of this guild.
+    /// </summary>
     PremiumTier? PremiumTier { get; }
 
+    /// <summary>
+    /// Gets the number of boosters this guild currently has.
+    /// </summary>
     int? PremiumSubscriptionCount { get; }
 
+    /// <summary>
+    /// Gets the preferred locale of this guild.
+    /// </summary>
     string? PreferredLocale { get; }
 
+    /// <summary>
+    /// Gets the ID of the channel where guild notices are posted, or null if not configured.
+    /// </summary>
     DiscordId? PublicUpdatesChannelId { get; }
 
+    /// <summary>
+    /// Gets the maximum number of users in a video channel, or null if not set.
+    /// </summary>
     int? MaxVideoChannelUsers { get; }
 
+    /// <summary>
+    /// Gets the approximate number of members in this guild, or null if not available.
+    /// </summary>
     int? ApproximateMemberCount { get; }
 
+    /// <summary>
+    /// Gets the approximate number of online members in this guild, or null if not available.
+    /// </summary>
     int? ApproximatePresenceCount { get; }
 
+    /// <summary>
+    /// Gets a value indicating whether this guild is unavailable (e.g., due to an outage).
+    /// </summary>
     bool? Unavailable { get; }
 
     // Guild Actions
@@ -230,81 +344,53 @@ public interface IGuild
     IAuditLogPaginationAction GetAuditLogs();
 
     /// <summary>
-    /// Gets a REST action to retrieve a channel by its ID in this guild.
+    /// Gets a channel by its ID in this guild.
     /// </summary>
     /// <param name="channelId">The ID of the channel to retrieve.</param>
-    /// <returns>A REST action that can be executed to retrieve the channel.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<IGuildChannelUnion?> GetChannel(DiscordId channelId);
+    /// <returns>The channel if found, or null if the channel does not exist in this guild.</returns>
+    IGuildChannelUnion? GetChannel(DiscordId channelId);
 
     /// <summary>
-    /// Gets a REST action to retrieve the AFK channel of this guild.
+    /// Gets the AFK channel of this guild.
     /// </summary>
-    /// <returns>A REST action that can be executed to retrieve the AFK channel.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// Returns null if no AFK channel is configured.
-    /// </remarks>
-    IRestAction<IGuildVoiceChannel?> GetAfkChannel();
+    /// <returns>The AFK channel if configured, or null if no AFK channel is set.</returns>
+    IGuildVoiceChannel? GetAfkChannel();
 
     /// <summary>
-    /// Gets a REST action to retrieve the system channel of this guild.
+    /// Gets the system channel of this guild.
     /// </summary>
-    /// <returns>A REST action that can be executed to retrieve the system channel.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// Returns null if no system channel is configured.
-    /// </remarks>
-    IRestAction<IGuildTextChannel?> GetSystemChannel();
+    /// <returns>The system channel if configured, or null if no system channel is set.</returns>
+    IGuildTextChannel? GetSystemChannel();
 
     /// <summary>
-    /// Gets a REST action to retrieve the rules channel of this guild.
+    /// Gets the rules channel of this guild.
     /// </summary>
-    /// <returns>A REST action that can be executed to retrieve the rules channel.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// Returns null if no rules channel is configured.
-    /// </remarks>
-    IRestAction<IGuildTextChannel?> GetRulesChannel();
+    /// <returns>The rules channel if configured, or null if no rules channel is set.</returns>
+    IGuildTextChannel? GetRulesChannel();
 
     /// <summary>
-    /// Gets a REST action to retrieve the public updates channel of this guild.
+    /// Gets the public updates channel of this guild.
     /// </summary>
-    /// <returns>A REST action that can be executed to retrieve the public updates channel.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// Returns null if no public updates channel is configured.
-    /// </remarks>
-    IRestAction<IGuildTextChannel?> GetPublicUpdatesChannel();
+    /// <returns>The public updates channel if configured, or null if no public updates channel is set.</returns>
+    IGuildTextChannel? GetPublicUpdatesChannel();
 
     /// <summary>
-    /// Gets a REST action to retrieve all channels in this guild.
+    /// Gets all channels in this guild.
     /// </summary>
-    /// <returns>A REST action that can be executed to retrieve channels.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<IReadOnlyList<IGuildChannelUnion>> GetChannels();
+    /// <returns>A read-only list of all channels in this guild.</returns>
+    IReadOnlyList<IGuildChannelUnion> GetChannels();
 
     /// <summary>
-    /// Gets a REST action to retrieve all text channels in this guild.
+    /// Gets all text channels in this guild.
     /// </summary>
-    /// <returns>A REST action that can be executed to retrieve text channels.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<IReadOnlyList<IGuildTextChannel>> GetTextChannels();
+    /// <returns>A read-only list of all text channels in this guild.</returns>
+    IReadOnlyList<IGuildTextChannel> GetTextChannels();
 
     /// <summary>
-    /// Gets a REST action to retrieve all voice channels in this guild.
+    /// Gets all voice channels in this guild.
     /// </summary>
-    /// <returns>A REST action that can be executed to retrieve voice channels.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<IReadOnlyList<IGuildVoiceChannel>> GetVoiceChannels();
+    /// <returns>A read-only list of all voice channels in this guild.</returns>
+    IReadOnlyList<IGuildVoiceChannel> GetVoiceChannels();
 
     /// <summary>
     /// Gets a REST action to retrieve all roles in this guild.
@@ -349,7 +435,6 @@ public interface IGuild
     /// </summary>
     /// <param name="days">The number of days to prune inactive members (1-30).</param>
     /// <param name="includeRoles">The role IDs to include in the prune.</param>
-    /// <param name="computePruneCount">Whether to return the prune count instead of actually pruning.</param>
     /// <returns>A REST action that can be configured and executed to begin the prune.</returns>
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.

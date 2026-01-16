@@ -53,8 +53,14 @@ public readonly struct DiscordId(ulong value) : IEquatable<DiscordId>, IComparab
         return new DiscordId(ulong.Parse(value, CultureInfo.InvariantCulture));
     }
 
-    public static bool TryParse(string value, out DiscordId snowflake)
+    public static bool TryParse(string? value, out DiscordId snowflake)
     {
+        if (string.IsNullOrEmpty(value))
+        {
+            snowflake = default;
+            return false;
+        }
+
         if (ulong.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var v))
         {
             snowflake = new DiscordId(v);
