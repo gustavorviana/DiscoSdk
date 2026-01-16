@@ -4,13 +4,13 @@ using DiscoSdk.Hosting.Events;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Payloads.Models;
 using DiscoSdk.Hosting.Logging;
-using DiscoSdk.Hosting.Rest;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 using System.Text.Json;
 
@@ -25,7 +25,7 @@ namespace DiscoSdk.Hosting
         private readonly ManualResetEventSlim _shutdownEvent = new(false);
         private readonly ManualResetEventSlim _readyEvent = new(false);
         private readonly DiscordEventDispatcher _eventDispatcher;
-        internal readonly IDiscordRestClientBase _client;
+        public IDiscordRestClientBase HttpClient { get; }
         private readonly DiscordClientConfig _config;
         internal GuildManager GuildManager { get; }
 
@@ -140,13 +140,13 @@ namespace DiscoSdk.Hosting
             SerializerOptions = jsonOptions;
             Logger = config.Logger ?? NullLogger.Instance;
             _eventDispatcher = new DiscordEventDispatcher(this);
-            _client = new DiscordRestClientBase(config.Token, new Uri("https://discord.com/api/v10"), jsonOptions);
+            HttpClient = new DiscordRestClientBase(config.Token, new Uri("https://discord.com/api/v10"), jsonOptions);
             InteractionClient = new InteractionClient(this);
-            MessageClient = new MessageClient(_client);
-            ChannelClient = new ChannelClient(_client, MessageClient);
-            InviteClient = new InviteClient(_client);
-            RoleClient = new RoleClient(_client);
-            GuildClient = new GuildClient(_client);
+            MessageClient = new MessageClient(HttpClient);
+            ChannelClient = new ChannelClient(HttpClient, MessageClient);
+            InviteClient = new InviteClient(HttpClient);
+            RoleClient = new RoleClient(HttpClient);
+            GuildClient = new GuildClient(HttpClient);
             GuildManager = new GuildManager(this, Logger);
 
             var maxConcurrency = config.EventProcessorMaxConcurrency > 0
@@ -168,7 +168,7 @@ namespace DiscoSdk.Hosting
         /// <returns>A task that represents the asynchronous start operation.</returns>
         public async Task StartAsync()
         {
-            var gatewayInfo = await new DiscordRestClient(_client).GetGatewayBotInfoAsync();
+            var gatewayInfo = await new DiscordRestClient(HttpClient).GetGatewayBotInfoAsync();
 
             _gate = new(gatewayInfo.SessionInfo.MaxConcurrency, TimeSpan.FromMicroseconds(gatewayInfo.SessionInfo.ResetAfter));
             _totalShards = Math.Max(_config.TotalShards ?? gatewayInfo.Shards, 1);
@@ -391,7 +391,6 @@ namespace DiscoSdk.Hosting
             });
         }
 
-        /// <inheritdoc />
         public IRestAction<IChannel?> GetChannel(Snowflake channelId)
         {
             if (channelId == default)
@@ -409,6 +408,24 @@ namespace DiscoSdk.Hosting
                     guild = await GuildManager.GetAsync(channel.GuildId.Value, cancellationToken);
 
                 return Wrappers.Channels.ChannelWrapper.ToSpecificType(channel, guild, this);
+            });
+        }
+
+        public IRestAction<TimeSpan> Ping()
+        {
+            return RestAction<TimeSpan>.Create(async cancellationToken =>
+            {
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                try
+                {
+                    // Use a simple endpoint to measure latency
+                    await HttpClient.SendAsync("gateway", HttpMethod.Get, cancellationToken);
+                }
+                finally
+                {
+                    stopwatch.Stop();
+                }
+                return TimeSpan.FromMilliseconds(stopwatch.ElapsedMilliseconds);
             });
         }
     }

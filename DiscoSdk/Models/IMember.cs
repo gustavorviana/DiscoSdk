@@ -40,11 +40,6 @@ public interface IMember : IPermissionHolder
 	DateTimeOffset? TimeJoined { get; }
 
 	/// <summary>
-	/// Gets a value indicating whether this member has a join time.
-	/// </summary>
-	bool HasTimeJoined => TimeJoined != null;
-
-	/// <summary>
 	/// Gets the date and time when this member started boosting the guild.
 	/// </summary>
 	DateTimeOffset? TimeBoosted { get; }

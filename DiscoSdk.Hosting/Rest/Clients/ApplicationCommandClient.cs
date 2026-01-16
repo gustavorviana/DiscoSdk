@@ -1,4 +1,5 @@
 using DiscoSdk.Models.Commands;
+using DiscoSdk.Rest;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
 

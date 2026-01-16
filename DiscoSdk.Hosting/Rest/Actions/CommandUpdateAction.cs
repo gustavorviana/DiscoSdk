@@ -12,7 +12,7 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// </summary>
 internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandUpdateAction
 {
-    private readonly ApplicationCommandClient _applicationCommandClient = new(client._client);
+    private readonly ApplicationCommandClient _applicationCommandClient = new(client.HttpClient);
 
     private readonly List<ApplicationCommand> _globalCommands = [];
     private readonly Dictionary<string, List<ApplicationCommand>> _guildCommands = [];

@@ -1,4 +1,4 @@
-﻿namespace DiscoSdk.Hosting.Rest;
+﻿namespace DiscoSdk.Rest;
 
 /// <summary>
 /// Interface for making HTTP requests to the Discord REST API.

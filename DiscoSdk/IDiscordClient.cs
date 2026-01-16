@@ -3,12 +3,14 @@ using DiscoSdk.Events;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk;
 
 public interface IDiscordClient
 {
+    IDiscordRestClientBase HttpClient { get; }
     string? ApplicationId { get; }
     IDiscordEventRegistry EventRegistry { get; }
     bool IsFullyInitialized { get; }
@@ -41,4 +43,14 @@ public interface IDiscordClient
     /// <param name="channelId">The ID of the channel to retrieve.</param>
     /// <returns>The channel as its most specific type, or null if not found.</returns>
     IRestAction<TChannel?> GetChannel<TChannel>(Snowflake channelId) where TChannel : IChannel;
+
+    /// <summary>
+    /// Gets a REST action to measure the latency (ping) to the Discord API.
+    /// </summary>
+    /// <returns>A REST action that can be executed to measure the API latency in milliseconds.</returns>
+    /// <remarks>
+    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+    /// This measures the round-trip time to the Discord API by making a simple request.
+    /// </remarks>
+    IRestAction<TimeSpan> Ping();
 }

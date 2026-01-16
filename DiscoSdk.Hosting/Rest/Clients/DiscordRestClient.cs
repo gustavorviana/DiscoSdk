@@ -1,4 +1,5 @@
 ﻿using DiscoSdk.Hosting.Rest.Messages;
+using DiscoSdk.Rest;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
 

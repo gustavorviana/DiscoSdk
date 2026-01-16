@@ -4,6 +4,7 @@ using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Requests;
+using DiscoSdk.Rest;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
 
@@ -15,7 +16,7 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 /// </remarks>
 internal class InteractionClient(DiscordClient discordClient)
 {
-    private IDiscordRestClientBase Client => discordClient._client;
+    private IDiscordRestClientBase Client => discordClient.HttpClient;
 
     public async Task DeferAsync(InteractionHandle interaction, bool ephemeral = false, CancellationToken cancellationToken = default)
     {

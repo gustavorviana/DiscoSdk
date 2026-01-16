@@ -1,6 +1,7 @@
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Messages;
+using DiscoSdk.Rest;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
 
@@ -438,6 +439,22 @@ internal class ChannelClient(IDiscordRestClientBase client, MessageClient messag
 		ArgumentNullException.ThrowIfNull(request);
 
 		var path = $"channels/{channelId}/messages/{messageId}/threads";
+		return client.SendAsync<Channel>(path, HttpMethod.Post, request, cancellationToken);
+	}
+
+	/// <summary>
+	/// Creates or gets a direct message channel with the specified user.
+	/// </summary>
+	/// <param name="userId">The ID of the user to create a DM with.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>The DM channel.</returns>
+	public Task<Channel> CreateDMAsync(Snowflake userId, CancellationToken cancellationToken = default)
+	{
+		if (userId == default)
+			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
+
+		var path = "users/@me/channels";
+		var request = new { recipient_id = userId.ToString() };
 		return client.SendAsync<Channel>(path, HttpMethod.Post, request, cancellationToken);
 	}
 
