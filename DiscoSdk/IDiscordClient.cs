@@ -74,4 +74,14 @@ public interface IDiscordClient
     /// Returns null if the user is not found.
     /// </remarks>
     IRestAction<IUser?> GetUser(Snowflake userId);
+
+    /// <summary>
+    /// Gets a REST action to update the bot's presence (status and activities).
+    /// </summary>
+    /// <returns>A REST action that can be configured and executed to update the presence.</returns>
+    /// <remarks>
+    /// The action is not executed immediately. Call <see cref="IRestAction.ExecuteAsync"/> to execute it.
+    /// This updates the presence through the Gateway connection.
+    /// </remarks>
+    IUpdatePresenceAction UpdatePresence();
 }

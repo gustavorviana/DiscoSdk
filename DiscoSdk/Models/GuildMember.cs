@@ -81,5 +81,17 @@ public class GuildMember
     /// </summary>
     [JsonPropertyName("communication_disabled_until")]
     public string? CommunicationDisabledUntil { get; set; }
+
+    /// <summary>
+    /// Gets or sets the member's banner hash.
+    /// </summary>
+    [JsonPropertyName("banner")]
+    public string? Banner { get; set; }
+
+    /// <summary>
+    /// Gets or sets the member's avatar decoration data.
+    /// </summary>
+    [JsonPropertyName("avatar_decoration_data")]
+    public AvatarDecorationData? AvatarDecorationData { get; set; }
 }
 

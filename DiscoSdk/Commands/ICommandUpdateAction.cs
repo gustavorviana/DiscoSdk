@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Models.Builders;
+﻿using DiscoSdk.Models;
+using DiscoSdk.Models.Builders;
 using DiscoSdk.Models.Commands;
 using DiscoSdk.Rest.Actions;
 
@@ -29,7 +30,7 @@ public interface ICommandUpdateAction : IRestAction
     /// <param name="guildId">The guild ID where the command should be registered.</param>
     /// <param name="configure">A function that configures the command builder.</param>
     /// <returns>The current <see cref="ICommandUpdateAction"/> instance for method chaining.</returns>
-    ICommandUpdateAction AddGuild(string guildId, Func<IApplicationCommandBuilder, IApplicationCommandBuilder> configure);
+    ICommandUpdateAction AddGuild(Snowflake guildId, Func<IApplicationCommandBuilder, IApplicationCommandBuilder> configure);
 
     /// <summary>
     /// Adds multiple guild-specific application commands to the queue.
@@ -37,7 +38,7 @@ public interface ICommandUpdateAction : IRestAction
     /// <param name="guildId">The guild ID where the commands should be registered.</param>
     /// <param name="commands">The commands to add.</param>
     /// <returns>The current <see cref="ICommandUpdateAction"/> instance for method chaining.</returns>
-    ICommandUpdateAction AddGuild(string guildId, params ApplicationCommand[] commands);
+    ICommandUpdateAction AddGuild(Snowflake guildId, params ApplicationCommand[] commands);
 
     /// <summary>
     /// Marks that previously registered commands should be deleted before registering new ones.

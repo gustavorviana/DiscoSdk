@@ -1,6 +1,7 @@
 using DiscoSdk.Events;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages.Components;
+using System.Net.NetworkInformation;
 
 namespace TomoriBot;
 
@@ -83,13 +84,55 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
                 .SetEphemeral()
                 .AddActionRow(buttons)
                 .ExecuteAsync();
+
+            return;
         }
-        else
+
+        if (commandName == "status")
         {
-            // Unknown command - still respond to avoid error
-            await eventData.Reply(
-                $"Command '{commandName}' not found."
-            ).ExecuteAsync();
+            var strStatus = eventData.Interaction.Data?.Options?.FirstOrDefault(o => o.Name == "status")?.Value?.ToString();
+            if (string.IsNullOrEmpty(strStatus) || !Enum.TryParse<OnlineStatus>(strStatus, out var status))
+            {
+                await eventData
+                    .Reply("Invalid option")
+                    .SetEphemeral()
+                    .ExecuteAsync();
+                return;
+            }
+
+            await eventData
+                .Client
+                .UpdatePresence()
+                .SetStatus(status)
+                .ExecuteAsync();
+
+            await eventData.Reply("Ok").SetEphemeral().ExecuteAsync();
+
+            return;
         }
+
+        if (commandName == "shutdown")
+        {
+            await eventData
+                .Reply("Shutdowning...")
+                .SetEphemeral()
+                .ExecuteAsync();
+
+            await eventData
+                .Client
+                .UpdatePresence()
+                .SetStatus(OnlineStatus.Invisible)
+                .ExecuteAsync();
+
+            await Task.Delay(2000);
+
+            eventData.Client.StopAsync();
+            return;
+        }
+
+        // Unknown command - still respond to avoid error
+        await eventData.Reply(
+            $"Command '{commandName}' not found."
+        ).ExecuteAsync();
     }
 }

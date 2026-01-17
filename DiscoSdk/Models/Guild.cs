@@ -1,6 +1,7 @@
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.JsonConverters;
+using DiscoSdk.Models.Presences;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;
@@ -245,4 +246,179 @@ public class Guild
     /// </summary>
     [JsonPropertyName("channels")]
     public Channel[] Channels { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the soundboard sounds in the guild.
+    /// </summary>
+    [JsonPropertyName("soundboard_sounds")]
+    public SoundboardSound[] SoundboardSounds { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the hub type of the guild.
+    /// </summary>
+    [JsonPropertyName("hub_type")]
+    public GuildHubType? HubType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the embedded activities in the guild.
+    /// </summary>
+    [JsonPropertyName("embedded_activities")]
+    public EmbeddedActivity[] EmbeddedActivities { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the members of the guild.
+    /// </summary>
+    [JsonPropertyName("members")]
+    public GuildMember[] Members { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the profile information.
+    /// </summary>
+    [JsonPropertyName("profile")]
+    public GuildProfile? Profile { get; set; }
+
+    /// <summary>
+    /// Gets or sets the premium features of the guild.
+    /// </summary>
+    [JsonPropertyName("premium_features")]
+    public string[] PremiumFeatures { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the guild is large.
+    /// </summary>
+    [JsonPropertyName("large")]
+    public bool Large { get; set; }
+
+    /// <summary>
+    /// Gets or sets the inventory settings.
+    /// </summary>
+    [JsonPropertyName("inventory_settings")]
+    public InventorySettings? InventorySettings { get; set; }
+
+    /// <summary>
+    /// Gets or sets the stickers in the guild.
+    /// </summary>
+    [JsonPropertyName("stickers")]
+    public Messages.Sticker[] Stickers { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the owner configured content level.
+    /// </summary>
+    [JsonPropertyName("owner_configured_content_level")]
+    public int OwnerConfiguredContentLevel { get; set; }
+
+    /// <summary>
+    /// Gets or sets the member count of the guild.
+    /// </summary>
+    [JsonPropertyName("member_count")]
+    public int MemberCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the NSFW level of the guild.
+    /// </summary>
+    [JsonPropertyName("nsfw_level")]
+    public int NsfwLevel { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the guild is NSFW.
+    /// </summary>
+    [JsonPropertyName("nsfw")]
+    public bool Nsfw { get; set; }
+
+    /// <summary>
+    /// Gets or sets the threads in the guild.
+    /// </summary>
+    [JsonPropertyName("threads")]
+    public Channel[] Threads { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the home header of the guild.
+    /// </summary>
+    [JsonPropertyName("home_header")]
+    public string? HomeHeader { get; set; }
+
+    /// <summary>
+    /// Gets or sets the activity instances in the guild.
+    /// </summary>
+    [JsonPropertyName("activity_instances")]
+    public ActivityInstance[] ActivityInstances { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the ID of the safety alerts channel.
+    /// </summary>
+    [JsonPropertyName("safety_alerts_channel_id")]
+    public Snowflake? SafetyAlertsChannelId { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the premium progress bar is enabled.
+    /// </summary>
+    [JsonPropertyName("premium_progress_bar_enabled")]
+    public bool PremiumProgressBarEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the voice states in the guild.
+    /// </summary>
+    [JsonPropertyName("voice_states")]
+    public VoiceState[]? VoiceStates { get; set; }
+
+    /// <summary>
+    /// Gets or sets when the bot joined the guild.
+    /// </summary>
+    [JsonPropertyName("joined_at")]
+    public string? JoinedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the guild scheduled events.
+    /// </summary>
+    [JsonPropertyName("guild_scheduled_events")]
+    public GuildScheduledEvent[]? GuildScheduledEvents { get; set; }
+
+    /// <summary>
+    /// Gets or sets the presences in the guild.
+    /// </summary>
+    [JsonPropertyName("presences")]
+    public Presence[] Presences { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the application command counts.
+    /// </summary>
+    [JsonPropertyName("application_command_counts")]
+[JsonConverter(typeof(ApplicationCommandCountMapConverter))]
+    public Dictionary<ApplicationCommandType, int> ApplicationCommandCounts { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the incidents data.
+    /// </summary>
+    [JsonPropertyName("incidents_data")]
+    public IncidentsData? IncidentsData { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the guild is lazy loaded.
+    /// </summary>
+    [JsonPropertyName("lazy")]
+    public bool Lazy { get; set; }
+
+    /// <summary>
+    /// Gets or sets the version of the guild.
+    /// </summary>
+    [JsonPropertyName("version")]
+    public long Version { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum number of users in a stage video channel.
+    /// </summary>
+    [JsonPropertyName("max_stage_video_channel_users")]
+    public int MaxStageVideoChannelUsers { get; set; }
+
+    /// <summary>
+    /// Gets or sets the latest onboarding question ID.
+    /// </summary>
+    [JsonPropertyName("latest_onboarding_question_id")]
+    public Snowflake? LatestOnboardingQuestionId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the stage instances in the guild.
+    /// </summary>
+    [JsonPropertyName("stage_instances")]
+    public StageInstance[]? StageInstances { get; set; }
 }

@@ -81,4 +81,23 @@ public class Role
     /// </summary>
     [JsonPropertyName("flags")]
     public RoleFlags? Flags { get; set; }
+
+    /// <summary>
+    /// Gets or sets the role's permissions as a string (new format).
+    /// </summary>
+    [JsonPropertyName("permissions_new")]
+    [JsonConverter(typeof(SafeStringConverter))]
+    public string? PermissionsNew { get; set; }
+
+    /// <summary>
+    /// Gets or sets the version of the role.
+    /// </summary>
+    [JsonPropertyName("version")]
+    public long Version { get; set; }
+
+    /// <summary>
+    /// Gets or sets the colors of the role.
+    /// </summary>
+    [JsonPropertyName("colors")]
+    public RoleColorData? Colors { get; set; }
 }

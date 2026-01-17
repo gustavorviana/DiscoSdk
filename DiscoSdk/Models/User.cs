@@ -103,4 +103,34 @@ public class User
     /// </summary>
     [JsonPropertyName("public_flags")]
     public UserFlags? PublicFlags { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user's display name.
+    /// </summary>
+    [JsonPropertyName("display_name")]
+    public string? DisplayName { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user's display name styles.
+    /// </summary>
+    [JsonPropertyName("display_name_styles")]
+    public DisplayNameStyles? DisplayNameStyles { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user's primary guild.
+    /// </summary>
+    [JsonPropertyName("primary_guild")]
+    public PrimaryGuild? PrimaryGuild { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user's collectibles.
+    /// </summary>
+    [JsonPropertyName("collectibles")]
+    public UserCollectibles? Collectibles { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user's avatar decoration data.
+    /// </summary>
+    [JsonPropertyName("avatar_decoration_data")]
+    public AvatarDecorationData? AvatarDecorationData { get; set; }
 }

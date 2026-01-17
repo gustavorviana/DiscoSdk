@@ -7,10 +7,11 @@ namespace DiscoSdk.Hosting.Events;
 /// <summary>
 /// Represents the event data for when an interaction is created (e.g., slash command).
 /// </summary>
-internal class InteractionCreateEvent(IInteraction interaction) : IInteractionCreateEvent
+internal class InteractionCreateEvent(IInteraction interaction, IDiscordClient client) : IInteractionCreateEvent
 {
     public IInteraction Interaction => interaction;
 
+    public IDiscordClient Client => client;
 
     public IRestAction Defer(bool ephemeral = true)
     {

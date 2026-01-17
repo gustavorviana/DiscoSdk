@@ -35,7 +35,7 @@ internal class InteractionWrapper(Interaction interaction,
     public IGuild? Guild => channel is IGuildChannel gChannel ? gChannel.Guild : null;
     public ITextBasedChannel? Channel => channel;
     public IMember? Member => member;
-    public IUser User { get; } = interaction.User is not null ? new UserWrapper(interaction.User, client) : throw new InvalidOperationException("Interaction user is null.");
+    public IUser? User { get; } = interaction.User is not null ? new UserWrapper(interaction.User, client) : null;
     public string Token => _interaction.Token;
     public int Version => _interaction.Version;
     public IMessage? Message { get; } = interaction.Message is not null ? new MessageWrapper(channel!, interaction.Message, client, null) : null;

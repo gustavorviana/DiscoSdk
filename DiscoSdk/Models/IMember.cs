@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Models.Channels;
+﻿using DiscoSdk.Models.Activities;
+using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using System.Collections.Immutable;
 
@@ -64,10 +65,10 @@ public interface IMember : IPermissionHolder
 	/// </summary>
 	IGuildVoiceState? VoiceState { get; }
 
-	/// <summary>
-	/// Gets the activities of this member.
-	/// </summary>
-	ImmutableList<Activity> Activities { get; }
+    /// <summary>
+    /// Gets the activities of this member.
+    /// </summary>
+    Activity[] Activities { get; }
 
 	/// <summary>
 	/// Gets the online status of this member.

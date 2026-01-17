@@ -1,143 +1,118 @@
 ﻿namespace DiscoSdk.Hosting.Gateway;
 
 /// <summary>
-/// Rate limiter for Discord Gateway identify operations using a fixed-window throttling mechanism.
+/// Fixed-window rate limiter for Discord Gateway IDENTIFY.
+/// Allows at most <paramref name="maxCalls"/> calls per <paramref name="window"/>.
+/// Extra callers wait until the next window.
 /// </summary>
 public sealed class IdentifyGate : IDisposable
 {
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly SemaphoreSlim _signal = new(0, int.MaxValue);
-    private readonly SemaphoreSlim _mutex = new(1, 1);
-    private Timer? _timer;
-
-    private int _availableInWindow;
+    private readonly object _lock = new();
+    private readonly Timer _timer;
     private TimeSpan _window;
-    private bool _disposed;
+    private int _available;
     private int _maxCalls;
     private int _waiters;
 
-    /// <summary>
-    /// Gets the cancellation token that is cancelled when this instance is disposed.
-    /// </summary>
     public CancellationToken Token => _cancellationTokenSource.Token;
 
-    /// <summary>
-    /// Gets a value indicating whether cancellation has been requested.
-    /// </summary>
-    public bool IsCancellationRequested => _cancellationTokenSource.IsCancellationRequested;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="IdentifyGate"/> class.
-    /// </summary>
-    /// <param name="maxCalls">The maximum number of identify calls allowed in the time window.</param>
-    /// <param name="window">The time window for rate limiting. Defaults to 5 seconds if not specified.</param>
-    public IdentifyGate(int maxCalls, TimeSpan? window = null)
+    public IdentifyGate(int maxCalls, TimeSpan window)
     {
-        UpdateCheckValues(maxCalls, window);
+        Configure(maxCalls, window);
 
-        _availableInWindow = _maxCalls;
+        _available = _maxCalls;
 
-        _timer = new Timer(static s => ((IdentifyGate)s!).OnWindowTick(), this, _window, _window);
+        _timer = new Timer(
+            _ => OnWindowTick(),
+            null,
+            _window,
+            _window);
     }
 
     /// <summary>
-    /// Updates the rate limiting parameters.
+    /// Reconfigures the gate (safe to call at runtime).
     /// </summary>
-    /// <param name="maxCalls">The maximum number of identify calls allowed in the time window.</param>
-    /// <param name="window">The time window for rate limiting. Defaults to 5 seconds if not specified.</param>
-    public void UpdateCheckValues(int maxCalls, TimeSpan? window = null)
+    public void Configure(int maxCalls, TimeSpan window)
     {
-        _maxCalls = Math.Max(1, maxCalls);
-        _window = window ?? TimeSpan.FromSeconds(5);
-        if (_window <= TimeSpan.Zero) _window = TimeSpan.FromMilliseconds(1);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxCalls);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(window, TimeSpan.Zero);
+
+        lock (_lock)
+        {
+            _maxCalls = maxCalls;
+            _window = window;
+
+            _timer?.Change(_window, _window);
+        }
     }
 
     /// <summary>
-    /// Fixed-window throttle: in each window (Y), allow at most X acquisitions.
-    /// Extra callers block until a window boundary refills permits.
+    /// Waits until an IDENTIFY slot is available.
     /// </summary>
-    public async Task WaitTurnAsync()
+    public async Task WaitAsync(CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, _cancellationTokenSource.Token);
 
         while (!_cancellationTokenSource.IsCancellationRequested)
         {
-            await _mutex.WaitAsync(Token);
-            try
+            lock (_lock)
             {
-                ObjectDisposedException.ThrowIf(_disposed, this);
-
-                if (_availableInWindow > 0)
+                if (_available > 0)
                 {
-                    _availableInWindow--;
+                    _available--;
                     return;
                 }
 
                 _waiters++;
             }
-            finally
-            {
-                _mutex.Release();
-            }
 
-            await _signal.WaitAsync(Token);
+            await _signal.WaitAsync(linked.Token).ConfigureAwait(false);
         }
     }
 
     private void OnWindowTick()
     {
-        _mutex.Wait();
-        try
+        int toRelease;
+
+        lock (_lock)
         {
-            if (_disposed) return;
+            if (_cancellationTokenSource.IsCancellationRequested)
+                return;
 
-            _availableInWindow = _maxCalls;
+            _available = _maxCalls;
 
-            int toWake = _waiters;
-            if (toWake <= 0) return;
-
-            if (toWake > _maxCalls) toWake = _maxCalls;
-
-            _waiters -= toWake;
-            // wake outside mutex? Release is cheap; keep it simple and consistent.
-            _signal.Release(toWake);
+            toRelease = Math.Min(_waiters, _maxCalls);
+            _waiters -= toRelease;
         }
-        finally
-        {
-            _mutex.Release();
-        }
+
+        if (toRelease > 0)
+            _signal.Release(toRelease);
     }
 
-    private void Dispose(bool disposing)
+    public void Reset()
     {
-        if (_disposed)
-            return;
-
-        _mutex.Wait();
-        _cancellationTokenSource.Cancel();
-        _mutex.Release();
-
-        _signal.Dispose();
-        _mutex.Dispose();
-
-        if (disposing)
+        lock (_lock)
         {
-            _cancellationTokenSource.Dispose();
-            _timer?.Dispose();
-            _timer = null;
+            if (_cancellationTokenSource.IsCancellationRequested)
+                return;
+
+            var toRelease = Math.Min(_waiters, _maxCalls);
+            if (toRelease > 0)
+                _signal.Release(toRelease);
+
+            _available = _maxCalls;
+            _waiters = 0;
         }
-
-        _disposed = true;
-    }
-
-    ~IdentifyGate()
-    {
-        Dispose(disposing: false);
     }
 
     public void Dispose()
     {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        _cancellationTokenSource.Cancel();
+        _timer.Dispose();
+        _signal.Dispose();
+        _cancellationTokenSource.Dispose();
     }
 }

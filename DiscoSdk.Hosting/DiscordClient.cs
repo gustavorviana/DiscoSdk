@@ -193,7 +193,7 @@ namespace DiscoSdk.Hosting
 
             for (int i = 0; i < _totalShards; i++)
             {
-                var shard = new Shard(i, _config.Token, _config.Intents, _gate, gatewayUri);
+                var shard = new Shard(i, _config, _gate, gatewayUri);
                 _shards.Add(shard);
                 shard.OnResume += Shard_OnResume;
                 shard.OnReady += Shard_OnReady;
@@ -424,6 +424,12 @@ namespace DiscoSdk.Hosting
         public IRestAction<IUser?> GetUser(Snowflake userId)
         {
             return UserRepository.Get(userId);
+        }
+
+        /// <inheritdoc />
+        public IUpdatePresenceAction UpdatePresence()
+        {
+            return new UpdatePresenceAction(this);
         }
     }
 }

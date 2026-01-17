@@ -50,9 +50,7 @@ internal class ShardSocket
             r = await _ws.ReceiveAsync(buffer, token);
 
             if (r.MessageType == WebSocketMessageType.Close)
-            {
-                throw new WebSocketException("Gateway closed socket.");
-            }
+                throw new DiscordSocketException(_ws.CloseStatus ?? WebSocketCloseStatus.Empty, _ws.CloseStatusDescription ?? "Gateway closed socket.");
 
             sb.Append(Encoding.UTF8.GetString(buffer, 0, r.Count));
         }

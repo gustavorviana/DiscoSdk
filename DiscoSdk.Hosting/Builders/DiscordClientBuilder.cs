@@ -18,6 +18,7 @@ public class DiscordClientBuilder
 	private int _eventProcessorQueueCapacity = 100;
 	private ILogger? _logger;
 	private JsonSerializerOptions? _jsonOptions;
+	private TimeSpan? _reconnectDelay;
 
 	/// <summary>
 	/// Initializes a new instance of <see cref="DiscordClientBuilder"/> with the required bot token.
@@ -121,6 +122,22 @@ public class DiscordClientBuilder
 		return this;
 	}
 
+	/// <summary>
+	/// Sets the delay before attempting to reconnect after a connection loss.
+	/// Default is 5 seconds.
+	/// </summary>
+	/// <param name="delay">The delay before reconnecting. Must be non-negative.</param>
+	/// <returns>The current <see cref="DiscordClientBuilder"/> instance.</returns>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown when delay is negative.</exception>
+	public DiscordClientBuilder WithReconnectDelay(TimeSpan delay)
+	{
+		if (delay < TimeSpan.Zero)
+			throw new ArgumentOutOfRangeException(nameof(delay), "Reconnect delay cannot be negative.");
+
+		_reconnectDelay = delay;
+		return this;
+	}
+
     /// <summary>
     /// Builds the <see cref="DiscordClient"/> instance, starts the connection to Discord Gateway,
     /// and returns the client ready for use. The client will be connecting in the background.
@@ -141,7 +158,8 @@ public class DiscordClientBuilder
 			TotalShards = _totalShards,
 			EventProcessorMaxConcurrency = _eventProcessorMaxConcurrency,
 			EventProcessorQueueCapacity = _eventProcessorQueueCapacity,
-			Logger = _logger
+			Logger = _logger,
+			ReconnectDelay = _reconnectDelay ?? TimeSpan.FromSeconds(5)
 		};
 
 		var jsonOptions = _jsonOptions ?? DiscoJson.Create();

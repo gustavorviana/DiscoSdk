@@ -2,16 +2,20 @@
 using DiscoSdk.Hosting.Builders;
 using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Logging;
+using DiscoSdk.Models;
+using DiscoSdk.Models.Commands;
 using DiscoSdk.Models.Enums;
 using TomoriBot;
 
 var token = Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN") ?? throw new InvalidOperationException("DISCORD_BOT_TOKEN environment variable is not set.");
 
 var dsc = await DiscordClientBuilder.Create(token)
-	.WithIntents(DiscordIntent.All)
-	.WithEventProcessorMaxConcurrency(100)
-	.WithLogger(new ConsoleLogger(LogLevel.Trace))
-	.BuildAsync();
+    .WithIntents(DiscordIntent.All)
+    .WithEventProcessorMaxConcurrency(100)
+    .WithLogger(new ConsoleLogger(LogLevel.Trace))
+    .BuildAsync();
+
+var betaGuild = Snowflake.Parse("773618860875579422");
 
 await dsc.WaitReadyAsync();
 
@@ -31,6 +35,18 @@ await dsc.UpdateCommands()
         .WithDescription("Open feedback modal")
         .WithType(ApplicationCommandType.ChatInput)
     )
+    .AddGuild(betaGuild, x =>
+    {
+        x.WithName("status")
+        .WithDescription("Update ot status");
+
+        var enums = Enum.GetNames(typeof(OnlineStatus));
+
+        x.AddStringOption("status", $"update bot status", choices: [..enums.Select(x => new ApplicationCommandOptionChoice { Name = x, Value = x })]);
+
+        return x;
+    })
+    .AddGuild(betaGuild, x => x.WithName("shutdown").WithDescription("Shutdown bot"))
     .DeletePrevious()
     .ExecuteAsync();
 
@@ -48,4 +64,4 @@ dsc.EventRegistry.Add(new ComponentInteractionHandler());
 
 Console.WriteLine("Bot is ready!");
 
- await dsc.WaitShutdownAsync();
+await dsc.WaitShutdownAsync();

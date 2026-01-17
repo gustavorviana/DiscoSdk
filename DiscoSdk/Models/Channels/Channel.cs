@@ -208,4 +208,10 @@ public class Channel
 	/// </summary>
 	[JsonPropertyName("available_tags")]
 	public ForumTag[]? AvailableTags { get; set; }
+
+	/// <summary>
+	/// Gets or sets the version of the channel.
+	/// </summary>
+	[JsonPropertyName("version")]
+	public long Version { get; set; }
 }

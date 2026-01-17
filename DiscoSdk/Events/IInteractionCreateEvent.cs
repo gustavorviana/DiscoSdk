@@ -8,6 +8,7 @@ namespace DiscoSdk.Events;
 /// </summary>
 public interface IInteractionCreateEvent
 {
+    IDiscordClient Client { get; }
     /// <summary>
     /// Gets or sets the interaction that was created.
     /// </summary>

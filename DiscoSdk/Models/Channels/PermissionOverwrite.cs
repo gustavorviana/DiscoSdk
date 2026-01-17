@@ -20,6 +20,7 @@ public class PermissionOverwrite
     /// Gets or sets the type of overwrite (0 for role, 1 for member).
     /// </summary>
     [JsonPropertyName("type")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public PermissionOverwriteType Type { get; set; }
 
     /// <summary>

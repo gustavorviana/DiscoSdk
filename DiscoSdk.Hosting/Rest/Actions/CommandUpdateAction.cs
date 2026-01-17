@@ -2,6 +2,7 @@ using DiscoSdk.Commands;
 using DiscoSdk.Hosting.Builders;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Logging;
+using DiscoSdk.Models;
 using DiscoSdk.Models.Builders;
 using DiscoSdk.Models.Commands;
 
@@ -15,7 +16,7 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
     private readonly ApplicationCommandClient _applicationCommandClient = new(client.HttpClient);
 
     private readonly List<ApplicationCommand> _globalCommands = [];
-    private readonly Dictionary<string, List<ApplicationCommand>> _guildCommands = [];
+    private readonly Dictionary<Snowflake, List<ApplicationCommand>> _guildCommands = [];
     private bool _deletePrevious = false;
 
 
@@ -35,9 +36,9 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
         return this;
     }
 
-    public ICommandUpdateAction AddGuild(string guildId, params ApplicationCommand[] commands)
+    public ICommandUpdateAction AddGuild(Snowflake guildId, params ApplicationCommand[] commands)
     {
-        if (string.IsNullOrEmpty(guildId))
+        if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
         ArgumentNullException.ThrowIfNull(commands);
@@ -50,9 +51,9 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
         return this;
     }
 
-    public ICommandUpdateAction AddGuild(string guildId, Func<IApplicationCommandBuilder, IApplicationCommandBuilder> configure)
+    public ICommandUpdateAction AddGuild(Snowflake guildId, Func<IApplicationCommandBuilder, IApplicationCommandBuilder> configure)
     {
-        if (string.IsNullOrEmpty(guildId))
+        if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
         var command = BuildCommand(configure);

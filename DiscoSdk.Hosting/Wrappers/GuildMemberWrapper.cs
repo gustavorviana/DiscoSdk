@@ -1,4 +1,5 @@
 using DiscoSdk.Models;
+using DiscoSdk.Models.Activities;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using System.Collections.Immutable;
@@ -89,7 +90,7 @@ internal class GuildMemberWrapper(GuildMember member, IGuild guild, DiscordClien
     public IGuildVoiceState? VoiceState => null;
 
     /// <inheritdoc />
-    public ImmutableList<Activity> Activities => [];
+    public Activity[] Activities => [];
 
     /// <inheritdoc />
     public OnlineStatus OnlineStatus => OnlineStatus.Offline;

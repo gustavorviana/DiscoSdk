@@ -1,3 +1,4 @@
+using DiscoSdk.Models;
 using DiscoSdk.Models.Commands;
 using DiscoSdk.Rest;
 
@@ -33,7 +34,7 @@ internal sealed class ApplicationCommandClient(IDiscordRestClientBase client)
     /// <param name="commands">The commands to register.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains the registered commands.</returns>
-    public async Task<List<ApplicationCommand>> RegisterGuildCommandsAsync(string applicationId, string guildId, List<ApplicationCommand> commands, CancellationToken ct = default)
+    public async Task<List<ApplicationCommand>> RegisterGuildCommandsAsync(string applicationId, Snowflake guildId, List<ApplicationCommand> commands, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/guilds/{guildId}/commands";
         return await client.SendAsync<List<ApplicationCommand>>(path, HttpMethod.Put, commands, ct);
@@ -58,7 +59,7 @@ internal sealed class ApplicationCommandClient(IDiscordRestClientBase client)
     /// <param name="guildId">The guild ID.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains all guild commands.</returns>
-    public async Task<List<ApplicationCommand>> GetGuildCommandsAsync(string applicationId, string guildId, CancellationToken ct = default)
+    public async Task<List<ApplicationCommand>> GetGuildCommandsAsync(string applicationId, Snowflake guildId, CancellationToken ct = default)
     {
         var path = $"applications/{applicationId}/guilds/{guildId}/commands";
         return await client.SendAsync<List<ApplicationCommand>>(path, HttpMethod.Get, null, ct);

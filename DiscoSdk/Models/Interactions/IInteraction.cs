@@ -53,7 +53,7 @@ public interface IInteraction
 	/// <summary>
 	/// Gets the user who triggered the interaction.
 	/// </summary>
-	IUser User { get; }
+	IUser? User { get; }
 
 	/// <summary>
 	/// Gets the continuation token for responding to the interaction.
