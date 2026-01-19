@@ -1,7 +1,6 @@
-using DiscoSdk;
-using DiscoSdk.Hosting;
 using DiscoSdk.Logging;
 using DiscoSdk.Models.JsonConverters;
+using System.Globalization;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Builders;
@@ -19,6 +18,7 @@ public class DiscordClientBuilder
 	private ILogger? _logger;
 	private JsonSerializerOptions? _jsonOptions;
 	private TimeSpan? _reconnectDelay;
+	private IObjectConverter? _objectConverter;
 
 	/// <summary>
 	/// Initializes a new instance of <see cref="DiscordClientBuilder"/> with the required bot token.
@@ -139,6 +139,22 @@ public class DiscordClientBuilder
 	}
 
     /// <summary>
+    /// Sets the object converter used to transform raw interaction values into strongly-typed objects.
+    /// This converter is applied when resolving command arguments, modal fields, and other interaction data.
+    /// </summary>
+    /// <param name="converter">The converter responsible for mapping raw values to target types.</param>
+    /// <returns>The current <see cref="DiscordClientBuilder"/> instance.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="converter"/> is null.</exception>
+    public DiscordClientBuilder WithObjectConverter(IObjectConverter converter)
+    {
+        if (converter is null)
+            throw new ArgumentNullException(nameof(converter));
+
+        _objectConverter = converter;
+        return this;
+    }
+
+    /// <summary>
     /// Builds the <see cref="DiscordClient"/> instance, starts the connection to Discord Gateway,
     /// and returns the client ready for use. The client will be connecting in the background.
     /// Use <see cref="DiscordClient.WaitReadyAsync(CancellationToken)"/> or <see cref="DiscordClient.WaitReadyAsync(TimeSpan
@@ -164,7 +180,7 @@ public class DiscordClientBuilder
 
 		var jsonOptions = _jsonOptions ?? DiscoJson.Create();
 
-		var builder = new DiscordClient(config, jsonOptions);
+		var builder = new DiscordClient(config, jsonOptions, _objectConverter ?? new ObjectConverter(CultureInfo.InvariantCulture));
 		await builder.StartAsync();
 
 		return builder;

@@ -1,17 +1,11 @@
 ﻿using DiscoSdk.Models.Interactions;
 using DiscoSdk.Rest.Actions;
 
-namespace DiscoSdk.Events;
+namespace DiscoSdk.Contexts.Interactions;
 
-/// <summary>
-/// Represents the event data for when an interaction is created (e.g., slash command).
-/// </summary>
-public interface IInteractionCreateEvent
+public interface IInteractionContext
 {
     IDiscordClient Client { get; }
-    /// <summary>
-    /// Gets or sets the interaction that was created.
-    /// </summary>
     IInteraction Interaction { get; }
 
     IRestAction Defer(bool ephemeral = true);

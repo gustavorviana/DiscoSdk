@@ -1,9 +1,8 @@
 ﻿using DiscoSdk.Models;
 using DiscoSdk.Models.Builders;
 using DiscoSdk.Models.Commands;
-using DiscoSdk.Rest.Actions;
 
-namespace DiscoSdk.Commands;
+namespace DiscoSdk.Rest.Actions;
 
 /// <summary>
 /// Represents a fluent builder for queuing and registering Discord application commands.

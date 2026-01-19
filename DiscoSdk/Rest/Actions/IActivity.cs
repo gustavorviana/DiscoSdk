@@ -1,4 +1,3 @@
-using DiscoSdk.Models;
 using DiscoSdk.Models.Activities;
 
 namespace DiscoSdk.Rest.Actions;

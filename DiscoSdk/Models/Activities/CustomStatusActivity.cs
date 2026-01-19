@@ -1,9 +1,9 @@
-using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Models.Activities;
 
-internal class CustomStatusActivity(string? state)
+public class CustomStatusActivity(string? state) : IActivity
 {
 	private string? _emojiName;
 	private Snowflake? _emojiId;

@@ -1,3 +1,5 @@
+using DiscoSdk.Contexts.Interactions;
+
 namespace DiscoSdk.Events;
 
 public interface IDiscordEventHandler
@@ -100,7 +102,7 @@ public interface ITypingStartHandler : IDiscordEventHandler<TypingStartEvent>
 /// <summary>
 /// Interface for handling interaction creation events (slash commands, buttons, etc.).
 /// </summary>
-public interface IInteractionCreateHandler : IDiscordEventHandler<IInteractionCreateEvent>
+public interface IInteractionCreateHandler : IDiscordEventHandler<IInteractionContext>
 {
 }
 
@@ -108,7 +110,7 @@ public interface IInteractionCreateHandler : IDiscordEventHandler<IInteractionCr
 /// Interface for handling application command interactions (slash commands only).
 /// This handler is only called when interaction.Type == InteractionType.ApplicationCommand.
 /// </summary>
-public interface IApplicationCommandHandler : IDiscordEventHandler<IInteractionCreateEvent>
+public interface IApplicationCommandHandler : IDiscordEventHandler<ICommandContext>
 {
 }
 
@@ -116,7 +118,7 @@ public interface IApplicationCommandHandler : IDiscordEventHandler<IInteractionC
 /// Interface for handling modal submission interactions.
 /// This handler is only called when interaction.Type == InteractionType.ModalSubmit.
 /// </summary>
-public interface IModalSubmitHandler : IDiscordEventHandler<IInteractionCreateEvent>
+public interface IModalSubmitHandler : IDiscordEventHandler<IInteractionContext>
 {
 }
 
@@ -124,7 +126,7 @@ public interface IModalSubmitHandler : IDiscordEventHandler<IInteractionCreateEv
 /// Interface for handling component interactions (button clicks, select menus, etc.).
 /// This handler is only called when interaction.Type == InteractionType.MessageComponent.
 /// </summary>
-public interface IComponentInteractionHandler : IDiscordEventHandler<IInteractionCreateEvent>
+public interface IComponentInteractionHandler : IDiscordEventHandler<IInteractionContext>
 {
 }
 

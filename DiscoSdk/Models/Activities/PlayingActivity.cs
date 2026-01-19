@@ -1,8 +1,9 @@
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Models.Activities;
 
-internal class PlayingActivity(string name)
+public class PlayingActivity(string name) : IActivity
 {
 	private string? _details;
 	private string? _state;

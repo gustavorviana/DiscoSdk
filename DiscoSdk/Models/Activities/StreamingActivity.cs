@@ -1,8 +1,9 @@
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Models.Activities;
 
-internal class StreamingActivity(string name, string url) 
+public class StreamingActivity(string name, string url) : IActivity
 {
 	private string? _details;
 	private string? _state;

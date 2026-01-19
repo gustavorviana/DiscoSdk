@@ -1,7 +1,7 @@
+using DiscoSdk.Contexts.Interactions;
 using DiscoSdk.Events;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages.Components;
-using System.Net.NetworkInformation;
 
 namespace TomoriBot;
 
@@ -11,22 +11,17 @@ namespace TomoriBot;
 /// </summary>
 internal class ApplicationCommandHandler : IApplicationCommandHandler
 {
-    public async Task HandleAsync(IInteractionCreateEvent eventData)
+    public async Task HandleAsync(ICommandContext context)
     {
-        var interaction = eventData.Interaction;
+        Console.WriteLine($"[INTERACTION] Command received: {context.Name}");
 
-        if (interaction.Data == null)
-            return;
-
-        var commandName = interaction.Data.Name;
-        Console.WriteLine($"[INTERACTION] Command received: {commandName}");
-
-        if (commandName == "test")
+        if (context.Name == "test")
         {
-            var ephemeral = eventData.Interaction.Data?.Options?.FirstOrDefault(o => o.Name == "ephemeral")?.Value is bool b && b;
-            await eventData.Defer().ExecuteAsync();
-            var msg = await eventData
-                .Reply($"This is a test command response in the {eventData.Interaction.Channel.Name} channel.")
+            var ephemeral = context.GetOption<bool>("ephemeral") ?? true;
+
+            await context.Defer().ExecuteAsync();
+            var msg = await context
+                .Reply($"This is a test command response in the {context.Interaction.Channel.Name} channel.")
                 .SetEphemeral(ephemeral)
                 .ExecuteAsync(default);
 
@@ -47,7 +42,7 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
             return;
         }
 
-        if (commandName == "feedback")
+        if (context.Name == "feedback")
         {
             var buttons = new MessageComponent[]
             {
@@ -76,10 +71,10 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
                 }
             };
 
-            await eventData.Defer().ExecuteAsync();
+            await context.Defer().ExecuteAsync();
 
             // Send message with buttons
-            await eventData
+            await context
                 .Reply($"✅ **Feedback received!**\n\nWaiting for your action...")
                 .SetEphemeral()
                 .AddActionRow(buttons)
@@ -88,37 +83,37 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
             return;
         }
 
-        if (commandName == "status")
+        if (context.Name == "status")
         {
-            var strStatus = eventData.Interaction.Data?.Options?.FirstOrDefault(o => o.Name == "status")?.Value?.ToString();
-            if (string.IsNullOrEmpty(strStatus) || !Enum.TryParse<OnlineStatus>(strStatus, out var status))
+            var status = context.GetOption<OnlineStatus>("status");
+            if (status == null)
             {
-                await eventData
+                await context
                     .Reply("Invalid option")
                     .SetEphemeral()
                     .ExecuteAsync();
                 return;
             }
 
-            await eventData
+            await context
                 .Client
                 .UpdatePresence()
-                .SetStatus(status)
+                .SetStatus(status.Value)
                 .ExecuteAsync();
 
-            await eventData.Reply("Ok").SetEphemeral().ExecuteAsync();
+            await context.Reply("Ok").SetEphemeral().ExecuteAsync();
 
             return;
         }
 
-        if (commandName == "shutdown")
+        if (context.Name == "shutdown")
         {
-            await eventData
+            await context
                 .Reply("Shutdowning...")
                 .SetEphemeral()
                 .ExecuteAsync();
 
-            await eventData
+            await context
                 .Client
                 .UpdatePresence()
                 .SetStatus(OnlineStatus.Invisible)
@@ -126,13 +121,13 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
 
             await Task.Delay(2000);
 
-            eventData.Client.StopAsync();
+            context.Client.StopAsync();
             return;
         }
 
         // Unknown command - still respond to avoid error
-        await eventData.Reply(
-            $"Command '{commandName}' not found."
+        await context.Reply(
+            $"Command '{context.Name}' not found."
         ).ExecuteAsync();
     }
 }

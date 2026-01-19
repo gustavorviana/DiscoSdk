@@ -1,5 +1,4 @@
-﻿using DiscoSdk.Commands;
-using DiscoSdk.Events;
+﻿using DiscoSdk.Events;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;

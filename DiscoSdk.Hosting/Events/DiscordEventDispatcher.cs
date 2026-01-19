@@ -1,4 +1,5 @@
 using DiscoSdk.Events;
+using DiscoSdk.Hosting.Contexts;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Logging;
@@ -301,20 +302,20 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
             var member = guild is not null && interaction.Member is not null ? new GuildMemberWrapper(interaction.Member, guild, _discordClient) : null;
 
             var interactionWrapper = new InteractionWrapper(interaction, _discordClient, handle, channel, member);
-            var eventData = new InteractionCreateEvent(interactionWrapper, _discordClient);
+            var interactionContext = new InteractionContext(interactionWrapper, _discordClient);
 
             try
             {
                 if (interaction.Type == InteractionType.ApplicationCommand)
-                    await ProcessAll<IApplicationCommandHandler>(x => x.HandleAsync(eventData));
+                    await HandleCommand(interactionWrapper);
 
                 if (interaction.Type == InteractionType.ModalSubmit)
-                    await ProcessAll<IModalSubmitHandler>(x => x.HandleAsync(eventData));
+                    await ProcessAll<IModalSubmitHandler>(x => x.HandleAsync(interactionContext));
 
                 if (interaction.Type == InteractionType.MessageComponent)
-                    await ProcessAll<IComponentInteractionHandler>(x => x.HandleAsync(eventData));
+                    await ProcessAll<IComponentInteractionHandler>(x => x.HandleAsync(interactionContext));
 
-                await ProcessAll<IInteractionCreateHandler>(x => x.HandleAsync(eventData));
+                await ProcessAll<IInteractionCreateHandler>(x => x.HandleAsync(interactionContext));
             }
             catch (Exception ex)
             {
@@ -327,9 +328,24 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         }
     }
 
+    private async Task HandleCommand(InteractionWrapper interactionWrapper)
+    {
+        var commandHandlers = GetHandlersOfType<IApplicationCommandHandler>();
+        if (commandHandlers.Count > 0)
+        {
+            var commandContext = new CommandContext(interactionWrapper, _discordClient);
+            await ProcessAll(commandHandlers, x => x.HandleAsync(commandContext));
+        }
+    }
+
     private async Task ProcessAll<T>(Func<T, Task> calllback) where T : IDiscordEventHandler
     {
-        foreach (var handler in GetHandlersOfType<T>())
+        await ProcessAll(GetHandlersOfType<T>(), calllback);
+    }
+
+    private async Task ProcessAll<T>(List<T> handlers, Func<T, Task> calllback) where T : IDiscordEventHandler
+    {
+        foreach (var handler in handlers)
         {
             try
             {
@@ -342,16 +358,18 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         }
     }
 
-    private IEnumerable<T> GetHandlersOfType<T>() where T : IDiscordEventHandler
+    private List<T> GetHandlersOfType<T>() where T : IDiscordEventHandler
     {
         var targetType = typeof(T);
-        if (!_handlerIndicesByType.TryGetValue(targetType, out var indices))
-            yield break;
+        if (!_handlerIndicesByType.TryGetValue(targetType, out var indexes))
+            return [];
 
-        foreach (var index in indices)
-        {
+        var items = new List<T>(indexes.Count);
+
+        foreach (var index in indexes)
             if (_handlers[index] is T typedHandler)
-                yield return typedHandler;
-        }
+                items.Add(typedHandler);
+
+        return items;
     }
 }

@@ -21,7 +21,7 @@ public interface IUpdatePresenceAction : IRestAction
 	/// </summary>
 	/// <param name="activities">The activities to set, or null to clear all activities.</param>
 	/// <returns>The current <see cref="IUpdatePresenceAction"/> instance.</returns>
-	IUpdatePresenceAction SetActivities(Activity[]? activities);
+	IUpdatePresenceAction SetActivities(params Activity[] activities);
 
 	/// <summary>
 	/// Adds an activity to the presence.

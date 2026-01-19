@@ -1,3 +1,4 @@
+using DiscoSdk.Contexts.Interactions;
 using DiscoSdk.Events;
 
 namespace TomoriBot;
@@ -8,7 +9,7 @@ namespace TomoriBot;
 /// </summary>
 internal class ModalSubmitHandler : IModalSubmitHandler
 {
-    public async Task HandleAsync(IInteractionCreateEvent eventData)
+    public async Task HandleAsync(IInteractionContext eventData)
     {
         var interaction = eventData.Interaction;
 

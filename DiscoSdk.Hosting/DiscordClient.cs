@@ -1,5 +1,4 @@
-﻿using DiscoSdk.Commands;
-using DiscoSdk.Events;
+﻿using DiscoSdk.Events;
 using DiscoSdk.Hosting.Events;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Payloads.Models;
@@ -44,6 +43,7 @@ namespace DiscoSdk.Hosting
         /// Gets the JSON serializer options used for deserializing Gateway events.
         /// </summary>
         public JsonSerializerOptions SerializerOptions { get; }
+        public IObjectConverter ObjectConverter { get; }
 
         public ILogger Logger { get; }
 
@@ -114,7 +114,7 @@ namespace DiscoSdk.Hosting
         /// </summary>
         public ICurrentUser User { get; private set; } = new ReadyUser();
 
-        public DiscordClient(DiscordClientConfig config, JsonSerializerOptions jsonOptions)
+        public DiscordClient(DiscordClientConfig config, JsonSerializerOptions jsonOptions, IObjectConverter converter)
         {
             _config = config;
             SerializerOptions = jsonOptions;
@@ -130,6 +130,7 @@ namespace DiscoSdk.Hosting
             UserRepository = new UserRepository(this);
             GuildManager = new GuildManager(this, Logger);
             DmRepository = new DmChannelRepository(this);
+            ObjectConverter = converter;
 
             var maxConcurrency = config.EventProcessorMaxConcurrency > 0
                 ? config.EventProcessorMaxConcurrency
