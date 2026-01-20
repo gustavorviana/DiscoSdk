@@ -3,9 +3,8 @@ using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Contexts.Interactions;
 
-public interface IInteractionContext
+public interface IInteractionContext : IContext
 {
-    IDiscordClient Client { get; }
     IInteraction Interaction { get; }
 
     IRestAction Defer(bool ephemeral = true);

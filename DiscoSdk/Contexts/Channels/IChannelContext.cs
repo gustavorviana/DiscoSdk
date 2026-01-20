@@ -1,15 +1,14 @@
 using DiscoSdk.Models.Channels;
 
-namespace DiscoSdk.Events;
+namespace DiscoSdk.Contexts.Channels;
 
 /// <summary>
 /// Represents the event data for when a channel is created.
 /// </summary>
-public class ChannelCreateEvent
+public interface IChannelContext : IGuildContext
 {
     /// <summary>
     /// Gets or sets the channel that was created.
     /// </summary>
-    public Channel Channel { get; set; } = default!;
+    IGuildChannelUnion Channel { get; }
 }
-

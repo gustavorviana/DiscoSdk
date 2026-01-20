@@ -13,7 +13,7 @@ internal class ModalContext : InteractionContext, IModalContext
 
     public IReadOnlyCollection<IModalOption> Options { get; }
 
-    public ModalContext(InteractionWrapper interaction, DiscordClient client) : base(interaction, client)
+    public ModalContext(DiscordClient client, InteractionWrapper interaction) : base(client, interaction)
     {
         var components = interaction.Data?.Components;
         Options = components == null ? [] : [.. components.SelectMany(x => x.Components ?? []).Select(x => new ModalOption(x.CustomId, x.Value))];

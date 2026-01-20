@@ -1,14 +1,15 @@
 using DiscoSdk.Events;
 using DiscoSdk.Hosting.Contexts;
+using DiscoSdk.Hosting.Contexts.Contexts;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Wrappers;
+using DiscoSdk.Hosting.Wrappers.Channels;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Interactions;
 using DiscoSdk.Models.Messages;
-using System;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Events;
@@ -212,33 +213,45 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
     private async Task ProcessChannelCreateAsync(JsonElement payload)
     {
         var channel = payload.Deserialize<Channel>(_discordClient.SerializerOptions);
-        if (channel == null) return;
+        if (TryGetChannelGuild(channel, out var guild)) return;
 
-        _discordClient.GuildManager.HandleChannelCreate(channel);
+        _discordClient.GuildManager.HandleChannelCreate(channel!);
 
-        var eventData = new ChannelCreateEvent { Channel = channel };
+        var eventData = new ChannelContext(_discordClient, new GuildChannelUnionWrapper(channel!, guild!, _discordClient));
         await ProcessAll<IChannelCreateHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessChannelUpdateAsync(JsonElement payload)
     {
         var channel = payload.Deserialize<Channel>(_discordClient.SerializerOptions);
-        if (channel == null) return;
+        if (TryGetChannelGuild(channel, out var guild)) return;
 
-        _discordClient.GuildManager.HandleChannelUpdate(channel);
+        _discordClient.GuildManager.HandleChannelUpdate(channel!);
 
-        var eventData = new ChannelUpdateEvent { Channel = channel };
+        var eventData = new ChannelContext(_discordClient, new GuildChannelUnionWrapper(channel!, guild!, _discordClient));
         await ProcessAll<IChannelUpdateHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessChannelDeleteAsync(JsonElement payload)
     {
         var channel = payload.Deserialize<Channel>(_discordClient.SerializerOptions);
-        if (channel == null) return;
+        if (TryGetChannelGuild(channel, out var guild)) return;
 
         _discordClient.GuildManager.HandleChannelDelete(channel);
-        var eventData = new ChannelDeleteEvent { Channel = channel };
+        var eventData = new ChannelDeleteContext(_discordClient, guild!, channel.Id);
         await ProcessAll<IChannelDeleteHandler>(x => x.HandleAsync(eventData));
+    }
+
+    private bool TryGetChannelGuild(Channel? channel, out GuildWrapper? guild)
+    {
+        if (channel == null || channel.Id.Empty || !_discordClient.GuildManager.TryGet(channel.GuildId!.Value, out var iGuild))
+        {
+            guild = null;
+            return false;
+        }
+
+        guild = (GuildWrapper)iGuild!;
+        return true;
     }
 
     private async Task ProcessMessageReactionAddAsync(JsonElement payload)
@@ -298,7 +311,7 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
             var member = guild is not null && interaction.Member is not null ? new GuildMemberWrapper(interaction.Member, guild, _discordClient) : null;
 
             var interactionWrapper = new InteractionWrapper(interaction, _discordClient, handle, channel, member);
-            var interactionContext = new InteractionContext(interactionWrapper, _discordClient);
+            var interactionContext = new InteractionContext(_discordClient, interactionWrapper);
 
             try
             {
@@ -330,7 +343,7 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         if (commandHandlers.Count == 0)
             return;
 
-        var commandContext = new ModalContext(interactionWrapper, _discordClient);
+        var commandContext = new ModalContext(_discordClient, interactionWrapper);
         await ProcessAll(commandHandlers, x => x.HandleAsync(commandContext));
     }
 
@@ -340,7 +353,7 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         if (commandHandlers.Count == 0)
             return;
 
-        var commandContext = new CommandContext(interactionWrapper, _discordClient);
+        var commandContext = new CommandContext(_discordClient, interactionWrapper);
         await ProcessAll(commandHandlers, x => x.HandleAsync(commandContext));
     }
 

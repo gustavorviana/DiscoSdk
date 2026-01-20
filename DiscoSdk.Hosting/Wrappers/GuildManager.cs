@@ -159,9 +159,19 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
         }
         catch
         {
-            return null;
         }
 
         return null;
+    }
+
+    public bool TryGet(Snowflake guildId, out IGuild? guild)
+    {
+        if (guildId.Empty)
+        {
+            guild = null;
+            return false;
+        }
+
+        return _guildCache.TryGetValue(guildId, out guild);
     }
 }
