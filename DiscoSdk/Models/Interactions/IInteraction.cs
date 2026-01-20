@@ -1,7 +1,6 @@
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
-using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Models.Interactions;
@@ -122,17 +121,6 @@ public interface IInteraction
 	/// This can only be used after the interaction has been responded to.
 	/// </remarks>
 	IEditMessageRestAction Edit();
-
-	/// <summary>
-	/// Creates a REST action to send a follow-up message to this interaction.
-	/// </summary>
-	/// <param name="content">The initial message content.</param>
-	/// <returns>A REST action that can be configured and executed to send the follow-up message.</returns>
-	/// <remarks>
-	/// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-	/// Follow-up messages can be sent after deferring or responding to the interaction.
-	/// </remarks>
-	ISendMessageRestAction FollowUp(string? content = null);
 
 	/// <summary>
 	/// Gets a REST action for deleting the original interaction response message.

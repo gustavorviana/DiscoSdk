@@ -75,14 +75,6 @@ internal class InteractionWrapper(Interaction interaction,
         return new EditMessageRestAction(_client, channel!, default, handle);
     }
 
-    public ISendMessageRestAction FollowUp(string? content = null)
-    {
-        if (!_interaction.ChannelId.HasValue)
-            throw new InvalidOperationException("Cannot send follow-up to interaction without a channel ID.");
-
-        return new SendMessageRestAction(_client, handle, channel!, content);
-    }
-
     public IRestAction Delete()
     {
         return RestAction.Create(cancellationToken => _client.InteractionClient.DeleteOriginalResponseAsync(handle, cancellationToken));
