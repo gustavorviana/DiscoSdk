@@ -1,10 +1,11 @@
 using DiscoSdk.Hosting.Logging;
+using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using System.Collections.Concurrent;
 
-namespace DiscoSdk.Hosting.Wrappers;
+namespace DiscoSdk.Hosting.Managers;
 
 /// <summary>
 /// Manages guild cache, pending guilds tracking, and guild-related operations.
@@ -74,7 +75,7 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
     /// <param name="jsonOptions">The JSON serializer options.</param>
     internal IGuild? HandleGuildCreate(Guild? guild)
     {
-        if (guild == null || !guild.Id.Empty)
+        if (guild == null || guild.Id.Empty)
             return null;
 
         lock (_lock)
@@ -162,6 +163,17 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
         catch
         {
         }
+
+        return null;
+    }
+
+    internal GuildWrapper? GetWrapped(Snowflake? id)
+    {
+        if (id == null)
+            return null; ;
+
+        if (TryGet(id.Value, out var guild))
+            return (GuildWrapper?)guild;
 
         return null;
     }

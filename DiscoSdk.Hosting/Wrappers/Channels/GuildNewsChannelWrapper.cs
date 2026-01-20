@@ -17,15 +17,15 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 /// </remarks>
 /// <param name="channel">The channel instance to wrap.</param>
 /// <param name="client">The Discord client for performing operations.</param>
-internal class GuildNewsChannelWrapper(Channel channel, IGuild guild, DiscordClient client)
-    : GuildTextBasedChannelWrapper(channel, guild, client), IGuildNewsChannel
+internal class GuildNewsChannelWrapper(DiscordClient client, Channel channel, IGuild guild)
+    : GuildTextBasedChannelWrapper(client, channel, guild), IGuildNewsChannel
 {
     public IRestAction<IMessage> CrosspostMessage(Snowflake messageId)
     {
         return RestAction<IMessage>.Create(async cancellationToken =>
         {
             var message = await _client.MessageClient.CrosspostAsync(_channel.Id, messageId, cancellationToken);
-            return new MessageWrapper(this, message, _client, null);
+            return new MessageWrapper(_client, this, message, null);
         });
     }
 
@@ -43,7 +43,7 @@ internal class GuildNewsChannelWrapper(Channel channel, IGuild guild, DiscordCli
 
         return RestAction<FollowedChannel>.Create(async cancellationToken =>
         {
-            var selfMember = await Guild.GetMember(Snowflake.Parse(_client.User.Id)).ExecuteAsync(cancellationToken) 
+            var selfMember = await Guild.GetMember(Snowflake.Parse(_client.BotUser.Id)).ExecuteAsync(cancellationToken)
             ?? throw new InvalidOperationException("Cannot get self member from guild.");
 
             var permission = targetChannel.GetPermission(selfMember);

@@ -1,4 +1,4 @@
-using DiscoSdk.Hosting.Events;
+using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Models;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;

@@ -46,7 +46,7 @@ internal class EditEmojiAction : RestAction<IEmoji>, IEditEmojiAction
 
 		var emoji = await _client.GuildClient.EditEmojiAsync(_guild.Id, _emojiId, request, cancellationToken);
 
-		return new EmojiWrapper(emoji, _guild, _client);
+		return new EmojiWrapper(_client, emoji, _guild);
 	}
 }
 

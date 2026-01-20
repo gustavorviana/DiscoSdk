@@ -2,6 +2,9 @@ using DiscoSdk.Events;
 using DiscoSdk.Hosting.Contexts;
 using DiscoSdk.Hosting.Contexts.Channels;
 using DiscoSdk.Hosting.Contexts.Guilds;
+using DiscoSdk.Hosting.Contexts.Messages;
+using DiscoSdk.Hosting.Contexts.Models;
+using DiscoSdk.Hosting.Contexts.Wrappers;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Hosting.Wrappers.Channels;
@@ -93,7 +96,7 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
                     break;
 
                 case "MESSAGE_DELETE":
-                    await ProcessMessageDeleteAsync(payload);
+                    await ProcessMessageDeleteAsync(new JsonElementParser(payload));
                     break;
 
                 case "GUILD_CREATE":
@@ -121,15 +124,15 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
                     break;
 
                 case "MESSAGE_REACTION_ADD":
-                    await ProcessMessageReactionAddAsync(payload);
+                    await ProcessMessageReactionAddAsync(new JsonElementParser(payload));
                     break;
 
                 case "MESSAGE_REACTION_REMOVE":
-                    await ProcessMessageReactionRemoveAsync(payload);
+                    await ProcessMessageReactionRemoveAsync(new JsonElementParser(payload));
                     break;
 
                 case "TYPING_START":
-                    await ProcessTypingStartAsync(payload);
+                    await ProcessTypingStartAsync(new JsonElementParser(payload));
                     break;
 
                 case "INTERACTION_CREATE":
@@ -150,7 +153,12 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         if (message == null)
             return;
 
-        var eventData = new MessageCreateEvent { Message = message };
+        var guild = _discordClient.Guilds.GetWrapped(message.GuildId);
+        var member = message.Member != null ? new GuildMemberWrapper(_discordClient, message.Member, guild!) : null;
+        var channel = await _discordClient.Channels.Get(message.ChannelId, guild).ExecuteAsync();
+        var wrappedMessage = new MessageWrapper(_discordClient, (ITextBasedChannel)channel!, message, null);
+
+        var eventData = new MessageCreateContextWrapper(_discordClient, member, wrappedMessage, (ITextBasedChannel)channel);
 
         await ProcessAll<IMessageCreateHandler>(x => x.HandleAsync(eventData));
     }
@@ -160,26 +168,32 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         var message = payload.Deserialize<Message>(_discordClient.SerializerOptions);
         if (message == null) return;
 
-        var eventData = new MessageUpdateEvent { Message = message };
+        var guild = _discordClient.Guilds.GetWrapped(message.GuildId);
+        var member = message.Member != null ? new GuildMemberWrapper(_discordClient, message.Member, guild!) : null;
+        var channel = _discordClient.Channels.GetWrappedTextChannel(message.ChannelId);
+        var wrappedMessage = new MessageWrapper(_discordClient, channel!, message, null);
+        var author = new UserWrapper(_discordClient, message.Author);
+
+        var eventData = new MessageUpdateContextWrapper(_discordClient, guild, author, member, wrappedMessage, channel);
         await ProcessAll<IMessageUpdateHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessMessageDeleteAsync(JsonElement payload)
+    private async Task ProcessMessageDeleteAsync(JsonElementParser payload)
     {
-        var eventData = new MessageDeleteEvent
-        {
-            Id = payload.GetProperty("id").GetString() ?? string.Empty,
-            ChannelId = payload.GetProperty("channel_id").GetString() ?? string.Empty,
-            GuildId = payload.TryGetProperty("guild_id", out var guildId) ? guildId.GetString() : null
-        };
+        var id = payload.GetSnowflake("id")!.Value;
+        var channelId = payload.GetSnowflake("channel_id")!.Value;
+        var guildId = payload.GetSnowflake("guild_id");
+        var wrappedChannel = _discordClient.Channels.GetWrappedTextChannel(channelId);
+        var wrappedGuild = _discordClient.Guilds.GetWrapped(guildId);
 
+        var eventData = new MessageDeleteContextWrapper(_discordClient, id, wrappedChannel!, wrappedGuild);
         await ProcessAll<IMessageDeleteHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessGuildCreateAsync(JsonElement payload)
     {
         var guild = payload.Deserialize<Guild>(_discordClient.SerializerOptions);
-        if (_discordClient.GuildManager.HandleGuildCreate(guild) is not IGuild wrappedGuild)
+        if (_discordClient.Guilds.HandleGuildCreate(guild) is not IGuild wrappedGuild)
             return;
 
         var eventData = new GuildContextWrapper(_discordClient, wrappedGuild);
@@ -189,7 +203,7 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
     private async Task ProcessGuildUpdateAsync(JsonElement payload)
     {
         var guild = payload.Deserialize<Guild>(_discordClient.SerializerOptions);
-        if (_discordClient.GuildManager.HandleGuildUpdate(guild) is not IGuild wrappedGuild) return;
+        if (_discordClient.Guilds.HandleGuildUpdate(guild) is not IGuild wrappedGuild) return;
 
         var eventData = new GuildContextWrapper(_discordClient, wrappedGuild);
         await ProcessAll<IGuildUpdateHandler>(x => x.HandleAsync(eventData));
@@ -198,7 +212,7 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
     private async Task ProcessGuildDeleteAsync(JsonElement payload)
     {
         var eventData = new GuildDeleteContextWrapper(_discordClient, payload);
-        _discordClient.GuildManager.HandleGuildDelete(eventData.Id);
+        _discordClient.Guilds.HandleGuildDelete(eventData.Id);
 
         await ProcessAll<IGuildDeleteHandler>(x => x.HandleAsync(eventData));
     }
@@ -208,9 +222,9 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         var channel = payload.Deserialize<Channel>(_discordClient.SerializerOptions);
         if (TryGetChannelGuild(channel, out var guild)) return;
 
-        _discordClient.GuildManager.HandleChannelCreate(channel!);
+        _discordClient.Guilds.HandleChannelCreate(channel!);
 
-        var eventData = new ChannelContext(_discordClient, new GuildChannelUnionWrapper(channel!, guild!, _discordClient));
+        var eventData = new ChannelContext(_discordClient, new GuildChannelUnionWrapper(_discordClient, channel!, guild!));
         await ProcessAll<IChannelCreateHandler>(x => x.HandleAsync(eventData));
     }
 
@@ -219,9 +233,9 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         var channel = payload.Deserialize<Channel>(_discordClient.SerializerOptions);
         if (TryGetChannelGuild(channel, out var guild)) return;
 
-        _discordClient.GuildManager.HandleChannelUpdate(channel!);
+        _discordClient.Guilds.HandleChannelUpdate(channel!);
 
-        var eventData = new ChannelContext(_discordClient, new GuildChannelUnionWrapper(channel!, guild!, _discordClient));
+        var eventData = new ChannelContext(_discordClient, new GuildChannelUnionWrapper(_discordClient, channel!, guild!));
         await ProcessAll<IChannelUpdateHandler>(x => x.HandleAsync(eventData));
     }
 
@@ -230,14 +244,14 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         var channel = payload.Deserialize<Channel>(_discordClient.SerializerOptions);
         if (TryGetChannelGuild(channel, out var guild)) return;
 
-        _discordClient.GuildManager.HandleChannelDelete(channel);
+        _discordClient.Guilds.HandleChannelDelete(channel);
         var eventData = new ChannelDeleteContext(_discordClient, guild!, channel.Id);
         await ProcessAll<IChannelDeleteHandler>(x => x.HandleAsync(eventData));
     }
 
     private bool TryGetChannelGuild(Channel? channel, out GuildWrapper? guild)
     {
-        if (channel == null || channel.Id.Empty || !_discordClient.GuildManager.TryGet(channel.GuildId!.Value, out var iGuild))
+        if (channel == null || channel.Id.Empty || !_discordClient.Guilds.TryGet(channel.GuildId!.Value, out var iGuild))
         {
             guild = null;
             return false;
@@ -247,47 +261,72 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         return true;
     }
 
-    private async Task ProcessMessageReactionAddAsync(JsonElement payload)
+    private async Task ProcessMessageReactionAddAsync(JsonElementParser payload)
     {
-        var eventData = new MessageReactionAddEvent
-        {
-            UserId = payload.GetProperty("user_id").GetString() ?? string.Empty,
-            ChannelId = payload.GetProperty("channel_id").GetString() ?? string.Empty,
-            MessageId = payload.GetProperty("message_id").GetString() ?? string.Empty,
-            GuildId = payload.TryGetProperty("guild_id", out var guildId) ? guildId.GetString() : null,
-            Member = payload.TryGetProperty("member", out var member) ? member.Deserialize<GuildMember>(_discordClient.SerializerOptions) : null,
-            Emoji = payload.GetProperty("emoji").Deserialize<Emoji>(_discordClient.SerializerOptions) ?? new Emoji()
-        };
+        var userId = payload.GetSnowflake("user_id")!.Value;
+        var messageId = payload.GetSnowflake("message_id")!.Value;
+
+        var member = payload.Deserialize<GuildMember>("member", _discordClient.SerializerOptions);
+        var guild = _discordClient.Guilds.GetWrapped(payload.GetSnowflake("guild_id"));
+        var channel = _discordClient.Channels.GetWrappedTextChannel(payload.GetSnowflake("channel_id")!.Value);
+        var user = await GetUserAsync(member, userId);
+        var wrappedMember = member is not null ? new GuildMemberWrapper(_discordClient, member, guild) : null;
+        var emoji = payload.Deserialize<Emoji>("emoji", _discordClient.SerializerOptions);
+
+
+        var eventData = new MessageAddReactionContext(_discordClient,
+            channel,
+            guild,
+            user,
+            messageId,
+            wrappedMember,
+            new EmojiWrapper(_discordClient, emoji, guild));
 
         await ProcessAll<IMessageReactionAddHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessMessageReactionRemoveAsync(JsonElement payload)
+    private async Task ProcessMessageReactionRemoveAsync(JsonElementParser payload)
     {
-        var eventData = new MessageReactionRemoveEvent
-        {
-            UserId = payload.GetProperty("user_id").GetString() ?? string.Empty,
-            ChannelId = payload.GetProperty("channel_id").GetString() ?? string.Empty,
-            MessageId = payload.GetProperty("message_id").GetString() ?? string.Empty,
-            GuildId = payload.TryGetProperty("guild_id", out var guildId) ? guildId.GetString() : null,
-            Emoji = payload.GetProperty("emoji").Deserialize<Emoji>(_discordClient.SerializerOptions) ?? new Emoji()
-        };
+        var userId = payload.GetSnowflake("user_id")!.Value;
+        var messageId = payload.GetSnowflake("message_id")!.Value;
+
+        var guild = _discordClient.Guilds.GetWrapped(payload.GetSnowflake("guild_id"));
+        var channel = _discordClient.Channels.GetWrappedTextChannel(payload.GetSnowflake("channel_id")!.Value);
+        var emoji = payload.Deserialize<Emoji>("emoji", _discordClient.SerializerOptions);
+
+        var json = payload.Payload.ToString();
+        var eventData = new MessageDeleteReactionContextWrapper(_discordClient,
+            channel,
+            guild,
+            userId,
+            messageId,
+            new EmojiWrapper(_discordClient, emoji, guild));
 
         await ProcessAll<IMessageReactionRemoveHandler>(x => x.HandleAsync(eventData));
     }
 
-    private async Task ProcessTypingStartAsync(JsonElement payload)
+    private async Task ProcessTypingStartAsync(JsonElementParser payload)
     {
-        var eventData = new TypingStartEvent
-        {
-            ChannelId = payload.GetProperty("channel_id").GetString() ?? string.Empty,
-            GuildId = payload.TryGetProperty("guild_id", out var guildId) ? guildId.GetString() : null,
-            UserId = payload.GetProperty("user_id").GetString() ?? string.Empty,
-            Timestamp = payload.GetProperty("timestamp").GetInt32(),
-            Member = payload.TryGetProperty("member", out var member) ? member.Deserialize<GuildMember>(_discordClient.SerializerOptions) : null
-        };
+        var userId = payload.GetSnowflake("user_id")!.Value;
+        var startedAt = payload.GetDateTimeOffset("timestamp")!.Value;
+
+        var member = payload.Deserialize<GuildMember>("member", _discordClient.SerializerOptions);
+        var guild = _discordClient.Guilds.GetWrapped(payload.GetSnowflake("guild_id"));
+        var channel = _discordClient.Channels.GetWrappedTextChannel(payload.GetSnowflake("channel_id")!.Value);
+        var user = await GetUserAsync(member, userId);
+        var wrappedMember = member is not null ? new GuildMemberWrapper(_discordClient, member, guild) : null;
+
+        var eventData = new TypingContextWrapper(_discordClient, startedAt, channel!, guild, user, wrappedMember);
 
         await ProcessAll<ITypingStartHandler>(x => x.HandleAsync(eventData));
+    }
+
+    private async Task<IUser?> GetUserAsync(GuildMember? member, Snowflake userId)
+    {
+        if (member?.User is not null)
+            return new UserWrapper(_discordClient, member.User);
+
+        return await _discordClient.Users.Get(userId).ExecuteAsync();
     }
 
     private async Task ProcessInteractionCreateAsync(JsonElement payload)
@@ -301,10 +340,10 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
             var handle = new InteractionHandle(interaction.Id, interaction.Token);
             var channel = interaction.ChannelId is not null ? await _discordClient.GetChannel<ITextBasedChannel>(interaction.ChannelId.Value).ExecuteAsync() : null;
             var guild = channel is IGuildChannelBase guildChannel ? guildChannel.Guild : null;
-            var member = guild is not null && interaction.Member is not null ? new GuildMemberWrapper(interaction.Member, guild, _discordClient) : null;
+            var member = guild is not null && interaction.Member is not null ? new GuildMemberWrapper(_discordClient, interaction.Member, guild) : null;
 
             var interactionWrapper = new InteractionWrapper(interaction, _discordClient, handle, channel, member);
-            var interactionContext = new InteractionContext(_discordClient, interactionWrapper);
+            var interactionContext = new InteractionContextWrapper(_discordClient, interactionWrapper);
 
             try
             {

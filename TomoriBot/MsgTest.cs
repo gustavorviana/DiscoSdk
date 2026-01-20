@@ -1,12 +1,13 @@
-﻿using DiscoSdk.Events;
+﻿using DiscoSdk.Contexts.Messages;
+using DiscoSdk.Events;
 
 namespace TomoriBot
 {
     internal class MsgTest : IMessageCreateHandler
     {
-        public Task HandleAsync(MessageCreateEvent eventData)
+        public Task HandleAsync(IMessageCreateContext eventData)
         {
-            var authorName = eventData.Message.Author.GlobalName ?? eventData.Message.Author.Username;
+            var authorName = eventData.Author.GlobalName ?? eventData.Author.Username;
             Console.WriteLine($"[MESSAGE] {authorName}: {eventData.Message.Content}");
 
             return Task.CompletedTask;

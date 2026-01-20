@@ -7,7 +7,7 @@ using static DiscoSdk.Hosting.Rest.Clients.InteractionClient;
 
 namespace DiscoSdk.Hosting.Contexts;
 
-internal class ModalContext : InteractionContext, IModalContext
+internal class ModalContext : InteractionContextWrapper, IModalContext
 {
     public string CustomId => Interaction.Data?.CustomId ?? string.Empty;
 

@@ -171,7 +171,7 @@ internal class GuildWrapper : IGuild
             if (member == null)
                 return null;
 
-            return new GuildMemberWrapper(member, this, _client);
+            return new GuildMemberWrapper(_client, member, this);
         });
     }
 
@@ -197,7 +197,7 @@ internal class GuildWrapper : IGuild
         if (!_channels.TryGetValue(new Channel { Id = Id }, out var channel))
             return null;
 
-        return new GuildChannelUnionWrapper(channel, this, _client);
+        return new GuildChannelUnionWrapper(_client, channel, this);
     }
 
     public IGuildVoiceChannel? GetAfkChannel()
@@ -205,7 +205,7 @@ internal class GuildWrapper : IGuild
         if (!AfkChannelId.HasValue || GetRawChannelById(AfkChannelId.Value) is not { } channel)
             return null;
 
-        return new GuildVoiceChannelWrapper(channel, this, _client);
+        return new GuildVoiceChannelWrapper(_client, channel, this);
     }
 
     public IGuildTextChannel? GetSystemChannel()
@@ -232,7 +232,7 @@ internal class GuildWrapper : IGuild
         if (!ChannelTypeUtils.IsText(channel.Type))
             throw new InvalidCastException();
 
-        return new GuildTextChannelWrapper(channel, this, _client);
+        return new GuildTextChannelWrapper(_client, channel, this);
     }
 
     private Channel? GetRawChannelById(Snowflake? channelId)
@@ -255,7 +255,7 @@ internal class GuildWrapper : IGuild
         {
             return [.. _guild
                 .Channels
-                .Select(ch => new GuildChannelUnionWrapper(ch, this, _client))];
+                .Select(ch => new GuildChannelUnionWrapper(_client, ch, this))];
         }
     }
 
@@ -266,7 +266,7 @@ internal class GuildWrapper : IGuild
             return [.._guild
                 .Channels
                 .Where(x => ChannelTypeUtils.IsText(x.Type))
-                .Select(ch => ChannelWrapper.ToSpecificType(ch, this, _client))
+                .Select(ch => ChannelWrapper.ToSpecificType(_client, ch, this))
                 .OfType<IGuildTextChannel>()];
         }
     }
@@ -278,7 +278,7 @@ internal class GuildWrapper : IGuild
             return [.._guild
                 .Channels
                 .Where(x => ChannelTypeUtils.IsVoice(x.Type))
-                .Select(ch => new GuildVoiceChannelWrapper(ch, this, _client))];
+                .Select(ch => new GuildVoiceChannelWrapper(_client, ch, this))];
         }
     }
 
@@ -288,7 +288,7 @@ internal class GuildWrapper : IGuild
         {
             var roles = await _client.GuildClient.GetRolesAsync(_guild.Id, cancellationToken);
             return roles
-                .Select(r => new RoleWrapper(r, this, _client))
+                .Select(r => new RoleWrapper(_client, r, this))
                 .Cast<IRole>()
                 .ToList()
                 .AsReadOnly();
@@ -312,7 +312,7 @@ internal class GuildWrapper : IGuild
                     result.Add(new InviteWrapper(invite, guildChannel, _client));
             }
 
-            return [..result];
+            return [.. result];
         });
     }
 
@@ -337,7 +337,7 @@ internal class GuildWrapper : IGuild
         return RestAction<IReadOnlyList<VoiceRegion>>.Create(async cancellationToken =>
         {
             var regions = await _client.GuildClient.GetVoiceRegionsAsync(_guild.Id, cancellationToken);
-            return [..regions];
+            return [.. regions];
         });
     }
 
@@ -400,6 +400,7 @@ internal class GuildWrapper : IGuild
         lock (_updateLock)
         {
             _channels.Add(channel);
+            _client.Channels.OnChannelCreated(ChannelWrapper.ToSpecificType(_client, channel, this));
         }
     }
 
@@ -409,19 +410,23 @@ internal class GuildWrapper : IGuild
         {
             _channels.Remove(channel);
             _channels.Add(channel);
+            _client.Channels.OnChannelUpdated(channel);
         }
     }
 
     internal void OnChannelDelete(Snowflake id)
     {
         lock (_updateLock)
+        {
             _channels.Remove(new Channel { Id = id });
+            _client.Channels.OnChannelRemoved(id);
+        }
     }
 
     private void RefreshProperties()
     {
-        Emojis = _guild.Emojis?.Select(x => new EmojiWrapper(x, this, _client))?.ToArray() ?? [];
-        Roles = _guild.Roles?.Select(x => new RoleWrapper(x, this, _client))?.ToArray() ?? [];
+        Emojis = _guild.Emojis?.Select(x => new EmojiWrapper(_client, x, this))?.ToArray() ?? [];
+        Roles = _guild.Roles?.Select(x => new RoleWrapper(_client, x, this))?.ToArray() ?? [];
         LoadImages();
     }
 

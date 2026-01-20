@@ -1,6 +1,7 @@
 using DiscoSdk.Contexts.Channels;
 using DiscoSdk.Contexts.Guilds;
 using DiscoSdk.Contexts.Interactions;
+using DiscoSdk.Contexts.Messages;
 
 namespace DiscoSdk.Events;
 
@@ -20,21 +21,21 @@ public interface IDiscordEventHandler<TContext> : IDiscordEventHandler
 /// <summary>
 /// Interface for handling message creation events.
 /// </summary>
-public interface IMessageCreateHandler : IDiscordEventHandler<MessageCreateEvent>
+public interface IMessageCreateHandler : IDiscordEventHandler<IMessageCreateContext>
 {
 }
 
 /// <summary>
 /// Interface for handling message update events.
 /// </summary>
-public interface IMessageUpdateHandler : IDiscordEventHandler<MessageUpdateEvent>
+public interface IMessageUpdateHandler : IDiscordEventHandler<IMessageUpdateContext>
 {
 }
 
 /// <summary>
 /// Interface for handling message deletion events.
 /// </summary>
-public interface IMessageDeleteHandler : IDiscordEventHandler<MessageDeleteEvent>
+public interface IMessageDeleteHandler : IDiscordEventHandler<IMessageDeleteContext>
 {
 }
 
@@ -83,21 +84,21 @@ public interface IChannelDeleteHandler : IDiscordEventHandler<IChannelDeleteCont
 /// <summary>
 /// Interface for handling message reaction add events.
 /// </summary>
-public interface IMessageReactionAddHandler : IDiscordEventHandler<MessageReactionAddEvent>
+public interface IMessageReactionAddHandler : IDiscordEventHandler<IMessageAddReactionContext>
 {
 }
 
 /// <summary>
 /// Interface for handling message reaction remove events.
 /// </summary>
-public interface IMessageReactionRemoveHandler : IDiscordEventHandler<MessageReactionRemoveEvent>
+public interface IMessageReactionRemoveHandler : IDiscordEventHandler<IMessageDeleteReactionContext>
 {
 }
 
 /// <summary>
 /// Interface for handling typing start events.
 /// </summary>
-public interface ITypingStartHandler : IDiscordEventHandler<TypingStartEvent>
+public interface ITypingStartHandler : IDiscordEventHandler<ITypingContext>
 {
 }
 

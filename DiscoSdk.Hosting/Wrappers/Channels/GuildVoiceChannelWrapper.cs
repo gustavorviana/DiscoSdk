@@ -17,8 +17,8 @@ internal class GuildVoiceChannelWrapper : GuildChannelWrapperBase, IGuildVoiceCh
 	/// <param name="channel">The channel instance to wrap.</param>
 	/// <param name="guild">The guild this channel belongs to.</param>
 	/// <param name="client">The Discord client for performing operations.</param>
-	public GuildVoiceChannelWrapper(Channel channel, IGuild guild, DiscordClient client)
-		: base(channel, guild, client)
+	public GuildVoiceChannelWrapper(DiscordClient client, Channel channel, IGuild guild)
+		: base(client, channel, guild)
 	{
 	}
 

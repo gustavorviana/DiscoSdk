@@ -25,7 +25,7 @@ public interface IMessage : IDeletable, IMentionable
 	/// <summary>
 	/// Gets the author of the message.
 	/// </summary>
-	User Author { get; }
+	IUser Author { get; }
 
 	/// <summary>
 	/// Gets the contents of the message.

@@ -14,7 +14,7 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 /// </remarks>
 /// <param name="channel">The channel instance to wrap.</param>
 /// <param name="client">The Discord client for performing operations.</param>
-internal class GuildMediaChannelWrapper(Channel channel, IGuild guild, DiscordClient client) : GuildChannelWrapperBase(channel, guild, client), IGuildMediaChannel
+internal class GuildMediaChannelWrapper(Channel channel, IGuild guild, DiscordClient client) : GuildChannelWrapperBase(client, channel, guild), IGuildMediaChannel
 {
     public DefaultReaction? DefaultReactionEmoji => _channel.DefaultReactionEmoji;
     public int? DefaultSortOrder => _channel.DefaultSortOrder;

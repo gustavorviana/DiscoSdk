@@ -5,7 +5,6 @@ using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Interactions;
 using DiscoSdk.Rest.Actions;
-using System;
 
 namespace DiscoSdk.Hosting.Wrappers;
 
@@ -16,7 +15,7 @@ namespace DiscoSdk.Hosting.Wrappers;
 /// Initializes a new instance of the <see cref="InteractionDataWrapper"/> class.
 /// </remarks>
 /// <param name="data">The interaction data instance to wrap.</param>
-internal class InteractionDataWrapper(InteractionData data, ITextBasedChannel channel, DiscordClient client) : IInteractionData
+internal class InteractionDataWrapper(DiscordClient client, InteractionData data, ITextBasedChannel channel) : IInteractionData
 {
     private readonly InteractionData _data = data ?? throw new ArgumentNullException(nameof(data));
     private IInteractionResolved? _resolved = null;
@@ -34,12 +33,12 @@ internal class InteractionDataWrapper(InteractionData data, ITextBasedChannel ch
             var guild = channel is IGuildChannelBase guildChannel ? guildChannel.Guild : null;
             var rolesId = data.Resolved.Roles?.Keys?.ToArray() ?? [];
             var membersId = data.Resolved.Members?.Keys?.ToArray() ?? [];
-            var messages = data.Resolved.Messages?.Values?.Select(x => new MessageWrapper(channel, x, client, null))?.ToArray() ?? [];
+            var messages = data.Resolved.Messages?.Values?.Select(x => new MessageWrapper(client, channel, x, null))?.ToArray() ?? [];
             IRole[] roles = [];
             IMember[] members = [];
             IUser[] users = [];
 
-            var channels = data.Resolved.Channels?.Values.Select(x => new GuildChannelUnionWrapper(x, guild, client))?.ToArray() ?? [];
+            var channels = data.Resolved.Channels?.Values.Select(x => new GuildChannelUnionWrapper(client, x, guild))?.ToArray() ?? [];
 
             if (guild is not null)
             {

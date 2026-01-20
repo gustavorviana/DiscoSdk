@@ -159,7 +159,7 @@ internal class RoleAction(DiscordClient client, IGuild guild, Snowflake? roleId 
 			role = await _client.RoleClient.CreateAsync(guild.Id, request, cancellationToken);
 		}
 
-		return new RoleWrapper(role, guild, _client);
+		return new RoleWrapper(_client, role, guild);
 	}
 }
 

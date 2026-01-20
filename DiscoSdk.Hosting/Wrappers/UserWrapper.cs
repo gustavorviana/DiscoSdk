@@ -20,13 +20,13 @@ internal class UserWrapper : IUser
     private User _user;
     private readonly DiscordClient _client;
 
-    public UserWrapper(User user, DiscordClient client)
+    public UserWrapper(DiscordClient client, User user)
     {
         _user = user ?? throw new ArgumentNullException(nameof(user));
         _client = client ?? throw new ArgumentNullException(nameof(client));
 
-        Avatar = DiscordImage.FromBase64(_user.Avatar);
-        Banner = DiscordImage.FromBase64(_user.Banner);
+        Avatar = DiscordImage.ParseAvatar(_user.Id, user.Avatar);
+        Banner = DiscordImage.ParseBanner(_user.Id, _user.Banner);
     }
 
     /// <inheritdoc />
@@ -116,6 +116,7 @@ internal class UserWrapper : IUser
     /// <inheritdoc />
     public IRestAction<IDmChannel> OpenPrivateChannel()
     {
+        _client.Users.Add(this);
         return _client.DmRepository.OpenDm(Id);
     }
 

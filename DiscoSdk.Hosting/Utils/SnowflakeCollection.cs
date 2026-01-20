@@ -1,5 +1,4 @@
-﻿using DiscoSdk.Hosting.Wrappers.Channels;
-using DiscoSdk.Models;
+﻿using DiscoSdk.Models;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
@@ -38,7 +37,7 @@ namespace DiscoSdk.Hosting.Utils
             }
         }
 
-        public async Task<TModel> GetOrAddAsync(Snowflake id, Func<Snowflake, Task<TModel>> callback)
+        public async Task<TModel?> GetOrAddAsync(Snowflake id, Func<Snowflake, Task<TModel>> callback)
         {
             _semaphore.Wait();
             try

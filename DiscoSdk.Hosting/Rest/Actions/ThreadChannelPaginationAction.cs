@@ -63,7 +63,7 @@ internal class ThreadChannelPaginationAction : RestAction<IGuildThreadChannel[]>
         }
 
         return [.. threads
-            .Select(ch => new GuildThreadChannelWrapper(ch, _channel.Guild, _client))
+            .Select(ch => new GuildThreadChannelWrapper(_client, ch, _channel.Guild))
             .Cast<IGuildThreadChannel>()];
     }
 }

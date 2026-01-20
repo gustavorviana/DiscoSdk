@@ -4,7 +4,7 @@ using DiscoSdk.Hosting.Wrappers;
 
 namespace DiscoSdk.Hosting.Contexts;
 
-internal class CommandContext(DiscordClient client, InteractionWrapper interaction) : InteractionContext(client, interaction), ICommandContext
+internal class CommandContext(DiscordClient client, InteractionWrapper interaction) : InteractionContextWrapper(client, interaction), ICommandContext
 {
     public string Name => Interaction.Data?.Name ?? string.Empty;
 

@@ -64,6 +64,6 @@ internal class CreateEmojiAction : RestAction<IEmoji>, ICreateEmojiAction
 			request["roles"] = _roles.Select(r => r.ToString()).ToArray();
 
 		var emoji = await _client.GuildClient.CreateEmojiAsync(_guildId, request, cancellationToken);
-		return new EmojiWrapper(emoji, _guild, _client);
+		return new EmojiWrapper(_client, emoji, _guild);
 	}
 }

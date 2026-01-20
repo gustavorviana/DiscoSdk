@@ -18,9 +18,15 @@ namespace DiscoSdk.Hosting.Repositories
                 return await _channels.GetOrAddAsync(userId, async id =>
                 {
                     var channelModel = await client.ChannelClient.CreateDMAsync(userId, cancellationToken);
-                    return new DmChannelWrapper(channelModel, client);
+
+                    return new DmChannelWrapper(client, channelModel);
                 });
             });
+        }
+
+        public void SignalDmOpen(Channel channel)
+        {
+
         }
 
         public bool Close(Snowflake userId)

@@ -1,4 +1,4 @@
-using DiscoSdk.Hosting.Events;
+using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
@@ -31,14 +31,14 @@ internal class InteractionWrapper(Interaction interaction,
     public Snowflake Id => _interaction.Id;
     public Snowflake ApplicationId => _interaction.ApplicationId;
     public InteractionType Type => _interaction.Type;
-    public IInteractionData? Data { get; } = interaction.Data is not null && channel is not null ? new InteractionDataWrapper(interaction.Data, channel, client) : null;
+    public IInteractionData? Data { get; } = interaction.Data is not null && channel is not null ? new InteractionDataWrapper(client, interaction.Data, channel) : null;
     public IGuild? Guild => channel is IGuildChannel gChannel ? gChannel.Guild : null;
     public ITextBasedChannel Channel => channel;
     public IMember? Member => member;
-    public IUser? User { get; } = interaction.User is not null ? new UserWrapper(interaction.User, client) : null;
+    public IUser? User { get; } = interaction.User is not null ? new UserWrapper(client, interaction.User) : null;
     public string Token => _interaction.Token;
     public int Version => _interaction.Version;
-    public IMessage? Message { get; } = interaction.Message is not null ? new MessageWrapper(channel!, interaction.Message, client, null) : null;
+    public IMessage? Message { get; } = interaction.Message is not null ? new MessageWrapper(client, channel!, interaction.Message, null) : null;
     public string? Locale => _interaction.Locale;
     public string? GuildLocale => _interaction.GuildLocale;
 

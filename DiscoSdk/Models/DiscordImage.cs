@@ -1,12 +1,50 @@
 ﻿namespace DiscoSdk.Models;
 
-public class DiscordImage(byte[] buffer, string? extension = null)
+public class DiscordImage
 {
-    public byte[] Buffer { get; } = buffer;
+    public byte[] Buffer { get; }
 
     public string ImageType => "image/" + Extension;
 
-    public string Extension { get; } = string.IsNullOrEmpty(extension) ? GetImageExtension(buffer) : extension;
+    public string Extension { get; }
+
+    public string? Url { get; }
+
+    public DiscordImage(byte[] buffer, string? extension = null)
+    {
+        Buffer = buffer;
+        Extension = string.IsNullOrEmpty(extension) ? GetImageExtension(buffer) : extension;
+    }
+
+    private DiscordImage(string url, string extension)
+    {
+        Url = url;
+        Buffer = [];
+        Extension = extension;
+    }
+
+    public static DiscordImage ParseAvatar(Snowflake userId, string? avatarHash)
+    {
+        if (avatarHash == null)
+            return new DiscordImage($"https://cdn.discordapp.com/embed/avatars/{userId % 5}.png", "png");
+
+        var ext = GetExtension(avatarHash);
+        return new DiscordImage($"https://cdn.discordapp.com/avatars/{userId}/{avatarHash}.{ext}", ext);
+    }
+
+    public static DiscordImage? ParseBanner(Snowflake userId, string? bannerHash)
+    {
+        if (bannerHash == null)
+            return null;
+
+        var ext = GetExtension(bannerHash);
+        return new DiscordImage($"https://cdn.discordapp.com/banners/{userId}/{bannerHash}.{ext}", ext);
+    }
+
+    private static string GetExtension(string hash)
+    {
+        return hash.StartsWith("a_") ? "gif" : "png";
+    }
 
     public string ToBase64()
     {

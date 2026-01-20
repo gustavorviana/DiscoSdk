@@ -80,6 +80,6 @@ internal class MessagePaginationAction : RestAction<IMessage[]>, IMessagePaginat
 	{
 		var channel = await _client.ChannelClient.GetAsync(_channel.Id, cancellationToken);
 		var messages = await _client.ChannelClient.GetMessagesAsync(_channel.Id, _limit, _around, _before, _after, cancellationToken);
-		return [.. messages.Select(m => new MessageWrapper(_channel, m, _client, null)).Cast<IMessage>()];
+		return [.. messages.Select(m => new MessageWrapper(_client, _channel, m, null)).Cast<IMessage>()];
 	}
 }

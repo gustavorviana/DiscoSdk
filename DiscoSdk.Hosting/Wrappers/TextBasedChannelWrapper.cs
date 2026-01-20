@@ -16,8 +16,8 @@ namespace DiscoSdk.Hosting.Wrappers;
 /// </remarks>
 /// <param name="channel">The channel instance to wrap.</param>
 /// <param name="client">The Discord client for performing operations.</param>
-internal class TextBasedChannelWrapper(Channel channel, DiscordClient client)
-    : ChannelWrapper(channel, client), ITextBasedChannel
+internal class TextBasedChannelWrapper(DiscordClient client, Channel channel)
+    : ChannelWrapper(client, channel), ITextBasedChannel
 {
     public Snowflake? LastMessageId => _channel.LastMessageId;
     public int? RateLimitPerUser => _channel.RateLimitPerUser;
@@ -31,7 +31,7 @@ internal class TextBasedChannelWrapper(Channel channel, DiscordClient client)
         return RestAction<IMessage[]>.Create(async cancellationToken =>
         {
             var messages = await _client.ChannelClient.GetMessagesAsync(_channel.Id, limit, around, before, after, cancellationToken);
-            return [.. messages.Select(m => new MessageWrapper(this, m, _client, null)).Cast<IMessage>()];
+            return [.. messages.Select(m => new MessageWrapper(_client, this, m, null)).Cast<IMessage>()];
         });
     }
 
@@ -42,7 +42,7 @@ internal class TextBasedChannelWrapper(Channel channel, DiscordClient client)
             try
             {
                 var message = await _client.ChannelClient.GetMessageAsync(_channel.Id, messageId, cancellationToken);
-                return new MessageWrapper(this, message, _client, null);
+                return new MessageWrapper(_client, this, message, null);
             }
             catch
             {
@@ -156,7 +156,7 @@ internal class TextBasedChannelWrapper(Channel channel, DiscordClient client)
         return RestAction<IMessage[]>.Create(async cancellationToken =>
         {
             var messages = await _client.MessageClient.GetPinnedMessagesAsync(_channel.Id, cancellationToken);
-            return [.. messages.Select(m => new MessageWrapper(this, m, _client, null)).Cast<IMessage>()];
+            return [.. messages.Select(m => new MessageWrapper(_client, this, m, null)).Cast<IMessage>()];
         });
     }
 
@@ -170,7 +170,7 @@ internal class TextBasedChannelWrapper(Channel channel, DiscordClient client)
         return RestAction<IMessage>.Create(async cancellationToken =>
         {
             var message = await _client.MessageClient.EndPollAsync(_channel.Id, messageId, cancellationToken);
-            return new MessageWrapper(this, message, _client, null);
+            return new MessageWrapper(_client, this, message, null);
         });
     }
 

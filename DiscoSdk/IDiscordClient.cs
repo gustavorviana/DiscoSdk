@@ -16,7 +16,7 @@ public interface IDiscordClient
     bool IsReady { get; }
     ILogger Logger { get; }
     int TotalShards { get; }
-    ICurrentUser User { get; }
+    ICurrentUser BotUser { get; }
 
     event EventHandler? OnConnectionLost;
     event EventHandler? OnReady;

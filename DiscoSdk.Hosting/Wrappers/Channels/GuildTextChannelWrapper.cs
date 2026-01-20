@@ -18,8 +18,8 @@ internal class GuildTextChannelWrapper : GuildTextBasedChannelWrapper, IGuildTex
     /// <param name="channel">The channel instance to wrap.</param>
     /// <param name="guild">The guild this channel belongs to.</param>
     /// <param name="client">The Discord client for performing operations.</param>
-    public GuildTextChannelWrapper(Channel channel, IGuild guild, DiscordClient client)
-        : base(channel, guild, client)
+    public GuildTextChannelWrapper(DiscordClient client, Channel channel, IGuild guild)
+        : base(client, channel, guild)
     {
     }
 

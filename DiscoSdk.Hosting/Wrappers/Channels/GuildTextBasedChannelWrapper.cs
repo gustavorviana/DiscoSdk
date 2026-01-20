@@ -10,8 +10,8 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 /// <summary>
 /// Base class for guild text-based channel wrappers that combines TextBasedChannelWrapper and GuildChannelWrapperBase functionality.
 /// </summary>
-internal abstract class GuildTextBasedChannelWrapper(Channel channel, IGuild guild, DiscordClient client)
-    : TextBasedChannelWrapper(channel, client), IGuildChannelBase
+internal abstract class GuildTextBasedChannelWrapper(DiscordClient client, Channel channel, IGuild guild)
+    : TextBasedChannelWrapper(client, channel), IGuildChannelBase
 {
     public IGuild Guild => guild;
 

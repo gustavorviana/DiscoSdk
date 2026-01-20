@@ -21,8 +21,8 @@ internal class GuildThreadChannelWrapper : TextBasedChannelWrapper, IGuildThread
     /// </summary>
     /// <param name="channel">The channel instance to wrap.</param>
     /// <param name="client">The Discord client for performing operations.</param>
-    public GuildThreadChannelWrapper(Channel channel, IGuild guild, DiscordClient client)
-        : base(channel, client)
+    public GuildThreadChannelWrapper(DiscordClient client, Channel channel, IGuild guild)
+        : base(client, channel)
     {
         Guild = guild;
     }
@@ -127,7 +127,7 @@ internal class GuildThreadChannelWrapper : TextBasedChannelWrapper, IGuildThread
                 return null;
 
             var parent = await _client.ChannelClient.GetAsync(_channel.ParentId.Value, cancellationToken);
-            return new GuildChannelUnionWrapper(parent, Guild, _client);
+            return new GuildChannelUnionWrapper(_client, parent, Guild);
         });
     }
 

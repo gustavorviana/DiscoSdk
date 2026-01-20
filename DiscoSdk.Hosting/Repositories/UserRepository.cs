@@ -26,19 +26,23 @@ namespace DiscoSdk.Hosting.Repositories
                 if (userModel == null)
                     return null;
 
-
-                user = new UserWrapper(userModel, client);
+                user = new UserWrapper(client, userModel);
                 _users[userId] = user;
                 return user;
             });
         }
 
-        public void UpdateUser(User updatedUser)
+        public void Upsert(User updatedUser)
         {
             if (_users.TryGetValue(updatedUser.Id, out var user))
                 (user as UserWrapper)?.OnUpdate(updatedUser);
             else
-                _users[updatedUser.Id] = new UserWrapper(updatedUser, client);
+                _users[updatedUser.Id] = new UserWrapper(client, updatedUser);
+        }
+
+        internal void Add(IUser user)
+        {
+            _users.TryAdd(user.Id, user);
         }
     }
 }

@@ -1,5 +1,5 @@
 using DiscoSdk.Exceptions;
-using DiscoSdk.Hosting.Events;
+using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
@@ -25,7 +25,7 @@ internal class MessageWrapper : IMessage
     /// </summary>
     /// <param name="message">The message instance to wrap.</param>
     /// <param name="client">The Discord client for performing operations.</param>
-    public MessageWrapper(ITextBasedChannel channel, Message message, DiscordClient client, InteractionHandle? interactionHandle)
+    public MessageWrapper(DiscordClient client, ITextBasedChannel channel, Message message, InteractionHandle? interactionHandle)
     {
         Channel = channel ?? throw new ArgumentNullException(nameof(channel));
         _message = message ?? throw new ArgumentNullException(nameof(message));
@@ -33,6 +33,7 @@ internal class MessageWrapper : IMessage
         _interactionHandle = interactionHandle;
 
         Reactions = _message.Reactions?.Select(r => new ReactionWrapper(r, this, _client))?.ToArray() ?? [];
+        Author = new UserWrapper(client, message.Author);
     }
 
     // Visual Properties
@@ -41,7 +42,7 @@ internal class MessageWrapper : IMessage
     /// <inheritdoc />
     public DateTimeOffset CreatedAt => _message.Id.CreatedAt;
 
-    public User Author => _message.Author;
+    public IUser Author { get; }
     public string Content
     {
         get
@@ -116,7 +117,7 @@ internal class MessageWrapper : IMessage
         return RestAction<IMessage>.Create(async cancellationToken =>
         {
             var message = await _client.MessageClient.CrosspostAsync(_message.ChannelId, _message.Id, cancellationToken);
-            return new MessageWrapper(Channel, message, _client, null);
+            return new MessageWrapper(_client, Channel, message,  null);
         });
     }
 
@@ -222,10 +223,10 @@ internal class MessageWrapper : IMessage
     /// <returns>True if the message author is the bot, false otherwise.</returns>
     private bool IsBotMessage()
     {
-        if (string.IsNullOrEmpty(_client.User?.Id))
+        if (string.IsNullOrEmpty(_client.BotUser?.Id))
             return false;
 
-        if (!Snowflake.TryParse(_client.User.Id, out var botId))
+        if (!Snowflake.TryParse(_client.BotUser.Id, out var botId))
             return false;
 
         return _message.Author.Id == botId;

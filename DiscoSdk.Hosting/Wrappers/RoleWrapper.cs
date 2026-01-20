@@ -2,8 +2,6 @@ using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
-using System;
-using System.Linq;
 
 namespace DiscoSdk.Hosting.Wrappers;
 
@@ -16,7 +14,7 @@ namespace DiscoSdk.Hosting.Wrappers;
 /// <param name="role">The role instance to wrap.</param>
 /// <param name="guild">The guild this role belongs to.</param>
 /// <param name="client">The Discord client for performing operations.</param>
-internal class RoleWrapper(Role role, IGuild guild, DiscordClient client) : IRole
+internal class RoleWrapper(DiscordClient client, Role role, IGuild guild) : IRole
 {
     private readonly Role _role = role ?? throw new ArgumentNullException(nameof(role));
     private readonly IGuild _guild = guild ?? throw new ArgumentNullException(nameof(guild));

@@ -3,10 +3,10 @@ using DiscoSdk.Hosting.Events;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Payloads.Models;
 using DiscoSdk.Hosting.Logging;
+using DiscoSdk.Hosting.Managers;
 using DiscoSdk.Hosting.Repositories;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Rest.Clients;
-using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
@@ -27,7 +27,8 @@ namespace DiscoSdk.Hosting
         private readonly DiscordEventDispatcher _eventDispatcher;
         public IDiscordRestClientBase HttpClient { get; }
         private readonly DiscordClientConfig _config;
-        internal GuildManager GuildManager { get; }
+        public GuildManager Guilds { get; }
+        internal ChannelManager Channels { get; }
 
         /// <summary>
         /// Gets the gateway intents configured for this client.
@@ -73,7 +74,7 @@ namespace DiscoSdk.Hosting
         internal InviteClient InviteClient { get; }
         internal RoleClient RoleClient { get; }
         internal GuildClient GuildClient { get; }
-        internal UserRepository UserRepository { get; }
+        internal UserRepository Users { get; }
         internal DmChannelRepository DmRepository { get; }
 
         /// <summary>
@@ -90,11 +91,6 @@ namespace DiscoSdk.Hosting
         }
 
         /// <summary>
-        /// Gets the guild manager for managing guilds and channels.
-        /// </summary>
-        public GuildManager Guilds => GuildManager;
-
-        /// <summary>
         /// Gets or sets the application ID of the bot.
         /// </summary>
         public string? ApplicationId { get; private set; }
@@ -107,12 +103,12 @@ namespace DiscoSdk.Hosting
         /// <summary>
         /// Gets a value indicating whether the bot has fully initialized (all guilds have been loaded).
         /// </summary>
-        public bool IsFullyInitialized => GuildManager.IsFullyInitialized;
+        public bool IsFullyInitialized => Guilds.IsFullyInitialized;
 
         /// <summary>
         /// Gets the current authenticated user.
         /// </summary>
-        public ICurrentUser User { get; private set; } = new ReadyUser();
+        public ICurrentUser BotUser { get; private set; } = new ReadyUser();
 
         public DiscordClient(DiscordClientConfig config, JsonSerializerOptions jsonOptions, IObjectConverter converter)
         {
@@ -127,8 +123,9 @@ namespace DiscoSdk.Hosting
             InviteClient = new InviteClient(HttpClient);
             RoleClient = new RoleClient(HttpClient);
             GuildClient = new GuildClient(HttpClient);
-            UserRepository = new UserRepository(this);
-            GuildManager = new GuildManager(this, Logger);
+            Users = new UserRepository(this);
+            Guilds = new GuildManager(this, Logger);
+            Channels = new ChannelManager(this);
             DmRepository = new DmChannelRepository(this);
             ObjectConverter = converter;
 
@@ -253,14 +250,14 @@ namespace DiscoSdk.Hosting
 
         private async Task Shard_OnReady(Shard sender, Gateway.Payloads.ReadyPayload arg)
         {
-            if (string.IsNullOrEmpty(User?.Id))
-                User = arg.User;
+            if (string.IsNullOrEmpty(BotUser?.Id))
+                BotUser = arg.User;
 
             // Store application ID from ready payload
             if (string.IsNullOrEmpty(ApplicationId))
                 ApplicationId = arg.Application.Id;
 
-            Logger.Log(LogLevel.Information, $"Shard {sender.ShardId} of {User.Username} is ready.");
+            Logger.Log(LogLevel.Information, $"Shard {sender.ShardId} of {BotUser.Username} is ready.");
 
             // Initialize pending guilds list from Ready payload (only once, on shard 0)
             if (IsReady && sender.ShardId == 0 && !_isInitialized)
@@ -272,7 +269,7 @@ namespace DiscoSdk.Hosting
                     .Where(g => !string.IsNullOrEmpty(g.Id))
                     .Select(g => Snowflake.TryParse(g.Id, out var id) ? id : default);
 
-                GuildManager.InitializePendingGuilds(guildIds);
+                Guilds.InitializePendingGuilds(guildIds);
             }
 
             if (IsReady && OnReady != null)
@@ -388,9 +385,9 @@ namespace DiscoSdk.Hosting
                 // Get the guild if the channel belongs to a guild
                 IGuild? guild = null;
                 if (channel.GuildId.HasValue && !channel.GuildId.Value.Empty)
-                    guild = await GuildManager.GetAsync(channel.GuildId.Value, cancellationToken);
+                    guild = await Guilds.GetAsync(channel.GuildId.Value, cancellationToken);
 
-                return Wrappers.Channels.ChannelWrapper.ToSpecificType(channel, guild, this);
+                return Wrappers.Channels.ChannelWrapper.ToSpecificType(this, channel, guild);
             });
         }
 
@@ -418,13 +415,19 @@ namespace DiscoSdk.Hosting
             if (userId == default)
                 throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
-            return DmRepository.OpenDm(userId);
+            return RestAction<IDmChannel>.Create(async cancellationToken =>
+            {
+                var user = await Users.Get(userId).ExecuteAsync(cancellationToken);
+                return user == null
+                    ? throw new InvalidOperationException("User not found")
+                    : await DmRepository.OpenDm(userId).ExecuteAsync(cancellationToken);
+            });
         }
 
         /// <inheritdoc />
         public IRestAction<IUser?> GetUser(Snowflake userId)
         {
-            return UserRepository.Get(userId);
+            return Users.Get(userId);
         }
 
         /// <inheritdoc />

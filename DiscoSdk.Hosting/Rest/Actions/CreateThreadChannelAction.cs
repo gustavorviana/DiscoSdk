@@ -246,6 +246,6 @@ internal class CreateThreadChannelAction : RestAction<IGuildThreadChannel>, ICre
 			threadChannel = forumPost.Channel;
 		}
 
-		return new GuildThreadChannelWrapper(threadChannel, _channel.Guild, _client);
+		return new GuildThreadChannelWrapper(_client, threadChannel, _channel.Guild);
 	}
 }

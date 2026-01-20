@@ -16,7 +16,7 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 /// </remarks>
 /// <param name="channel">The channel instance to wrap.</param>
 /// <param name="client">The Discord client for performing operations.</param>
-internal class ChannelWrapper(Channel channel, DiscordClient client) : IChannel
+internal class ChannelWrapper(DiscordClient client, Channel channel) : IChannel
 {
     protected readonly Channel _channel = channel ?? throw new ArgumentNullException(nameof(channel));
     protected readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
@@ -59,7 +59,7 @@ internal class ChannelWrapper(Channel channel, DiscordClient client) : IChannel
         if (!ChannelTypeUtils.IsGuild(channel.Type))
             throw new InvalidCastException();
 
-        return (IGuildChannelBase)ToSpecificType(channel, guild, client);
+        return (IGuildChannelBase)ToSpecificType(client, channel, guild);
     }
 
     /// <summary>
@@ -69,15 +69,15 @@ internal class ChannelWrapper(Channel channel, DiscordClient client) : IChannel
     /// <param name="guild">The guild this channel belongs to (null for DM channels).</param>
     /// <param name="client">The Discord client for performing operations.</param>
     /// <returns>The channel as its most specific type.</returns>
-    public static IChannel ToSpecificType(Channel channel, IGuild? guild, DiscordClient client)
+    public static IChannel ToSpecificType(DiscordClient client, Channel channel, IGuild? guild)
     {
         ArgumentNullException.ThrowIfNull(channel);
         ArgumentNullException.ThrowIfNull(client);
 
         if (channel.Type is ChannelType.Dm or ChannelType.GroupDm)
-            return new DmChannelWrapper(channel, client);
+            return new DmChannelWrapper(client, channel);
 
-        var unionWrapper = new GuildChannelUnionWrapper(channel, guild!, client);
+        var unionWrapper = new GuildChannelUnionWrapper(client, channel, guild!);
 
         return channel.Type switch
         {
@@ -90,5 +90,9 @@ internal class ChannelWrapper(Channel channel, DiscordClient client) : IChannel
             ChannelType.GuildMedia => unionWrapper.AsMediaChannel() ?? (IChannel)unionWrapper,
             _ => unionWrapper
         };
+    }
+
+    internal void OnUpdate(Channel channel)
+    {
     }
 }

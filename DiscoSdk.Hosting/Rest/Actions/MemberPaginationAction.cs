@@ -42,7 +42,7 @@ internal class MemberPaginationAction(DiscordClient client, IGuild guild) : Rest
 		
 		return [.. members
 			.Where(m => m.User != null)
-			.Select(m => new GuildMemberWrapper(m, guild, _client))
+			.Select(m => new GuildMemberWrapper(_client, m, guild))
 			.Cast<IMember>()];
 	}
 }

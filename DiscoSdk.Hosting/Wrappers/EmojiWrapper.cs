@@ -10,17 +10,17 @@ namespace DiscoSdk.Hosting.Wrappers;
 internal class EmojiWrapper : IEmoji
 {
     private readonly Emoji _emoji;
-    private readonly IGuild _guild;
+    private readonly IGuild? _guild;
     private readonly DiscordClient _client;
 
-    public EmojiWrapper(Emoji emoji, IGuild guild, DiscordClient client)
+    public EmojiWrapper(DiscordClient client, Emoji emoji, IGuild? guild)
     {
         _emoji = emoji ?? throw new ArgumentNullException(nameof(emoji));
-        _guild = guild ?? throw new ArgumentNullException(nameof(guild));
         _client = client ?? throw new ArgumentNullException(nameof(client));
+        _guild = guild ;
 
         if (_emoji.User != null)
-            User = new UserWrapper(_emoji.User, client);
+            User = new UserWrapper(client, _emoji.User);
     }
 
     /// <inheritdoc />

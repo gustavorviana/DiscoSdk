@@ -10,8 +10,8 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 /// <summary>
 /// Base class for guild channel wrappers that provides common implementations for IGuildChannelBase, IPermissionContainer, etc.
 /// </summary>
-internal abstract class GuildChannelWrapperBase(Channel channel, IGuild guild, DiscordClient client) 
-    : ChannelWrapper(channel, client), IGuildChannel
+internal abstract class GuildChannelWrapperBase(DiscordClient client, Channel channel, IGuild guild) 
+    : ChannelWrapper(client, channel), IGuildChannel
 {
     public IGuild Guild => guild;
     public bool Nsfw => _channel.Nsfw ?? false;

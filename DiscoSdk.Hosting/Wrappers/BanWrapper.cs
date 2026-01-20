@@ -13,7 +13,7 @@ internal class BanWrapper : IBan
 	{
 		_client = client ?? throw new ArgumentNullException(nameof(client));
 
-		User = new UserWrapper(ban.User, _client);
+		User = new UserWrapper(_client, ban.User);
 		Reason = ban.Reason;
     }
 

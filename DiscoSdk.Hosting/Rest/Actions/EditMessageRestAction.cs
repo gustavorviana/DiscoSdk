@@ -1,4 +1,4 @@
-using DiscoSdk.Hosting.Events;
+using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
@@ -145,7 +145,7 @@ internal class EditMessageRestAction : RestAction<IMessage>, IEditMessageRestAct
         else
             message = await _client.InteractionClient.EditOriginalResponseAsync(_interactionHandle, request, cancellationToken);
 
-        return new MessageWrapper(_channel, message, _client, _interactionHandle);
+        return new MessageWrapper(_client, _channel, message, _interactionHandle);
     }
 }
 

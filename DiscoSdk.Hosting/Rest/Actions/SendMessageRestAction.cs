@@ -1,4 +1,4 @@
-using DiscoSdk.Hosting.Events;
+using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Models;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
@@ -227,7 +227,7 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
         };
 
         var message = await _client.MessageClient.CreateAsync(_channel.Id, request, cancellationToken);
-        return new MessageWrapper(_channel, message, _client, _interactionHandle);
+        return new MessageWrapper(_client, _channel, message, _interactionHandle);
     }
 
     private async Task<IMessage> SendInteractionResponseAsync(CancellationToken cancellationToken)
@@ -246,7 +246,7 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
 
         await _client.InteractionClient.RespondAsync(_interactionHandle!, callbackData, cancellationToken);
         var message = await _client.InteractionClient.GetOriginalResponseAsync(_interactionHandle!, cancellationToken);
-        return new MessageWrapper(_channel, message, _client, EnsureInteractionHandle());
+        return new MessageWrapper(_client, _channel, message, EnsureInteractionHandle());
     }
 
     private async Task<IMessage> SendFollowUpAsync(CancellationToken cancellationToken)
@@ -265,7 +265,7 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
         }, cancellationToken);
 
         var message = await _client.InteractionClient.GetOriginalResponseAsync(_interactionHandle!, cancellationToken);
-        return new MessageWrapper(_channel, message, _client, EnsureInteractionHandle());
+        return new MessageWrapper(_client, _channel, message, EnsureInteractionHandle());
     }
 
     private InteractionHandle? EnsureInteractionHandle()

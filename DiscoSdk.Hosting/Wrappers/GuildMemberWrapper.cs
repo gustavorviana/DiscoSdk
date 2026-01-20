@@ -16,7 +16,7 @@ namespace DiscoSdk.Hosting.Wrappers;
 /// <param name="member">The guild member instance to wrap.</param>
 /// <param name="guild">The guild this member belongs to.</param>
 /// <param name="client">The Discord client for performing operations.</param>
-internal class GuildMemberWrapper(GuildMember member, IGuild guild, DiscordClient client) : IMember
+internal class GuildMemberWrapper(DiscordClient client, GuildMember member, IGuild guild) : IMember
 {
     private readonly GuildMember _member = member ?? throw new ArgumentNullException(nameof(member));
     private readonly IGuild _guild = guild ?? throw new ArgumentNullException(nameof(guild));
@@ -44,7 +44,7 @@ internal class GuildMemberWrapper(GuildMember member, IGuild guild, DiscordClien
         get
         {
             if (_user == null && _member.User != null)
-                _user = new UserWrapper(_member.User, client);
+                _user = new UserWrapper(client, _member.User);
 
             return _user ?? throw new InvalidOperationException("Member has no user data.");
         }

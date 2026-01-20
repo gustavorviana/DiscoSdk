@@ -5,7 +5,7 @@ using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Contexts;
 
-internal class InteractionContext(DiscordClient client, InteractionWrapper interaction) : ContextWrapper(client), IInteractionContext
+internal class InteractionContextWrapper(DiscordClient client, InteractionWrapper interaction) : ContextWrapper(client), IInteractionContext
 {
     public InteractionWrapper Interaction => interaction;
 
