@@ -72,35 +72,37 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
     /// </summary>
     /// <param name="guild">The guild that was created or became available.</param>
     /// <param name="jsonOptions">The JSON serializer options.</param>
-    internal void HandleGuildCreate(Guild guild)
+    internal IGuild? HandleGuildCreate(Guild? guild)
     {
         if (guild == null || !guild.Id.Empty)
-            return;
+            return null;
 
         lock (_lock)
         {
-            // Add or update guild in cache
-            _guildCache[guild.Id] = new GuildWrapper(guild, client);
+            var wrappedGuild = new GuildWrapper(guild, client);
 
-            // Remove from pending list if it was there
+            _guildCache[guild.Id] = wrappedGuild;
+
             if (_pendingGuilds.Remove(guild.Id))
             {
                 var remaining = _pendingGuilds.Count;
                 _logger.Log(LogLevel.Debug, $"Guild {guild.Name} ({guild.Id}) loaded. {remaining} guild(s) remaining.");
 
-                // If all guilds are loaded, log completion
                 if (remaining == 0)
-                {
                     _logger.Log(LogLevel.Information, $"All guilds loaded! Bot is fully initialized. Total guilds: {_guildCache.Count}");
-                }
             }
+
+            return wrappedGuild;
         }
     }
 
-    internal void HandleGuildUpdate(Guild guildUpdate)
+    internal IGuild? HandleGuildUpdate(Guild? guildUpdate)
     {
-        if (_guildCache.TryGetValue(guildUpdate.Id, out var guild))
-            (guild as GuildWrapper)?.OnUpdate(guildUpdate);
+        if (guildUpdate is null || _guildCache.TryGetValue(guildUpdate.Id, out var guild))
+            return null;
+
+        (guild as GuildWrapper)?.OnUpdate(guildUpdate);
+        return guild;
     }
 
     internal void HandleGuildDelete(Snowflake guildId)

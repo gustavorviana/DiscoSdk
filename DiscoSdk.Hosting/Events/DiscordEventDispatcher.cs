@@ -1,6 +1,7 @@
 using DiscoSdk.Events;
 using DiscoSdk.Hosting.Contexts;
-using DiscoSdk.Hosting.Contexts.Contexts;
+using DiscoSdk.Hosting.Contexts.Channels;
+using DiscoSdk.Hosting.Contexts.Guilds;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Hosting.Wrappers.Channels;
@@ -178,35 +179,27 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
     private async Task ProcessGuildCreateAsync(JsonElement payload)
     {
         var guild = payload.Deserialize<Guild>(_discordClient.SerializerOptions);
-        if (guild == null) return;
+        if (_discordClient.GuildManager.HandleGuildCreate(guild) is not IGuild wrappedGuild)
+            return;
 
-        _discordClient.GuildManager.HandleGuildCreate(guild);
-
-        var eventData = new GuildCreateEvent { Guild = guild };
+        var eventData = new GuildContextWrapper(_discordClient, wrappedGuild);
         await ProcessAll<IGuildCreateHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessGuildUpdateAsync(JsonElement payload)
     {
         var guild = payload.Deserialize<Guild>(_discordClient.SerializerOptions);
-        if (guild == null) return;
+        if (_discordClient.GuildManager.HandleGuildUpdate(guild) is not IGuild wrappedGuild) return;
 
-        _discordClient.GuildManager.HandleGuildUpdate(guild);
-
-        var eventData = new GuildUpdateEvent { Guild = guild };
+        var eventData = new GuildContextWrapper(_discordClient, wrappedGuild);
         await ProcessAll<IGuildUpdateHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessGuildDeleteAsync(JsonElement payload)
     {
-        Snowflake.TryParse(payload.GetProperty("id").GetString(), out var snowflake);
-        var eventData = new GuildDeleteEvent
-        {
-            Id = snowflake,
-            Unavailable = payload.TryGetProperty("unavailable", out var unavailable) && unavailable.GetBoolean()
-        };
-
+        var eventData = new GuildDeleteContextWrapper(_discordClient, payload);
         _discordClient.GuildManager.HandleGuildDelete(eventData.Id);
+
         await ProcessAll<IGuildDeleteHandler>(x => x.HandleAsync(eventData));
     }
 

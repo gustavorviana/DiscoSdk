@@ -1,4 +1,5 @@
 using DiscoSdk.Contexts.Channels;
+using DiscoSdk.Contexts.Guilds;
 using DiscoSdk.Contexts.Interactions;
 
 namespace DiscoSdk.Events;
@@ -40,21 +41,21 @@ public interface IMessageDeleteHandler : IDiscordEventHandler<MessageDeleteEvent
 /// <summary>
 /// Interface for handling guild creation events.
 /// </summary>
-public interface IGuildCreateHandler : IDiscordEventHandler<GuildCreateEvent>
+public interface IGuildCreateHandler : IDiscordEventHandler<IGuildContext>
 {
 }
 
 /// <summary>
 /// Interface for handling guild update events.
 /// </summary>
-public interface IGuildUpdateHandler : IDiscordEventHandler<GuildUpdateEvent>
+public interface IGuildUpdateHandler : IDiscordEventHandler<IGuildContext>
 {
 }
 
 /// <summary>
 /// Interface for handling guild deletion events.
 /// </summary>
-public interface IGuildDeleteHandler : IDiscordEventHandler<GuildDeleteEvent>
+public interface IGuildDeleteHandler : IDiscordEventHandler<IGuildDeleteContext>
 {
 }
 

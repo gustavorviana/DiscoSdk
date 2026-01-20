@@ -1,7 +1,7 @@
-﻿using DiscoSdk.Contexts;
+﻿using DiscoSdk.Contexts.Guilds;
 using DiscoSdk.Models;
 
-namespace DiscoSdk.Hosting.Contexts
+namespace DiscoSdk.Hosting.Contexts.Guilds
 {
     internal class GuildContextWrapper(DiscordClient client, IGuild guild) : ContextWrapper(client), IGuildContext
     {

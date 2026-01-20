@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Models;
+﻿using DiscoSdk.Contexts.Guilds;
+using DiscoSdk.Models;
 
 namespace DiscoSdk.Contexts.Channels;
 

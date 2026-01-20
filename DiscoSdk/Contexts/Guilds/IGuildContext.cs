@@ -1,6 +1,6 @@
 ﻿using DiscoSdk.Models;
 
-namespace DiscoSdk.Contexts;
+namespace DiscoSdk.Contexts.Guilds;
 
 public interface IGuildContext : IContext
 {
