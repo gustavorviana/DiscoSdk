@@ -9,34 +9,25 @@ namespace TomoriBot;
 /// </summary>
 internal class ModalSubmitHandler : IModalSubmitHandler
 {
-    public async Task HandleAsync(IInteractionContext eventData)
+    public async Task HandleAsync(IModalContext context)
     {
-        var interaction = eventData.Interaction;
+        Console.WriteLine($"[MODAL] Modal submitted: {context.CustomId}");
 
-        if (interaction.Data == null)
-            return;
-
-        var modalCustomId = interaction.Data.CustomId;
-        Console.WriteLine($"[MODAL] Modal submitted: {modalCustomId}");
+        await context.Defer().ExecuteAsync();
+        await Task.Delay(2000);
 
         // Example: Handle feedback modal
-        if (modalCustomId == "feedback_modal")
+        if (context.CustomId == "feedback_modal")
         {
             // Get values from modal components
-            var feedback = interaction.Data.Components?
-                .SelectMany(row => row.Components ?? [])
-                .FirstOrDefault(c => c.CustomId == "feedback_input")?
-                .Value ?? "No feedback provided";
+            var feedback = context.GetOption("feedback_input") ?? "No feedback provided";
 
             Console.WriteLine($"[MODAL] Feedback received: {feedback}");
 
-            // Respond to the modal submission
-            await eventData.Reply(
+            await context.Reply(
                 $"✅ **Feedback received!**\n\nThank you for your feedback: {feedback}"
             ).SetEphemeral()
             .ExecuteAsync();
         }
     }
 }
-
-

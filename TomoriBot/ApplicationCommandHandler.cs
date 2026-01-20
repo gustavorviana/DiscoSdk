@@ -44,40 +44,50 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
 
         if (context.Name == "feedback")
         {
-            var buttons = new MessageComponent[]
-            {
-                // "Approve" button
-                new() {
-                    Type = ComponentType.Button,
-                    Style = ButtonStyle.Success,
-                    Label = "Approve",
-                    CustomId = "approve_feedback"
-                },
-                // "Reject" button
-                new()
-                {
-                    Type = ComponentType.Button,
-                    Style = ButtonStyle.Danger,
-                    Label = "Reject",
-                    CustomId = "reject_feedback"
-                },
-                // "View Details" button
-                new()
-                {
-                    Type = ComponentType.Button,
-                    Style = ButtonStyle.Secondary,
-                    Label = "View Details",
-                    CustomId = "view_feedback_details"
-                }
-            };
+            //var buttons = new MessageComponent[]
+            //{
+            //    // "Approve" button
+            //    new() {
+            //        Type = ComponentType.Button,
+            //        Style = ButtonStyle.Success,
+            //        Label = "Approve",
+            //        CustomId = "approve_feedback"
+            //    },
+            //    // "Reject" button
+            //    new()
+            //    {
+            //        Type = ComponentType.Button,
+            //        Style = ButtonStyle.Danger,
+            //        Label = "Reject",
+            //        CustomId = "reject_feedback"
+            //    },
+            //    // "View Details" button
+            //    new()
+            //    {
+            //        Type = ComponentType.Button,
+            //        Style = ButtonStyle.Secondary,
+            //        Label = "View Details",
+            //        CustomId = "view_feedback_details"
+            //    }
+            //};
 
-            await context.Defer().ExecuteAsync();
+            //// Send message with buttons
+            //await context
+            //    .Reply($"✅ **Feedback received!**\n\nWaiting for your action...")
+            //    .SetEphemeral()
+            //    .AddActionRow(buttons)
+            //    .ExecuteAsync();
 
-            // Send message with buttons
             await context
-                .Reply($"✅ **Feedback received!**\n\nWaiting for your action...")
-                .SetEphemeral()
-                .AddActionRow(buttons)
+                .ReplyModal()
+                .SetCustomId("feedback_modal")
+                .SetTitle("Feedback")
+                .AddActionRow(new TextInputComponent
+                {
+                    Label = "Teste",
+                    CustomId = "feedback_input",
+                    Placeholder = "My Placeholder"
+                })
                 .ExecuteAsync();
 
             return;

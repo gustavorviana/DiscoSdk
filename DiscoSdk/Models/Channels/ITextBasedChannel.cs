@@ -72,17 +72,17 @@ public interface ITextBasedChannel : IChannel
 	/// <returns>An array of tasks representing the deletion operations.</returns>
 	IRestAction PurgeMessagesAsync(IEnumerable<IMessage> messages);
 
-	/// <summary>
-	/// Sends a message to this channel.
-	/// </summary>
-	/// <returns>A REST action that can be executed to send the message.</returns>
-	ISendMessageRestAction SendMessage();
+    /// <summary>
+    /// Sends a message to this channel.
+    /// </summary>
+    /// <returns>A REST action that can be executed to send the message.</returns>
+    ISendMessageRestAction SendMessage(string? content = null);
 
-	/// <summary>
-	/// Triggers the typing indicator in this channel.
-	/// </summary>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	IRestAction TriggerTypingAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Triggers the typing indicator in this channel.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    IRestAction TriggerTypingAsync(CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Gets an iterable message pagination action for this channel.

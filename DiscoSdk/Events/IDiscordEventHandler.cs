@@ -10,9 +10,9 @@ public interface IDiscordEventHandler
 /// <summary>
 /// Base interface for Discord event handlers.
 /// </summary>
-public interface IDiscordEventHandler<TEventData> : IDiscordEventHandler
+public interface IDiscordEventHandler<TContext> : IDiscordEventHandler
 {
-    Task HandleAsync(TEventData eventData);
+    Task HandleAsync(TContext context);
 }
 
 /// <summary>
@@ -118,7 +118,7 @@ public interface IApplicationCommandHandler : IDiscordEventHandler<ICommandConte
 /// Interface for handling modal submission interactions.
 /// This handler is only called when interaction.Type == InteractionType.ModalSubmit.
 /// </summary>
-public interface IModalSubmitHandler : IDiscordEventHandler<IInteractionContext>
+public interface IModalSubmitHandler : IDiscordEventHandler<IModalContext>
 {
 }
 
@@ -129,4 +129,3 @@ public interface IModalSubmitHandler : IDiscordEventHandler<IInteractionContext>
 public interface IComponentInteractionHandler : IDiscordEventHandler<IInteractionContext>
 {
 }
-

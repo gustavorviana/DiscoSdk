@@ -1,10 +1,10 @@
 using DiscoSdk.Contexts.Interactions;
 using DiscoSdk.Hosting.Contexts.Models;
-using DiscoSdk.Models.Interactions;
+using DiscoSdk.Hosting.Wrappers;
 
 namespace DiscoSdk.Hosting.Contexts;
 
-internal class CommandContext(IInteraction interaction, DiscordClient client) : InteractionContext(interaction, client), ICommandContext
+internal class CommandContext(InteractionWrapper interaction, DiscordClient client) : InteractionContext(interaction, client), ICommandContext
 {
     public string Name => Interaction.Data?.Name ?? string.Empty;
 
@@ -18,5 +18,5 @@ internal class CommandContext(IInteraction interaction, DiscordClient client) : 
         => GetOption(name)?.To(@default);
 
     public IRootCommandOption? GetOption(string name)
-        => Options.FirstOrDefault(x => x.Name == name);
+        => Options.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 }

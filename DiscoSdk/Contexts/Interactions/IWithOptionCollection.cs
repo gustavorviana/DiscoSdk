@@ -1,8 +1,6 @@
-﻿using DiscoSdk.Models;
+﻿namespace DiscoSdk.Contexts.Interactions;
 
-namespace DiscoSdk.Contexts.Interactions;
-
-public interface IWithOptionCollection<TOption> where TOption : IInteractionOption
+public interface IWithOptionCollection<TOption>
 {
     IReadOnlyCollection<TOption> Options { get; }
 

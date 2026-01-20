@@ -14,11 +14,6 @@ public class InteractionCallbackRequest
     [JsonPropertyName("type")]
     public InteractionCallbackType Type { get; set; }
 
-    /// <summary>
-    /// Gets or sets the callback data. This is required for <see cref="InteractionCallbackType.ChannelMessageWithSource"/>
-    /// and optional for <see cref="InteractionCallbackType.DeferredChannelMessageWithSource"/>.
-    /// </summary>
     [JsonPropertyName("data")]
-    public InteractionCallbackData? Data { get; set; }
+    public object? Data { get; set; }
 }
-

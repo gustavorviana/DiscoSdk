@@ -25,7 +25,7 @@ public class TextInputComponent
     /// 1 = Short (single line), 2 = Paragraph (multi-line).
     /// </summary>
     [JsonPropertyName("style")]
-    public TextInputStyle Style { get; set; }
+    public TextInputStyle Style { get; set; } = TextInputStyle.Short;
 
     /// <summary>
     /// Gets or sets the label for the text input (max 45 characters).
@@ -63,4 +63,3 @@ public class TextInputComponent
     [JsonPropertyName("value")]
     public string? Value { get; set; }
 }
-

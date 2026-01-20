@@ -43,7 +43,7 @@ public interface IInteraction
     /// <summary>
     /// Gets the channel ID where the interaction was triggered.
     /// </summary>
-    ITextBasedChannel? Channel { get; }
+    ITextBasedChannel Channel { get; }
 
 	/// <summary>
 	/// Gets the member who triggered the interaction, or null if triggered in a DM.

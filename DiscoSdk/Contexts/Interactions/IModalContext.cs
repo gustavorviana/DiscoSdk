@@ -1,9 +1,13 @@
-﻿namespace DiscoSdk.Contexts.Interactions;
+﻿using DiscoSdk.Rest.Actions;
+
+namespace DiscoSdk.Contexts.Interactions;
 
 public interface IModalContext : IInteractionContext
 {
     string CustomId { get; }
-    IReadOnlyCollection<IModalOption> Fields { get; }
+    IReadOnlyCollection<IModalOption> Options { get; }
 
-    IModalOption? GetField(string customId);
+    string? GetOption(string customId);
+
+    IRestAction Acknowledge();
 }

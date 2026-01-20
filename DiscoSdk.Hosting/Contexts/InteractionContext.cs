@@ -1,14 +1,19 @@
 ﻿using DiscoSdk.Contexts.Interactions;
+using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models.Interactions;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Contexts;
 
-internal class InteractionContext(IInteraction interaction, IDiscordClient client) : IInteractionContext
+internal class InteractionContext(InteractionWrapper interaction, DiscordClient client) : IInteractionContext
 {
-    public IInteraction Interaction => interaction;
+    public InteractionWrapper Interaction => interaction;
 
-    public IDiscordClient Client => client;
+    public DiscordClient Client => client;
+
+    IDiscordClient IInteractionContext.Client => Client;
+
+    IInteraction IInteractionContext.Interaction => Interaction;
 
     public IRestAction Defer(bool ephemeral = true)
     {

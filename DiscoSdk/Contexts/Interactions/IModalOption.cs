@@ -1,8 +1,7 @@
-﻿using DiscoSdk.Models;
+﻿namespace DiscoSdk.Contexts.Interactions;
 
-namespace DiscoSdk.Contexts.Interactions;
-
-public interface IModalOption : IInteractionOption
+public interface IModalOption
 {
     string CustomId { get; }
+    string Value { get; }
 }

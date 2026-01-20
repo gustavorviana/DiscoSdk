@@ -45,14 +45,7 @@ internal class InteractionClient(DiscordClient discordClient)
 
     public async Task RespondWithModalAsync(InteractionHandle interaction, ModalData modalData, CancellationToken cancellationToken = default)
     {
-        var data = new InteractionCallbackData
-        {
-            CustomId = modalData.CustomId,
-            Title = modalData.Title,
-            Components = modalData.Components
-        };
-
-        await SendCallbackAsync(interaction, data, InteractionCallbackType.Modal, cancellationToken);
+        await SendCallbackAsync(interaction, modalData, InteractionCallbackType.Modal, cancellationToken);
     }
 
     public async Task AcknowledgeAsync(InteractionHandle interaction, AcknowledgeType type, CancellationToken cancellationToken = default)
@@ -70,7 +63,7 @@ internal class InteractionClient(DiscordClient discordClient)
     }
 
 	public async Task SendCallbackAsync(InteractionHandle interaction,
-		InteractionCallbackData? data,
+		object? data,
 		InteractionCallbackType type,
 		CancellationToken cancellationToken)
 	{
@@ -81,7 +74,7 @@ internal class InteractionClient(DiscordClient discordClient)
 		};
 
 		var path = $"interactions/{interaction.Id}/{interaction.Token}/callback";
-		await Client.SendAsync<object>(path, HttpMethod.Post, request, cancellationToken);
+		await Client.SendAsync(path, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>

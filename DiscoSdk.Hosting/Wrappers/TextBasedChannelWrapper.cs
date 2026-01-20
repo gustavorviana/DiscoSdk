@@ -99,9 +99,9 @@ internal class TextBasedChannelWrapper(Channel channel, DiscordClient client)
         });
     }
 
-    public ISendMessageRestAction SendMessage()
+    public ISendMessageRestAction SendMessage(string? content = null)
     {
-        return new SendMessageRestAction(_client, null, this, null);
+        return new SendMessageRestAction(_client, null, this, content);
     }
 
     public IMessagePaginationAction GetMessages()

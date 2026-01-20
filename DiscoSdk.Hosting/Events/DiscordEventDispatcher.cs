@@ -293,10 +293,6 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
                 return;
 
             var handle = new InteractionHandle(interaction.Id, interaction.Token);
-
-            if (interaction.Type == InteractionType.ModalSubmit)
-                await _discordClient.InteractionClient.AcknowledgeAsync(handle, Rest.Clients.InteractionClient.AcknowledgeType.ModalSubmit, CancellationToken.None);
-
             var channel = interaction.ChannelId is not null ? await _discordClient.GetChannel<ITextBasedChannel>(interaction.ChannelId.Value).ExecuteAsync() : null;
             var guild = channel is IGuildChannelBase guildChannel ? guildChannel.Guild : null;
             var member = guild is not null && interaction.Member is not null ? new GuildMemberWrapper(interaction.Member, guild, _discordClient) : null;
@@ -310,7 +306,7 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
                     await HandleCommand(interactionWrapper);
 
                 if (interaction.Type == InteractionType.ModalSubmit)
-                    await ProcessAll<IModalSubmitHandler>(x => x.HandleAsync(interactionContext));
+                    await HandleModal(interactionWrapper);
 
                 if (interaction.Type == InteractionType.MessageComponent)
                     await ProcessAll<IComponentInteractionHandler>(x => x.HandleAsync(interactionContext));
@@ -328,14 +324,24 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         }
     }
 
+    private async Task HandleModal(InteractionWrapper interactionWrapper)
+    {
+        var commandHandlers = GetHandlersOfType<IModalSubmitHandler>();
+        if (commandHandlers.Count == 0)
+            return;
+
+        var commandContext = new ModalContext(interactionWrapper, _discordClient);
+        await ProcessAll(commandHandlers, x => x.HandleAsync(commandContext));
+    }
+
     private async Task HandleCommand(InteractionWrapper interactionWrapper)
     {
         var commandHandlers = GetHandlersOfType<IApplicationCommandHandler>();
-        if (commandHandlers.Count > 0)
-        {
-            var commandContext = new CommandContext(interactionWrapper, _discordClient);
-            await ProcessAll(commandHandlers, x => x.HandleAsync(commandContext));
-        }
+        if (commandHandlers.Count == 0)
+            return;
+
+        var commandContext = new CommandContext(interactionWrapper, _discordClient);
+        await ProcessAll(commandHandlers, x => x.HandleAsync(commandContext));
     }
 
     private async Task ProcessAll<T>(Func<T, Task> calllback) where T : IDiscordEventHandler
