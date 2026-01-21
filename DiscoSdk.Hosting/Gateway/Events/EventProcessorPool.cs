@@ -2,7 +2,7 @@ using System.Threading.Channels;
 using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Logging;
 
-namespace DiscoSdk.Hosting.Events;
+namespace DiscoSdk.Hosting.Gateway.Events;
 
 /// <summary>
 /// Thread-safe execution pool for processing events asynchronously:

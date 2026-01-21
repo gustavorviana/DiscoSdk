@@ -5,7 +5,6 @@ using DiscoSdk.Hosting.Contexts.Guilds;
 using DiscoSdk.Hosting.Contexts.Messages;
 using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Contexts.Wrappers;
-using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Hosting.Wrappers.Channels;
 using DiscoSdk.Hosting.Wrappers.Messages;
@@ -17,12 +16,12 @@ using DiscoSdk.Models.Interactions;
 using DiscoSdk.Models.Messages;
 using System.Text.Json;
 
-namespace DiscoSdk.Hosting.Events;
+namespace DiscoSdk.Hosting.Gateway.Events;
 
 /// <summary>
 /// Dispatches Discord Gateway events to registered handlers.
 /// </summary>
-public class DiscordEventDispatcher : IDiscordEventRegistry
+internal class DiscordEventDispatcher : IDiscordEventRegistry
 {
     private readonly List<IDiscordEventHandler> _handlers = [];
     private readonly Dictionary<Type, HashSet<int>> _handlerIndicesByType = [];
@@ -88,18 +87,6 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
         {
             switch (message.EventType)
             {
-                case "MESSAGE_CREATE":
-                    await ProcessMessageCreateAsync(payload);
-                    break;
-
-                case "MESSAGE_UPDATE":
-                    await ProcessMessageUpdateAsync(payload);
-                    break;
-
-                case "MESSAGE_DELETE":
-                    await ProcessMessageDeleteAsync(new JsonElementParser(payload));
-                    break;
-
                 case "GUILD_CREATE":
                     await ProcessGuildCreateAsync(payload);
                     break;
@@ -122,6 +109,18 @@ public class DiscordEventDispatcher : IDiscordEventRegistry
 
                 case "CHANNEL_DELETE":
                     await ProcessChannelDeleteAsync(payload);
+                    break;
+
+                case "MESSAGE_CREATE":
+                    await ProcessMessageCreateAsync(payload);
+                    break;
+
+                case "MESSAGE_UPDATE":
+                    await ProcessMessageUpdateAsync(payload);
+                    break;
+
+                case "MESSAGE_DELETE":
+                    await ProcessMessageDeleteAsync(new JsonElementParser(payload));
                     break;
 
                 case "MESSAGE_REACTION_ADD":

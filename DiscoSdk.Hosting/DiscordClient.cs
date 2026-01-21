@@ -1,6 +1,6 @@
 ﻿using DiscoSdk.Events;
-using DiscoSdk.Hosting.Events;
 using DiscoSdk.Hosting.Gateway;
+using DiscoSdk.Hosting.Gateway.Events;
 using DiscoSdk.Hosting.Gateway.Payloads.Models;
 using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Hosting.Managers;

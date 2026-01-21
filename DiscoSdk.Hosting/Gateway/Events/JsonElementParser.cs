@@ -1,7 +1,7 @@
 ﻿using DiscoSdk.Models;
 using System.Text.Json;
 
-namespace DiscoSdk.Hosting.Events;
+namespace DiscoSdk.Hosting.Gateway.Events;
 
 internal readonly struct JsonElementParser(JsonElement payload)
 {
