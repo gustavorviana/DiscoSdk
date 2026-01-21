@@ -9,21 +9,19 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 internal static class ClientUtils
 {
     public static async Task<TResponse> SendMultipartAsync<TResponse>(this IDiscordRestClient client,
-        string path,
+        DiscordRoute route,
         HttpMethod method,
         object payload,
         IReadOnlyList<MessageFile> files,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(path))
-            throw new ArgumentException("Path cannot be null or empty.", nameof(path));
-
+        ArgumentNullException.ThrowIfNull(route);
         ArgumentNullException.ThrowIfNull(method);
         ArgumentNullException.ThrowIfNull(payload);
         ArgumentNullException.ThrowIfNull(files);
 
         using var content = client.BuildMultipartContent(payload, files);
-        return await client.SendAsync<TResponse>(path, method, content, cancellationToken);
+        return await client.SendAsync<TResponse>(route, method, content, cancellationToken);
     }
 
     public static MultipartFormDataContent BuildMultipartContent(this IDiscordRestClient client, object payload, IReadOnlyList<MessageFile> files)

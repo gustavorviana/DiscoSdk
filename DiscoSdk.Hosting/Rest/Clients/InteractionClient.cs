@@ -42,12 +42,12 @@ internal class InteractionClient(DiscordClient discordClient)
         CancellationToken cancellationToken = default)
     {
         var id = interaction.GetDeferredId(discordClient.ApplicationId);
-        var path = $"webhooks/{id}/{interaction.Token}";
+        var route = new DiscordRoute("webhooks/{webhook_id}/{webhook_token}", id, interaction.Token);
 
         if (files == null || files.Count == 0)
-            return Client.SendAsync<object>(path, HttpMethod.Post, request, cancellationToken);
+            return Client.SendAsync<object>(route, HttpMethod.Post, request, cancellationToken);
 
-        return Client.SendMultipartAsync<Message>(path, HttpMethod.Patch, request, files, cancellationToken);
+        return Client.SendMultipartAsync<Message>(route, HttpMethod.Post, request, files, cancellationToken);
     }
     public async Task RespondWithModalAsync(InteractionHandle interaction, ModalData modalData, CancellationToken cancellationToken = default)
     {
@@ -79,8 +79,8 @@ internal class InteractionClient(DiscordClient discordClient)
             Data = data
         };
 
-        var path = $"interactions/{interaction.Id}/{interaction.Token}/callback";
-        await Client.SendAsync(path, HttpMethod.Post, request, cancellationToken);
+        var route = new DiscordRoute("interactions/{interaction_id}/{interaction_token}/callback", interaction.Id, interaction.Token);
+        await Client.SendAsync(route, HttpMethod.Post, request, cancellationToken);
     }
 
     public enum AcknowledgeType

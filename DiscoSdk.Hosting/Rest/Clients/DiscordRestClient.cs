@@ -51,7 +51,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         _http.DefaultRequestHeaders.UserAgent.ParseAdd($"{DeviceInfo.SdkName}/1.0");
     }
 
-    public Task<T> SendAsync<T>(string path, HttpMethod method, CancellationToken ct)
+    public Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, CancellationToken ct)
     {
         return SendAsync<T>(path, method, null, ct);
     }
@@ -66,9 +66,9 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains the deserialized response.</returns>
     /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
-    public async Task<T> SendAsync<T>(string path, HttpMethod method, object? body, CancellationToken ct)
+    public async Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
     {
-        using var req = new HttpRequestMessage(method, path);
+        using var req = new HttpRequestMessage(method, path.ToString());
 
         if (body is not null)
         {
@@ -95,9 +95,9 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
             error?.Code);
     }
 
-    public async Task SendAsync(string path, HttpMethod method, object? body, CancellationToken ct)
+    public async Task SendAsync(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
     {
-        using var req = new HttpRequestMessage(method, path);
+        using var req = new HttpRequestMessage(method, path.ToString());
 
         if (body is not null)
         {
@@ -125,9 +125,9 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
-    public async Task SendAsync(string path, HttpMethod method, CancellationToken ct)
+    public async Task SendAsync(DiscordRoute path, HttpMethod method, CancellationToken ct)
     {
-        using var req = new HttpRequestMessage(method, path);
+        using var req = new HttpRequestMessage(method, path.ToString());
         using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
 
         if (res.IsSuccessStatusCode)

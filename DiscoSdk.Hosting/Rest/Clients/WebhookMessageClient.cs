@@ -19,8 +19,8 @@ internal sealed class WebhookMessageClient(IDiscordRestClient client)
     public IDiscordRestClient Client => client;
     public Task<WebhookInfo> GetInfoAsync(WebhookIdentity identity, CancellationToken cancellationToken = default)
     {
-        var path = $"webhooks/{identity.Id}/{identity.Token}";
-        return client.SendAsync<WebhookInfo>(path, HttpMethod.Get, cancellationToken);
+        var route = new DiscordRoute("webhooks/{webhook_id}/{webhook_token}", identity.Id, identity.Token);
+        return client.SendAsync<WebhookInfo>(route, HttpMethod.Get, cancellationToken);
     }
 
     public Task<Message?> ExecuteAsync(
@@ -33,13 +33,14 @@ internal sealed class WebhookMessageClient(IDiscordRestClient client)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var path = $"webhooks/{identity.Id}/{identity.Token}";
-        path = AppendQuery(path, wait, threadId);
+        var route = new DiscordRoute("webhooks/{webhook_id}/{webhook_token}", identity.Id, identity.Token);
+        var routeString = AppendQuery(route.ToString(), wait, threadId);
+        var routeWithQuery = new DiscordRoute(routeString);
 
         if (files == null || files.Count == 0)
-            return client.SendAsync<Message?>(path, HttpMethod.Post, request, cancellationToken);
+            return client.SendAsync<Message?>(routeWithQuery, HttpMethod.Post, request, cancellationToken);
 
-        return client.SendMultipartAsync<Message?>(path, HttpMethod.Post, request, files, cancellationToken);
+        return client.SendMultipartAsync<Message?>(routeWithQuery, HttpMethod.Post, request, files, cancellationToken);
     }
 
     public Task<Message> EditAsync(
@@ -55,13 +56,14 @@ internal sealed class WebhookMessageClient(IDiscordRestClient client)
 
         ArgumentNullException.ThrowIfNull(request);
 
-        var path = $"webhooks/{identity.Id}/{identity.Token}/messages/{messageId}";
-        path = AppendThreadQueryIfPresent(path, threadId);
+        var route = new DiscordRoute("webhooks/{webhook_id}/{webhook_token}/messages/{message_id}", identity.Id, identity.Token, messageId);
+        var routeString = AppendThreadQueryIfPresent(route.ToString(), threadId);
+        var routeWithQuery = new DiscordRoute(routeString);
 
         if (files == null || files.Count == 0)
-            return client.SendAsync<Message>(path, HttpMethod.Patch, request, cancellationToken);
+            return client.SendAsync<Message>(routeWithQuery, HttpMethod.Patch, request, cancellationToken);
 
-        return client.SendMultipartAsync<Message>(path, HttpMethod.Patch, request, files, cancellationToken);
+        return client.SendMultipartAsync<Message>(routeWithQuery, HttpMethod.Patch, request, files, cancellationToken);
 
     }
 
@@ -74,18 +76,19 @@ internal sealed class WebhookMessageClient(IDiscordRestClient client)
         if (messageId == default)
             throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
 
-        var path = $"webhooks/{identity.Id}/{identity.Token}/messages/{messageId}";
-        path = AppendThreadQueryIfPresent(path, threadId);
+        var route = new DiscordRoute("webhooks/{webhook_id}/{webhook_token}/messages/{message_id}", identity.Id, identity.Token, messageId);
+        var routeString = AppendThreadQueryIfPresent(route.ToString(), threadId);
+        var routeWithQuery = new DiscordRoute(routeString);
 
-        return client.SendAsync(path, HttpMethod.Delete, body: null, cancellationToken);
+        return client.SendAsync(routeWithQuery, HttpMethod.Delete, body: null, cancellationToken);
     }
 
     public async Task<Message> GetOriginalResponseAsync(
         WebhookIdentity identity,
         CancellationToken cancellationToken = default)
     {
-        var path = $"webhooks/{identity.Id}/{identity.Token}/messages/@original";
-        return await client.SendAsync<Message>(path, HttpMethod.Get, null, cancellationToken);
+        var route = new DiscordRoute("webhooks/{webhook_id}/{webhook_token}/messages/@original", identity.Id, identity.Token);
+        return await client.SendAsync<Message>(route, HttpMethod.Get, null, cancellationToken);
     }
 
     public async Task<Message> EditOriginalResponseAsync(
@@ -95,16 +98,16 @@ internal sealed class WebhookMessageClient(IDiscordRestClient client)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var path = $"webhooks/{identity.Id}/{identity.Token}/messages/@original";
-        return await client.SendAsync<Message>(path, HttpMethod.Patch, request, cancellationToken);
+        var route = new DiscordRoute("webhooks/{webhook_id}/{webhook_token}/messages/@original", identity.Id, identity.Token);
+        return await client.SendAsync<Message>(route, HttpMethod.Patch, request, cancellationToken);
     }
 
     public async Task DeleteOriginalResponseAsync(
         WebhookIdentity identity,
         CancellationToken cancellationToken = default)
     {
-        var path = $"webhooks/{identity.Id}/{identity.Token}/messages/@original";
-        await client.SendAsync(path, HttpMethod.Delete, cancellationToken);
+        var route = new DiscordRoute("webhooks/{webhook_id}/{webhook_token}/messages/@original", identity.Id, identity.Token);
+        await client.SendAsync(route, HttpMethod.Delete, cancellationToken);
     }
 
     private static string AppendQuery(string path, bool wait, Snowflake? threadId)

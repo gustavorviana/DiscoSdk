@@ -16,7 +16,7 @@ public interface IDiscordRestClient : IDisposable
     /// <param name="method">The HTTP method to use.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    Task SendAsync(string path, HttpMethod method, CancellationToken ct);
+    Task SendAsync(DiscordRoute path, HttpMethod method, CancellationToken ct);
 
     /// <summary>
     /// Sends a JSON request to the Discord API and deserializes the response.
@@ -27,7 +27,7 @@ public interface IDiscordRestClient : IDisposable
     /// <param name="body">The request body object to serialize, or null.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains the deserialized response.</returns>
-    Task SendAsync(string path, HttpMethod method, object? body, CancellationToken ct);
+    Task SendAsync(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct);
 
     /// <summary>
     /// Sends a JSON request to the Discord API and deserializes the response.
@@ -38,7 +38,7 @@ public interface IDiscordRestClient : IDisposable
     /// <param name="body">The request body object to serialize, or null.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains the deserialized response.</returns>
-    Task<T> SendAsync<T>(string path, HttpMethod method, object? body, CancellationToken ct);
+    Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct);
 
     /// <summary>
     /// Sends a JSON request to the Discord API and deserializes the response.
@@ -48,5 +48,5 @@ public interface IDiscordRestClient : IDisposable
     /// <param name="method">The HTTP method to use.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains the deserialized response.</returns>
-    Task<T> SendAsync<T>(string path, HttpMethod method, CancellationToken ct);
+    Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, CancellationToken ct);
 }

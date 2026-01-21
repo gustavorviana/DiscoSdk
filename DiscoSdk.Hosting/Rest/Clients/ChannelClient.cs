@@ -23,8 +23,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
-		var path = $"channels/{channelId}";
-		return client.SendAsync<Channel>(path, HttpMethod.Get, null, cancellationToken);
+		var route = new DiscordRoute("channels/{channel_id}", channelId);
+		return client.SendAsync<Channel>(route, HttpMethod.Get, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -41,8 +41,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 
 		ArgumentNullException.ThrowIfNull(request);
 
-		var path = $"channels/{channelId}";
-		return client.SendAsync<Channel>(path, HttpMethod.Patch, request, cancellationToken);
+		var route = new DiscordRoute("channels/{channel_id}", channelId);
+		return client.SendAsync<Channel>(route, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -56,8 +56,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
-		var path = $"channels/{channelId}";
-		return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
+		var route = new DiscordRoute("channels/{channel_id}", channelId);
+		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
 	}
 
 	/// <summary>
@@ -126,9 +126,9 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (targetChannelId == default)
 			throw new ArgumentException("Target channel ID cannot be null or empty.", nameof(targetChannelId));
 
-		var path = $"channels/{channelId}/followers";
+		var route = new DiscordRoute("channels/{channel_id}/followers", channelId);
 		var request = new { webhook_channel_id = targetChannelId.ToString() };
-		return client.SendAsync<FollowedChannel>(path, HttpMethod.Post, request, cancellationToken);
+		return client.SendAsync<FollowedChannel>(route, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -153,8 +153,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
-		var path = $"channels/{channelId}/thread-members/@me";
-		return client.SendAsync(path, HttpMethod.Put, cancellationToken);
+		var route = new DiscordRoute("channels/{channel_id}/thread-members/@me", channelId);
+		return client.SendAsync(route, HttpMethod.Put, cancellationToken);
 	}
 
 	/// <summary>
@@ -168,8 +168,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
-		var path = $"channels/{channelId}/thread-members/@me";
-		return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
+		var route = new DiscordRoute("channels/{channel_id}/thread-members/@me", channelId);
+		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
 	}
 
 	/// <summary>
@@ -187,8 +187,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (userId == default)
 			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
-		var path = $"channels/{channelId}/thread-members/{userId}";
-		return client.SendAsync(path, HttpMethod.Put, cancellationToken);
+		var route = new DiscordRoute("channels/{channel_id}/thread-members/{user_id}", channelId, userId);
+		return client.SendAsync(route, HttpMethod.Put, cancellationToken);
 	}
 
 	/// <summary>
@@ -206,8 +206,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (userId == default)
 			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
-		var path = $"channels/{channelId}/thread-members/{userId}";
-		return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
+		var route = new DiscordRoute("channels/{channel_id}/thread-members/{user_id}", channelId, userId);
+		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
 	}
 
 	/// <summary>
@@ -225,8 +225,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (userId == default)
 			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
-		var path = $"channels/{channelId}/thread-members/{userId}";
-		return client.SendAsync<ThreadMember>(path, HttpMethod.Get, null, cancellationToken);
+		var route = new DiscordRoute("channels/{channel_id}/thread-members/{user_id}", channelId, userId);
+		return client.SendAsync<ThreadMember>(route, HttpMethod.Get, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -258,8 +258,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 			queryParams.Add($"with_member={withMember.Value.ToString().ToLowerInvariant()}");
 
 		var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
-		var path = $"channels/{channelId}/thread-members{query}";
-		return client.SendAsync<ThreadMember[]>(path, HttpMethod.Get, null, cancellationToken);
+		var route = new DiscordRoute($"channels/{{channel_id}}/thread-members{query}", channelId);
+		return client.SendAsync<ThreadMember[]>(route, HttpMethod.Get, null, cancellationToken);
 	}
 
 	/// <summary>
@@ -273,9 +273,9 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
-		var path = $"channels/{channelId}";
+		var route = new DiscordRoute("channels/{channel_id}", channelId);
 		var request = new { archived = true };
-		return client.SendAsync(path, HttpMethod.Patch, request, cancellationToken);
+		return client.SendAsync(route, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -289,9 +289,9 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
-		var path = $"channels/{channelId}";
+		var route = new DiscordRoute("channels/{channel_id}", channelId);
 		var request = new { archived = false };
-		return client.SendAsync(path, HttpMethod.Patch, request, cancellationToken);
+		return client.SendAsync(route, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -305,9 +305,9 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
-		var path = $"channels/{channelId}";
+		var route = new DiscordRoute("channels/{channel_id}", channelId);
 		var request = new { locked = true };
-		return client.SendAsync(path, HttpMethod.Patch, request, cancellationToken);
+		return client.SendAsync(route, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -321,9 +321,9 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
-		var path = $"channels/{channelId}";
+		var route = new DiscordRoute("channels/{channel_id}", channelId);
 		var request = new { locked = false };
-		return client.SendAsync(path, HttpMethod.Patch, request, cancellationToken);
+		return client.SendAsync(route, HttpMethod.Patch, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -337,8 +337,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
-		var path = $"channels/{channelId}/threads/active";
-		var response = await client.SendAsync<ThreadsResponse>(path, HttpMethod.Get, null, cancellationToken);
+		var route = new DiscordRoute("channels/{channel_id}/threads/active", channelId);
+		var response = await client.SendAsync<ThreadsResponse>(route, HttpMethod.Get, null, cancellationToken);
 		return response.Threads;
 	}
 
@@ -367,8 +367,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 			queryParams.Add($"limit={limit.Value}");
 
 		var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
-		var path = $"channels/{channelId}/threads/archived/public{query}";
-		var response = await client.SendAsync<ThreadsResponse>(path, HttpMethod.Get, null, cancellationToken);
+		var route = new DiscordRoute($"channels/{{channel_id}}/threads/archived/public{query}", channelId);
+		var response = await client.SendAsync<ThreadsResponse>(route, HttpMethod.Get, null, cancellationToken);
 		return response.Threads;
 	}
 
@@ -397,8 +397,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 			queryParams.Add($"limit={limit.Value}");
 
 		var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
-		var path = $"channels/{channelId}/threads/archived/private{query}";
-		var response = await client.SendAsync<ThreadsResponse>(path, HttpMethod.Get, null, cancellationToken);
+		var route = new DiscordRoute($"channels/{{channel_id}}/threads/archived/private{query}", channelId);
+		var response = await client.SendAsync<ThreadsResponse>(route, HttpMethod.Get, null, cancellationToken);
 		return response.Threads;
 	}
 
@@ -416,8 +416,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 
 		ArgumentNullException.ThrowIfNull(request);
 
-		var path = $"channels/{channelId}/threads";
-		return client.SendAsync<ForumPost>(path, HttpMethod.Post, request, cancellationToken);
+		var route = new DiscordRoute("channels/{channel_id}/threads", channelId);
+		return client.SendAsync<ForumPost>(route, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -438,8 +438,8 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 
 		ArgumentNullException.ThrowIfNull(request);
 
-		var path = $"channels/{channelId}/messages/{messageId}/threads";
-		return client.SendAsync<Channel>(path, HttpMethod.Post, request, cancellationToken);
+		var route = new DiscordRoute("channels/{channel_id}/messages/{message_id}/threads", channelId, messageId);
+		return client.SendAsync<Channel>(route, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>
@@ -453,9 +453,9 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 		if (userId == default)
 			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
-		var path = "users/@me/channels";
+		var route = new DiscordRoute("users/@me/channels");
 		var request = new { recipient_id = userId.ToString() };
-		return client.SendAsync<Channel>(path, HttpMethod.Post, request, cancellationToken);
+		return client.SendAsync<Channel>(route, HttpMethod.Post, request, cancellationToken);
 	}
 
 	/// <summary>

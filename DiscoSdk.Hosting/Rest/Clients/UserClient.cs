@@ -21,10 +21,10 @@ internal class UserClient(IDiscordRestClient client)
 		if (userId == default)
 			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
-		var path = $"users/{userId}";
+		var route = new DiscordRoute("users/{user_id}", userId);
 		try
 		{
-			return await client.SendAsync<User>(path, HttpMethod.Get, null, cancellationToken);
+			return await client.SendAsync<User>(route, HttpMethod.Get, null, cancellationToken);
 		}
 		catch (DiscordApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
 		{

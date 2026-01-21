@@ -15,6 +15,7 @@ internal class DiscordGatewayClient(IDiscordRestClient client)
     /// <returns>A task that represents the asynchronous operation. The result contains gateway information.</returns>
     public Task<DiscordGatewayInfo> GetGatewayBotInfoAsync(CancellationToken ct = default)
     {
-        return client.SendAsync<DiscordGatewayInfo>("gateway/bot", HttpMethod.Get, body: null, ct);
+        var route = new DiscordRoute("gateway/bot");
+        return client.SendAsync<DiscordGatewayInfo>(route, HttpMethod.Get, body: null, ct);
     }
 }

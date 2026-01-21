@@ -22,8 +22,8 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
     /// <returns>A task that represents the asynchronous operation. The result contains the registered commands.</returns>
     public async Task<List<ApplicationCommand>> RegisterGlobalCommandsAsync(Snowflake applicationId, List<ApplicationCommand> commands, CancellationToken ct = default)
     {
-        var path = $"applications/{applicationId}/commands";
-        return await client.SendAsync<List<ApplicationCommand>>(path, HttpMethod.Put, commands, ct);
+        var route = new DiscordRoute("applications/{application_id}/commands", applicationId);
+        return await client.SendAsync<List<ApplicationCommand>>(route, HttpMethod.Put, commands, ct);
     }
 
     /// <summary>
@@ -36,8 +36,8 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
     /// <returns>A task that represents the asynchronous operation. The result contains the registered commands.</returns>
     public async Task<List<ApplicationCommand>> RegisterGuildCommandsAsync(Snowflake applicationId, Snowflake guildId, List<ApplicationCommand> commands, CancellationToken ct = default)
     {
-        var path = $"applications/{applicationId}/guilds/{guildId}/commands";
-        return await client.SendAsync<List<ApplicationCommand>>(path, HttpMethod.Put, commands, ct);
+        var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands", applicationId, guildId);
+        return await client.SendAsync<List<ApplicationCommand>>(route, HttpMethod.Put, commands, ct);
     }
 
     /// <summary>
@@ -48,8 +48,8 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
     /// <returns>A task that represents the asynchronous operation. The result contains all global commands.</returns>
     public async Task<List<ApplicationCommand>> GetGlobalCommandsAsync(Snowflake applicationId, CancellationToken ct = default)
     {
-        var path = $"applications/{applicationId}/commands";
-        return await client.SendAsync<List<ApplicationCommand>>(path, HttpMethod.Get, null, ct);
+        var route = new DiscordRoute("applications/{application_id}/commands", applicationId);
+        return await client.SendAsync<List<ApplicationCommand>>(route, HttpMethod.Get, null, ct);
     }
 
     /// <summary>
@@ -61,8 +61,8 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
     /// <returns>A task that represents the asynchronous operation. The result contains all guild commands.</returns>
     public async Task<List<ApplicationCommand>> GetGuildCommandsAsync(Snowflake applicationId, Snowflake guildId, CancellationToken ct = default)
     {
-        var path = $"applications/{applicationId}/guilds/{guildId}/commands";
-        return await client.SendAsync<List<ApplicationCommand>>(path, HttpMethod.Get, null, ct);
+        var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands", applicationId, guildId);
+        return await client.SendAsync<List<ApplicationCommand>>(route, HttpMethod.Get, null, ct);
     }
 
     /// <summary>
@@ -74,8 +74,8 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
     /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task DeleteGlobalCommandAsync(Snowflake applicationId, string commandId, CancellationToken ct = default)
     {
-        var path = $"applications/{applicationId}/commands/{commandId}";
-        await client.SendAsync(path, HttpMethod.Delete, ct);
+        var route = new DiscordRoute("applications/{application_id}/commands/{command_id}", applicationId, commandId);
+        await client.SendAsync(route, HttpMethod.Delete, ct);
     }
 
     /// <summary>
@@ -88,8 +88,8 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
     /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task DeleteGuildCommandAsync(Snowflake applicationId, string guildId, string commandId, CancellationToken ct = default)
     {
-        var path = $"applications/{applicationId}/guilds/{guildId}/commands/{commandId}";
-        await client.SendAsync(path, HttpMethod.Delete, ct);
+        var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands/{command_id}", applicationId, guildId, commandId);
+        await client.SendAsync(route, HttpMethod.Delete, ct);
     }
 }
 

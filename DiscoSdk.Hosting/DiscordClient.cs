@@ -399,7 +399,7 @@ namespace DiscoSdk.Hosting
                 try
                 {
                     // Use a simple endpoint to measure latency
-                    await HttpClient.SendAsync("gateway", HttpMethod.Get, cancellationToken);
+                    await HttpClient.SendAsync(new DiscordRoute("gateway"), HttpMethod.Get, cancellationToken);
                 }
                 finally
                 {

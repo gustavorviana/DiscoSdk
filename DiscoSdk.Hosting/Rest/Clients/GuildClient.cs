@@ -37,8 +37,8 @@ internal class GuildClient(IDiscordRestClient client)
             queryParams.Add($"after={after.Value}");
 
         var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
-        var path = $"guilds/{guildId}/members{query}";
-        return client.SendAsync<GuildMember[]>(path, HttpMethod.Get, null, cancellationToken);
+        var route = new DiscordRoute($"guilds/{{guild_id}}/members{query}", guildId);
+        return client.SendAsync<GuildMember[]>(route, HttpMethod.Get, null, cancellationToken);
     }
 
     /// <summary>
@@ -56,10 +56,10 @@ internal class GuildClient(IDiscordRestClient client)
         if (userId == default)
             throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
-        var path = $"guilds/{guildId}/members/{userId}";
+        var route = new DiscordRoute("guilds/{guild_id}/members/{user_id}", guildId, userId);
         try
         {
-            return await client.SendAsync<GuildMember>(path, HttpMethod.Get, null, cancellationToken);
+            return await client.SendAsync<GuildMember>(route, HttpMethod.Get, null, cancellationToken);
         }
         catch (DiscordApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
@@ -82,10 +82,10 @@ internal class GuildClient(IDiscordRestClient client)
         if (userId == default)
             throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
-        var path = $"guilds/{guildId}/bans/{userId}";
+        var route = new DiscordRoute("guilds/{guild_id}/bans/{user_id}", guildId, userId);
         try
         {
-            return await client.SendAsync<Ban>(path, HttpMethod.Get, null, cancellationToken);
+            return await client.SendAsync<Ban>(route, HttpMethod.Get, null, cancellationToken);
         }
         catch (DiscordApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
@@ -104,8 +104,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
-        var path = $"guilds/{guildId}/channels";
-        return client.SendAsync<Channel[]>(path, HttpMethod.Get, null, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/channels", guildId);
+        return client.SendAsync<Channel[]>(route, HttpMethod.Get, null, cancellationToken);
     }
 
     /// <summary>
@@ -119,8 +119,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
-        var path = $"guilds/{guildId}/roles";
-        return client.SendAsync<Role[]>(path, HttpMethod.Get, null, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/roles", guildId);
+        return client.SendAsync<Role[]>(route, HttpMethod.Get, null, cancellationToken);
     }
 
     /// <summary>
@@ -134,10 +134,10 @@ internal class GuildClient(IDiscordRestClient client)
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
-        var path = $"guilds/{guildId}";
+        var route = new DiscordRoute("guilds/{guild_id}", guildId);
         try
         {
-            return await client.SendAsync<Guild>(path, HttpMethod.Get, null, cancellationToken);
+            return await client.SendAsync<Guild>(route, HttpMethod.Get, null, cancellationToken);
         }
         catch (DiscordApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
@@ -160,9 +160,9 @@ internal class GuildClient(IDiscordRestClient client)
         if (channelId == default)
             throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
-        var path = $"guilds/{guildId}/voice-states/@me";
+        var route = new DiscordRoute("guilds/{guild_id}/voice-states/@me", guildId);
         var request = new { channel_id = channelId.ToString(), request_to_speak_timestamp = DateTimeOffset.UtcNow.ToString("o") };
-        return client.SendAsync<object>(path, HttpMethod.Patch, request, cancellationToken);
+        return client.SendAsync(route, HttpMethod.Patch, request, cancellationToken);
     }
 
     /// <summary>
@@ -180,9 +180,9 @@ internal class GuildClient(IDiscordRestClient client)
         if (channelId == default)
             throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
-        var path = $"guilds/{guildId}/voice-states/@me";
+        var route = new DiscordRoute("guilds/{guild_id}/voice-states/@me", guildId);
         var request = new { channel_id = channelId.ToString(), request_to_speak_timestamp = (string?)null };
-        return client.SendAsync<object>(path, HttpMethod.Patch, request, cancellationToken);
+        return client.SendAsync(route, HttpMethod.Patch, request, cancellationToken);
     }
 
     /// <summary>
@@ -199,8 +199,8 @@ internal class GuildClient(IDiscordRestClient client)
 
         ArgumentNullException.ThrowIfNull(request);
 
-        var path = $"guilds/{guildId}/channels";
-        return client.SendAsync<Channel>(path, HttpMethod.Post, request, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/channels", guildId);
+        return client.SendAsync<Channel>(route, HttpMethod.Post, request, cancellationToken);
     }
 
     /// <summary>
@@ -221,8 +221,8 @@ internal class GuildClient(IDiscordRestClient client)
 
         ArgumentNullException.ThrowIfNull(request);
 
-        var path = $"guilds/{guildId}/bans/{userId}";
-        return client.SendAsync(path, HttpMethod.Put, request, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/bans/{user_id}", guildId, userId);
+        return client.SendAsync(route, HttpMethod.Put, request, cancellationToken);
     }
 
     /// <summary>
@@ -240,8 +240,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (userId == default)
             throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
-        var path = $"guilds/{guildId}/bans/{userId}";
-        return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/bans/{user_id}", guildId, userId);
+        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
     }
 
     /// <summary>
@@ -259,8 +259,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (userId == default)
             throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
-        var path = $"guilds/{guildId}/members/{userId}";
-        return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/members/{user_id}", guildId, userId);
+        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
     }
 
     /// <summary>
@@ -277,8 +277,8 @@ internal class GuildClient(IDiscordRestClient client)
 
         ArgumentNullException.ThrowIfNull(request);
 
-        var path = $"guilds/{guildId}/emojis";
-        return client.SendAsync<Emoji>(path, HttpMethod.Post, request, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/emojis", guildId);
+        return client.SendAsync<Emoji>(route, HttpMethod.Post, request, cancellationToken);
     }
 
     /// <summary>
@@ -299,8 +299,8 @@ internal class GuildClient(IDiscordRestClient client)
 
         ArgumentNullException.ThrowIfNull(request);
 
-        var path = $"guilds/{guildId}/emojis/{emojiId}";
-        return client.SendAsync<Emoji>(path, HttpMethod.Patch, request, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/emojis/{emoji_id}", guildId, emojiId);
+        return client.SendAsync<Emoji>(route, HttpMethod.Patch, request, cancellationToken);
     }
 
     /// <summary>
@@ -318,8 +318,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (emojiId == default)
             throw new ArgumentException("Emoji ID cannot be null or empty.", nameof(emojiId));
 
-        var path = $"guilds/{guildId}/emojis/{emojiId}";
-        return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/emojis/{emoji_id}", guildId, emojiId);
+        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
     }
 
     /// <summary>
@@ -336,8 +336,8 @@ internal class GuildClient(IDiscordRestClient client)
 
         ArgumentNullException.ThrowIfNull(request);
 
-        var path = $"guilds/{guildId}";
-        return client.SendAsync<Guild>(path, HttpMethod.Patch, request, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}", guildId);
+        return client.SendAsync<Guild>(route, HttpMethod.Patch, request, cancellationToken);
     }
 
     /// <summary>
@@ -351,8 +351,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
-        var path = $"guilds/{guildId}";
-        return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}", guildId);
+        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
     }
 
     /// <summary>
@@ -366,8 +366,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
-        var path = $"users/@me/guilds/{guildId}";
-        return client.SendAsync(path, HttpMethod.Delete, cancellationToken);
+        var route = new DiscordRoute("users/@me/guilds/{guild_id}", guildId);
+        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
     }
 
     /// <summary>
@@ -409,8 +409,8 @@ internal class GuildClient(IDiscordRestClient client)
             queryParams.Add($"action_type={(int)actionType.Value}");
 
         var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
-        var path = $"guilds/{guildId}/audit-logs{query}";
-        var auditLog = await client.SendAsync<AuditLog>(path, HttpMethod.Get, null, cancellationToken);
+        var route = new DiscordRoute($"guilds/{{guild_id}}/audit-logs{query}", guildId);
+        var auditLog = await client.SendAsync<AuditLog>(route, HttpMethod.Get, null, cancellationToken);
         return auditLog.AuditLogEntries;
     }
 
@@ -419,7 +419,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
-        return await client.SendAsync<VanityUrl?>($"guilds/{guildId}/vanity-url", HttpMethod.Get, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/vanity-url", guildId);
+        return await client.SendAsync<VanityUrl?>(route, HttpMethod.Get, cancellationToken);
     }
 
     /// <summary>
@@ -433,8 +434,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
-        var path = $"guilds/{guildId}/invites";
-        return client.SendAsync<Invite[]>(path, HttpMethod.Get, null, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/invites", guildId);
+        return client.SendAsync<Invite[]>(route, HttpMethod.Get, null, cancellationToken);
     }
 
     /// <summary>
@@ -459,8 +460,8 @@ internal class GuildClient(IDiscordRestClient client)
             queryParams.Add($"include_roles={string.Join(",", includeRoles.Select(r => r.ToString()))}");
 
         var query = $"?{string.Join("&", queryParams)}";
-        var path = $"guilds/{guildId}/prune{query}";
-        var response = await client.SendAsync<Dictionary<string, object>>(path, HttpMethod.Get, null, cancellationToken);
+        var route = new DiscordRoute($"guilds/{{guild_id}}/prune{query}", guildId);
+        var response = await client.SendAsync<Dictionary<string, object>>(route, HttpMethod.Get, null, cancellationToken);
         
         if (response.TryGetValue("pruned", out var prunedValue))
         {
@@ -496,8 +497,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (includeRoles != null && includeRoles.Length > 0)
             request["include_roles"] = includeRoles.Select(r => r.ToString()).ToArray();
 
-        var path = $"guilds/{guildId}/prune";
-        var response = await client.SendAsync<Dictionary<string, object>>(path, HttpMethod.Post, request, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/prune", guildId);
+        var response = await client.SendAsync<Dictionary<string, object>>(route, HttpMethod.Post, request, cancellationToken);
         
         if (response.TryGetValue("pruned", out var prunedValue))
         {
@@ -523,8 +524,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
-        var path = $"guilds/{guildId}/regions";
-        return client.SendAsync<VoiceRegion[]>(path, HttpMethod.Get, null, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/regions", guildId);
+        return client.SendAsync<VoiceRegion[]>(route, HttpMethod.Get, null, cancellationToken);
     }
 
     /// <summary>
@@ -538,8 +539,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
-        var path = $"guilds/{guildId}/preview";
-        return client.SendAsync<GuildPreview>(path, HttpMethod.Get, null, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/preview", guildId);
+        return client.SendAsync<GuildPreview>(route, HttpMethod.Get, null, cancellationToken);
     }
 
     /// <summary>
@@ -553,8 +554,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
-        var path = $"guilds/{guildId}/widget.json";
-        return client.SendAsync<GuildWidget>(path, HttpMethod.Get, null, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/widget.json", guildId);
+        return client.SendAsync<GuildWidget>(route, HttpMethod.Get, null, cancellationToken);
     }
 
     /// <summary>
@@ -571,8 +572,8 @@ internal class GuildClient(IDiscordRestClient client)
 
         ArgumentNullException.ThrowIfNull(request);
 
-        var path = $"guilds/{guildId}/widget";
-        return client.SendAsync<GuildWidget>(path, HttpMethod.Patch, request, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/widget", guildId);
+        return client.SendAsync<GuildWidget>(route, HttpMethod.Patch, request, cancellationToken);
     }
 
     /// <summary>
@@ -586,8 +587,8 @@ internal class GuildClient(IDiscordRestClient client)
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 
-        var path = $"guilds/{guildId}/welcome-screen";
-        return client.SendAsync<WelcomeScreen>(path, HttpMethod.Get, null, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/welcome-screen", guildId);
+        return client.SendAsync<WelcomeScreen>(route, HttpMethod.Get, null, cancellationToken);
     }
 
     /// <summary>
@@ -604,7 +605,7 @@ internal class GuildClient(IDiscordRestClient client)
 
         ArgumentNullException.ThrowIfNull(request);
 
-        var path = $"guilds/{guildId}/welcome-screen";
-        return client.SendAsync<WelcomeScreen>(path, HttpMethod.Patch, request, cancellationToken);
+        var route = new DiscordRoute("guilds/{guild_id}/welcome-screen", guildId);
+        return client.SendAsync<WelcomeScreen>(route, HttpMethod.Patch, request, cancellationToken);
     }
 }
