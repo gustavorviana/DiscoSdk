@@ -1,10 +1,14 @@
-﻿namespace DiscoSdk.Rest;
+﻿using System.Text.Json;
+
+namespace DiscoSdk.Rest;
 
 /// <summary>
 /// Interface for making HTTP requests to the Discord REST API.
 /// </summary>
-public interface IDiscordRestClientBase : IDisposable
+public interface IDiscordRestClient : IDisposable
 {
+    JsonSerializerOptions JsonOptions { get; }
+
     /// <summary>
     /// Sends a request to the Discord API that expects no content in the response.
     /// </summary>
@@ -42,7 +46,6 @@ public interface IDiscordRestClientBase : IDisposable
     /// <typeparam name="T">The type to deserialize the response to.</typeparam>
     /// <param name="path">The API endpoint path.</param>
     /// <param name="method">The HTTP method to use.</param>
-    /// <param name="body">The request body object to serialize, or null.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains the deserialized response.</returns>
     Task<T> SendAsync<T>(string path, HttpMethod method, CancellationToken ct);

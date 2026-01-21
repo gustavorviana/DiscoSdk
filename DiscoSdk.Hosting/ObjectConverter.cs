@@ -44,6 +44,9 @@ public class ObjectConverter(CultureInfo cultureInfo) : IObjectConverter
         if (enumType.IsInstanceOfType(value))
             return value;
 
+        if (value is string strValue && Enum.TryParse(enumType, strValue, ignoreCase: true, out var result))
+            return result;
+
         try
         {
             var underlying = Enum.GetUnderlyingType(enumType);
@@ -61,7 +64,7 @@ public class ObjectConverter(CultureInfo cultureInfo) : IObjectConverter
         {
         }
 
-        if (Enum.TryParse(enumType, value.ToString(), ignoreCase: true, out var result))
+        if (Enum.TryParse(enumType, value.ToString(), ignoreCase: true, out result))
             return result;
 
         return null;

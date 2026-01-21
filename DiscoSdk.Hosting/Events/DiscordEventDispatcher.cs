@@ -8,6 +8,7 @@ using DiscoSdk.Hosting.Contexts.Wrappers;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Hosting.Wrappers.Channels;
+using DiscoSdk.Hosting.Wrappers.Messages;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;

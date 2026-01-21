@@ -1,24 +1,25 @@
 using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Actions;
+using DiscoSdk.Hosting.Rest.Actions.Messages;
+using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
-using DiscoSdk.Models.Messages.Embeds;
 using DiscoSdk.Rest.Actions;
+using DiscoSdk.Rest.Actions.Messages;
 
-namespace DiscoSdk.Hosting.Wrappers;
+namespace DiscoSdk.Hosting.Wrappers.Messages;
 
 /// <summary>
 /// Wrapper that implements <see cref="IMessage"/> for a <see cref="Message"/> instance.
 /// </summary>
-internal class MessageWrapper : IMessage
+internal class MessageWrapper : MessageBaseWrapper, IMessage
 {
     private readonly InteractionHandle? _interactionHandle;
     private readonly DiscordClient _client;
-    private readonly Message _message;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MessageWrapper"/> class.
@@ -26,40 +27,34 @@ internal class MessageWrapper : IMessage
     /// <param name="message">The message instance to wrap.</param>
     /// <param name="client">The Discord client for performing operations.</param>
     public MessageWrapper(DiscordClient client, ITextBasedChannel channel, Message message, InteractionHandle? interactionHandle)
+        : base(message)
     {
         Channel = channel ?? throw new ArgumentNullException(nameof(channel));
-        _message = message ?? throw new ArgumentNullException(nameof(message));
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _interactionHandle = interactionHandle;
 
-        Reactions = _message.Reactions?.Select(r => new ReactionWrapper(r, this, _client))?.ToArray() ?? [];
+        Reactions = Message.Reactions?.Select(r => new ReactionWrapper(r, this, _client))?.ToArray() ?? [];
         Author = new UserWrapper(client, message.Author);
     }
 
-    // Visual Properties
-    public Snowflake Id => _message.Id;
+    public Snowflake Id => Message.Id;
 
     /// <inheritdoc />
-    public DateTimeOffset CreatedAt => _message.Id.CreatedAt;
+    public DateTimeOffset CreatedAt => Message.Id.CreatedAt;
 
     public IUser Author { get; }
-    public string Content
+    public override string Content
     {
         get
         {
             ValidateIntent(DiscordIntent.MessageContent, "access message content");
-            return _message.Content;
+            return Message.Content;
         }
     }
-    public Embed[] Embeds => _message.Embeds;
-    public MessageComponent[]? Components => _message.Components;
-    public Attachment[] Attachments => _message.Attachments;
+    public MessageComponent[]? Components => Message.Components;
     public IReaction[] Reactions { get; }
-    public string Timestamp => _message.Timestamp;
-    public string? EditedTimestamp => _message.EditedTimestamp;
-    public bool Pinned => _message.Pinned;
-    public MessageFlags Flags => _message.Flags;
-    public MessageType Type => _message.Type;
+    public string Timestamp => Message.Timestamp;
+    public string? EditedTimestamp => Message.EditedTimestamp;
 
     public ITextBasedChannel Channel { get; }
 
@@ -77,47 +72,47 @@ internal class MessageWrapper : IMessage
     // Operations with Builders
     public IEditMessageRestAction Edit()
     {
-        if (_message.Flags.HasFlag(MessageFlags.Ephemeral) && _interactionHandle == null)
+        if (Message.Flags.HasFlag(MessageFlags.Ephemeral) && _interactionHandle == null)
             throw EphemeralMessageException.Operation("edit");
 
         // Only allow editing messages from the bot itself
         if (!IsBotMessage())
             throw InsufficientPermissionException.Operation("MANAGE_MESSAGES", "edit messages from other users");
 
-        return new EditMessageRestAction(_client, Channel, _message.Id, _interactionHandle);
+        return new EditMessageRestAction(_client, Channel, Message.Id, _interactionHandle);
     }
 
     public ISendMessageRestAction Reply(string? content = null)
     {
         return new SendMessageRestAction(_client, null, Channel, content)
-            .SetMessageReference(_message.Id.ToString(), _message.ChannelId.ToString(), _message.GuildId?.ToString());
+            .SetMessageReference(Message.Id.ToString(), Message.ChannelId.ToString(), Message.GuildId?.ToString());
     }
 
     // Direct Operations
     /// <inheritdoc />
     public IRestAction Delete()
     {
-        if (_message.Flags.HasFlag(MessageFlags.Ephemeral) && _interactionHandle == null)
+        if (Message.Flags.HasFlag(MessageFlags.Ephemeral) && _interactionHandle == null)
             throw EphemeralMessageException.Operation("delete");
 
         return RestAction.Create(cancellationToken =>
         {
             if (_interactionHandle != null)
-                return _client.InteractionClient.DeleteOriginalResponseAsync(_interactionHandle, cancellationToken);
+                return new WebhookMessageClient(_client.HttpClient).DeleteOriginalResponseAsync(_interactionHandle.WithAppId(_client.ApplicationId), cancellationToken);
 
-            return _client.MessageClient.DeleteAsync(_message.ChannelId, _message.Id, cancellationToken);
+            return _client.MessageClient.DeleteAsync(Message.ChannelId, Message.Id, cancellationToken);
         });
     }
 
     public IRestAction<IMessage> Crosspost()
     {
-        if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
+        if (Message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("crosspost");
 
         return RestAction<IMessage>.Create(async cancellationToken =>
         {
-            var message = await _client.MessageClient.CrosspostAsync(_message.ChannelId, _message.Id, cancellationToken);
-            return new MessageWrapper(_client, Channel, message,  null);
+            var message = await _client.MessageClient.CrosspostAsync(Message.ChannelId, Message.Id, cancellationToken);
+            return new MessageWrapper(_client, Channel, message, null);
         });
     }
 
@@ -125,62 +120,62 @@ internal class MessageWrapper : IMessage
     {
         ValidateReactionIntent("add reactions to");
 
-        if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
+        if (Message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("add reactions to");
 
         return RestAction.Create(cancellationToken =>
-            _client.MessageClient.AddReactionAsync(_message.ChannelId, _message.Id, emoji, cancellationToken));
+            _client.MessageClient.AddReactionAsync(Message.ChannelId, Message.Id, emoji, cancellationToken));
     }
 
     public IRestAction<User[]> GetReactions(string emoji, string? after = null, int? limit = null)
     {
         ValidateReactionIntent("get reactions from");
 
-        if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
+        if (Message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("get reactions from");
 
         return RestAction<User[]>.Create(cancellationToken =>
-            _client.MessageClient.GetReactionsAsync(_message.ChannelId, _message.Id, emoji, after, limit, cancellationToken));
+            _client.MessageClient.GetReactionsAsync(Message.ChannelId, Message.Id, emoji, after, limit, cancellationToken));
     }
 
     public IRestAction DeleteAllReactionsForEmoji(string emoji)
     {
         ValidateReactionIntent("delete reactions from");
 
-        if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
+        if (Message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("delete reactions from");
 
         return RestAction.Create(cancellationToken =>
-            _client.MessageClient.DeleteAllReactionsForEmojiAsync(_message.ChannelId, _message.Id, emoji, cancellationToken));
+            _client.MessageClient.DeleteAllReactionsForEmojiAsync(Message.ChannelId, Message.Id, emoji, cancellationToken));
     }
 
     public IRestAction DeleteAllReactions()
     {
         ValidateReactionIntent("delete all reactions from");
 
-        if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
+        if (Message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("delete all reactions from");
 
         return RestAction.Create(cancellationToken =>
-            _client.MessageClient.DeleteAllReactionsAsync(_message.ChannelId, _message.Id, cancellationToken));
+            _client.MessageClient.DeleteAllReactionsAsync(Message.ChannelId, Message.Id, cancellationToken));
     }
 
     public IRestAction Pin()
     {
-        if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
+        if (Message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("pin");
 
         return RestAction.Create(cancellationToken =>
-            _client.MessageClient.PinAsync(_message.ChannelId, _message.Id, cancellationToken));
+            _client.MessageClient.PinAsync(Message.ChannelId, Message.Id, cancellationToken));
     }
 
     public IRestAction Unpin()
     {
-        if (_message.Flags.HasFlag(MessageFlags.Ephemeral))
+        if (Message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("unpin");
 
         return RestAction.Create(cancellationToken =>
-            _client.MessageClient.UnpinAsync(_message.ChannelId, _message.Id, cancellationToken));
+            _client.MessageClient.UnpinAsync(Message.ChannelId, Message.Id, cancellationToken));
     }
 
     /// <summary>
@@ -207,7 +202,7 @@ internal class MessageWrapper : IMessage
 
     private DiscordIntent GetCurrentReactionIntent()
     {
-        return _message.GuildId.HasValue
+        return Message.GuildId.HasValue
                     ? DiscordIntent.GuildMessageReactions
                     : DiscordIntent.DirectMessageReactions;
     }
@@ -229,6 +224,6 @@ internal class MessageWrapper : IMessage
         if (!Snowflake.TryParse(_client.BotUser.Id, out var botId))
             return false;
 
-        return _message.Author.Id == botId;
+        return Message.Author.Id == botId;
     }
 }

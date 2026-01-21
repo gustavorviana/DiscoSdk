@@ -1,5 +1,6 @@
 ﻿using DiscoSdk.Models.Interactions;
 using DiscoSdk.Rest.Actions;
+using DiscoSdk.Rest.Actions.Messages;
 
 namespace DiscoSdk.Contexts.Interactions;
 

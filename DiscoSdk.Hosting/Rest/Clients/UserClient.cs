@@ -7,7 +7,7 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 /// Client for Discord user operations (get user, etc.).
 /// </summary>
 /// <param name="client">The REST client base to use for requests.</param>
-internal class UserClient(IDiscordRestClientBase client)
+internal class UserClient(IDiscordRestClient client)
 {
 	/// <summary>
 	/// Gets a user by their ID.

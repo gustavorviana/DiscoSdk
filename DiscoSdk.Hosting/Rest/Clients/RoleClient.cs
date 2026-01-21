@@ -7,7 +7,7 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 /// Client for Discord role operations (create, edit, delete, modify position, etc.).
 /// </summary>
 /// <param name="client">The REST client base to use for requests.</param>
-internal class RoleClient(IDiscordRestClientBase client)
+internal class RoleClient(IDiscordRestClient client)
 {
 	/// <summary>
 	/// Creates a new role in the specified guild.

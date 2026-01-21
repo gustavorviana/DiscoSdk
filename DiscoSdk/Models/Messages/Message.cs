@@ -2,6 +2,7 @@
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
+using DiscoSdk.Models.Messages.Pools;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Messages;
@@ -203,5 +204,11 @@ public class Message
     /// </summary>
     [JsonPropertyName("position")]
     public int? Position { get; set; }
+
+    /// <summary>
+    /// Gets or sets the poll of the message in the thread.
+    /// </summary>
+    [JsonPropertyName("pool")]
+    public Poll? Pool { get; set; }
 }
 

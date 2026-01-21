@@ -1,10 +1,13 @@
 using DiscoSdk.Hosting.Rest.Actions;
+using DiscoSdk.Hosting.Rest.Actions.Messages;
 using DiscoSdk.Hosting.Wrappers.Channels;
+using DiscoSdk.Hosting.Wrappers.Messages;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Rest.Actions;
+using DiscoSdk.Rest.Actions.Messages;
 
 namespace DiscoSdk.Hosting.Wrappers;
 

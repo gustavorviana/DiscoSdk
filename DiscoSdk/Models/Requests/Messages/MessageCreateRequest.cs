@@ -4,13 +4,13 @@ using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
 using System.Text.Json.Serialization;
 
-namespace DiscoSdk.Models.Requests;
+namespace DiscoSdk.Models.Requests.Messages;
 
 /// <summary>
 /// Represents a request to create a message in Discord.
 /// Contains all fields supported by the Discord API for message creation.
 /// </summary>
-public class MessageCreateRequest
+internal class MessageCreateRequest
 {
 	/// <summary>
 	/// Gets or sets the message content (max 2000 characters).

@@ -10,7 +10,7 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 /// Client for Discord guild operations (get members, channels, roles, etc.).
 /// </summary>
 /// <param name="client">The REST client base to use for requests.</param>
-internal class GuildClient(IDiscordRestClientBase client)
+internal class GuildClient(IDiscordRestClient client)
 {
     /// <summary>
     /// Gets a list of members in the specified guild.

@@ -1,40 +1,37 @@
 using DiscoSdk.Hosting.Contexts.Models;
+using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Hosting.Rest.Models;
-using DiscoSdk.Hosting.Wrappers;
+using DiscoSdk.Hosting.Wrappers.Messages;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
-using DiscoSdk.Models.Requests;
-using DiscoSdk.Rest.Actions;
+using DiscoSdk.Models.Requests.Messages;
+using DiscoSdk.Rest.Actions.Messages;
 
-namespace DiscoSdk.Hosting.Rest.Actions;
+namespace DiscoSdk.Hosting.Rest.Actions.Messages;
 
 /// <summary>
 /// Implementation of <see cref="ISendMessageRestAction"/> for sending messages to Discord.
 /// Supports both regular channel messages and interaction responses.
 /// </summary>
-internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAction
+internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestAction, IMessage>, ISendMessageRestAction
 {
     private readonly InteractionHandle? _interactionHandle;
-    private readonly List<MessageComponent> _components = [];
     private MessageReference? _messageReference;
     private readonly ITextBasedChannel _channel;
-    private AllowedMentions? _allowedMentions;
-    private readonly List<Embed> _embeds = [];
     private readonly DiscordClient _client;
-    private string? _content;
+    private bool _suppressNotifications;
+    private List<Snowflake>? _stickers;
     private bool _ephemeral;
     private bool _tts;
-    private List<Snowflake>? _stickers;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SendMessageRestAction"/> class for regular channel messages.
     /// </summary>
     /// <param name="client">The REST client base to use for requests.</param>
-    /// <param name="channelId">The ID of the channel to send the message to.</param>
     /// <param name="content">The initial message content.</param>
     public SendMessageRestAction(DiscordClient client, InteractionHandle? interactionHandle, ITextBasedChannel channel, string? content)
     {
@@ -42,16 +39,6 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _interactionHandle = interactionHandle;
         _content = content;
-    }
-
-    /// <inheritdoc />
-    public ISendMessageRestAction SetContent(string? content)
-    {
-        if (content != null && content.Length > 2000)
-            throw new ArgumentException("Message content cannot exceed 2000 characters.", nameof(content));
-
-        _content = content;
-        return this;
     }
 
     /// <inheritdoc />
@@ -70,28 +57,6 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
             _embeds.Add(embed);
         }
 
-        return this;
-    }
-
-    /// <inheritdoc />
-    public ISendMessageRestAction AddActionRow(params MessageComponent[] items)
-    {
-        ArgumentNullException.ThrowIfNull(items);
-
-        if (items.Length == 0)
-            throw new ArgumentException("At least one component must be provided.", nameof(items));
-
-        if (_components.Count >= 5)
-            throw new InvalidOperationException("Message cannot have more than 5 component rows.");
-
-        // Create an ActionRow containing the items
-        var actionRow = new MessageComponent
-        {
-            Type = ComponentType.ActionRow,
-            Components = [.. items]
-        };
-
-        _components.Add(actionRow);
         return this;
     }
 
@@ -150,25 +115,6 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
     }
 
     /// <inheritdoc />
-    public ISendMessageRestAction SetAllowedMentions(string[]? parse = null, string[]? users = null, string[]? roles = null)
-    {
-        if (parse == null && users == null && roles == null)
-        {
-            _allowedMentions = null;
-            return this;
-        }
-
-        _allowedMentions = new AllowedMentions
-        {
-            Parse = parse,
-            Users = users,
-            Roles = roles
-        };
-
-        return this;
-    }
-
-    /// <inheritdoc />
     public ISendMessageRestAction SetEphemeral(bool ephemeral = true)
     {
         _ephemeral = ephemeral;
@@ -179,6 +125,12 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
     public ISendMessageRestAction SetStickers(IEnumerable<Snowflake> stickers)
     {
         _stickers = stickers?.ToList();
+        return this;
+    }
+
+    public ISendMessageRestAction SetSuppressNotifications(bool suppress = true)
+    {
+        _suppressNotifications = suppress;
         return this;
     }
 
@@ -214,6 +166,13 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
 
     private async Task<IMessage> SendChannelMessageAsync(CancellationToken cancellationToken)
     {
+        var flags = MessageFlags.None;
+        if (_ephemeral)
+            flags |= MessageFlags.Ephemeral;
+
+        if (_suppressNotifications)
+            flags |= MessageFlags.SuppressNotifications;
+
         var request = new MessageCreateRequest
         {
             Content = _content,
@@ -222,7 +181,7 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
             Components = [.. _components],
             MessageReference = _messageReference,
             AllowedMentions = _allowedMentions,
-            Flags = _ephemeral ? MessageFlags.Ephemeral : null,
+            Flags = flags,
             StickerIds = _stickers?.Select(s => s.ToString()).ToArray()
         };
 
@@ -236,6 +195,9 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
         if (_ephemeral)
             flags |= MessageFlags.Ephemeral;
 
+        if (_suppressNotifications)
+            flags |= MessageFlags.SuppressNotifications;
+
         var callbackData = new InteractionCallbackData
         {
             Content = _content,
@@ -244,8 +206,12 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
             Embeds = [.. _embeds]
         };
 
+        var webhookClient = new WebhookMessageClient(_client.HttpClient);
+
         await _client.InteractionClient.RespondAsync(_interactionHandle!, callbackData, cancellationToken);
-        var message = await _client.InteractionClient.GetOriginalResponseAsync(_interactionHandle!, cancellationToken);
+        var message = await webhookClient.GetOriginalResponseAsync(_interactionHandle!.WithAppId(_client.ApplicationId),
+            cancellationToken);
+
         return new MessageWrapper(_client, _channel, message, EnsureInteractionHandle());
     }
 
@@ -255,16 +221,23 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
         if (_ephemeral)
             flags |= MessageFlags.Ephemeral;
 
+        if (_suppressNotifications)
+            flags |= MessageFlags.SuppressNotifications;
+
         var actionRows = EnsureActionRows();
-        await _client.InteractionClient.FollowUpAsync(_interactionHandle!, new FollowUpMessageRequest
+        var webhookClient = new WebhookMessageClient(_client.HttpClient);
+
+        await _client.InteractionClient.FollowUpAsync(_interactionHandle!, new ExecuteWebhookRequest
         {
-            Components = actionRows.OfType<MessageComponent>().ToArray(),
+            Components = [.. actionRows.OfType<MessageComponent>()],
             Content = _content,
             Embeds = [.. _embeds],
             Flags = flags != MessageFlags.None ? flags : null
-        }, cancellationToken);
+        }, _attachments, cancellationToken);
 
-        var message = await _client.InteractionClient.GetOriginalResponseAsync(_interactionHandle!, cancellationToken);
+        var message = await webhookClient.GetOriginalResponseAsync(_interactionHandle!.WithAppId(_client.ApplicationId),
+            cancellationToken);
+
         return new MessageWrapper(_client, _channel, message, EnsureInteractionHandle());
     }
 
@@ -291,4 +264,3 @@ internal class SendMessageRestAction : RestAction<IMessage>, ISendMessageRestAct
         })];
     }
 }
-

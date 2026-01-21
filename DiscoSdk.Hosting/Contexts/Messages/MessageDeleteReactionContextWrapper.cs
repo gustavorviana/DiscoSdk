@@ -1,6 +1,6 @@
 ﻿using DiscoSdk.Contexts.Messages;
 using DiscoSdk.Hosting.Rest.Actions;
-using DiscoSdk.Hosting.Wrappers;
+using DiscoSdk.Hosting.Wrappers.Messages;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Messages;

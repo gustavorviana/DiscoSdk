@@ -9,8 +9,8 @@ namespace DiscoSdk;
 
 public interface IDiscordClient
 {
-    IDiscordRestClientBase HttpClient { get; }
-    string? ApplicationId { get; }
+    IDiscordRestClient HttpClient { get; }
+    Snowflake? ApplicationId { get; }
     IDiscordEventRegistry EventRegistry { get; }
     bool IsFullyInitialized { get; }
     bool IsReady { get; }

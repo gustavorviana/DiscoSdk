@@ -23,7 +23,7 @@ namespace DiscoSdk.Hosting.Rest.Messages
         /// Gets or sets the time (in milliseconds) after which the rate limit resets.
         /// </summary>
         [JsonPropertyName("reset_after")]
-        public int ResetAfter { get; set; }
+        public long ResetAfter { get; set; }
 
         /// <summary>
         /// Gets or sets the total number of session starts allowed in the current window.

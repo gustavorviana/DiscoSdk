@@ -10,42 +10,22 @@ public sealed class IdentifyGate : IDisposable
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly SemaphoreSlim _signal = new(0, int.MaxValue);
     private readonly object _lock = new();
-    private readonly Timer _timer;
-    private TimeSpan _window;
+    private readonly Timer? _timer;
+    private readonly int _maxCalls;
     private int _available;
-    private int _maxCalls;
     private int _waiters;
 
     public CancellationToken Token => _cancellationTokenSource.Token;
 
     public IdentifyGate(int maxCalls, TimeSpan window)
     {
-        Configure(maxCalls, window);
-
-        _available = _maxCalls;
-
-        _timer = new Timer(
-            _ => OnWindowTick(),
-            null,
-            _window,
-            _window);
-    }
-
-    /// <summary>
-    /// Reconfigures the gate (safe to call at runtime).
-    /// </summary>
-    public void Configure(int maxCalls, TimeSpan window)
-    {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxCalls);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(window, TimeSpan.Zero);
 
-        lock (_lock)
-        {
-            _maxCalls = maxCalls;
-            _window = window;
+        _available = maxCalls;
+        _maxCalls = maxCalls;
 
-            _timer?.Change(_window, _window);
-        }
+        if (window != TimeSpan.Zero)
+            _timer = new Timer(_ => OnWindowTick(), null, window, window);
     }
 
     /// <summary>
@@ -111,7 +91,7 @@ public sealed class IdentifyGate : IDisposable
     public void Dispose()
     {
         _cancellationTokenSource.Cancel();
-        _timer.Dispose();
+        _timer?.Dispose();
         _signal.Dispose();
         _cancellationTokenSource.Dispose();
     }

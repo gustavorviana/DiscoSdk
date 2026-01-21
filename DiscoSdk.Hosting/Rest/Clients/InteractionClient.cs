@@ -1,9 +1,9 @@
 using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Models;
+using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
-using DiscoSdk.Models.Requests;
 using DiscoSdk.Rest;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
@@ -16,7 +16,7 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 /// </remarks>
 internal class InteractionClient(DiscordClient discordClient)
 {
-    private IDiscordRestClientBase Client => discordClient.HttpClient;
+    private IDiscordRestClient Client => discordClient.HttpClient;
 
     public async Task DeferAsync(InteractionHandle interaction, bool ephemeral = false, CancellationToken cancellationToken = default)
     {
@@ -36,13 +36,19 @@ internal class InteractionClient(DiscordClient discordClient)
         await SendCallbackAsync(interaction, data, InteractionCallbackType.ChannelMessageWithSource, cancellationToken);
     }
 
-    public async Task FollowUpAsync(InteractionHandle interaction, FollowUpMessageRequest request, CancellationToken ct = default)
+    public Task FollowUpAsync(InteractionHandle interaction,
+        ExecuteWebhookRequest request,
+        IReadOnlyList<MessageFile>? files = null,
+        CancellationToken cancellationToken = default)
     {
-        var id = interaction.IsDeferred ? discordClient.ApplicationId : interaction.Id.ToString();
+        var id = interaction.GetDeferredId(discordClient.ApplicationId);
         var path = $"webhooks/{id}/{interaction.Token}";
-        await Client.SendAsync<object>(path, HttpMethod.Post, request, ct);
-    }
 
+        if (files == null || files.Count == 0)
+            return Client.SendAsync<object>(path, HttpMethod.Post, request, cancellationToken);
+
+        return Client.SendMultipartAsync<Message>(path, HttpMethod.Patch, request, files, cancellationToken);
+    }
     public async Task RespondWithModalAsync(InteractionHandle interaction, ModalData modalData, CancellationToken cancellationToken = default)
     {
         await SendCallbackAsync(interaction, modalData, InteractionCallbackType.Modal, cancellationToken);
@@ -62,64 +68,25 @@ internal class InteractionClient(DiscordClient discordClient)
         await SendCallbackAsync(interaction, data, callbackType, cancellationToken);
     }
 
-	public async Task SendCallbackAsync(InteractionHandle interaction,
-		object? data,
-		InteractionCallbackType type,
-		CancellationToken cancellationToken)
-	{
-		var request = new InteractionCallbackRequest
-		{
-			Type = type,
-			Data = data
-		};
+    public async Task SendCallbackAsync(InteractionHandle interaction,
+        object? data,
+        InteractionCallbackType type,
+        CancellationToken cancellationToken)
+    {
+        var request = new InteractionCallbackRequest
+        {
+            Type = type,
+            Data = data
+        };
 
-		var path = $"interactions/{interaction.Id}/{interaction.Token}/callback";
-		await Client.SendAsync(path, HttpMethod.Post, request, cancellationToken);
-	}
+        var path = $"interactions/{interaction.Id}/{interaction.Token}/callback";
+        await Client.SendAsync(path, HttpMethod.Post, request, cancellationToken);
+    }
 
-	/// <summary>
-	/// Gets the original interaction response message.
-	/// </summary>
-	/// <param name="interaction">The interaction handle containing the interaction ID and token.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>The original message.</returns>
-	public async Task<Message> GetOriginalResponseAsync(InteractionHandle interaction, CancellationToken cancellationToken = default)
-	{
-		var path = $"webhooks/{discordClient.ApplicationId}/{interaction.Token}/messages/@original";
-		return await Client.SendAsync<Message>(path, HttpMethod.Get, null, cancellationToken);
-	}
-
-	/// <summary>
-	/// Edits the original interaction response message.
-	/// </summary>
-	/// <param name="interaction">The interaction handle containing the interaction ID and token.</param>
-	/// <param name="request">The message edit request.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>The edited message.</returns>
-	public async Task<Message> EditOriginalResponseAsync(InteractionHandle interaction, MessageEditRequest request, CancellationToken cancellationToken = default)
-	{
-		ArgumentNullException.ThrowIfNull(request);
-
-		var path = $"webhooks/{discordClient.ApplicationId}/{interaction.Token}/messages/@original";
-		return await Client.SendAsync<Message>(path, HttpMethod.Patch, request, cancellationToken);
-	}
-
-	/// <summary>
-	/// Deletes the original interaction response message.
-	/// </summary>
-	/// <param name="interaction">The interaction handle containing the interaction ID and token.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A task that represents the asynchronous operation.</returns>
-	public async Task DeleteOriginalResponseAsync(InteractionHandle interaction, CancellationToken cancellationToken = default)
-	{
-		var path = $"webhooks/{discordClient.ApplicationId}/{interaction.Token}/messages/@original";
-		await Client.SendAsync(path, HttpMethod.Delete, cancellationToken);
-	}
-
-	public enum AcknowledgeType
-	{
-		ModalSubmit,
-		Ephemeral,
-		NonEphemeral
-	}
+    public enum AcknowledgeType
+    {
+        ModalSubmit,
+        Ephemeral,
+        NonEphemeral
+    }
 }

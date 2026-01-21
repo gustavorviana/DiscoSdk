@@ -107,7 +107,7 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
         if (!_deletePrevious)
         {
             client.Logger.Log(LogLevel.Debug, "Loading existing global commands from Discord...");
-            var existingGlobal = await _applicationCommandClient.GetGlobalCommandsAsync(client.ApplicationId!, cancellationToken);
+            var existingGlobal = await _applicationCommandClient.GetGlobalCommandsAsync(client.ApplicationId!.Value, cancellationToken);
             commandsToSend = FilterChangedOrNewCommands(_globalCommands, existingGlobal);
 
             if (commandsToSend.Count == 0)
@@ -127,7 +127,7 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
         }
 
         client.Logger.Log(LogLevel.Information, $"Registering {commandsToSend.Count} global command(s) (out of {_globalCommands.Count} total)...");
-        var registered = await _applicationCommandClient.RegisterGlobalCommandsAsync(client.ApplicationId!, commandsToSend, cancellationToken);
+        var registered = await _applicationCommandClient.RegisterGlobalCommandsAsync(client.ApplicationId!.Value, commandsToSend, cancellationToken);
         client.Logger.Log(LogLevel.Information, $"Successfully registered {registered.Count} global command(s).");
     }
 
@@ -146,7 +146,7 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
             if (!_deletePrevious)
             {
                 client.Logger.Log(LogLevel.Debug, $"Loading existing commands for guild {guildId} from Discord...");
-                var existingGuild = await _applicationCommandClient.GetGuildCommandsAsync(client.ApplicationId!, guildId, cancellationToken);
+                var existingGuild = await _applicationCommandClient.GetGuildCommandsAsync(client.ApplicationId!.Value, guildId, cancellationToken);
                 commandsToSend = FilterChangedOrNewCommands(commands, existingGuild);
 
                 if (commandsToSend.Count == 0)
@@ -166,7 +166,7 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
             }
 
             client.Logger.Log(LogLevel.Information, $"Registering {commandsToSend.Count} command(s) for guild {guildId} (out of {commands.Count} total)...");
-            var guildRegistered = await _applicationCommandClient.RegisterGuildCommandsAsync(client.ApplicationId!, guildId, commandsToSend, cancellationToken);
+            var guildRegistered = await _applicationCommandClient.RegisterGuildCommandsAsync(client.ApplicationId!.Value, guildId, commandsToSend, cancellationToken);
             client.Logger.Log(LogLevel.Information, $"Successfully registered {guildRegistered.Count} command(s) for guild {guildId}.");
         }
     }

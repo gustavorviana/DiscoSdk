@@ -2,6 +2,7 @@ using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Rest.Actions;
+using DiscoSdk.Rest.Actions.Messages;
 
 namespace DiscoSdk.Models.Interactions;
 

@@ -7,7 +7,7 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 /// Client for Discord invite operations (create, delete, etc.).
 /// </summary>
 /// <param name="client">The REST client base to use for requests.</param>
-internal class InviteClient(IDiscordRestClientBase client)
+internal class InviteClient(IDiscordRestClient client)
 {
 	/// <summary>
 	/// Creates a new invite for the specified channel.

@@ -25,7 +25,7 @@ namespace DiscoSdk.Hosting
         private readonly ManualResetEventSlim _shutdownEvent = new(false);
         private readonly ManualResetEventSlim _readyEvent = new(false);
         private readonly DiscordEventDispatcher _eventDispatcher;
-        public IDiscordRestClientBase HttpClient { get; }
+        public IDiscordRestClient HttpClient { get; }
         private readonly DiscordClientConfig _config;
         public GuildManager Guilds { get; }
         internal ChannelManager Channels { get; }
@@ -84,7 +84,7 @@ namespace DiscoSdk.Hosting
         /// <exception cref="InvalidOperationException">Thrown when ApplicationId is not yet available.</exception>
         public ICommandUpdateAction UpdateCommands()
         {
-            if (string.IsNullOrEmpty(ApplicationId))
+            if (ApplicationId == null)
                 throw new InvalidOperationException("ApplicationId is not available yet. Wait for the bot to be ready or provide the ApplicationId manually.");
 
             return new CommandUpdateAction(this);
@@ -93,7 +93,7 @@ namespace DiscoSdk.Hosting
         /// <summary>
         /// Gets or sets the application ID of the bot.
         /// </summary>
-        public string? ApplicationId { get; private set; }
+        public Snowflake? ApplicationId { get; private set; }
 
         /// <summary>
         /// Gets a value indicating whether all shards are ready.
@@ -116,7 +116,7 @@ namespace DiscoSdk.Hosting
             SerializerOptions = jsonOptions;
             Logger = config.Logger ?? NullLogger.Instance;
             _eventDispatcher = new DiscordEventDispatcher(this);
-            HttpClient = new DiscordRestClientBase(config.Token, new Uri("https://discord.com/api/v10"), jsonOptions);
+            HttpClient = new DiscordRestClient(config.Token, new Uri("https://discord.com/api/v10"), jsonOptions);
             InteractionClient = new InteractionClient(this);
             MessageClient = new MessageClient(HttpClient);
             ChannelClient = new ChannelClient(HttpClient, MessageClient);
@@ -148,7 +148,7 @@ namespace DiscoSdk.Hosting
         /// <returns>A task that represents the asynchronous start operation.</returns>
         public async Task StartAsync()
         {
-            var gatewayInfo = await new DiscordRestClient(HttpClient).GetGatewayBotInfoAsync();
+            var gatewayInfo = await new DiscordGatewayClient(HttpClient).GetGatewayBotInfoAsync();
 
             _gate = new(gatewayInfo.SessionInfo.MaxConcurrency, TimeSpan.FromMicroseconds(gatewayInfo.SessionInfo.ResetAfter));
             _totalShards = Math.Max(_config.TotalShards ?? gatewayInfo.Shards, 1);
@@ -254,8 +254,8 @@ namespace DiscoSdk.Hosting
                 BotUser = arg.User;
 
             // Store application ID from ready payload
-            if (string.IsNullOrEmpty(ApplicationId))
-                ApplicationId = arg.Application.Id;
+            if (ApplicationId == null)
+                ApplicationId = Snowflake.Parse(arg.Application.Id);
 
             Logger.Log(LogLevel.Information, $"Shard {sender.ShardId} of {BotUser.Username} is ready.");
 

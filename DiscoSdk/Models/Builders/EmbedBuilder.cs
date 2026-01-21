@@ -8,18 +8,18 @@ namespace DiscoSdk.Models.Builders;
 public class EmbedBuilder
 {
     private readonly List<EmbedField> _fields = [];
-    public readonly string? _title;
-    public readonly string? _url;
-    public string? _type;
-    public string? _description;
-    public string? _timestamp;
-    public Color? _color;
-    public EmbedFooter? _footer;
-    public EmbedImage? _image;
-    public EmbedThumbnail? _thumbnail;
-    public EmbedVideo? _video;
-    public EmbedProvider? _provider;
-    public EmbedAuthor? _author;
+    private readonly string? _title;
+    private readonly string? _url;
+    private string? _type;
+    private string? _description;
+    private string? _timestamp;
+    private Color? _color;
+    private EmbedFooter? _footer;
+    private EmbedImage? _image;
+    private EmbedThumbnail? _thumbnail;
+    private EmbedVideo? _video;
+    private EmbedProvider? _provider;
+    private EmbedAuthor? _author;
 
     public EmbedBuilder(string title, string? url = null)
     {

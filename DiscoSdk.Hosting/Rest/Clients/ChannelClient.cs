@@ -10,7 +10,7 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 /// </summary>
 /// <param name="client">The REST client base to use for requests.</param>
 /// <param name="messageClient">The message client for message-related operations.</param>
-internal class ChannelClient(IDiscordRestClientBase client, MessageClient messageClient)
+internal class ChannelClient(IDiscordRestClient client, MessageClient messageClient)
 {
 	/// <summary>
 	/// Gets a channel by its ID.

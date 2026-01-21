@@ -1,5 +1,6 @@
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Wrappers.Channels;
+using DiscoSdk.Hosting.Wrappers.Messages;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;

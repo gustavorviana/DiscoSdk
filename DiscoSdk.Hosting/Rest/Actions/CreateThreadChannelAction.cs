@@ -4,7 +4,7 @@ using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
-using DiscoSdk.Models.Requests;
+using DiscoSdk.Models.Requests.Messages;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;

@@ -1,11 +1,15 @@
 using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Actions;
+using DiscoSdk.Hosting.Rest.Actions.Messages;
+using DiscoSdk.Hosting.Rest.Clients;
+using DiscoSdk.Hosting.Wrappers.Messages;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Interactions;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Rest.Actions;
+using DiscoSdk.Rest.Actions.Messages;
 
 namespace DiscoSdk.Hosting.Wrappers;
 
@@ -77,6 +81,8 @@ internal class InteractionWrapper(Interaction interaction,
 
     public IRestAction Delete()
     {
-        return RestAction.Create(cancellationToken => _client.InteractionClient.DeleteOriginalResponseAsync(handle, cancellationToken));
+        return RestAction.Create(cancellationToken => new WebhookMessageClient(client.HttpClient).
+        DeleteOriginalResponseAsync(Handle.WithAppId(_client.ApplicationId),
+            cancellationToken));
     }
 }

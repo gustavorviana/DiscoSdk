@@ -2,6 +2,7 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models.Interactions;
 using DiscoSdk.Rest.Actions;
+using DiscoSdk.Rest.Actions.Messages;
 
 namespace DiscoSdk.Hosting.Contexts;
 
