@@ -1,6 +1,6 @@
 ﻿using DiscoSdk.Models.Messages.Components;
 
-namespace DiscoSdk.Models.Builders;
+namespace DiscoSdk.Models.Messages;
 
 /// <summary>
 /// Fluent builder for creating text input components in modals.

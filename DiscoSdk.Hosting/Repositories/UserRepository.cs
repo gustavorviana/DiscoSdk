@@ -3,6 +3,7 @@ using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Hosting.Utils;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
+using DiscoSdk.Models.Users;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Repositories
@@ -34,10 +35,10 @@ namespace DiscoSdk.Hosting.Repositories
 
         public void Upsert(User updatedUser)
         {
-            if (_users.TryGetValue(updatedUser.Id, out var user))
+            if (_users.TryGetValue(updatedUser.UserId, out var user))
                 (user as UserWrapper)?.OnUpdate(updatedUser);
             else
-                _users[updatedUser.Id] = new UserWrapper(client, updatedUser);
+                _users[updatedUser.UserId] = new UserWrapper(client, updatedUser);
         }
 
         internal void Add(IUser user)

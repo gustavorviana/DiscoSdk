@@ -1,6 +1,7 @@
 using DiscoSdk.Models;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Requests.Messages;
+using DiscoSdk.Models.Users;
 using DiscoSdk.Rest;
 
 namespace DiscoSdk.Hosting.Rest.Clients;

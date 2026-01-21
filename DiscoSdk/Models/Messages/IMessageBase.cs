@@ -7,6 +7,13 @@ namespace DiscoSdk.Models.Messages;
 public interface IMessageBase
 {
     /// <summary>
+    /// Gets the type of message.
+    /// </summary>
+    MessageType Type { get; }
+
+    Snowflake[] MentionRoles { get; }
+
+    /// <summary>
     /// Gets the contents of the message.
     /// </summary>
     string Content { get; }
@@ -35,11 +42,6 @@ public interface IMessageBase
     /// Gets the message flags.
     /// </summary>
     MessageFlags Flags { get; }
-
-    /// <summary>
-    /// Gets the type of message.
-    /// </summary>
-    MessageType Type { get; }
 
     /// <summary>
     /// Gets the pool of message.

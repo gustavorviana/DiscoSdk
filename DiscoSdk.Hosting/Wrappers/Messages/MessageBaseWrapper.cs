@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Models.Enums;
+﻿using DiscoSdk.Models;
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Embeds;
 using DiscoSdk.Models.Messages.Pools;
@@ -18,7 +19,7 @@ internal abstract class MessageBaseWrapper(Message message) : IMessageBase
 
     public Attachment[] Attachments => message.Attachments;
 
-    public DateTimeOffset? UpdatedAt { get; } 
+    public DateTimeOffset? UpdatedAt { get; }
         = message.EditedTimestamp != null
         ? DateTimeOffset.Parse(message.EditedTimestamp, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
         : null;
@@ -28,4 +29,10 @@ internal abstract class MessageBaseWrapper(Message message) : IMessageBase
     public MessageFlags Flags => message.Flags;
 
     public MessageType Type => message.Type;
+
+    public Snowflake[] MentionRoles { get; }
+        = [.. message
+        .MentionRoles
+        .Select(x => Snowflake.TryParse(x, out var role) ? role : default)
+        .Where(x => x != default)];
 }

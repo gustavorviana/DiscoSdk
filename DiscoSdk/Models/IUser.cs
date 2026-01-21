@@ -24,10 +24,10 @@ public interface IUser : IMentionable
 	/// </summary>
 	string? GlobalName { get; }
 
-	/// <summary>
-	/// Gets the user's avatar hash.
-	/// </summary>
-	DiscordImage? Avatar { get; }
+    /// <summary>
+    /// Gets the user's avatar hash.
+    /// </summary>
+    DiscordImageUrl? Avatar { get; }
 
 	/// <summary>
 	/// Gets a value indicating whether the user is a bot.
@@ -47,7 +47,7 @@ public interface IUser : IMentionable
     /// <summary>
     /// Gets the user's banner hash.
     /// </summary>
-    DiscordImage? Banner { get; }
+    DiscordImageUrl? Banner { get; }
 
 	/// <summary>
 	/// Gets the user's accent color.

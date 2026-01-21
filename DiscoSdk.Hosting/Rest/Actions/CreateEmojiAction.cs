@@ -13,10 +13,10 @@ internal class CreateEmojiAction : RestAction<IEmoji>, ICreateEmojiAction
 	private readonly Snowflake _guildId;
 	private readonly IGuild _guild;
 	private string? _name;
-	private DiscordImage? _image;
+	private DiscordImageBuffer? _image;
 	private Snowflake[]? _roles;
 
-	public CreateEmojiAction(DiscordClient client, IGuild guild, string name, DiscordImage image)
+	public CreateEmojiAction(DiscordClient client, IGuild guild, string name, DiscordImageBuffer image)
 	{
 		_client = client ?? throw new ArgumentNullException(nameof(client));
 		_guild = guild ?? throw new ArgumentNullException(nameof(guild));
@@ -31,7 +31,7 @@ internal class CreateEmojiAction : RestAction<IEmoji>, ICreateEmojiAction
 		return this;
 	}
 
-	public ICreateEmojiAction SetImage(DiscordImage image)
+	public ICreateEmojiAction SetImage(DiscordImageBuffer image)
 	{
 		_image = image ?? throw new ArgumentNullException(nameof(image));
 		return this;

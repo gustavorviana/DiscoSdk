@@ -55,28 +55,28 @@ public interface IEditGuildAction : IRestAction<IGuild>
 	/// </summary>
 	/// <param name="icon">The icon image data, or null to remove it.</param>
 	/// <returns>The current <see cref="IEditGuildAction"/> instance.</returns>
-	IEditGuildAction SetIcon(DiscordImage? icon);
+	IEditGuildAction SetIcon(DiscordImageBuffer? icon);
 
 	/// <summary>
 	/// Sets the guild's splash from image data.
 	/// </summary>
 	/// <param name="splash">The splash image data, or null to remove it.</param>
 	/// <returns>The current <see cref="IEditGuildAction"/> instance.</returns>
-	IEditGuildAction SetSplash(DiscordImage? splash);
+	IEditGuildAction SetSplash(DiscordImageBuffer? splash);
 
 	/// <summary>
 	/// Sets the guild's discovery splash from image data.
 	/// </summary>
 	/// <param name="discoverySplash">The discovery splash image data, or null to remove it.</param>
 	/// <returns>The current <see cref="IEditGuildAction"/> instance.</returns>
-	IEditGuildAction SetDiscoverySplash(DiscordImage? discoverySplash);
+	IEditGuildAction SetDiscoverySplash(DiscordImageBuffer? discoverySplash);
 
 	/// <summary>
 	/// Sets the guild's banner from image data.
 	/// </summary>
 	/// <param name="banner">The banner image data, or null to remove it.</param>
 	/// <returns>The current <see cref="IEditGuildAction"/> instance.</returns>
-	IEditGuildAction SetBanner(DiscordImage? banner);
+	IEditGuildAction SetBanner(DiscordImageBuffer? banner);
 
 	/// <summary>
 	/// Sets the system channel ID.

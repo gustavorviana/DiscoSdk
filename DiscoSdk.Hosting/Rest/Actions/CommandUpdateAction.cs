@@ -2,7 +2,6 @@ using DiscoSdk.Hosting.Builders;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
-using DiscoSdk.Models.Builders;
 using DiscoSdk.Models.Commands;
 using DiscoSdk.Rest.Actions;
 

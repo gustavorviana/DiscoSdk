@@ -27,7 +27,7 @@ internal class GuildMemberWrapper(DiscordClient client, GuildMember member, IGui
 
     // IMentionable / IWithDiscordIdentity
     /// <inheritdoc />
-    public Snowflake Id => _member.User?.Id ?? default;
+    public Snowflake Id => _member.User?.UserId ?? default;
 
     /// <inheritdoc />
     public DateTimeOffset CreatedAt => Id.CreatedAt;

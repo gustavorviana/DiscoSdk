@@ -4,6 +4,7 @@ using DiscoSdk.Hosting.Rest.Actions.Messages.Webhooks;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Messages;
+using DiscoSdk.Models.Messages.Mentions;
 using DiscoSdk.Rest.Actions;
 using DiscoSdk.Rest.Actions.Messages.Webhooks;
 
@@ -12,6 +13,8 @@ namespace DiscoSdk.Hosting.Wrappers.Messages;
 internal class WebhookMessageWrapper(WebhookIdentity id, WebhookMessageClient client, Message message) : MessageBaseWrapper(message), IWebhookMessage
 {
     public Snowflake ChannelId => Message.ChannelId;
+
+    public MessageMentionUser[] Mentions { get; } = [.. message.Mentions];
 
     public IRestAction Delete(Snowflake? threadId = null)
     {

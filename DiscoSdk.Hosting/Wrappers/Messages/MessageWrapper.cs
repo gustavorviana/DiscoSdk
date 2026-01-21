@@ -8,6 +8,7 @@ using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
+using DiscoSdk.Models.Users;
 using DiscoSdk.Rest.Actions;
 using DiscoSdk.Rest.Actions.Messages;
 
@@ -35,6 +36,7 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
 
         Reactions = Message.Reactions?.Select(r => new ReactionWrapper(r, this, _client))?.ToArray() ?? [];
         Author = new UserWrapper(client, message.Author);
+        Mentions = message.Mentions?.Select(x => new UserMentionWrapper(client, x, Guild))?.ToArray() ?? [];
     }
 
     public Snowflake Id => Message.Id;
@@ -68,6 +70,8 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
             return null;
         }
     }
+
+    public IUserMention[] Mentions { get; }
 
     // Operations with Builders
     public IEditMessageRestAction Edit()
@@ -224,6 +228,6 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
         if (!Snowflake.TryParse(_client.BotUser.Id, out var botId))
             return false;
 
-        return Message.Author.Id == botId;
+        return Message.Author.UserId == botId;
     }
 }

@@ -1,4 +1,5 @@
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Models.Users;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;

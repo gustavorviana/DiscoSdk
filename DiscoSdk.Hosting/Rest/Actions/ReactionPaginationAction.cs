@@ -1,4 +1,5 @@
 using DiscoSdk.Models;
+using DiscoSdk.Models.Users;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;

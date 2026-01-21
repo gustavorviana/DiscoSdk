@@ -19,7 +19,7 @@ public interface ICreateEmojiAction : IRestAction<IEmoji>
 	/// </summary>
 	/// <param name="image">The image data.</param>
 	/// <returns>The current <see cref="ICreateEmojiAction"/> instance.</returns>
-	ICreateEmojiAction SetImage(DiscordImage image);
+	ICreateEmojiAction SetImage(DiscordImageBuffer image);
 
 	/// <summary>
 	/// Sets the roles that can use this emoji.

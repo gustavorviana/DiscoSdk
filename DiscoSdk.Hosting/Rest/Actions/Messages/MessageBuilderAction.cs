@@ -2,6 +2,7 @@
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
+using DiscoSdk.Models.Messages.Mentions;
 using DiscoSdk.Models.Messages.Pools;
 using DiscoSdk.Models.Requests.Messages;
 using DiscoSdk.Rest.Actions.Messages;
@@ -59,9 +60,9 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
         return Self();
     }
 
-    public TSelf SetAllowedMentions(AllowedMentions? allowedMentions)
+    public TSelf SetAllowedMentions(MentionBuilder builder)
     {
-        _allowedMentions = allowedMentions;
+        _allowedMentions = builder.BuildAllowedMentions();
         return Self();
     }
 
@@ -72,6 +73,12 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
 
         _content = content;
         return Self();
+    }
+
+    public TSelf SetContent(MessageTextBuilder builder)
+    {
+        _allowedMentions = builder.BuildAllowedMentions();
+        return SetContent(builder.ToString());
     }
 
     public TSelf SetEmbeds(params Embed[] embeds)

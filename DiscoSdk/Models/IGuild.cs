@@ -26,17 +26,17 @@ public interface IGuild
     /// <summary>
     /// Gets the icon of this guild, returned when in the template object.
     /// </summary>
-    DiscordImage? Icon { get; }
+    DiscordImageUrl? Icon { get; }
 
     /// <summary>
     /// Gets the splash of this guild, or null if no splash is set.
     /// </summary>
-    DiscordImage? Splash { get; }
+    DiscordImageUrl? Splash { get; }
 
     /// <summary>
     /// Gets the discovery splash of this guild, or null if no discovery splash is set.
     /// </summary>
-    DiscordImage? DiscoverySplash { get; }
+    DiscordImageUrl? DiscoverySplash { get; }
 
     /// <summary>
     /// Gets a value indicating whether the current user is the owner of this guild.
@@ -156,7 +156,7 @@ public interface IGuild
     /// <summary>
     /// Gets the banner of this guild, or null if no banner is set.
     /// </summary>
-    DiscordImage? Banner { get; }
+    DiscordImageUrl? Banner { get; }
 
     /// <summary>
     /// Gets the premium tier (boost level) of this guild.
@@ -256,7 +256,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    ICreateEmojiAction CreateEmoji(string name, DiscordImage image);
+    ICreateEmojiAction CreateEmoji(string name, DiscordImageBuffer image);
 
     /// <summary>
     /// Creates a REST action to ban a member from this guild.

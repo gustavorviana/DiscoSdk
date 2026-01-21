@@ -1,8 +1,7 @@
-using DiscoSdk.Hosting.Rest.Actions;
-using DiscoSdk.Hosting.Wrappers.Channels;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.Users;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Wrappers;
@@ -25,15 +24,15 @@ internal class UserWrapper : IUser
         _user = user ?? throw new ArgumentNullException(nameof(user));
         _client = client ?? throw new ArgumentNullException(nameof(client));
 
-        Avatar = DiscordImage.ParseAvatar(_user.Id, user.Avatar);
-        Banner = DiscordImage.ParseBanner(_user.Id, _user.Banner);
+        Avatar = DiscordImageUrl.ParseAvatar(_user.UserId, user.Avatar);
+        Banner = DiscordImageUrl.ParseBanner(_user.UserId, _user.Banner);
     }
 
     /// <inheritdoc />
-    public Snowflake Id => _user.Id;
+    public Snowflake Id => _user.UserId;
 
     /// <inheritdoc />
-    public DateTimeOffset CreatedAt => _user.Id.CreatedAt;
+    public DateTimeOffset CreatedAt => _user.UserId.CreatedAt;
 
     /// <inheritdoc />
     public string Username => _user.Username;
@@ -45,7 +44,7 @@ internal class UserWrapper : IUser
     public string? GlobalName => _user.GlobalName;
 
     /// <inheritdoc />
-    public DiscordImage? Avatar { get; private set; }
+    public DiscordImageUrl? Avatar { get; private set; }
 
     /// <inheritdoc />
     public bool Bot => _user.Bot ?? false;
@@ -57,7 +56,7 @@ internal class UserWrapper : IUser
     public bool MfaEnabled => _user.MfaEnabled ?? false;
 
     /// <inheritdoc />
-    public DiscordImage? Banner { get; private set; }
+    public DiscordImageUrl? Banner { get; private set; }
 
     /// <inheritdoc />
     public int? AccentColor => _user.AccentColor;
@@ -72,13 +71,13 @@ internal class UserWrapper : IUser
     public string? Email => _user.Email;
 
     /// <inheritdoc />
-    public UserFlags Flags => _user.Flags ?? UserFlags.None;
+    public UserFlags Flags => _user.Flags;
 
     /// <inheritdoc />
-    public PremiumType PremiumType => _user.PremiumType ?? PremiumType.None;
+    public PremiumType PremiumType => _user.PremiumType;
 
     /// <inheritdoc />
-    public UserFlags PublicFlags => _user.PublicFlags ?? UserFlags.None;
+    public UserFlags PublicFlags => _user.PublicFlags;
 
     /// <inheritdoc />
     public string EffectiveAvatarUrl
@@ -88,7 +87,7 @@ internal class UserWrapper : IUser
             if (!string.IsNullOrEmpty(_user.Avatar))
             {
                 var extension = _user.Avatar.StartsWith("a_") ? "gif" : "png";
-                return $"https://cdn.discordapp.com/avatars/{_user.Id}/{_user.Avatar}.{extension}";
+                return $"https://cdn.discordapp.com/avatars/{_user.UserId}/{_user.Avatar}.{extension}";
             }
 
             // Default avatar based on discriminator
@@ -106,7 +105,7 @@ internal class UserWrapper : IUser
                 return null;
 
             var extension = _user.Banner.StartsWith("a_") ? "gif" : "png";
-            return $"https://cdn.discordapp.com/banners/{_user.Id}/{_user.Banner}.{extension}";
+            return $"https://cdn.discordapp.com/banners/{_user.UserId}/{_user.Banner}.{extension}";
         }
     }
 
@@ -123,7 +122,7 @@ internal class UserWrapper : IUser
     internal void OnUpdate(User user)
     {
         _user = user;
-        Avatar = DiscordImage.FromBase64(_user.Avatar);
-        Banner = DiscordImage.FromBase64(_user.Banner);
+        Avatar = DiscordImageUrl.ParseAvatar(_user.UserId, _user.Avatar);
+        Banner = DiscordImageUrl.ParseBanner(_user.UserId, _user.Banner);
     }
 }

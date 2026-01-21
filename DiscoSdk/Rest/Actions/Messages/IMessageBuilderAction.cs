@@ -1,21 +1,37 @@
-﻿using DiscoSdk.Models.Messages.Components;
+﻿using DiscoSdk.Models.Messages;
+using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
+using DiscoSdk.Models.Messages.Mentions;
 using DiscoSdk.Models.Messages.Pools;
-using DiscoSdk.Models.Requests.Messages;
 
 namespace DiscoSdk.Rest.Actions.Messages;
 
+/// <summary>
+/// Defines a fluent builder contract for creating or editing Discord messages.
+/// Implementations accumulate message state and execute a REST action that
+/// produces a <typeparamref name="TMessage"/>.
+/// </summary>
+/// <typeparam name="TSelf">The concrete builder type (CRTP pattern).</typeparam>
+/// <typeparam name="TMessage">The resulting message model type.</typeparam>
 public interface IMessageBuilderAction<TSelf, TMessage> : IRestAction<TMessage>
 {
     /// <summary>
-    /// Sets the content of the message.
+    /// Sets the raw textual content of the message.
     /// </summary>
-    /// <param name="content">The message content (max 2000 characters).</param>
+    /// <param name="content">The message content (maximum 2000 characters).</param>
     /// <returns>The current <see cref="TSelf"/> instance.</returns>
     TSelf SetContent(string? content);
 
     /// <summary>
-    /// Sets the embeds of the message.
+    /// Sets the textual content using a <see cref="MessageTextBuilder"/>,
+    /// allowing fine-grained control over mentions and formatting.
+    /// </summary>
+    /// <param name="builder">The text builder used to compose the message.</param>
+    /// <returns>The current <see cref="TSelf"/> instance.</returns>
+    TSelf SetContent(MessageTextBuilder builder);
+
+    /// <summary>
+    /// Replaces all embeds in the message.
     /// </summary>
     /// <param name="embeds">The embeds to set.</param>
     /// <returns>The current <see cref="TSelf"/> instance.</returns>
@@ -23,28 +39,64 @@ public interface IMessageBuilderAction<TSelf, TMessage> : IRestAction<TMessage>
 
     /// <summary>
     /// Adds an action row containing the specified components.
-    /// Components will be automatically wrapped in an ActionRow if they are not already.
+    /// Components will be wrapped in an ActionRow when required.
     /// </summary>
-    /// <param name="items">The components to add to the action row (buttons, select menus, etc.).</param>
-    /// <returns>The current <see cref="ISendMessageRestAction"/> instance.</returns>
+    /// <param name="items">The components to add (buttons, selects, etc.).</param>
+    /// <returns>The current <see cref="TSelf"/> instance.</returns>
     TSelf AddActionRow(params MessageComponent[] items);
 
+    /// <summary>
+    /// Removes all components from the message.
+    /// </summary>
+    /// <returns>The current <see cref="TSelf"/> instance.</returns>
     TSelf ClearComponents();
 
     /// <summary>
     /// Enables or disables embed rendering for the message.
-    /// When set to <c>true</c>, all embeds in the message will be suppressed and not rendered by clients.
-    /// When set to <c>false</c>, embeds will be restored and rendered normally.
+    /// When <c>true</c>, all embeds will be suppressed by clients.
+    /// When <c>false</c>, embeds will be rendered normally.
     /// </summary>
     /// <param name="suppress">
-    /// <c>true</c> to suppress embeds; <c>false</c> to allow embeds to be rendered.
+    /// <c>true</c> to suppress embeds; <c>false</c> to allow rendering.
     /// </param>
     /// <returns>The current <see cref="TSelf"/> instance.</returns>
     TSelf SetSuppressEmbeds(bool suppress = true);
 
+    /// <summary>
+    /// Sets or clears a poll attached to the message.
+    /// </summary>
+    /// <param name="poll">The poll to attach, or <c>null</c> to remove it.</param>
+    /// <returns>The current <see cref="TSelf"/> instance.</returns>
     TSelf SetPoll(Poll? poll);
 
+    /// <summary>
+    /// Removes all file attachments from the message.
+    /// </summary>
+    /// <returns>The current <see cref="TSelf"/> instance.</returns>
     TSelf ClearAttachments();
 
-    TSelf SetAllowedMentions(AllowedMentions? allowedMentions);
+    /// <summary>
+    /// Sets the <c>allowed_mentions</c> policy for the message using a
+    /// <see cref="MentionBuilder"/>.
+    ///
+    /// This overload is intended for scenarios where mention behavior is composed
+    /// semantically (users, roles, everyone, silent vs. ping) and then translated
+    /// into Discord’s low-level <c>allowed_mentions</c> payload.
+    ///
+    /// The provided <paramref name="builder"/> encapsulates:
+    /// - Which entities were mentioned (users, roles, everyone)
+    /// - Which mentions should actually notify (ping)
+    /// - The rules required to safely generate <c>parse</c>, <c>users</c> and <c>roles</c>
+    ///   without accidentally pinging silent mentions
+    ///
+    /// Using this method avoids dealing directly with Discord’s raw arrays and
+    /// prevents subtle mistakes such as enabling global parsing when silent mentions
+    /// are present.
+    /// </summary>
+    /// <param name="builder">
+    /// A mention builder containing the semantic mention state to be converted into
+    /// an <see cref="AllowedMentions"/> payload.
+    /// </param>
+    /// <returns>The current <see cref="TSelf"/> instance.</returns>
+    TSelf SetAllowedMentions(MentionBuilder builder);
 }

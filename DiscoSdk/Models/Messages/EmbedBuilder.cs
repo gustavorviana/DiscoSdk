@@ -1,6 +1,6 @@
 using DiscoSdk.Models.Messages.Embeds;
 
-namespace DiscoSdk.Models.Builders;
+namespace DiscoSdk.Models.Messages;
 
 /// <summary>
 /// Fluent builder for creating Discord embeds.

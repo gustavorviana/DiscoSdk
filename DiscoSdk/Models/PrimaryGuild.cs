@@ -31,4 +31,3 @@ public class PrimaryGuild
     [JsonPropertyName("badge")]
     public string? Badge { get; set; }
 }
-

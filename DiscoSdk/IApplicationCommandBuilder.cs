@@ -1,7 +1,7 @@
 ﻿using DiscoSdk.Models.Commands;
 using DiscoSdk.Models.Enums;
 
-namespace DiscoSdk.Models.Builders
+namespace DiscoSdk
 {
     public interface IApplicationCommandBuilder
     {

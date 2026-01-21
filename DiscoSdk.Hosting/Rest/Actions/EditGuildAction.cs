@@ -19,10 +19,10 @@ internal class EditGuildAction : RestAction<IGuild>, IEditGuildAction
 	private Snowflake? _afkChannelId;
 	private bool _afkChannelIdSet;
 	private int? _afkTimeout;
-	private DiscordImage? _icon;
-	private DiscordImage? _splash;
-	private DiscordImage? _discoverySplash;
-	private DiscordImage? _banner;
+	private DiscordImageBuffer? _icon;
+	private DiscordImageBuffer? _splash;
+	private DiscordImageBuffer? _discoverySplash;
+	private DiscordImageBuffer? _banner;
 	private Snowflake? _systemChannelId;
 	private bool _systemChannelIdSet;
 	private SystemChannelFlags? _systemChannelFlags;
@@ -81,25 +81,25 @@ internal class EditGuildAction : RestAction<IGuild>, IEditGuildAction
 		return this;
 	}
 
-	public IEditGuildAction SetIcon(DiscordImage? icon)
+	public IEditGuildAction SetIcon(DiscordImageBuffer? icon)
 	{
 		_icon = icon;
 		return this;
 	}
 
-	public IEditGuildAction SetSplash(DiscordImage? splash)
+	public IEditGuildAction SetSplash(DiscordImageBuffer? splash)
 	{
 		_splash = splash;
 		return this;
 	}
 
-	public IEditGuildAction SetDiscoverySplash(DiscordImage? discoverySplash)
+	public IEditGuildAction SetDiscoverySplash(DiscordImageBuffer? discoverySplash)
 	{
 		_discoverySplash = discoverySplash;
 		return this;
 	}
 
-	public IEditGuildAction SetBanner(DiscordImage? banner)
+	public IEditGuildAction SetBanner(DiscordImageBuffer? banner)
 	{
 		_banner = banner;
 		return this;

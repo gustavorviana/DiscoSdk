@@ -31,11 +31,11 @@ internal class GuildWrapper : IGuild
 
     public string Name => _guild.Name;
 
-    public DiscordImage? Icon { get; private set; }
+    public DiscordImageUrl? Icon { get; private set; }
 
-    public DiscordImage? Splash { get; private set; }
+    public DiscordImageUrl? Splash { get; private set; }
 
-    public DiscordImage? DiscoverySplash { get; private set; }
+    public DiscordImageUrl? DiscoverySplash { get; private set; }
 
     public bool? Owner => _guild.Owner;
 
@@ -83,7 +83,7 @@ internal class GuildWrapper : IGuild
 
     public string? Description => _guild.Description;
 
-    public DiscordImage? Banner { get; private set; }
+    public DiscordImageUrl? Banner { get; private set; }
 
     public PremiumTier? PremiumTier => _guild.PremiumTier;
 
@@ -132,7 +132,7 @@ internal class GuildWrapper : IGuild
         return new RoleAction(_client, this);
     }
 
-    public ICreateEmojiAction CreateEmoji(string name, DiscordImage image)
+    public ICreateEmojiAction CreateEmoji(string name, DiscordImageBuffer image)
     {
         return new CreateEmojiAction(_client, this, name, image);
     }
@@ -432,9 +432,9 @@ internal class GuildWrapper : IGuild
 
     private void LoadImages()
     {
-        Icon = DiscordImage.FromBase64(_guild.Icon);
-        Splash = DiscordImage.FromBase64(_guild.Splash);
-        DiscoverySplash = DiscordImage.FromBase64(_guild.DiscoverySplash);
-        Banner = DiscordImage.FromBase64(_guild.Banner);
+        Icon = DiscordImageUrl.ParseIcon(_guild.Id, _guild.Icon);
+        Splash = DiscordImageUrl.ParseSplash(_guild.Id, _guild.Splash);
+        DiscoverySplash = DiscordImageUrl.ParseDiscoverySplash(_guild.Id, _guild.DiscoverySplash);
+        Banner = DiscordImageUrl.ParseBanner(_guild.Id, _guild.Banner);
     }
 }

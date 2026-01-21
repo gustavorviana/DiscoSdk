@@ -1,6 +1,7 @@
 using DiscoSdk.Exceptions;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Messages.Components;
+using DiscoSdk.Models.Users;
 using DiscoSdk.Rest.Actions;
 using DiscoSdk.Rest.Actions.Messages;
 
@@ -51,6 +52,8 @@ public interface IMessage : IMessageBase, IMentionable, IDeletable
     /// Webhook API cannot query reactions.
     /// </remarks>
     IReaction[] Reactions { get; }
+
+    IUserMention[] Mentions { get; }
 
     /// <summary>
     /// Creates a builder for editing this message.

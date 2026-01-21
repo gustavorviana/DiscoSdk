@@ -2,6 +2,7 @@ using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
 using DiscoSdk.Models.Messages.Pools;
+using DiscoSdk.Rest.Actions.Messages;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Requests.Messages;

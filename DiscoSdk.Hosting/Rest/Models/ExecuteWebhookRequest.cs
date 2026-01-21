@@ -1,9 +1,9 @@
 using DiscoSdk.Models.Enums;
-using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
 using DiscoSdk.Models.Messages.Pools;
 using DiscoSdk.Models.Requests.Messages;
+using DiscoSdk.Rest.Actions.Messages;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Hosting.Rest.Models;

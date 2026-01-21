@@ -6,6 +6,8 @@ public abstract class RestAction<T> : IRestAction<T>
 {
     public abstract Task<T> ExecuteAsync(CancellationToken cancellationToken = default);
 
+    public static RestAction<T?> Empty => new RestActionImpl<T?>((_) => default!);
+
     public static RestAction<T> FromResult(T value)
     {
         return new RestActionImpl<T>(_ => Task.FromResult(value));

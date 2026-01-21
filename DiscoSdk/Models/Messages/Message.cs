@@ -2,7 +2,9 @@
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
+using DiscoSdk.Models.Messages.Mentions;
 using DiscoSdk.Models.Messages.Pools;
+using DiscoSdk.Models.Users;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Messages;
@@ -77,7 +79,7 @@ public class Message
     /// Gets or sets the users specifically mentioned in the message.
     /// </summary>
     [JsonPropertyName("mentions")]
-    public User[] Mentions { get; set; } = [];
+    public MessageMentionUser[] Mentions { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the roles specifically mentioned in this message.

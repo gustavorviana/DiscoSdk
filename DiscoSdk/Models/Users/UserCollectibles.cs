@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DiscoSdk.Models;
+namespace DiscoSdk.Models.Users;
 
 /// <summary>
 /// Represents collectibles for a user.
