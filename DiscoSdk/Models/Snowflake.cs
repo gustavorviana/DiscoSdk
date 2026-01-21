@@ -43,10 +43,15 @@ public readonly struct Snowflake(ulong value) : IEquatable<Snowflake>, IComparab
 {
 	private const long DiscordEpoch = 1420070400000L; // 2015-01-01T00:00:00Z
 
-	/// <summary>
-	/// Gets a value indicating whether this Discord ID is empty (zero).
-	/// </summary>
-	public bool Empty => value == 0;
+    public Snowflake(long value) : this((ulong)value)
+    {
+
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this Discord ID is empty (zero).
+    /// </summary>
+    public bool Empty => value == 0;
 
     public static Snowflake Parse(string value)
     {
@@ -115,6 +120,16 @@ public readonly struct Snowflake(ulong value) : IEquatable<Snowflake>, IComparab
     public static implicit operator ulong(Snowflake snowflake)
     {
         return snowflake.Value;
+    }
+
+    public static explicit operator Snowflake(long value)
+    {
+        return new Snowflake(value);
+    }
+
+    public static implicit operator long(Snowflake snowflake)
+    {
+        return (long)snowflake.Value;
     }
 
     public static explicit operator Snowflake(ulong value)

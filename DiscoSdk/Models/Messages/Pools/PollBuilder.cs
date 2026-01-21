@@ -1,98 +1,100 @@
 ﻿namespace DiscoSdk.Models.Messages.Pools;
 
-/// <summary>
-/// Builder used to create Discord polls.
-/// </summary>
-public sealed class PollBuilder(string question)
+public sealed class PollBuilder
 {
-    /// <summary>
-    /// Internal poll instance being built.
-    /// </summary>
-    private readonly Poll _poll = new() { Question = question };
+    private readonly Poll _poll = new();
 
-    /// <summary>
-    /// Adds an answer without emoji.
-    /// </summary>
-    /// <param name="text">Answer text.</param>
-    /// <returns>The current <see cref="PollBuilder"/>.</returns>
     public PollBuilder AddAnswer(string text)
     {
         _poll.Answers.Add(new PollAnswer
         {
-            Text = text
+            PoolMedia = new PollText
+            {
+                Text = text
+            }
         });
-
         return this;
     }
 
-    /// <summary>
-    /// Adds an answer with a unicode emoji.
-    /// </summary>
-    /// <param name="text">Answer text.</param>
-    /// <param name="emojiName">Emoji name or unicode value.</param>
-    /// <returns>The current <see cref="PollBuilder"/>.</returns>
-    public PollBuilder AddAnswer(string text, string emojiName)
+    public PollBuilder SetQuestionText(string? question)
+    {
+        _poll.Question.Text = question;
+        return this;
+    }
+
+    public PollBuilder SetQuestionEmoji(PollEmoji? emoji)
+    {
+        _poll.Question.Emoji = GetValidEmoji(emoji);
+        return this;
+    }
+
+    public PollBuilder SetQuestionEmoji(IEmoji? emoji)
+    {
+        if (emoji == null)
+        {
+            _poll.Question.Emoji = null;
+            return this;
+        }
+
+        _poll.Question.Emoji = new PollEmoji
+        {
+            Id = emoji.Id,
+            Name = emoji.Name
+        };
+        return this;
+    }
+
+    public PollBuilder AddAnswer(string text, PollEmoji? emoji)
     {
         _poll.Answers.Add(new PollAnswer
         {
-            Text = text,
-            Emoji = new PollEmoji
+            PoolMedia = new PollText
             {
-                Name = emojiName
+                Text = text,
+                Emoji = GetValidEmoji(emoji)
             }
         });
 
         return this;
     }
 
-    /// <summary>
-    /// Adds an answer with a custom emoji.
-    /// </summary>
-    /// <param name="text">Answer text.</param>
-    /// <param name="emojiId">Custom emoji id.</param>
-    /// <param name="emojiName">Optional emoji name.</param>
-    /// <returns>The current <see cref="PollBuilder"/>.</returns>
-    public PollBuilder AddAnswer(string text, ulong emojiId, string? emojiName = null)
+    private static PollEmoji? GetValidEmoji(PollEmoji? emoji)
+    {
+        if (emoji == null || ((emoji.Id == null || emoji.Id.Value == default) && string.IsNullOrEmpty(emoji.Name)))
+            return null;
+
+        return emoji;
+    }
+
+    public PollBuilder AddAnswer(string text, IEmoji? emoji)
     {
         _poll.Answers.Add(new PollAnswer
         {
-            Text = text,
-            Emoji = new PollEmoji
+            PoolMedia = new PollText
             {
-                Id = emojiId,
-                Name = emojiName
+                Text = text,
+                Emoji = emoji == null ? null : new PollEmoji
+                {
+                    Id = emoji.Id,
+                    Name = emoji.Name
+                }
             }
         });
-
         return this;
     }
 
-    /// <summary>
-    /// Sets the poll duration in hours.
-    /// </summary>
-    /// <param name="hours">Duration in hours.</param>
-    /// <returns>The current <see cref="PollBuilder"/>.</returns>
     public PollBuilder SetDurationHours(int hours)
     {
         _poll.DurationHours = hours;
         return this;
     }
 
-    /// <summary>
-    /// Defines whether multiple answers can be selected.
-    /// </summary>
-    /// <param name="allow">True to allow multiple selections.</param>
-    /// <returns>The current <see cref="PollBuilder"/>.</returns>
     public PollBuilder AllowMultiSelect(bool allow = true)
     {
         _poll.AllowMultiSelect = allow;
         return this;
     }
 
-    /// <summary>
-    /// Builds the poll instance.
-    /// </summary>
-    /// <returns>The built <see cref="Poll"/>.</returns>
     public Poll Build()
     {
         return _poll;

@@ -8,7 +8,7 @@ public sealed class PollEmoji
     /// <summary>
     /// Gets or sets the emoji id (custom emoji).
     /// </summary>
-    public ulong? Id { get; set; }
+    public Snowflake? Id { get; set; }
 
     /// <summary>
     /// Gets or sets the emoji name.

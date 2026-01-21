@@ -1,33 +1,27 @@
 ﻿using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Clients;
+using DiscoSdk.Models;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Builders;
 
 public sealed class DiscordWebhookClientBuilder
 {
-    private string? _webhookUrl;
-    private string? _webhookId;
-    private string? _webhookToken;
+    private readonly WebhookIdentity _identity;
 
     private TimeSpan? _timeout;
 
     private JsonSerializerOptions? _jsonOptions;
 
-    public DiscordWebhookClientBuilder WithWebhookUrl(string webhookUrl)
+    public DiscordWebhookClientBuilder(string webhookUrl)
     {
-        _webhookUrl = webhookUrl;
-        _webhookId = null;
-        _webhookToken = null;
-        return this;
+        _identity = WebhookIdentity.FromUrl(webhookUrl)
+            ?? throw new InvalidOperationException("Invalid Discord webhook url. Expected: https://discord.com/api/webhooks/{id}/{token}");
     }
 
-    public DiscordWebhookClientBuilder WithWebhook(string webhookId, string webhookToken)
+    public DiscordWebhookClientBuilder(Snowflake id, string token)
     {
-        _webhookId = webhookId;
-        _webhookToken = webhookToken;
-        _webhookUrl = null;
-        return this;
+        _identity = new WebhookIdentity(id, token);
     }
 
     public DiscordWebhookClientBuilder WithTimeout(TimeSpan timeout)
@@ -44,24 +38,10 @@ public sealed class DiscordWebhookClientBuilder
 
     public async Task<IDiscordWebhookClient> BuildAsync(CancellationToken cancellationToken = default)
     {
-        var url = ResolveWebhookUrl();
-        var identity = WebhookIdentity.FromUrl(url)
-            ?? throw new InvalidOperationException("Invalid Discord webhook url. Expected: https://discord.com/api/webhooks/{id}/{token}");
         var jsonOptions = _jsonOptions ?? new JsonSerializerOptions(JsonSerializerDefaults.Web);
         var client = new WebhookMessageClient(new DiscordRestClient(new Uri("https://discord.com/api/"), jsonOptions, _timeout));
-        var info = await client.GetInfoAsync(identity!, cancellationToken);
+        var info = await client.GetInfoAsync(_identity, cancellationToken);
 
-        return new DiscordWebhookClient(client, info, identity);
-    }
-
-    private string ResolveWebhookUrl()
-    {
-        if (!string.IsNullOrWhiteSpace(_webhookUrl))
-            return _webhookUrl!;
-
-        if (string.IsNullOrWhiteSpace(_webhookId) || string.IsNullOrWhiteSpace(_webhookToken))
-            throw new InvalidOperationException("You must set WithWebhookUrl(url) or WithWebhook(id, token).");
-
-        return $"https://discord.com/api/webhooks/{_webhookId}/{_webhookToken}";
+        return new DiscordWebhookClient(client, info, _identity);
     }
 }
