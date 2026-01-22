@@ -12,6 +12,6 @@ public static class ModelsExtensions
 		if (permissible.Permissions == DiscordPermission.Administrator)
 			return true;
 
-		return permissible.Permissions.HasFlag(permission);
+		return permission != DiscordPermission.None &&  permissible.Permissions.HasFlag(permission);
     }
 }

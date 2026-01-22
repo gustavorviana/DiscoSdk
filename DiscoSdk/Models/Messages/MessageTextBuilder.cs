@@ -34,9 +34,9 @@ public sealed class MessageTextBuilder : MentionBuilderBase<MessageTextBuilder>
     /// </summary>
     /// <param name="text">The text to append.</param>
     /// <returns>The current <see cref="MessageTextBuilder"/> instance.</returns>
-    public MessageTextBuilder AppendLine(string text)
+    public MessageTextBuilder AppendLine(string? text = null)
     {
-        _content.AppendLine(text);
+        _content.AppendLine(text ?? String.Empty);
         return this;
     }
 

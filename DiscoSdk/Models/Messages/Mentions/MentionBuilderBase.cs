@@ -25,40 +25,40 @@ public abstract class MentionBuilderBase<TSelf> where TSelf : MentionBuilderBase
 
     /// <summary>
     /// Writes a user mention into the message.
-    /// When <paramref name="silent"/> is <c>true</c>, the mention will be rendered
+    /// When <paramref name="ping"/> is <c>true</c>, the mention will be rendered
     /// visually but will not trigger a notification.
     /// </summary>
     /// <param name="userId">The user ID to mention.</param>
-    /// <param name="silent">Whether the mention should be silent.</param>
+    /// <param name="ping">Whether the mention should be silent.</param>
     /// <returns>The current <see cref="TSelf"/> instance.</returns>
-    public TSelf MentionUser(Snowflake userId, bool silent = false)
+    public TSelf MentionUser(Snowflake userId, bool ping = true)
     {
-        return AppendMention(new Mention(MentionType.User, userId, silent));
+        return AppendMention(new Mention(MentionType.User, userId, ping));
     }
 
     /// <summary>
     /// Writes a role mention into the message.
-    /// When <paramref name="silent"/> is <c>true</c>, the mention will be rendered
+    /// When <paramref name="ping"/> is <c>true</c>, the mention will be rendered
     /// visually but will not trigger a notification.
     /// </summary>
     /// <param name="roleId">The role ID to mention.</param>
-    /// <param name="silent">Whether the mention should be silent.</param>
+    /// <param name="ping">Whether the mention should be silent.</param>
     /// <returns>The current <see cref="TSelf"/> instance.</returns>
-    public TSelf MentionRole(Snowflake roleId, bool silent = false)
+    public TSelf MentionRole(Snowflake roleId, bool ping = true)
     {
-        return AppendMention(new Mention(MentionType.Role, roleId, silent));
+        return AppendMention(new Mention(MentionType.Role, roleId, ping));
     }
 
     /// <summary>
     /// Writes an <c>@everyone</c> mention into the message.
-    /// When <paramref name="silent"/> is <c>true</c>, it will be rendered as text
+    /// When <paramref name="ping"/> is <c>true</c>, it will be rendered as text
     /// without notifying anyone.
     /// </summary>
-    /// <param name="silent">Whether the mention should be silent.</param>
+    /// <param name="ping">Whether the mention should be silent.</param>
     /// <returns>The current <see cref="TSelf"/> instance.</returns>
-    public TSelf MentionEveryone(bool silent = false)
+    public TSelf MentionEveryone(bool ping = true)
     {
-        return AppendMention(Mention.Everyone(silent));
+        return AppendMention(Mention.Everyone(ping));
     }
 
     /// <summary>
