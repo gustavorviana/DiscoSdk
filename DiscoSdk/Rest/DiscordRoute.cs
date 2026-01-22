@@ -32,10 +32,14 @@ public readonly struct DiscordRoute(string template, params object[] args)
     /// Template: /channels/{channel_id}/messages/{message_id}
     /// Result:   /channels/123456724611559464
     /// </summary>
-    public string GetBucketPath()
+    public string? GetBucketPath()
     {
         var segments = Template.Split('/', StringSplitOptions.RemoveEmptyEntries);
         var allowApplicationFallback = !segments.Any(MajorParameters.Contains);
+
+        if (allowApplicationFallback && !segments.Contains("{application_id}", StringComparer.OrdinalIgnoreCase))
+            return null;
+
         var sb = new StringBuilder();
         var argIndex = 0;
 
