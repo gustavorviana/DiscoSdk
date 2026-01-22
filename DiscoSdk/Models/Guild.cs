@@ -63,8 +63,8 @@ public class Guild
     /// Gets or sets the permissions for the current user in the guild.
     /// </summary>
     [JsonPropertyName("permissions")]
-    [JsonConverter(typeof(PermissionIntegerNullableConverter))]
-    public int? Permissions { get; set; }
+    [JsonConverter(typeof(DiscordPermissionConverter))]
+    public DiscordPermission? Permissions { get; set; }
 
     /// <summary>
     /// Gets or sets the guild's region.

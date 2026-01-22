@@ -47,15 +47,7 @@ internal class RoleWrapper(DiscordClient client, Role role, IGuild guild) : IRol
     public bool IsMentionable => _role.Mentionable;
 
     /// <inheritdoc />
-    public DiscordPermission Permissions
-    {
-        get
-        {
-            if (ulong.TryParse(_role.Permissions, out var permissions))
-                return (DiscordPermission)permissions;
-            return DiscordPermission.None;
-        }
-    }
+    public DiscordPermission Permissions => _role.Permissions;
 
     /// <inheritdoc />
     public DiscordPermission PermissionsRaw => Permissions;
@@ -69,21 +61,21 @@ internal class RoleWrapper(DiscordClient client, Role role, IGuild guild) : IRol
     /// <inheritdoc />
     public IGuild Guild => _guild;
 
-	/// <inheritdoc />
-	public RoleTags Tags => _role.Tags ?? new();
+    /// <inheritdoc />
+    public RoleTags Tags => _role.Tags ?? new();
 
-	/// <inheritdoc />
-	public RoleIcon? Icon
-	{
-		get
-		{
-			if (!string.IsNullOrEmpty(_role.UnicodeEmoji))
-				return new RoleIcon(_role.UnicodeEmoji, isEmoji: true);
-			if (!string.IsNullOrEmpty(_role.Icon))
-				return new RoleIcon(_role.Icon);
-			return null;
-		}
-	}
+    /// <inheritdoc />
+    public RoleIcon? Icon
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(_role.UnicodeEmoji))
+                return new RoleIcon(_role.UnicodeEmoji, isEmoji: true);
+            if (!string.IsNullOrEmpty(_role.Icon))
+                return new RoleIcon(_role.Icon);
+            return null;
+        }
+    }
 
     /// <inheritdoc />
     public int CompareTo(IRole? other)
@@ -122,55 +114,55 @@ internal class RoleWrapper(DiscordClient client, Role role, IGuild guild) : IRol
         return Position > role.Position;
     }
 
-	/// <inheritdoc />
-	public IRoleAction Edit()
-	{
-		return new RoleAction(_client, _guild, _role.Id);
-	}
+    /// <inheritdoc />
+    public IRoleAction Edit()
+    {
+        return new RoleAction(_client, _guild, _role.Id);
+    }
 
-	/// <inheritdoc />
-	public IRestAction ModifyPosition(int position)
-	{
-		if (IsPublicRole)
-			throw new InvalidOperationException("Cannot modify position of the @everyone role.");
+    /// <inheritdoc />
+    public IRestAction ModifyPosition(int position)
+    {
+        if (IsPublicRole)
+            throw new InvalidOperationException("Cannot modify position of the @everyone role.");
 
-		return RestAction.Create(async cancellationToken =>
-		{
-			var request = new[]
-			{
-				new { id = _role.Id.ToString(), position = position }
-			};
+        return RestAction.Create(async cancellationToken =>
+        {
+            var request = new[]
+            {
+                new { id = _role.Id.ToString(), position = position }
+            };
 
-			await _client.RoleClient.ModifyPositionsAsync(_guild.Id, request, cancellationToken);
-		});
-	}
+            await _client.RoleClient.ModifyPositionsAsync(_guild.Id, request, cancellationToken);
+        });
+    }
 
-	/// <inheritdoc />
-	public IRoleAction CreateCopy(IGuild guild)
-	{
-		if (guild == null)
-			throw new ArgumentNullException(nameof(guild));
+    /// <inheritdoc />
+    public IRoleAction CreateCopy(IGuild guild)
+    {
+        if (guild == null)
+            throw new ArgumentNullException(nameof(guild));
 
-		var action = new RoleAction(_client, guild);
-		action.SetName(_role.Name);
-		action.SetPermissions(Permissions);
-		action.SetColor(_role.Color);
-		action.SetHoist(_role.Hoist);
-		action.SetMentionable(_role.Mentionable);
-		if (!string.IsNullOrEmpty(_role.Icon))
-			action.SetIcon(_role.Icon);
-		if (!string.IsNullOrEmpty(_role.UnicodeEmoji))
-			action.SetUnicodeEmoji(_role.UnicodeEmoji);
-		return action;
-	}
+        var action = new RoleAction(_client, guild);
+        action.SetName(_role.Name);
+        action.SetPermissions(Permissions);
+        action.SetColor(_role.Color);
+        action.SetHoist(_role.Hoist);
+        action.SetMentionable(_role.Mentionable);
+        if (!string.IsNullOrEmpty(_role.Icon))
+            action.SetIcon(_role.Icon);
+        if (!string.IsNullOrEmpty(_role.UnicodeEmoji))
+            action.SetUnicodeEmoji(_role.UnicodeEmoji);
+        return action;
+    }
 
-	/// <inheritdoc />
-	public IRestAction Delete()
-	{
-		if (IsPublicRole)
-			throw new InvalidOperationException("Cannot delete the @everyone role.");
+    /// <inheritdoc />
+    public IRestAction Delete()
+    {
+        if (IsPublicRole)
+            throw new InvalidOperationException("Cannot delete the @everyone role.");
 
-		return RestAction.Create(cancellationToken => _client.RoleClient.DeleteAsync(_guild.Id, _role.Id, cancellationToken));
-	}
+        return RestAction.Create(cancellationToken => _client.RoleClient.DeleteAsync(_guild.Id, _role.Id, cancellationToken));
+    }
 }
 

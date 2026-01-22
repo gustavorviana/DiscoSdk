@@ -20,6 +20,16 @@ public class ColorConverter : JsonConverter<Color>
             return new Color(value);
         }
 
+        if (reader.TokenType == JsonTokenType.String)
+        {
+            var value = reader.GetString()!;
+            if (value.All(char.IsDigit))
+                return new Color(int.Parse(value));
+
+            if (value.StartsWith('#'))
+                return Color.FromHex(value);
+        }
+
         return default;
     }
 

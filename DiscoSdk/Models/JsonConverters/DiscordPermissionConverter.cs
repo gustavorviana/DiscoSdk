@@ -14,8 +14,11 @@ public sealed class DiscordPermissionConverter : JsonConverter<DiscordPermission
         if (reader.TokenType == JsonTokenType.String)
         {
             var value = reader.GetString();
+            
+            if (string.IsNullOrWhiteSpace(value))
+                throw new JsonException("Invalid Discord permission value: string is null or empty.");
 
-            if (ulong.TryParse(value, out var permissions))
+            if (ulong.TryParse(value, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var permissions))
                 return (DiscordPermission)permissions;
         }
 

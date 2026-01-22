@@ -55,8 +55,8 @@ public class Role
     /// Gets or sets the role's permissions as a string (bitfield).
     /// </summary>
     [JsonPropertyName("permissions")]
-    [JsonConverter(typeof(SafeStringConverter))]
-    public string Permissions { get; set; } = default!;
+    [JsonConverter(typeof(DiscordPermissionConverter))]
+    public DiscordPermission Permissions { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets a value indicating whether the role is managed by an integration.
@@ -86,8 +86,8 @@ public class Role
     /// Gets or sets the role's permissions as a string (new format).
     /// </summary>
     [JsonPropertyName("permissions_new")]
-    [JsonConverter(typeof(SafeStringConverter))]
-    public string? PermissionsNew { get; set; }
+    [JsonConverter(typeof(DiscordPermissionConverter))]
+    public DiscordPermission PermissionsNew { get; set; }
 
     /// <summary>
     /// Gets or sets the version of the role.

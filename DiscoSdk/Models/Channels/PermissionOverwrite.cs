@@ -27,14 +27,13 @@ public class PermissionOverwrite
     /// Gets or sets the permission bit set.
     /// </summary>
     [JsonPropertyName("allow")]
-    [JsonConverter(typeof(SafeStringConverter))]
-    public string Allow { get; set; } = default!;
+    [JsonConverter(typeof(DiscordPermissionConverter))]
+    public DiscordPermission Allow { get; set; } = default!;
 
     /// <summary>
     /// Gets or sets the permission bit set.
     /// </summary>
     [JsonPropertyName("deny")]
-    [JsonConverter(typeof(SafeStringConverter))]
-    public string Deny { get; set; } = default!;
+    [JsonConverter(typeof(DiscordPermissionConverter))]
+    public DiscordPermission Deny { get; set; } = default!;
 }
-

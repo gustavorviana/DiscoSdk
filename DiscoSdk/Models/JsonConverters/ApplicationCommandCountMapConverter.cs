@@ -13,11 +13,8 @@ public sealed class ApplicationCommandCountMapConverter
         Type typeToConvert,
         JsonSerializerOptions options)
     {
-        if (reader.TokenType == JsonTokenType.Null)
-            return new();
-
-        if (reader.TokenType != JsonTokenType.StartObject)
-            throw new JsonException("Expected object for application_command_counts.");
+        if (reader.TokenType == JsonTokenType.Null || reader.TokenType != JsonTokenType.StartObject)
+            return [];
 
         var dict = new Dictionary<ApplicationCommandType, int>();
 

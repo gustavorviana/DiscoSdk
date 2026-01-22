@@ -1,5 +1,4 @@
-﻿using DiscoSdk.Models.JsonConverters;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Messages.Embeds;
 

@@ -52,10 +52,8 @@ internal class ChannelPermissionCalculator
             // Only apply if member has this role
             if (member.Roles.Any(r => r.Id == overwrite.Id))
             {
-                if (ulong.TryParse(overwrite.Allow, out var allow))
-                    permissions |= (DiscordPermission)allow;
-                if (ulong.TryParse(overwrite.Deny, out var deny))
-                    permissions &= ~(DiscordPermission)deny;
+                permissions |= overwrite.Allow;
+                permissions &= ~overwrite.Deny;
             }
         }
 
@@ -68,10 +66,8 @@ internal class ChannelPermissionCalculator
 
         if (memberOverwrite != null)
         {
-            if (ulong.TryParse(memberOverwrite.Allow, out var allow))
-                permissions |= (DiscordPermission)allow;
-            if (ulong.TryParse(memberOverwrite.Deny, out var deny))
-                permissions &= ~(DiscordPermission)deny;
+            permissions |= memberOverwrite.Allow;
+            permissions &= ~memberOverwrite.Deny;
         }
 
         return permissions;
