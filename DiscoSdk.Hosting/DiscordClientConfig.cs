@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Logging;
+﻿using DiscoSdk.Hosting.Gateway;
+using DiscoSdk.Logging;
 
 namespace DiscoSdk.Hosting;
 
@@ -7,6 +8,8 @@ namespace DiscoSdk.Hosting;
 /// </summary>
 public class DiscordClientConfig
 {
+    public GatewayCompressMode GatewayCompressMode { get; set; } = GatewayCompressMode.ZlibStream;
+
     /// <summary>
     /// Gets or sets the total number of shards. If null, the value will be determined from the gateway.
     /// </summary>

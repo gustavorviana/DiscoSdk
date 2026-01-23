@@ -1,3 +1,4 @@
+using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Logging;
 using DiscoSdk.Models.JsonConverters;
 using System.Globalization;
@@ -19,6 +20,7 @@ public class DiscordClientBuilder
 	private JsonSerializerOptions? _jsonOptions;
 	private TimeSpan? _reconnectDelay;
 	private IObjectConverter? _objectConverter;
+	private GatewayCompressMode? _gatewayCompressMode;
 
 	/// <summary>
 	/// Initializes a new instance of <see cref="DiscordClientBuilder"/> with the required bot token.
@@ -154,6 +156,18 @@ public class DiscordClientBuilder
         return this;
     }
 
+	/// <summary>
+	/// Sets the gateway compression mode for WebSocket communication.
+	/// Default is <see cref="GatewayCompressMode.ZlibStream"/>.
+	/// </summary>
+	/// <param name="compressMode">The compression mode to use for gateway communication.</param>
+	/// <returns>The current <see cref="DiscordClientBuilder"/> instance.</returns>
+	public DiscordClientBuilder WithGatewayCompressMode(GatewayCompressMode compressMode)
+	{
+		_gatewayCompressMode = compressMode;
+		return this;
+	}
+
     /// <summary>
     /// Builds the <see cref="DiscordClient"/> instance, starts the connection to Discord Gateway,
     /// and returns the client ready for use. The client will be connecting in the background.
@@ -175,7 +189,8 @@ public class DiscordClientBuilder
 			EventProcessorMaxConcurrency = _eventProcessorMaxConcurrency,
 			EventProcessorQueueCapacity = _eventProcessorQueueCapacity,
 			Logger = _logger,
-			ReconnectDelay = _reconnectDelay ?? TimeSpan.FromSeconds(5)
+			ReconnectDelay = _reconnectDelay ?? TimeSpan.FromSeconds(5),
+			GatewayCompressMode = _gatewayCompressMode ?? GatewayCompressMode.ZlibStream
 		};
 
 		var jsonOptions = _jsonOptions ?? DiscoJson.Create();

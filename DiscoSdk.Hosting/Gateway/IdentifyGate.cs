@@ -1,98 +1,112 @@
 ﻿namespace DiscoSdk.Hosting.Gateway;
 
-/// <summary>
-/// Fixed-window rate limiter for Discord Gateway IDENTIFY.
-/// Allows at most <paramref name="maxCalls"/> calls per <paramref name="window"/>.
-/// Extra callers wait until the next window.
-/// </summary>
-public sealed class IdentifyGate : IDisposable
+internal sealed class IdentifyGate : IDisposable
 {
-    private readonly CancellationTokenSource _cancellationTokenSource = new();
-    private readonly SemaphoreSlim _signal = new(0, int.MaxValue);
-    private readonly object _lock = new();
-    private readonly Timer? _timer;
-    private readonly int _maxCalls;
-    private int _available;
-    private int _waiters;
+    private readonly List<TaskCompletionSource> _waiters = [];
+    private int _pendingReleaseCount = 0;
+    private int _maxConcurrency = 1;
+    private bool _disposed;
 
-    public CancellationToken Token => _cancellationTokenSource.Token;
+    public int PendingReleaseCount => Interlocked.CompareExchange(ref _pendingReleaseCount, 0, 0);
+    public int MaxConcurrency => Interlocked.CompareExchange(ref _maxConcurrency, 0, 0);
 
-    public IdentifyGate(int maxCalls, TimeSpan window)
+    public Task WaitAsync(CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxCalls);
+        lock (_waiters)
+        {
+            Interlocked.Increment(ref _pendingReleaseCount);
+            if (PendingReleaseCount <= MaxConcurrency)
+                return Task.CompletedTask;
 
-        _available = maxCalls;
-        _maxCalls = maxCalls;
+            var taskSource = new TaskCompletionSource();
+            _waiters.Add(taskSource);
 
-        if (window != TimeSpan.Zero)
-            _timer = new Timer(_ => OnWindowTick(), null, window, window);
+            return WaitWithCancellationAsync(taskSource, cancellationToken);
+        }
     }
 
-    /// <summary>
-    /// Waits until an IDENTIFY slot is available.
-    /// </summary>
-    public async Task WaitAsync(CancellationToken cancellationToken = default)
+    private async Task WaitWithCancellationAsync(TaskCompletionSource taskCompletionSource, CancellationToken cancellationToken)
     {
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken, _cancellationTokenSource.Token);
+        using (cancellationToken.Register(s => SignalReleased((TaskCompletionSource)s!, true, false), taskCompletionSource))
+            await taskCompletionSource.Task;
+    }
 
-        while (!_cancellationTokenSource.IsCancellationRequested)
+    public void SetMaxConcurrency(int newValue)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(newValue, 0, nameof(newValue));
+
+        if (newValue == MaxConcurrency)
+            return;
+
+        Interlocked.Exchange(ref _maxConcurrency, newValue);
+
+        lock (_waiters)
         {
-            lock (_lock)
+            for (int i = _pendingReleaseCount; i < MaxConcurrency; i++)
             {
-                if (_available > 0)
-                {
-                    _available--;
-                    return;
-                }
+                if (_waiters.Count == 0)
+                    break;
 
-                _waiters++;
+                _waiters[0].SetResult();
+                _waiters.RemoveAt(0);
             }
-
-            await _signal.WaitAsync(linked.Token).ConfigureAwait(false);
         }
     }
 
-    private void OnWindowTick()
+    public void Release()
     {
-        int toRelease;
-
-        lock (_lock)
-        {
-            if (_cancellationTokenSource.IsCancellationRequested)
-                return;
-
-            _available = _maxCalls;
-
-            toRelease = Math.Min(_waiters, _maxCalls);
-            _waiters -= toRelease;
-        }
-
-        if (toRelease > 0)
-            _signal.Release(toRelease);
+        if (PendingReleaseCount > 0)
+            lock (_waiters)
+                SignalReleased(_waiters.FirstOrDefault(), false, true);
     }
 
-    public void Reset()
+    private void SignalReleased(TaskCompletionSource? source, bool isCancelled, bool noLock)
     {
-        lock (_lock)
+        if (PendingReleaseCount > 0)
+            Interlocked.Decrement(ref _pendingReleaseCount);
+
+        if (source == null)
+            return;
+
+        if (noLock)
         {
-            if (_cancellationTokenSource.IsCancellationRequested)
-                return;
-
-            var toRelease = Math.Min(_waiters, _maxCalls);
-            if (toRelease > 0)
-                _signal.Release(toRelease);
-
-            _available = _maxCalls;
-            _waiters = 0;
+            _waiters.Remove(source);
         }
+        else
+        {
+            lock (_waiters)
+                _waiters.Remove(source);
+        }
+
+        if (isCancelled) source.SetCanceled();
+        else source.SetResult();
+    }
+
+    #region IDisposable
+
+    private void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        for (int i = _waiters.Count - 1; i >= 0; i--)
+            _waiters[i].SetCanceled();
+
+        _pendingReleaseCount = 0;
+        _waiters.Clear();
+        _disposed = true;
+    }
+
+    ~IdentifyGate()
+    {
+        Dispose(disposing: false);
     }
 
     public void Dispose()
     {
-        _cancellationTokenSource.Cancel();
-        _timer?.Dispose();
-        _signal.Dispose();
-        _cancellationTokenSource.Dispose();
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
+
+    #endregion
 }

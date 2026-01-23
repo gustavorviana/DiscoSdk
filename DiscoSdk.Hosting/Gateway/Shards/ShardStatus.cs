@@ -1,4 +1,4 @@
-﻿namespace DiscoSdk.Hosting.Gateway;
+﻿namespace DiscoSdk.Hosting.Gateway.Shards;
 
 /// <summary>
 /// Represents the connection status of a shard.

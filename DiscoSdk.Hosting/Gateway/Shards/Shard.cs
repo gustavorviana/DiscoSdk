@@ -1,34 +1,20 @@
 ﻿using DiscoSdk.Hosting.Gateway.Payloads;
 using System.Net.WebSockets;
 
-namespace DiscoSdk.Hosting.Gateway;
+namespace DiscoSdk.Hosting.Gateway.Shards;
 
 /// <summary>
 /// Represents a single shard connection to the Discord Gateway.
 /// </summary>
-internal sealed class Shard(int shardId, DiscordClientConfig config, IdentifyGate identifyGate, Uri gatewayUri)
+internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool pool)
 {
-    /// <summary>
-    /// Event raised when the shard successfully resumes a connection.
-    /// </summary>
-    public event ShardEventHandler? OnResume;
-
-    /// <summary>
-    /// Event raised when the shard receives a READY payload from the Gateway.
-    /// </summary>
-    public event ShardEventHandler<ReadyPayload>? OnReady;
-
-    /// <summary>
-    /// Event raised when the shard loses connection to the Gateway.
-    /// </summary>
-    public event ShardEventHandler<Exception>? ConnectionLost;
-
-    /// <summary>
-    /// Event raised when the shard receives a dispatch message from the Gateway.
-    /// </summary>
-    public event ShardEventHandler<ReceivedGatewayMessage>? OnReceiveMessage;
-
+    private readonly ShardSocket _socket = new(pool.DecompressFactory);
+    private CancellationTokenRegistration _tokenRegistration;
+    private ShardStatus _status = ShardStatus.PendingHello;
+    private CancellationTokenSource? _heartbeatCts;
     private string? _resumeGatewayUrl = null;
+    private bool _heartbeatAck = true;
+    private int _heartbeatIntervalMs;
     private string? _sessionId = null;
 
     /// <summary>
@@ -41,29 +27,19 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IdentifyGat
     /// </summary>
     public ShardStatus Status => _status;
 
-    private CancellationTokenSource? _heartbeatCts;
-    private readonly ShardSocket _socket = new();
-
-    private ShardStatus _status = ShardStatus.PendingHello;
-    private bool _heartbeatAck = true;
-    private int _heartbeatIntervalMs;
-    private long? _seq;
-
-    private CancellationTokenRegistration _tokenRegistration;
-
     /// <summary>
     /// Starts the shard and establishes a connection to the Gateway.
     /// </summary>
     /// <returns>A task that represents the asynchronous start operation.</returns>
     public async Task StartAsync()
     {
-        if (_status is not ShardStatus.PendingHello && _status is not ShardStatus.ConnectionLost)
+        if (_status is not ShardStatus.PendingHello and ShardStatus.ConnectionLost)
             return;
 
         _tokenRegistration.Dispose();
-        _tokenRegistration = identifyGate.Token.Register(async () => await StopAsync());
+        _tokenRegistration = pool.CancellationToken.Register(async () => await StopAsync());
 
-        await _socket.ConnectAsync(gatewayUri, identifyGate.Token);
+        await _socket.ConnectAsync(pool.GatewayUri.ToUri(), pool.CancellationToken);
         _ = RunLoopAsync();
     }
 
@@ -82,7 +58,8 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IdentifyGat
 
     private async Task RunLoopAsync()
     {
-        while (!identifyGate.Token.IsCancellationRequested)
+        var token = pool.CancellationToken;
+        while (!token.IsCancellationRequested)
         {
             try
             {
@@ -94,15 +71,14 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IdentifyGat
             }
             catch (Exception ex)
             {
-                _status = ShardStatus.ConnectionLost;
-                await InvokeEvent(ConnectionLost, ex);
+                SignalConnectionLost();
+                await pool.OnConnectionLostAsync(this, ex);
 
                 if (ex is DiscordSocketException)
                 {
                     if (config.ReconnectDelay > TimeSpan.Zero)
                         await Task.Delay(config.ReconnectDelay);
 
-                    identifyGate.Reset();
                     await ReconnectAsync();
                 }
             }
@@ -111,14 +87,11 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IdentifyGat
 
     private async Task ReceiveLoopAsync()
     {
-        var message = await _socket.ReadAsync(identifyGate.Token);
+        var message = await _socket.ReadAsync(pool.CancellationToken);
         if (message == null) return;
 
         if (message.IsSystem())
         {
-            if (message.SequenceNumber != null)
-                _seq = message.SequenceNumber;
-
             await OnProcessSystemMessages(message);
             return;
         }
@@ -138,11 +111,11 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IdentifyGat
                 _heartbeatIntervalMs = payload.GetProperty("heartbeat_interval").GetInt32();
 
                 await SetupIdentify();
-                StartHeartbeat(identifyGate.Token);
+                StartHeartbeat();
                 break;
 
             case OpCodes.Heartbeat:
-                await SendHeartbeatAsync(identifyGate.Token);
+                await _socket.SendHeartbeatAsync(pool.CancellationToken);
                 break;
 
             case OpCodes.HeartbeatAck:
@@ -157,17 +130,12 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IdentifyGat
                 if (config.ReconnectDelay > TimeSpan.Zero)
                     await Task.Delay(config.ReconnectDelay);
 
-                identifyGate.Reset();
+                SignalConnectionLost();
                 var canReconnect = message.Opcode == OpCodes.Reconnect || payload.TryGetBoolean() == true;
                 if (canReconnect && !string.IsNullOrEmpty(_sessionId) && !string.IsNullOrEmpty(_resumeGatewayUrl))
                 {
-                    await _socket.ConnectAsync(new Uri(_resumeGatewayUrl), identifyGate.Token);
-                    await _socket.SendAsync(new(OpCodes.Resume, new
-                    {
-                        config.Token,
-                        session_id = _sessionId,
-                        seq = _seq
-                    }), identifyGate.Token);
+                    await _socket.ConnectAsync(new Uri(_resumeGatewayUrl), pool.CancellationToken);
+                    await _socket.ResumeAsync(config.Token, _sessionId, pool.CancellationToken);
                 }
                 else
                 {
@@ -177,12 +145,28 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IdentifyGat
         }
     }
 
+    private void SetReady()
+    {
+        if (_status != ShardStatus.PendingAck)
+            return;
+
+        _status = ShardStatus.Ready;
+        pool.Gate.Release();
+    }
+
+    private void SignalConnectionLost()
+    {
+        if (_status == ShardStatus.Ready)
+            pool.Gate.Release();
+
+        _status = ShardStatus.ConnectionLost;
+    }
+
     private async Task ReconnectAsync()
     {
         _sessionId = null;
         _resumeGatewayUrl = null;
-        _seq = null;
-        await _socket.ConnectAsync(gatewayUri, identifyGate.Token);
+        await _socket.ConnectAsync(pool.GatewayUri.ToUri(), pool.CancellationToken);
         await SetupIdentify();
     }
 
@@ -193,49 +177,53 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IdentifyGat
             var obj = message.Deserialize<ReadyPayload>()!;
             _sessionId = obj.SessionId;
             _resumeGatewayUrl = obj.ResumeGatewayUrl;
-            _status = ShardStatus.Ready;
-            await InvokeEvent(OnReady, obj);
+
+            SetReady();
+            await pool.OnReadyAsync(this, obj);
             return;
         }
 
         if (string.Equals(message.EventType, "RESUMED", StringComparison.Ordinal))
         {
-            _status = ShardStatus.Ready;
-            await InvokeEvent(OnResume);
+            SetReady();
+            await pool.OnResumeAsync(this);
             return;
         }
 
-        await InvokeEvent(OnReceiveMessage, message);
+        await pool.OnReceiveMessageAsync(this, message);
     }
 
     private async Task SetupIdentify()
     {
-        await identifyGate.WaitAsync();
-        await SendIdentifyAsync(identifyGate.Token);
+        await pool.Gate.WaitAsync();
+        _status = ShardStatus.PendingAck;
+        await SendIdentifyAsync();
     }
 
-    private void StartHeartbeat(CancellationToken parentToken)
+    private void StartHeartbeat()
     {
         StopHeartbeat();
 
-        _heartbeatCts = CancellationTokenSource.CreateLinkedTokenSource(parentToken);
-        _ = RunHeartbeatAsync(_heartbeatCts.Token);
+        _heartbeatCts = CancellationTokenSource.CreateLinkedTokenSource(pool.CancellationToken);
+        _ = RunHeartbeatAsync();
     }
 
-    private async Task RunHeartbeatAsync(CancellationToken ct)
+    private async Task RunHeartbeatAsync()
     {
+        var token = _heartbeatCts?.Token ?? default;
         _heartbeatAck = false;
-        await SendHeartbeatAsync(ct);
 
-        while (!ct.IsCancellationRequested)
+        await _socket.SendHeartbeatAsync(token);
+
+        while (!token.IsCancellationRequested)
         {
-            await Task.Delay(_heartbeatIntervalMs, ct);
+            await Task.Delay(_heartbeatIntervalMs, token);
 
             if (!_heartbeatAck)
                 throw new WebSocketException($"Shard {ShardId} missed HEARTBEAT_ACK.");
 
             _heartbeatAck = false;
-            await SendHeartbeatAsync(ct);
+            await _socket.SendHeartbeatAsync(token);
         }
     }
 
@@ -249,32 +237,15 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IdentifyGat
         _heartbeatCts = null;
     }
 
-    private Task SendHeartbeatAsync(CancellationToken ct)
-        => _socket.SendAsync(new(OpCodes.Heartbeat, _seq), ct);
-
-    private Task SendIdentifyAsync(CancellationToken ct)
-        => _socket.SendAsync(new(OpCodes.Identify, new
+    private Task SendIdentifyAsync()
+        => _socket.SendAsync(OpCodes.Identify, new
         {
             token = config.Token,
             intents = (int)config.Intents,
             properties = DeviceInfo.CreateDefault()
         }
-    ), ct);
+    , pool.CancellationToken);
 
-    internal Task SendAsync(OpCodes codes, object data, CancellationToken cancellationToken = default)
-    {
-        return _socket.SendAsync(new(codes, data), cancellationToken);
-    }
-
-    private async Task InvokeEvent<TEventArgs>(ShardEventHandler<TEventArgs>? @event, TEventArgs arg)
-    {
-        if (@event != null)
-            await @event.Invoke(this, arg);
-    }
-
-    private async Task InvokeEvent(ShardEventHandler? @event)
-    {
-        if (@event != null)
-            await @event.Invoke(this);
-    }
+    public Task SendAsync(OpCodes codes, object? data, CancellationToken cancellationToken = default)
+        => _socket.SendAsync(new(codes, data), cancellationToken);
 }

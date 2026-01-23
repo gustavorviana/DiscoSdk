@@ -1,7 +1,9 @@
 ﻿using DiscoSdk.Events;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Events;
+using DiscoSdk.Hosting.Gateway.Payloads;
 using DiscoSdk.Hosting.Gateway.Payloads.Models;
+using DiscoSdk.Hosting.Gateway.Shards;
 using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Hosting.Managers;
 using DiscoSdk.Hosting.Repositories;
@@ -19,8 +21,9 @@ namespace DiscoSdk.Hosting
     /// <summary>
     /// Main client for connecting to and managing Discord Gateway connections.
     /// </summary>
-    public class DiscordClient : IDiscordClient
+    public class DiscordClient : IDiscordClient, IShardEventListener
     {
+        private readonly ShardPool _shardPool;
         private readonly EventProcessorPool<ReceivedGatewayMessage> _eventProcessorPool;
         private readonly ManualResetEventSlim _shutdownEvent = new(false);
         private readonly ManualResetEventSlim _readyEvent = new(false);
@@ -34,10 +37,7 @@ namespace DiscoSdk.Hosting
         /// Gets the gateway intents configured for this client.
         /// </summary>
         public DiscordIntent Intents => _config.Intents;
-        private readonly List<Shard> _shards = [];
         private bool _isInitialized = false;
-        private int _totalShards = 0;
-        private IdentifyGate? _gate;
         private bool _isShuttingDown = false;
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace DiscoSdk.Hosting
         /// <summary>
         /// Gets the total number of shards being used.
         /// </summary>
-        public int TotalShards => _totalShards;
+        public int TotalShards => _shardPool.TotalShards;
 
         /// <summary>
         /// Gets the event dispatcher for handling Gateway events.
@@ -98,7 +98,7 @@ namespace DiscoSdk.Hosting
         /// <summary>
         /// Gets a value indicating whether all shards are ready.
         /// </summary>
-        public bool IsReady => _shards.All(s => s.Status == ShardStatus.Ready);
+        public bool IsReady => _shardPool.Shards.All(s => s.Status == ShardStatus.Ready);
 
         /// <summary>
         /// Gets a value indicating whether the bot has fully initialized (all guilds have been loaded).
@@ -114,6 +114,7 @@ namespace DiscoSdk.Hosting
         {
             _config = config;
             SerializerOptions = jsonOptions;
+            _shardPool = new ShardPool(this, config);
             Logger = config.Logger ?? NullLogger.Instance;
             _eventDispatcher = new DiscordEventDispatcher(this);
             HttpClient = new DiscordRestClient(config.Token, new Uri("https://discord.com/api/v10"), jsonOptions);
@@ -150,14 +151,10 @@ namespace DiscoSdk.Hosting
         {
             var gatewayInfo = await new DiscordGatewayClient(HttpClient).GetGatewayBotInfoAsync();
 
-            _gate = new(gatewayInfo.SessionInfo.MaxConcurrency, TimeSpan.FromMicroseconds(gatewayInfo.SessionInfo.ResetAfter));
-            _totalShards = Math.Max(_config.TotalShards ?? gatewayInfo.Shards, 1);
-
             // Start event processor pool
             _eventProcessorPool.Start();
-
-            // Start shards asynchronously without blocking
-            await InitShards(new Uri(gatewayInfo.Url));
+            _shardPool.Init(gatewayInfo);
+            await _shardPool.InitShards();
         }
 
         /// <summary>
@@ -173,110 +170,11 @@ namespace DiscoSdk.Hosting
 
             // Stop event processor pool
             await _eventProcessorPool.StopAsync();
-
-            await ClearShardsAsync();
+            await _shardPool.ClearShardsAsync();
             _isInitialized = false;
 
             // Signal shutdown completion
             _shutdownEvent.Set();
-        }
-
-        private async Task InitShards(Uri gatewayUri)
-        {
-            await ClearShardsAsync();
-            _shards.Clear();
-
-            if (_gate == null)
-                throw new InvalidOperationException("IdentifyGate must be initialized before creating shards.");
-
-            for (int i = 0; i < _totalShards; i++)
-            {
-                var shard = new Shard(i, _config, _gate, gatewayUri);
-                _shards.Add(shard);
-                shard.OnResume += Shard_OnResume;
-                shard.OnReady += Shard_OnReady;
-                shard.ConnectionLost += Shard_ConnectionLost;
-                shard.OnReceiveMessage += Shard_OnReceiveMessage;
-                await shard.StartAsync();
-            }
-        }
-
-        private async Task ClearShardsAsync()
-        {
-            if (_shards.Count == 0)
-                return;
-
-            try { _gate?.Dispose(); } catch { }
-
-            for (int i = _shards.Count - 1; i >= 0; i--)
-            {
-                var shard = _shards[i];
-                shard.OnResume -= Shard_OnResume;
-                shard.OnReady -= Shard_OnReady;
-                shard.ConnectionLost -= Shard_ConnectionLost;
-                shard.OnReceiveMessage -= Shard_OnReceiveMessage;
-                await shard.StopAsync();
-                _shards.RemoveAt(i);
-            }
-        }
-
-        /// <summary>
-        /// Handles messages received from the Gateway and enqueues them for processing.
-        /// </summary>
-        private async Task Shard_OnReceiveMessage(Shard sender, ReceivedGatewayMessage arg)
-        {
-            if (arg.Opcode != OpCodes.Dispatch || string.IsNullOrEmpty(arg.EventType))
-                return;
-
-            Logger.Log(LogLevel.Trace, $"Received {arg.EventType} event from shard {sender.ShardId}");
-
-            await _eventProcessorPool.EnqueueAsync(arg);
-        }
-
-        private Task Shard_ConnectionLost(Shard sender, Exception arg)
-        {
-            OnConnectionLost?.Invoke(this, EventArgs.Empty);
-
-            return Task.CompletedTask;
-        }
-
-        private Task Shard_OnResume(Shard sender)
-        {
-            if (IsReady && OnReady != null)
-                OnReady(this, EventArgs.Empty);
-
-            return Task.CompletedTask;
-        }
-
-        private async Task Shard_OnReady(Shard sender, Gateway.Payloads.ReadyPayload arg)
-        {
-            if (string.IsNullOrEmpty(BotUser?.Id))
-                BotUser = arg.User;
-
-            // Store application ID from ready payload
-            if (ApplicationId == null)
-                ApplicationId = Snowflake.Parse(arg.Application.Id);
-
-            Logger.Log(LogLevel.Information, $"Shard {sender.ShardId} of {BotUser.Username} is ready.");
-
-            // Initialize pending guilds list from Ready payload (only once, on shard 0)
-            if (IsReady && sender.ShardId == 0 && !_isInitialized)
-            {
-                _isInitialized = true;
-
-                // Initialize pending guilds from Ready payload
-                var guildIds = arg.Guilds
-                    .Where(g => !string.IsNullOrEmpty(g.Id))
-                    .Select(g => Snowflake.TryParse(g.Id, out var id) ? id : default);
-
-                Guilds.InitializePendingGuilds(guildIds);
-            }
-
-            if (IsReady && OnReady != null)
-                OnReady(this, EventArgs.Empty);
-
-            if (IsReady)
-                _readyEvent.Set();
         }
 
         /// <summary>
@@ -356,7 +254,7 @@ namespace DiscoSdk.Hosting
             if (shardId < 0 || shardId >= TotalShards)
                 throw new ArgumentOutOfRangeException(nameof(shardId), "Shard ID is out of range.");
 
-            return _shards[shardId];
+            return _shardPool.Shards[shardId];
         }
 
         public IRestAction<TChannel?> GetChannel<TChannel>(Snowflake channelId) where TChannel : IChannel
@@ -434,6 +332,62 @@ namespace DiscoSdk.Hosting
         public IUpdatePresenceAction UpdatePresence()
         {
             return new UpdatePresenceAction(this);
+        }
+
+        async Task IShardEventListener.OnReceiveMessageAsync(Shard shard, ReceivedGatewayMessage message)
+        {
+            if (message.Opcode != OpCodes.Dispatch || string.IsNullOrEmpty(message.EventType))
+                return;
+
+            Logger.Log(LogLevel.Trace, $"Received {message.EventType} event from shard {shard.ShardId}");
+
+            await _eventProcessorPool.EnqueueAsync(message);
+        }
+
+        async Task IShardEventListener.OnReadyAsync(Shard shard, ReadyPayload payload)
+        {
+            if (string.IsNullOrEmpty(BotUser?.Id))
+                BotUser = payload.User;
+
+            // Store application ID from ready payload
+            if (ApplicationId == null)
+                ApplicationId = Snowflake.Parse(payload.Application.Id);
+
+            Logger.Log(LogLevel.Information, $"Shard {shard.ShardId} of {BotUser.Username} is ready.");
+
+            // Initialize pending guilds list from Ready payload (only once, on shard 0)
+            if (IsReady && shard.ShardId == 0 && !_isInitialized)
+            {
+                _isInitialized = true;
+
+                // Initialize pending guilds from Ready payload
+                var guildIds = payload.Guilds
+                    .Where(g => !string.IsNullOrEmpty(g.Id))
+                    .Select(g => Snowflake.TryParse(g.Id, out var id) ? id : default);
+
+                Guilds.InitializePendingGuilds(guildIds);
+            }
+
+            if (IsReady && OnReady != null)
+                OnReady(this, EventArgs.Empty);
+
+            if (IsReady)
+                _readyEvent.Set();
+        }
+
+        Task IShardEventListener.OnResumeAsync(Shard shard)
+        {
+            if (IsReady && OnReady != null)
+                OnReady(this, EventArgs.Empty);
+
+            return Task.CompletedTask;
+        }
+
+        Task IShardEventListener.OnConnectionLostAsync(Shard shard, Exception exception)
+        {
+            OnConnectionLost?.Invoke(this, EventArgs.Empty);
+
+            return Task.CompletedTask;
         }
     }
 }
