@@ -77,7 +77,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
                 if (ex is DiscordSocketException)
                 {
                     if (config.ReconnectDelay > TimeSpan.Zero)
-                        await Task.Delay(config.ReconnectDelay);
+                        await Task.Delay(config.ReconnectDelay, pool.CancellationToken).ConfigureAwait(false);
 
                     await ReconnectAsync();
                 }
@@ -128,7 +128,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
                 StopHeartbeat();
                 await _socket.Close();
                 if (config.ReconnectDelay > TimeSpan.Zero)
-                    await Task.Delay(config.ReconnectDelay);
+                    await Task.Delay(config.ReconnectDelay, pool.CancellationToken);
 
                 SignalConnectionLost();
                 var canReconnect = message.Opcode == OpCodes.Reconnect || payload.TryGetBoolean() == true;

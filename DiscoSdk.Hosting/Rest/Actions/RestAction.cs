@@ -20,7 +20,7 @@ public abstract class RestAction<T> : IRestAction<T>
 
     void IRestAction.Execute()
     {
-        ExecuteAsync().GetAwaiter().GetResult();
+        ExecuteAsync().ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
     Task IRestAction.ExecuteAsync(CancellationToken cancellationToken)

@@ -14,11 +14,12 @@ internal sealed class IdentifyGate : IDisposable
     {
         lock (_waiters)
         {
+            ObjectDisposedException.ThrowIf(_disposed, this);
             Interlocked.Increment(ref _pendingReleaseCount);
             if (PendingReleaseCount <= MaxConcurrency)
                 return Task.CompletedTask;
 
-            var taskSource = new TaskCompletionSource();
+            var taskSource = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             _waiters.Add(taskSource);
 
             return WaitWithCancellationAsync(taskSource, cancellationToken);
@@ -33,6 +34,7 @@ internal sealed class IdentifyGate : IDisposable
 
     public void SetMaxConcurrency(int newValue)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(newValue, 0, nameof(newValue));
 
         if (newValue == MaxConcurrency)
@@ -55,9 +57,13 @@ internal sealed class IdentifyGate : IDisposable
 
     public void Release()
     {
-        if (PendingReleaseCount > 0)
-            lock (_waiters)
+        lock (_waiters)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            if (PendingReleaseCount > 0)
                 SignalReleased(_waiters.FirstOrDefault(), false, true);
+        }
     }
 
     private void SignalReleased(TaskCompletionSource? source, bool isCancelled, bool noLock)
@@ -89,12 +95,16 @@ internal sealed class IdentifyGate : IDisposable
         if (_disposed)
             return;
 
-        for (int i = _waiters.Count - 1; i >= 0; i--)
-            _waiters[i].SetCanceled();
-
-        _pendingReleaseCount = 0;
-        _waiters.Clear();
         _disposed = true;
+
+        lock (_waiters)
+        {
+            for (int i = _waiters.Count - 1; i >= 0; i--)
+                _waiters[i].SetCanceled();
+
+            _pendingReleaseCount = 0;
+            _waiters.Clear();
+        }
     }
 
     ~IdentifyGate()
