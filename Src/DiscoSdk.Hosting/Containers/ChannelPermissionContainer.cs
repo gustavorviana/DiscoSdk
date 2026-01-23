@@ -42,7 +42,7 @@ internal class ChannelPermissionContainer(Channel channel, DiscordClient client)
 	}
 
 	/// <inheritdoc />
-	public OverrideIPermissionAction UpsertPermissionOverride(IPermissionHolder holder)
+	public IOverrideIPermissionAction UpsertPermissionOverride(IPermissionHolder holder)
 	{
 		return new OverridePermissionAction(_client, _channel.Id, holder.Id);
 	}

@@ -7,7 +7,9 @@
 
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
-	</PropertyGroup>
+        <WarningsAsErrors>CS1998</WarningsAsErrors>
+
+    </PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="coverlet.collector" />

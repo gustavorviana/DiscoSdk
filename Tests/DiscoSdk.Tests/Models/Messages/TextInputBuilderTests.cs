@@ -215,7 +215,7 @@ public class TextInputBuilderTests
 		var builder = new TextInputBuilder("input_1", "Nome", TextInputStyle.Short);
 
 		// Act
-		var result = builder.WithPlaceholder(null);
+		var result = builder.WithPlaceholder(null!);
 
 		// Assert
 		Assert.Same(builder, result);

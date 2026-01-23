@@ -6,7 +6,7 @@ using DiscoSdk.Rest.Actions;
 namespace DiscoSdk.Hosting.Rest.Actions;
 
 /// <summary>
-/// Implementation of <see cref="OverrideIPermissionAction"/> for upserting permission overrides.
+/// Implementation of <see cref="IOverrideIPermissionAction"/> for upserting permission overrides.
 /// </summary>
 /// <remarks>
 /// Initializes a new instance of the <see cref="OverridePermissionAction"/> class.
@@ -14,21 +14,21 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <param name="client">The Discord client.</param>
 /// <param name="channelId">The ID of the channel.</param>
 /// <param name="holderId">The ID of the permission holder (user or role).</param>
-internal class OverridePermissionAction(DiscordClient client, Snowflake channelId, Snowflake holderId) : RestAction<PermissionOverride>, OverrideIPermissionAction
+internal class OverridePermissionAction(DiscordClient client, Snowflake channelId, Snowflake holderId) : RestAction<PermissionOverride>, IOverrideIPermissionAction
 {
 	private readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
     private DiscordPermission? _allow;
 	private DiscordPermission? _deny;
 
     /// <inheritdoc />
-    public OverrideIPermissionAction SetAllow(DiscordPermission permissions)
+    public IOverrideIPermissionAction SetAllow(DiscordPermission permissions)
 	{
 		_allow = permissions;
 		return this;
 	}
 
 	/// <inheritdoc />
-	public OverrideIPermissionAction SetDeny(DiscordPermission permissions)
+	public IOverrideIPermissionAction SetDeny(DiscordPermission permissions)
 	{
 		_deny = permissions;
 		return this;

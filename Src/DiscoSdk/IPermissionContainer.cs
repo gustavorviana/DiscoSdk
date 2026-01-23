@@ -50,5 +50,5 @@ public interface IPermissionContainer
 	/// </summary>
 	/// <param name="holder">The permission holder (user or role) to create or update the override for.</param>
 	/// <returns>A REST action that can be executed to upsert the permission override.</returns>
-	OverrideIPermissionAction UpsertPermissionOverride(IPermissionHolder holder);
+	IOverrideIPermissionAction UpsertPermissionOverride(IPermissionHolder holder);
 }

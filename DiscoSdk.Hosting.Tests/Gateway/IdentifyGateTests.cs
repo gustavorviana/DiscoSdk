@@ -40,7 +40,7 @@ public class IdentifyGateTests
     }
 
     [Fact]
-    public async Task Release_WhenTasksWaiting_CompletesNextWaitingTaskAsync()
+    public async Task Release_WhenTasksWaiting_CompletesNextWaitingTask_Async()
     {
         // Arrange
         using var gate = new IdentifyGate();
@@ -82,7 +82,7 @@ public class IdentifyGateTests
     }
 
     [Fact]
-    public async Task SetMaxConcurrency_WhenIncreased_ReleasesWaitingTasks()
+    public async Task SetMaxConcurrency_WhenIncreased_ReleasesWaitingTasks_Async()
     {
         // Arrange
         using var gate = new IdentifyGate();
@@ -152,7 +152,7 @@ public class IdentifyGateTests
     }
 
     [Fact]
-    public async Task WaitAsync_WithCancellationToken_WhenCancelled_CancelsTask()
+    public async Task WaitAsync_WithCancellationToken_WhenCancelled_CancelsTask_Async()
     {
         // Arrange
         using var gate = new IdentifyGate();
@@ -172,7 +172,7 @@ public class IdentifyGateTests
     }
 
     [Fact]
-    public async Task Dispose_CancelsAllWaitingTasks()
+    public async Task Dispose_CancelsAllWaitingTasks_Async()
     {
         // Arrange
         var gate = new IdentifyGate();
@@ -244,7 +244,7 @@ public class IdentifyGateTests
     }
 
     [Fact]
-    public async Task MultipleReleases_ProcessesAllWaitingTasks()
+    public async Task MultipleReleases_ProcessesAllWaitingTasks_Async()
     {
         // Arrange
         using var gate = new IdentifyGate();

@@ -64,8 +64,8 @@ public class PollBuilderTests
 		Assert.Single(poll.Answers);
 		Assert.Equal(answerText, poll.Answers[0].PoolMedia.Text);
 		Assert.NotNull(poll.Answers[0].PoolMedia.Emoji);
-		Assert.Equal(emoji.Id, poll.Answers[0].PoolMedia.Emoji.Id);
-		Assert.Equal(emoji.Name, poll.Answers[0].PoolMedia.Emoji.Name);
+		Assert.Equal(emoji.Id, poll.Answers[0].PoolMedia.Emoji!.Id);
+		Assert.Equal(emoji.Name, poll.Answers[0].PoolMedia.Emoji!.Name);
 	}
 
 	[Fact]
@@ -153,8 +153,8 @@ public class PollBuilderTests
 		Assert.Single(poll.Answers);
 		Assert.Equal(answerText, poll.Answers[0].PoolMedia.Text);
 		Assert.NotNull(poll.Answers[0].PoolMedia.Emoji);
-		Assert.Equal(emoji.Id, poll.Answers[0].PoolMedia.Emoji.Id);
-		Assert.Equal(emoji.Name, poll.Answers[0].PoolMedia.Emoji.Name);
+		Assert.Equal(emoji.Id, poll.Answers[0].PoolMedia.Emoji!.Id);
+		Assert.Equal(emoji.Name, poll.Answers[0].PoolMedia.Emoji!.Name);
 	}
 
 	[Fact]
@@ -514,10 +514,10 @@ public class PollBuilderTests
 		Assert.Equal(3, poll.Answers.Count);
 		Assert.Equal("Primeira opção", poll.Answers[0].PoolMedia.Text);
 		Assert.NotNull(poll.Answers[0].PoolMedia.Emoji);
-		Assert.Equal(answerEmoji1.Id, poll.Answers[0].PoolMedia.Emoji.Id);
+		Assert.Equal(answerEmoji1.Id, poll.Answers[0].PoolMedia.Emoji!.Id);
 		Assert.Equal("Segunda opção", poll.Answers[1].PoolMedia.Text);
 		Assert.NotNull(poll.Answers[1].PoolMedia.Emoji);
-		Assert.Equal(answerEmoji2.Id, poll.Answers[1].PoolMedia.Emoji.Id);
+		Assert.Equal(answerEmoji2.Id, poll.Answers[1].PoolMedia.Emoji!.Id);
 		Assert.Equal("Terceira opção", poll.Answers[2].PoolMedia.Text);
 		Assert.Null(poll.Answers[2].PoolMedia.Emoji);
 		Assert.Equal(72, poll.DurationHours);

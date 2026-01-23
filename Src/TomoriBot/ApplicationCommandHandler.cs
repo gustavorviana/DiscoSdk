@@ -131,7 +131,7 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
 
             await Task.Delay(2000);
 
-            context.Client.StopAsync();
+            _ = context.Client.StopAsync();
             return;
         }
 

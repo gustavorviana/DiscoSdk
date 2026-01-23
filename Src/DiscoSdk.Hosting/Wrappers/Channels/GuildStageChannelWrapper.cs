@@ -40,9 +40,8 @@ internal class GuildStageChannelWrapper : GuildVoiceChannelWrapper, IGuildStageC
 		});
 	}
 
-    public IStageChannelManager GetManager()
+    public new IStageChannelManager GetManager()
     {
-		return new StageChannelManagerWrapper(Id, _client.ChannelClient);
+        return new StageChannelManagerWrapper(Id, _client.ChannelClient);
     }
 }
-
