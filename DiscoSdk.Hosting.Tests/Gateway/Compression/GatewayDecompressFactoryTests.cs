@@ -3,7 +3,7 @@ using DiscoSdk.Hosting.Gateway.Compression;
 using NSubstitute;
 using System.Net.WebSockets;
 
-namespace DiscoSdk.Tests.Gateway.Compression;
+namespace DiscoSdk.Hosting.Tests.Gateway.Compression;
 
 public class GatewayDecompressFactoryTests
 {

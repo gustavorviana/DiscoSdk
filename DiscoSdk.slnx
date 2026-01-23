@@ -1,10 +1,14 @@
 <Solution>
+  <Folder Name="/Itens de Solução/">
+    <File Path="Directory.Packages.props" />
+  </Folder>
   <Folder Name="/Src/">
     <Project Path="Src/DiscoSdk.Hosting/DiscoSdk.Hosting.csproj" Id="496f519b-4253-4632-a450-b0988ed2c8ee" />
     <Project Path="Src/DiscoSdk/DiscoSdk.csproj" Id="d5a320b5-c1d5-48a3-b838-f8dfa7cb3b14" />
     <Project Path="Src/TomoriBot/TomoriBot.csproj" Id="92857d12-ad40-4060-8617-7b1011e47b9a" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="DiscoSdk.Hosting.Tests/DiscoSdk.Hosting.Tests.csproj" Id="dadcdb86-4298-4ee0-9f0f-098b1cce7072" />
     <Project Path="Tests/DiscoSdk.Tests/DiscoSdk.Tests.csproj" />
   </Folder>
 </Solution>
