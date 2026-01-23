@@ -44,7 +44,7 @@ internal sealed class IdentifyGate : IDisposable
 
         lock (_waiters)
         {
-            for (int i = _pendingReleaseCount; i < MaxConcurrency; i++)
+            for (int i = MaxConcurrency - _pendingReleaseCount; i < MaxConcurrency; i++)
             {
                 if (_waiters.Count == 0)
                     break;
