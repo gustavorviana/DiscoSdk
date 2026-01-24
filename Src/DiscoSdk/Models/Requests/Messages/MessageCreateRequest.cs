@@ -11,6 +11,7 @@ namespace DiscoSdk.Models.Requests.Messages;
 /// <summary>
 /// Represents a request to create a message in Discord.
 /// Contains all fields supported by the Discord API for message creation.
+/// Reference: https://discord.com/developers/docs/resources/message#create-message
 /// </summary>
 internal class MessageCreateRequest
 {
@@ -75,6 +76,13 @@ internal class MessageCreateRequest
     /// </summary>
     [JsonPropertyName("attachments")]
 	public MessageAttachmentMetadata[]? Attachments { get; set; }
+
+	/// <summary>
+	/// Gets or sets whether to enforce the nonce for uniqueness in the past few minutes.
+	/// If true and nonce is present, it will be checked for uniqueness.
+	/// </summary>
+	[JsonPropertyName("enforce_nonce")]
+	public bool? EnforceNonce { get; set; }
 
 	/// <summary>
 	/// Gets or sets the message flags.

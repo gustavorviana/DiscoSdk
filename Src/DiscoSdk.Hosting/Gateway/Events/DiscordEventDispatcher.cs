@@ -160,7 +160,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
 
         var eventData = new MessageCreateContextWrapper(_discordClient, member, wrappedMessage, (ITextBasedChannel)channel);
 
-        await ProcessAll<IMessageCreateHandler>(x => x.HandleAsync(eventData));
+        await ProcessAllAsync<IMessageCreateHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessMessageUpdateAsync(JsonElement payload)
@@ -175,7 +175,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
         var author = new UserWrapper(_discordClient, message.Author);
 
         var eventData = new MessageUpdateContextWrapper(_discordClient, guild, author, member, wrappedMessage, channel);
-        await ProcessAll<IMessageUpdateHandler>(x => x.HandleAsync(eventData));
+        await ProcessAllAsync<IMessageUpdateHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessMessageDeleteAsync(JsonElementParser payload)
@@ -187,7 +187,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
         var wrappedGuild = _discordClient.Guilds.GetWrapped(guildId);
 
         var eventData = new MessageDeleteContextWrapper(_discordClient, id, wrappedChannel!, wrappedGuild);
-        await ProcessAll<IMessageDeleteHandler>(x => x.HandleAsync(eventData));
+        await ProcessAllAsync<IMessageDeleteHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessGuildCreateAsync(JsonElement payload)
@@ -197,7 +197,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
             return;
 
         var eventData = new GuildContextWrapper(_discordClient, wrappedGuild);
-        await ProcessAll<IGuildCreateHandler>(x => x.HandleAsync(eventData));
+        await ProcessAllAsync<IGuildCreateHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessGuildUpdateAsync(JsonElement payload)
@@ -206,7 +206,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
         if (_discordClient.Guilds.HandleGuildUpdate(guild) is not IGuild wrappedGuild) return;
 
         var eventData = new GuildContextWrapper(_discordClient, wrappedGuild);
-        await ProcessAll<IGuildUpdateHandler>(x => x.HandleAsync(eventData));
+        await ProcessAllAsync<IGuildUpdateHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessGuildDeleteAsync(JsonElement payload)
@@ -214,7 +214,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
         var eventData = new GuildDeleteContextWrapper(_discordClient, payload);
         _discordClient.Guilds.HandleGuildDelete(eventData.Id);
 
-        await ProcessAll<IGuildDeleteHandler>(x => x.HandleAsync(eventData));
+        await ProcessAllAsync<IGuildDeleteHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessChannelCreateAsync(JsonElement payload)
@@ -225,7 +225,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
         _discordClient.Guilds.HandleChannelCreate(channel!);
 
         var eventData = new ChannelContext(_discordClient, new GuildChannelUnionWrapper(_discordClient, channel!, guild!));
-        await ProcessAll<IChannelCreateHandler>(x => x.HandleAsync(eventData));
+        await ProcessAllAsync<IChannelCreateHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessChannelUpdateAsync(JsonElement payload)
@@ -236,7 +236,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
         _discordClient.Guilds.HandleChannelUpdate(channel!);
 
         var eventData = new ChannelContext(_discordClient, new GuildChannelUnionWrapper(_discordClient, channel!, guild!));
-        await ProcessAll<IChannelUpdateHandler>(x => x.HandleAsync(eventData));
+        await ProcessAllAsync<IChannelUpdateHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessChannelDeleteAsync(JsonElement payload)
@@ -246,7 +246,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
 
         _discordClient.Guilds.HandleChannelDelete(channel);
         var eventData = new ChannelDeleteContext(_discordClient, guild!, channel.Id);
-        await ProcessAll<IChannelDeleteHandler>(x => x.HandleAsync(eventData));
+        await ProcessAllAsync<IChannelDeleteHandler>(x => x.HandleAsync(eventData));
     }
 
     private bool TryGetChannelGuild(Channel? channel, out GuildWrapper? guild)
@@ -282,7 +282,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
             wrappedMember,
             new EmojiWrapper(_discordClient, emoji, guild));
 
-        await ProcessAll<IMessageReactionAddHandler>(x => x.HandleAsync(eventData));
+        await ProcessAllAsync<IMessageReactionAddHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessMessageReactionRemoveAsync(JsonElementParser payload)
@@ -302,7 +302,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
             messageId,
             new EmojiWrapper(_discordClient, emoji, guild));
 
-        await ProcessAll<IMessageReactionRemoveHandler>(x => x.HandleAsync(eventData));
+        await ProcessAllAsync<IMessageReactionRemoveHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task ProcessTypingStartAsync(JsonElementParser payload)
@@ -318,7 +318,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
 
         var eventData = new TypingContextWrapper(_discordClient, startedAt, channel!, guild, user, wrappedMember);
 
-        await ProcessAll<ITypingStartHandler>(x => x.HandleAsync(eventData));
+        await ProcessAllAsync<ITypingStartHandler>(x => x.HandleAsync(eventData));
     }
 
     private async Task<IUser?> GetUserAsync(GuildMember? member, Snowflake userId)
@@ -348,15 +348,15 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
             try
             {
                 if (interaction.Type == InteractionType.ApplicationCommand)
-                    await HandleCommand(interactionWrapper);
+                    await HandleCommandAsync(interactionWrapper);
 
                 if (interaction.Type == InteractionType.ModalSubmit)
-                    await HandleModal(interactionWrapper);
+                    await HandleModalAsync(interactionWrapper);
 
                 if (interaction.Type == InteractionType.MessageComponent)
-                    await ProcessAll<IComponentInteractionHandler>(x => x.HandleAsync(interactionContext));
+                    await ProcessAllAsync<IComponentInteractionHandler>(x => x.HandleAsync(interactionContext));
 
-                await ProcessAll<IInteractionCreateHandler>(x => x.HandleAsync(interactionContext));
+                await ProcessAllAsync<IInteractionCreateHandler>(x => x.HandleAsync(interactionContext));
             }
             catch (Exception ex)
             {
@@ -369,32 +369,32 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
         }
     }
 
-    private async Task HandleModal(InteractionWrapper interactionWrapper)
+    private async Task HandleModalAsync(InteractionWrapper interactionWrapper)
     {
         var commandHandlers = GetHandlersOfType<IModalSubmitHandler>();
         if (commandHandlers.Count == 0)
             return;
 
         var commandContext = new ModalContext(_discordClient, interactionWrapper);
-        await ProcessAll(commandHandlers, x => x.HandleAsync(commandContext));
+        await ProcessAllAsync(commandHandlers, x => x.HandleAsync(commandContext));
     }
 
-    private async Task HandleCommand(InteractionWrapper interactionWrapper)
+    private async Task HandleCommandAsync(InteractionWrapper interactionWrapper)
     {
         var commandHandlers = GetHandlersOfType<IApplicationCommandHandler>();
         if (commandHandlers.Count == 0)
             return;
 
         var commandContext = new CommandContext(_discordClient, interactionWrapper);
-        await ProcessAll(commandHandlers, x => x.HandleAsync(commandContext));
+        await ProcessAllAsync(commandHandlers, x => x.HandleAsync(commandContext));
     }
 
-    private async Task ProcessAll<T>(Func<T, Task> calllback) where T : IDiscordEventHandler
+    private async Task ProcessAllAsync<T>(Func<T, Task> calllback) where T : IDiscordEventHandler
     {
-        await ProcessAll(GetHandlersOfType<T>(), calllback);
+        await ProcessAllAsync(GetHandlersOfType<T>(), calllback);
     }
 
-    private async Task ProcessAll<T>(List<T> handlers, Func<T, Task> calllback) where T : IDiscordEventHandler
+    private async Task ProcessAllAsync<T>(List<T> handlers, Func<T, Task> calllback) where T : IDiscordEventHandler
     {
         foreach (var handler in handlers)
         {

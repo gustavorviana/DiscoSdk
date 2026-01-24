@@ -76,7 +76,7 @@ internal class InteractionWrapper(Interaction interaction,
         if (!_interaction.ChannelId.HasValue)
             throw new InvalidOperationException("Cannot edit interaction response without a channel ID.");
 
-        return new EditMessageRestAction(_client, channel!, default, handle);
+        return new EditMessageRestAction(_client, channel!, default(Snowflake), handle);
     }
 
     public IRestAction Delete()

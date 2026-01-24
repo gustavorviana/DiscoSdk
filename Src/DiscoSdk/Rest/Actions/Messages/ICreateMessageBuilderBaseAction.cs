@@ -1,4 +1,5 @@
 using DiscoSdk.Models.Messages;
+using DiscoSdk.Models.Messages.Pools;
 
 namespace DiscoSdk.Rest.Actions.Messages;
 
@@ -21,16 +22,9 @@ public interface ICreateMessageBuilderBaseAction<TSelf, TMessage> : IMessageBuil
     TSelf SetSuppressNotifications(bool suppress = true);
 
     /// <summary>
-    /// Attaches a file to the message.
+    /// Sets or clears a poll attached to the message.
     /// </summary>
-    /// <param name="file">The file to attach.</param>
+    /// <param name="poll">The poll to attach, or <c>null</c> to remove it.</param>
     /// <returns>The current <see cref="TSelf"/> instance.</returns>
-    TSelf AttachFile(MessageFile file);
-
-    /// <summary>
-    /// Attaches multiple files to the message.
-    /// </summary>
-    /// <param name="files">The files to attach.</param>
-    /// <returns>The current <see cref="TSelf"/> instance.</returns>
-    TSelf AttachFiles(params MessageFile[] files);
+    TSelf SetPoll(Poll? poll);
 }

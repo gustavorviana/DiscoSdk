@@ -19,4 +19,13 @@ public class MessageFile
         Description = description;
         ContentType = contentType;
     }
+
+    public static MessageFile FromString(string fileName, string? description, string content, string? contentType = null)
+    {
+        return new MessageFile(
+            fileName,
+            description,
+            System.Text.Encoding.UTF8.GetBytes(content),
+            contentType);
+    }
 }

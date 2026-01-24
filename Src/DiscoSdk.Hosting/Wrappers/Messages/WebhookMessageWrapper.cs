@@ -23,6 +23,6 @@ internal class WebhookMessageWrapper(WebhookIdentity id, WebhookMessageClient cl
 
     public IWebhookEditMessageRestAction Edit()
     {
-        return new WebhookEditMessageRestAction(id, client, Message.Id);
+        return new WebhookEditMessageRestAction(id, client, Message);
     }
 }

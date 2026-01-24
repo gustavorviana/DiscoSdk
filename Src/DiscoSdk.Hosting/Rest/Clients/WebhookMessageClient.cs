@@ -42,6 +42,27 @@ internal sealed class WebhookMessageClient(IDiscordRestClient client)
 
         return client.SendMultipartAsync<Message?>(routeWithQuery, HttpMethod.Post, request, files, cancellationToken);
     }
+    public Task<Message> GetAsync(
+        WebhookIdentity identity,
+        Snowflake messageId,
+        Snowflake? threadId = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (messageId == default)
+            throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
+
+        var route = new DiscordRoute(
+            "webhooks/{webhook_id}/{webhook_token}/messages/{message_id}",
+            identity.Id,
+            identity.Token,
+            messageId
+        );
+
+        var routeString = AppendThreadQueryIfPresent(route.ToString(), threadId);
+        var routeWithQuery = new DiscordRoute(routeString);
+
+        return client.SendAsync<Message>(routeWithQuery, HttpMethod.Get, body: null, cancellationToken);
+    }
 
     public Task<Message> EditAsync(
         WebhookIdentity identity,
@@ -91,15 +112,19 @@ internal sealed class WebhookMessageClient(IDiscordRestClient client)
         return await client.SendAsync<Message>(route, HttpMethod.Get, null, cancellationToken);
     }
 
-    public async Task<Message> EditOriginalResponseAsync(
+    public Task<Message> EditOriginalResponseAsync(
         WebhookIdentity identity,
         MessageEditRequest request,
+        IReadOnlyList<MessageFile>? files = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
         var route = new DiscordRoute("webhooks/{webhook_id}/{webhook_token}/messages/@original", identity.Id, identity.Token);
-        return await client.SendAsync<Message>(route, HttpMethod.Patch, request, cancellationToken);
+        if (files == null || files.Count == 0)
+            return client.SendAsync<Message>(route, HttpMethod.Patch, request, cancellationToken);
+
+        return client.SendMultipartAsync<Message>(route, HttpMethod.Patch, request, files, cancellationToken);
     }
 
     public async Task DeleteOriginalResponseAsync(

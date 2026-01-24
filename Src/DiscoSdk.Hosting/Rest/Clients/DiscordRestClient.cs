@@ -72,8 +72,15 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
 
         if (body is not null)
         {
-            var json = JsonSerializer.Serialize(body, JsonOptions);
-            req.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            if (body is HttpContent content)
+            {
+                req.Content = content;
+            }
+            else
+            {
+                var json = JsonSerializer.Serialize(body, JsonOptions);
+                req.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            }
         }
 
         using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);

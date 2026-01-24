@@ -63,11 +63,18 @@ public interface IMessageBuilderAction<TSelf, TMessage> : IRestAction<TMessage>
     TSelf SetSuppressEmbeds(bool suppress = true);
 
     /// <summary>
-    /// Sets or clears a poll attached to the message.
+    /// Attaches a file to the message.
     /// </summary>
-    /// <param name="poll">The poll to attach, or <c>null</c> to remove it.</param>
+    /// <param name="file">The file to attach.</param>
     /// <returns>The current <see cref="TSelf"/> instance.</returns>
-    TSelf SetPoll(Poll? poll);
+    TSelf AttachFile(MessageFile file);
+
+    /// <summary>
+    /// Attaches multiple files to the message.
+    /// </summary>
+    /// <param name="files">The files to attach.</param>
+    /// <returns>The current <see cref="TSelf"/> instance.</returns>
+    TSelf AttachFiles(params MessageFile[] files);
 
     /// <summary>
     /// Removes all file attachments from the message.

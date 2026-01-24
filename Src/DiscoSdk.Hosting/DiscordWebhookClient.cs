@@ -2,7 +2,9 @@
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Rest.Actions.Messages.Webhooks;
 using DiscoSdk.Hosting.Rest.Clients;
+using DiscoSdk.Hosting.Wrappers.Messages;
 using DiscoSdk.Models;
+using DiscoSdk.Models.Messages;
 using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 using DiscoSdk.Rest.Actions.Messages.Webhooks;
@@ -38,6 +40,18 @@ internal sealed class DiscordWebhookClient(WebhookMessageClient client, IWebhook
     public IWebhookEditMessageRestAction EditMessage(Snowflake messageId)
     {
         return new WebhookEditMessageRestAction(identity, client, messageId);
+    }
+
+    public IRestAction<IWebhookMessage?> GetMessageById(Snowflake messageId, Snowflake? threadId = null)
+    {
+        return RestAction<IWebhookMessage?>.Create(async cancellationToken =>
+        {
+            var message = await client.GetAsync(identity, messageId, threadId, cancellationToken);
+            if (message is null)
+                return null;
+
+            return new WebhookMessageWrapper(identity, client, message);
+        });
     }
 
     public IWebhookSendMessageRestAction Send(Snowflake? threadId = null)

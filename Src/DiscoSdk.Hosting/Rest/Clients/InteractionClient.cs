@@ -36,16 +36,16 @@ internal class InteractionClient(DiscordClient discordClient)
         await SendCallbackAsync(interaction, data, InteractionCallbackType.ChannelMessageWithSource, cancellationToken);
     }
 
-    public Task FollowUpAsync(InteractionHandle interaction,
+    public Task<Message> FollowUpAsync(InteractionHandle interaction,
         ExecuteWebhookRequest request,
         IReadOnlyList<MessageFile>? files = null,
         CancellationToken cancellationToken = default)
     {
         var id = interaction.GetDeferredId(discordClient.ApplicationId);
-        var route = new DiscordRoute("webhooks/{webhook_id}/{webhook_token}", id, interaction.Token);
+        var route = new DiscordRoute("webhooks/{webhook_id}/{webhook_token}?wait=true", id, interaction.Token);
 
         if (files == null || files.Count == 0)
-            return Client.SendAsync<object>(route, HttpMethod.Post, request, cancellationToken);
+            return Client.SendAsync<Message>(route, HttpMethod.Post, request, cancellationToken);
 
         return Client.SendMultipartAsync<Message>(route, HttpMethod.Post, request, files, cancellationToken);
     }

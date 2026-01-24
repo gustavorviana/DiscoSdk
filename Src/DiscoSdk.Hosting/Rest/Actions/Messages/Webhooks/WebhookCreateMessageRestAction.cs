@@ -97,6 +97,11 @@ internal class WebhookCreateMessageRestAction(WebhookIdentity identity, WebhookM
 
     public override async Task<IWebhookMessage?> ExecuteAsync(CancellationToken cancellationToken = default)
     {
+        ValidateMessageContent(null);
+        ValidateEmbeds();
+        ValidateComponents();
+        ValidateRequestSize();
+
         var obj = BuildWebhookCreateRequest();
 
         var message = await client.ExecuteAsync(identity, obj, _attachments, _wait, _threadId, cancellationToken);

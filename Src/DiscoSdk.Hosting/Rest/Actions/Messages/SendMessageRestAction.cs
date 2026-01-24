@@ -16,6 +16,17 @@ namespace DiscoSdk.Hosting.Rest.Actions.Messages;
 /// <summary>
 /// Implementation of <see cref="ISendMessageRestAction"/> for sending messages to Discord.
 /// Supports both regular channel messages and interaction responses.
+/// 
+/// Validation Rules (Discord API):
+/// - Message content is sanitized by Discord (invalid unicode, formatting issues removed)
+/// - User-generated strings should be sanitized to prevent unexpected behavior
+/// - Use allowed_mentions to prevent unexpected mentions
+/// - SEND_MESSAGES permission required for guild channels
+/// - SEND_TTS_MESSAGES permission required when TTS is enabled
+/// - READ_MESSAGE_HISTORY permission required for message replies
+/// - Referenced message must exist and cannot be a system message
+/// - Maximum request size: 25 MiB
+/// - Embeds cannot have: type (always "rich"), provider, video, height/width/proxy_url for images
 /// </summary>
 internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestAction, IMessage>, ISendMessageRestAction
 {
@@ -27,6 +38,8 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
     private List<Snowflake>? _stickers;
     private bool _ephemeral;
     private bool _tts;
+
+    private const int MaxStickerCount = 3;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SendMessageRestAction"/> class for regular channel messages.
@@ -128,17 +141,48 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
         return this;
     }
 
+    /// <inheritdoc />
     public ISendMessageRestAction SetSuppressNotifications(bool suppress = true)
     {
         _suppressNotifications = suppress;
         return this;
     }
 
+    private void ValidateStickers()
+    {
+        if (_stickers != null && _stickers.Count > MaxStickerCount)
+            throw new InvalidOperationException($"Message cannot have more than {MaxStickerCount} stickers.");
+    }
+
+    private void ValidateMessageReference()
+    {
+        if (_messageReference != null)
+        {
+            // Validate that messageId is present for replies
+            if (string.IsNullOrEmpty(_messageReference.MessageId))
+                throw new ArgumentException("Message reference must include a message ID for replies.", nameof(_messageReference));
+
+            // Note: We cannot validate if the referenced message exists or is a system message at this layer
+            // That validation should be done by Discord API when the message is sent
+        }
+    }
+
+    private void ValidateTtsPermission()
+    {
+        if (_tts && string.IsNullOrEmpty(_content))
+            throw new InvalidOperationException("TTS messages must have content. TTS requires message text to convert to speech.");
+    }
+
     /// <inheritdoc />
     public override Task<IMessage> ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_content) && _embeds.Count == 0)
-            throw new InvalidOperationException("Message must have either content or at least one embed.");
+        ValidateMessageContent(null);
+        ValidateEmbeds();
+        ValidateComponents();
+        ValidateStickers();
+        ValidateMessageReference();
+        ValidateTtsPermission();
+        ValidateRequestSize();
 
         if (_interactionHandle != null)
         {
@@ -225,10 +269,7 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
         request.Components = [.. actionRows.OfType<MessageComponent>()];
         request.Flags = flags != MessageFlags.None ? flags : null;
 
-        await _client.InteractionClient.FollowUpAsync(_interactionHandle!, request, _attachments, cancellationToken);
-
-        var message = await webhookClient.GetOriginalResponseAsync(_interactionHandle!.WithAppId(_client.ApplicationId),
-            cancellationToken);
+        var message = await _client.InteractionClient.FollowUpAsync(_interactionHandle!, request, _attachments, cancellationToken);
 
         return new MessageWrapper(_client, _channel, message, EnsureInteractionHandle());
     }

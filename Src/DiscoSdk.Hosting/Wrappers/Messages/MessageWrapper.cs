@@ -83,7 +83,7 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
         if (!IsBotMessage())
             throw InsufficientPermissionException.Operation("MANAGE_MESSAGES", "edit messages from other users");
 
-        return new EditMessageRestAction(_client, Channel, Message.Id, _interactionHandle);
+        return new EditMessageRestAction(_client, Channel, Message, _interactionHandle);
     }
 
     public ISendMessageRestAction Reply(string? content = null)
