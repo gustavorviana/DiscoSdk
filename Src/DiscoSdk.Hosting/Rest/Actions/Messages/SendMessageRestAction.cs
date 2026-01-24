@@ -173,19 +173,13 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
         if (_suppressNotifications)
             flags |= MessageFlags.SuppressNotifications;
 
-        var request = new MessageCreateRequest
-        {
-            Content = _content,
-            Tts = _tts ? true : null,
-            Embeds = [.. _embeds],
-            Components = [.. _components],
-            MessageReference = _messageReference,
-            AllowedMentions = _allowedMentions,
-            Flags = flags,
-            StickerIds = _stickers?.Select(s => s.ToString()).ToArray()
-        };
+        var request = BuildCreateRequest();
+        request.Tts = _tts ? true : null;
+        request.MessageReference = _messageReference;
+        request.StickerIds = _stickers?.Select(s => s.ToString()).ToArray();
+        request.Flags = flags;
 
-        var message = await _client.MessageClient.CreateAsync(_channel.Id, request, cancellationToken);
+        var message = await _client.MessageClient.CreateAsync(_channel.Id, request, _attachments, cancellationToken);
         return new MessageWrapper(_client, _channel, message, _interactionHandle);
     }
 
@@ -227,13 +221,11 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
         var actionRows = EnsureActionRows();
         var webhookClient = new WebhookMessageClient(_client.HttpClient);
 
-        await _client.InteractionClient.FollowUpAsync(_interactionHandle!, new ExecuteWebhookRequest
-        {
-            Components = [.. actionRows.OfType<MessageComponent>()],
-            Content = _content,
-            Embeds = [.. _embeds],
-            Flags = flags != MessageFlags.None ? flags : null
-        }, _attachments, cancellationToken);
+        var request = BuildWebhookCreateRequest();
+        request.Components = [.. actionRows.OfType<MessageComponent>()];
+        request.Flags = flags != MessageFlags.None ? flags : null;
+
+        await _client.InteractionClient.FollowUpAsync(_interactionHandle!, request, _attachments, cancellationToken);
 
         var message = await webhookClient.GetOriginalResponseAsync(_interactionHandle!.WithAppId(_client.ApplicationId),
             cancellationToken);

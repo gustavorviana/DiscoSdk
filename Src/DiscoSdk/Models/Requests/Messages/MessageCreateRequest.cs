@@ -2,6 +2,7 @@ using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
+using DiscoSdk.Models.Messages.Pools;
 using DiscoSdk.Rest.Actions.Messages;
 using System.Text.Json.Serialization;
 
@@ -61,6 +62,19 @@ internal class MessageCreateRequest
 	/// </summary>
 	[JsonPropertyName("sticker_ids")]
 	public string[]? StickerIds { get; set; }
+
+    /// <summary>
+    /// Gets or sets the poll configuration.
+    /// </summary>
+    [JsonPropertyName("poll")]
+    public Poll? Poll { get; set; }
+
+    /// <summary>
+    /// Gets or sets the attachment metadata.
+    /// This describes files sent via multipart upload.
+    /// </summary>
+    [JsonPropertyName("attachments")]
+	public MessageAttachmentMetadata[]? Attachments { get; set; }
 
 	/// <summary>
 	/// Gets or sets the message flags.

@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Models.Messages.Mentions;
+using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.Messages.Mentions;
 using DiscoSdk.Rest.Actions.Messages;
 using System.Text;
 
@@ -50,6 +51,41 @@ public sealed class MessageTextBuilder : MentionBuilderBase<MessageTextBuilder>
     {
         _content.Append(mention.ToString());
         return base.AppendMention(mention);
+    }
+
+    /// <summary>
+    /// Appends a Discord timestamp mention for the current UTC time.
+    /// </summary>
+    /// <param name="format">The timestamp format. Defaults to <see cref="TimestampFormat.ShortDateTime"/>.</param>
+    /// <returns>The current <see cref="MessageTextBuilder"/> instance.</returns>
+    public MessageTextBuilder AppendTimestamp(TimestampFormat format = TimestampFormat.ShortDateTime)
+    {
+        return AppendTimestamp(DateTimeOffset.UtcNow, format);
+    }
+
+    /// <summary>
+    /// Appends a Discord timestamp mention for a specific date and time.
+    /// </summary>
+    /// <param name="timestamp">The timestamp to display. Will be converted to UTC.</param>
+    /// <param name="format">The timestamp format. Defaults to <see cref="TimestampFormat.ShortDateTime"/>.</param>
+    /// <returns>The current <see cref="MessageTextBuilder"/> instance.</returns>
+    public MessageTextBuilder AppendTimestamp(DateTimeOffset timestamp, TimestampFormat format = TimestampFormat.ShortDateTime)
+    {
+        var unixTimestamp = timestamp.ToUniversalTime().ToUnixTimeSeconds();
+        var formatChar = (char)format;
+        _content.Append($"<t:{unixTimestamp}:{formatChar}>");
+        return this;
+    }
+
+    /// <summary>
+    /// Appends a Discord timestamp mention from a DateTime (converted to UTC).
+    /// </summary>
+    /// <param name="timestamp">The timestamp to display. Will be converted to UTC.</param>
+    /// <param name="format">The timestamp format. Defaults to <see cref="TimestampFormat.ShortDateTime"/>.</param>
+    /// <returns>The current <see cref="MessageTextBuilder"/> instance.</returns>
+    public MessageTextBuilder AppendTimestamp(DateTime timestamp, TimestampFormat format = TimestampFormat.ShortDateTime)
+    {
+        return AppendTimestamp(new DateTimeOffset(timestamp).ToUniversalTime(), format);
     }
 
     /// <summary>

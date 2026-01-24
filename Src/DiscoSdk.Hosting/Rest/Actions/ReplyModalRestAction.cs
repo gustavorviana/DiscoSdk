@@ -1,4 +1,5 @@
 using DiscoSdk.Hosting.Contexts.Models;
+using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Rest.Actions;
 
@@ -67,6 +68,15 @@ internal class ReplyModalRestAction : RestAction, IReplyModalRestAction
 
         _components.Add(actionRow);
         return this;
+    }
+
+    /// <inheritdoc />
+    public IReplyModalRestAction AddActionRow(TextInputBuilder textInputBuilder)
+    {
+        ArgumentNullException.ThrowIfNull(textInputBuilder);
+
+        var textInput = textInputBuilder.Build();
+        return AddActionRow(textInput);
     }
 
     /// <inheritdoc />

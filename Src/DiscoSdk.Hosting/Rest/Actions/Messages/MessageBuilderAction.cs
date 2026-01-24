@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Models.Enums;
+using DiscoSdk.Hosting.Rest.Models;
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
@@ -39,6 +40,21 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
         };
 
         _components.Add(actionRow);
+        return Self();
+    }
+
+    public TSelf AttachFiles(params MessageFile[] files)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+
+        foreach (var file in files)
+        {
+            if (file == null)
+                continue;
+
+            _attachments.Add(file);
+        }
+
         return Self();
     }
 
@@ -101,6 +117,34 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
     {
         _suppressEmbeds = suppress;
         return Self();
+    }
+
+    protected virtual ExecuteWebhookRequest BuildWebhookCreateRequest()
+    {
+        return new ExecuteWebhookRequest
+        {
+            Content = _content,
+            Embeds = _embeds.Count > 0 ? [.. _embeds] : null,
+            Components = _components.Count > 0 ? [.. _components] : null,
+            AllowedMentions = _allowedMentions,
+            Flags = BuildFlags(),
+            Poll = _poll,
+            Attachments = BuildAttachmentMetadata()
+        };
+    }
+
+    protected virtual MessageCreateRequest BuildCreateRequest()
+    {
+        return new MessageCreateRequest
+        {
+            Content = _content,
+            Embeds = _embeds.Count > 0 ? [.. _embeds] : null,
+            Components = _components.Count > 0 ? [.. _components] : null,
+            AllowedMentions = _allowedMentions,
+            Flags = BuildFlags(),
+            Poll = _poll,
+            Attachments = BuildAttachmentMetadata()
+        };
     }
 
     protected MessageEditRequest BuildEditRequest()

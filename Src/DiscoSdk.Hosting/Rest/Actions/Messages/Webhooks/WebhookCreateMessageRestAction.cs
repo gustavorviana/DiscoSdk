@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Hosting.Contexts.Models;
+using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Hosting.Rest.Models;
 using DiscoSdk.Hosting.Wrappers.Messages;
@@ -74,28 +74,30 @@ internal class WebhookCreateMessageRestAction(WebhookIdentity identity, WebhookM
         return this;
     }
 
-    public override async Task<IWebhookMessage?> ExecuteAsync(CancellationToken cancellationToken = default)
+    protected override ExecuteWebhookRequest BuildWebhookCreateRequest()
+    {
+        var request = base.BuildWebhookCreateRequest();
+        request.Tts = _tts;
+        request.Username = _username;
+        request.AvatarUrl = _avatarUrl;
+        request.ThreadName = _threadName;
+        request.AppliedTags = _appliedTags.Count == 0 ? null : [.. _appliedTags];
+        return request;
+    }
+
+    protected override MessageFlags BuildFlags()
     {
         var flags = base.BuildFlags();
 
         if (_suppressNotifications)
             flags |= MessageFlags.SuppressNotifications;
 
-        var obj = new ExecuteWebhookRequest
-        {
-            Content = _content,
-            Tts = _tts,
-            Username = _username,
-            AvatarUrl = _avatarUrl,
-            ThreadName = _threadName,
-            AllowedMentions = _allowedMentions,
-            Embeds = _embeds.Count == 0 ? null : _embeds.ToArray(),
-            Components = _components.Count == 0 ? null : [.. _components],
-            Poll = _poll,
-            AppliedTags = _appliedTags.Count == 0 ? null : [.. _appliedTags],
-            Attachments = BuildAttachmentMetadata(),
-            Flags = flags
-        };
+        return flags;
+    }
+
+    public override async Task<IWebhookMessage?> ExecuteAsync(CancellationToken cancellationToken = default)
+    {
+        var obj = BuildWebhookCreateRequest();
 
         var message = await client.ExecuteAsync(identity, obj, _attachments, _wait, _threadId, cancellationToken);
         return _wait && message is not null ? new WebhookMessageWrapper(identity, client, message) : null;

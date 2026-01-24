@@ -20,9 +20,10 @@ internal class MessageClient(IDiscordRestClient client)
     /// </summary>
     /// <param name="channelId">The ID of the channel to send the message to.</param>
     /// <param name="request">The message creation request.</param>
+    /// <param name="files">Optional files to attach to the message.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The created message.</returns>
-    public Task<Message> CreateAsync(Snowflake channelId, MessageCreateRequest request, CancellationToken cancellationToken = default)
+    public Task<Message> CreateAsync(Snowflake channelId, MessageCreateRequest request, IReadOnlyList<MessageFile>? files = null, CancellationToken cancellationToken = default)
     {
         if (channelId == default)
             throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -30,7 +31,10 @@ internal class MessageClient(IDiscordRestClient client)
         ArgumentNullException.ThrowIfNull(request);
 
         var route = new DiscordRoute("channels/{channel_id}/messages", channelId);
-        return client.SendAsync<Message>(route, HttpMethod.Post, request, cancellationToken);
+        if (files == null || files.Count == 0)
+            return client.SendAsync<Message>(route, HttpMethod.Post, request, cancellationToken);
+
+        return client.SendMultipartAsync<Message>(route, HttpMethod.Post, request, files, cancellationToken);
     }
 
     /// <summary>

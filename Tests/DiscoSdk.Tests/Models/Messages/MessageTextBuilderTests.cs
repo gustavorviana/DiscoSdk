@@ -1,4 +1,5 @@
 using DiscoSdk.Models;
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Mentions;
 using System.Reflection;
@@ -388,6 +389,223 @@ public class MessageTextBuilderTests
 		Assert.NotNull(allowedMentions.Users);
 		Assert.Contains(userId1.ToString(), allowedMentions.Users);
 		Assert.DoesNotContain(userId2.ToString(), allowedMentions.Users);
+	}
+
+	[Fact]
+	public void AppendTimestamp_WithNoParameters_AppendsCurrentTimestamp()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var beforeTime = DateTimeOffset.UtcNow;
+
+		// Act
+		var result = builder.AppendTimestamp();
+
+		// Assert
+		Assert.Same(builder, result);
+		var content = builder.ToString();
+		Assert.StartsWith("<t:", content);
+		Assert.Contains(":f>", content);
+		var afterTime = DateTimeOffset.UtcNow;
+		// Extract timestamp and verify it's within reasonable range
+		var timestampMatch = System.Text.RegularExpressions.Regex.Match(content, @"<t:(\d+):f>");
+		Assert.True(timestampMatch.Success);
+		var unixTimestamp = long.Parse(timestampMatch.Groups[1].Value);
+		var timestamp = DateTimeOffset.FromUnixTimeSeconds(unixTimestamp);
+		Assert.True(timestamp >= beforeTime.AddSeconds(-1));
+		Assert.True(timestamp <= afterTime.AddSeconds(1));
+	}
+
+	[Fact]
+	public void AppendTimestamp_WithDateTimeOffset_AppendsTimestamp()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var timestamp = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+		var expectedUnixTimestamp = timestamp.ToUnixTimeSeconds();
+
+		// Act
+		var result = builder.AppendTimestamp(timestamp);
+
+		// Assert
+		Assert.Same(builder, result);
+		var content = builder.ToString();
+		Assert.Equal($"<t:{expectedUnixTimestamp}:f>", content);
+	}
+
+	[Fact]
+	public void AppendTimestamp_WithDateTime_AppendsTimestamp()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var timestamp = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+		var expectedTimestamp = new DateTimeOffset(timestamp).ToUniversalTime();
+		var expectedUnixTimestamp = expectedTimestamp.ToUnixTimeSeconds();
+
+		// Act
+		var result = builder.AppendTimestamp(timestamp);
+
+		// Assert
+		Assert.Same(builder, result);
+		var content = builder.ToString();
+		Assert.Equal($"<t:{expectedUnixTimestamp}:f>", content);
+	}
+
+	[Fact]
+	public void AppendTimestamp_WithShortTimeFormat_AppendsWithFormatT()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var timestamp = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+		var expectedUnixTimestamp = timestamp.ToUnixTimeSeconds();
+
+		// Act
+		var result = builder.AppendTimestamp(timestamp, TimestampFormat.ShortTime);
+
+		// Assert
+		Assert.Same(builder, result);
+		var content = builder.ToString();
+		Assert.Equal($"<t:{expectedUnixTimestamp}:t>", content);
+	}
+
+	[Fact]
+	public void AppendTimestamp_WithLongTimeFormat_AppendsWithFormatT()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var timestamp = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+		var expectedUnixTimestamp = timestamp.ToUnixTimeSeconds();
+
+		// Act
+		var result = builder.AppendTimestamp(timestamp, TimestampFormat.LongTime);
+
+		// Assert
+		Assert.Same(builder, result);
+		var content = builder.ToString();
+		Assert.Equal($"<t:{expectedUnixTimestamp}:T>", content);
+	}
+
+	[Fact]
+	public void AppendTimestamp_WithShortDateFormat_AppendsWithFormatD()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var timestamp = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+		var expectedUnixTimestamp = timestamp.ToUnixTimeSeconds();
+
+		// Act
+		var result = builder.AppendTimestamp(timestamp, TimestampFormat.ShortDate);
+
+		// Assert
+		Assert.Same(builder, result);
+		var content = builder.ToString();
+		Assert.Equal($"<t:{expectedUnixTimestamp}:d>", content);
+	}
+
+	[Fact]
+	public void AppendTimestamp_WithLongDateFormat_AppendsWithFormatD()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var timestamp = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+		var expectedUnixTimestamp = timestamp.ToUnixTimeSeconds();
+
+		// Act
+		var result = builder.AppendTimestamp(timestamp, TimestampFormat.LongDate);
+
+		// Assert
+		Assert.Same(builder, result);
+		var content = builder.ToString();
+		Assert.Equal($"<t:{expectedUnixTimestamp}:D>", content);
+	}
+
+	[Fact]
+	public void AppendTimestamp_WithShortDateTimeFormat_AppendsWithFormatF()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var timestamp = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+		var expectedUnixTimestamp = timestamp.ToUnixTimeSeconds();
+
+		// Act
+		var result = builder.AppendTimestamp(timestamp, TimestampFormat.ShortDateTime);
+
+		// Assert
+		Assert.Same(builder, result);
+		var content = builder.ToString();
+		Assert.Equal($"<t:{expectedUnixTimestamp}:f>", content);
+	}
+
+	[Fact]
+	public void AppendTimestamp_WithLongDateTimeFormat_AppendsWithFormatF()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var timestamp = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+		var expectedUnixTimestamp = timestamp.ToUnixTimeSeconds();
+
+		// Act
+		var result = builder.AppendTimestamp(timestamp, TimestampFormat.LongDateTime);
+
+		// Assert
+		Assert.Same(builder, result);
+		var content = builder.ToString();
+		Assert.Equal($"<t:{expectedUnixTimestamp}:F>", content);
+	}
+
+	[Fact]
+	public void AppendTimestamp_WithRelativeTimeFormat_AppendsWithFormatR()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var timestamp = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+		var expectedUnixTimestamp = timestamp.ToUnixTimeSeconds();
+
+		// Act
+		var result = builder.AppendTimestamp(timestamp, TimestampFormat.RelativeTime);
+
+		// Assert
+		Assert.Same(builder, result);
+		var content = builder.ToString();
+		Assert.Equal($"<t:{expectedUnixTimestamp}:R>", content);
+	}
+
+	[Fact]
+	public void AppendTimestamp_WithMultipleTimestamps_AppendsAll()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var timestamp1 = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+		var timestamp2 = new DateTimeOffset(2024, 1, 2, 12, 0, 0, TimeSpan.Zero);
+
+		// Act
+		builder.Append("Event 1: ")
+			.AppendTimestamp(timestamp1, TimestampFormat.ShortDateTime)
+			.Append(" | Event 2: ")
+			.AppendTimestamp(timestamp2, TimestampFormat.RelativeTime);
+
+		// Assert
+		var content = builder.ToString();
+		Assert.Contains($"<t:{timestamp1.ToUnixTimeSeconds()}:f>", content);
+		Assert.Contains($"<t:{timestamp2.ToUnixTimeSeconds()}:R>", content);
+	}
+
+	[Fact]
+	public void AppendTimestamp_WithTextAndTimestamp_CombinesCorrectly()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var timestamp = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+
+		// Act
+		builder.Append("The event starts at ")
+			.AppendTimestamp(timestamp, TimestampFormat.ShortDateTime)
+			.Append(".");
+
+		// Assert
+		var content = builder.ToString();
+		Assert.StartsWith("The event starts at <t:", content);
+		Assert.EndsWith(">.", content);
 	}
 }
 

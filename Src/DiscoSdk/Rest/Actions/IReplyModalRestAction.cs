@@ -1,3 +1,4 @@
+using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 
 namespace DiscoSdk.Rest.Actions;
@@ -27,6 +28,14 @@ public interface IReplyModalRestAction : IRestAction
 	/// <param name="textInput">The text input component to add.</param>
 	/// <returns>The current <see cref="IReplyModalRestAction"/> instance.</returns>
 	IReplyModalRestAction AddActionRow(TextInputComponent textInput);
+
+	/// <summary>
+	/// Adds an action row containing a text input component built from a <see cref="TextInputBuilder"/> to the modal.
+	/// </summary>
+	/// <param name="textInputBuilder">The text input builder to build and add.</param>
+	/// <returns>The current <see cref="IReplyModalRestAction"/> instance.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when textInputBuilder is null.</exception>
+	IReplyModalRestAction AddActionRow(TextInputBuilder textInputBuilder);
 
 	/// <summary>
 	/// Sets the components (action rows) of the modal.

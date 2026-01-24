@@ -1,4 +1,6 @@
-﻿namespace DiscoSdk.Rest.Actions.Messages;
+using DiscoSdk.Models.Messages;
+
+namespace DiscoSdk.Rest.Actions.Messages;
 
 public interface ICreateMessageBuilderBaseAction<TSelf, TMessage> : IMessageBuilderAction<TSelf, TMessage>
 {
@@ -17,4 +19,18 @@ public interface ICreateMessageBuilderBaseAction<TSelf, TMessage> : IMessageBuil
     /// </param>
     /// <returns>The current <see cref="TSelf"/> instance.</returns>
     TSelf SetSuppressNotifications(bool suppress = true);
+
+    /// <summary>
+    /// Attaches a file to the message.
+    /// </summary>
+    /// <param name="file">The file to attach.</param>
+    /// <returns>The current <see cref="TSelf"/> instance.</returns>
+    TSelf AttachFile(MessageFile file);
+
+    /// <summary>
+    /// Attaches multiple files to the message.
+    /// </summary>
+    /// <param name="files">The files to attach.</param>
+    /// <returns>The current <see cref="TSelf"/> instance.</returns>
+    TSelf AttachFiles(params MessageFile[] files);
 }
