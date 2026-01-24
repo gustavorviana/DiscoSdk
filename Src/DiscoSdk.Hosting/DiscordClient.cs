@@ -117,7 +117,7 @@ namespace DiscoSdk.Hosting
             _shardPool = new ShardPool(this, config);
             Logger = config.Logger ?? NullLogger.Instance;
             _eventDispatcher = new DiscordEventDispatcher(this);
-            HttpClient = new DiscordRestClient(config.Token, new Uri("https://discord.com/api/v10"), jsonOptions);
+            HttpClient = new DiscordRestClient(config.Token, new Uri("https://discord.com/api/v10"), jsonOptions, Logger);
             InteractionClient = new InteractionClient(this);
             MessageClient = new MessageClient(HttpClient);
             ChannelClient = new ChannelClient(HttpClient, MessageClient);

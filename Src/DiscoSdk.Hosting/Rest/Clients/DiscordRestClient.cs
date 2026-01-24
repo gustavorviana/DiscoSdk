@@ -1,4 +1,7 @@
-﻿using DiscoSdk.Rest;
+﻿using DiscoSdk.Hosting.Rest.RateLimit;
+using DiscoSdk.Logging;
+using DiscoSdk.Rest;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
@@ -11,7 +14,12 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 /// </summary>
 public class DiscordRestClient : IDisposable, IDiscordRestClient
 {
+    private const int BucketQueueLimit = 100;
+
+    private readonly ConcurrentDictionary<string, BucketRequestQueue> _buckets = [];
+    private readonly GlobalRateLimitManager _globalRateLimiter = new();
     private readonly HttpClient _http = new();
+    private readonly ILogger _logger;
     private bool _disposed;
 
     public JsonSerializerOptions JsonOptions { get; }
@@ -22,7 +30,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <param name="botToken">The bot token for authentication.</param>
     /// <param name="apiUri">The base URI of the Discord API.</param>
     /// <exception cref="ArgumentException">Thrown when the bot token is null or whitespace.</exception>
-    public DiscordRestClient(string botToken, Uri apiUri, JsonSerializerOptions jsonOptions, TimeSpan? timeout = null)
+    public DiscordRestClient(string botToken, Uri apiUri, JsonSerializerOptions jsonOptions, ILogger logger, TimeSpan? timeout = null)
     {
         if (string.IsNullOrWhiteSpace(botToken))
             throw new ArgumentException("Bot token is required.", nameof(botToken));
@@ -30,6 +38,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         if (timeout.HasValue)
             _http.Timeout = timeout.Value;
 
+        _logger = logger;
         JsonOptions = jsonOptions;
         _http.BaseAddress = apiUri;
         _http.DefaultRequestHeaders.UserAgent.ParseAdd($"{DeviceInfo.SdkName}/1.0");
@@ -41,11 +50,12 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// </summary>
     /// <param name="apiUri">The base URI of the Discord API.</param>
     /// <exception cref="ArgumentException">Thrown when the bot token is null or whitespace.</exception>
-    public DiscordRestClient(Uri apiUri, JsonSerializerOptions jsonOptions, TimeSpan? timeout = null)
+    public DiscordRestClient(Uri apiUri, JsonSerializerOptions jsonOptions, ILogger logger, TimeSpan? timeout = null)
     {
         if (timeout.HasValue)
             _http.Timeout = timeout.Value;
 
+        _logger = logger;
         JsonOptions = jsonOptions;
         _http.BaseAddress = apiUri;
         _http.DefaultRequestHeaders.UserAgent.ParseAdd($"{DeviceInfo.SdkName}/1.0");
@@ -83,8 +93,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
             }
         }
 
-        using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
-
+        using var res = await GetOrCreateBucket(path).ExecuteAsync(req, ct);
         if (res.IsSuccessStatusCode)
         {
             if (res.StatusCode == HttpStatusCode.NoContent)
@@ -112,8 +121,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
             req.Content = new StringContent(json, Encoding.UTF8, "application/json");
         }
 
-        using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
-
+        using var res = await GetOrCreateBucket(path).ExecuteAsync(req, ct);
         if (res.IsSuccessStatusCode || res.StatusCode == HttpStatusCode.NoContent)
             return;
 
@@ -135,7 +143,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     public async Task SendAsync(DiscordRoute path, HttpMethod method, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(method, path.ToString());
-        using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        using var res = await GetOrCreateBucket(path).ExecuteAsync(req, ct);
 
         if (res.IsSuccessStatusCode)
             return;
@@ -161,6 +169,11 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         {
             return null;
         }
+    }
+
+    private BucketRequestQueue GetOrCreateBucket(DiscordRoute path)
+    {
+        return _buckets.GetOrAdd(path.GetBucketPath() ?? string.Empty, _ => new BucketRequestQueue(_globalRateLimiter, _http, BucketQueueLimit));
     }
 
     #region IDisposable
