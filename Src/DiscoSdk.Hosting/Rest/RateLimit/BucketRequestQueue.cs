@@ -32,45 +32,55 @@ internal sealed class BucketRequestQueue : IDisposable
         while (!_cancellationTokenSource.IsCancellationRequested)
         {
             var workItemTask = await _channel.Reader.ReadAsync(_cancellationTokenSource.Token);
-            await _globalRateLimiter.WaitForGlobalAsync(workItemTask.CancellationToken);
 
             try
             {
-                var now = DateTimeOffset.UtcNow;
-                if (_remainingRequests == 0 && _resetTime > now)
-                {
-                    var delay = _resetTime - now;
-                    await Task.Delay(delay, workItemTask.CancellationToken);
-                }
-
-                for (int i = 0; i < 5; i++)
-                {
-                    var response = await workItemTask.SendAsync(_http);
-                    if (await _globalRateLimiter.ReadAndWaitForGlobalAsync(response))
-                        continue;
-
-                    var rateLimit = ParseHeaders(response);
-                    _remainingRequests = rateLimit.Remaining ?? 0;
-                    _resetTime = rateLimit.ResetAt;
-
-                    if (response.StatusCode != System.Net.HttpStatusCode.TooManyRequests)
-                    {
-                        workItemTask.Complete(response);
-                        break;
-                    }
-
-                    if (rateLimit.ResetAfter.HasValue)
-                        await Task.Delay(TimeSpan.FromSeconds(rateLimit.ResetAfter.Value));
-                    continue;
-                }
-
-                workItemTask.TrySetException(new HttpRequestException("Exceeded maximum retry attempts due to rate limiting."));
+                await CheckRemainingRequestsAsync(workItemTask);
+                await SendWorkItemAsync(workItemTask);
             }
             catch (Exception ex)
             {
                 workItemTask.TrySetException(ex);
             }
         }
+    }
+
+    private async Task CheckRemainingRequestsAsync(WorkItem workItem)
+    {
+        var now = DateTimeOffset.UtcNow;
+        if (_remainingRequests == 0 && _resetTime > now)
+        {
+            var delay = _resetTime - now;
+            await Task.Delay(delay, workItem.CancellationToken);
+        }
+    }
+
+    private async Task SendWorkItemAsync(WorkItem workItem)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            await _globalRateLimiter.WaitForGlobalAsync(workItem.CancellationToken);
+            var response = await workItem.SendAsync(_http);
+            if (await _globalRateLimiter.ReadAndWaitForGlobalAsync(response))
+                continue;
+
+            var rateLimit = ParseHeaders(response);
+            _remainingRequests = rateLimit.Remaining ?? 0;
+            _resetTime = rateLimit.ResetAt;
+
+            if (response.StatusCode != System.Net.HttpStatusCode.TooManyRequests)
+            {
+                workItem.Complete(response);
+                return;
+            }
+
+            if (rateLimit.ResetAfter.HasValue)
+                await Task.Delay(TimeSpan.FromSeconds(rateLimit.ResetAfter.Value));
+
+            continue;
+        }
+
+        workItem.TrySetException(new HttpRequestException("Exceeded maximum retry attempts due to rate limiting."));
     }
 
     private static DiscordRateLimitHeader ParseHeaders(HttpResponseMessage response)
