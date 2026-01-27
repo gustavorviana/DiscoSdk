@@ -1,4 +1,5 @@
-﻿using System.Threading.Channels;
+﻿using DiscoSdk.Logging;
+using System.Threading.Channels;
 
 namespace DiscoSdk.Hosting.Rest.RateLimit;
 
@@ -9,13 +10,17 @@ internal sealed class BucketRequestQueue : IDisposable
     private readonly Channel<WorkItem> _channel;
     private readonly HttpClient _http;
     private DateTimeOffset _resetTime;
+    private readonly ILogger _logger;
+    private readonly string _bucket;
     private int _remainingRequests;
     private bool _disposed;
 
-    public BucketRequestQueue(GlobalRateLimitManager globalRateLimiter, HttpClient http, int bucketQueueLimit)
+    public BucketRequestQueue(GlobalRateLimitManager globalRateLimiter, ILogger logger, HttpClient http, string bucket, int bucketQueueLimit)
     {
         _globalRateLimiter ??= globalRateLimiter ?? throw new ArgumentNullException(nameof(globalRateLimiter));
         _http = http ?? throw new ArgumentNullException(nameof(http));
+        _logger = logger;
+        _bucket = bucket;
 
         _channel = Channel.CreateBounded<WorkItem>(new BoundedChannelOptions(bucketQueueLimit)
         {
@@ -67,6 +72,9 @@ internal sealed class BucketRequestQueue : IDisposable
             var rateLimit = ParseHeaders(response);
             _remainingRequests = rateLimit.Remaining ?? 0;
             _resetTime = rateLimit.ResetAt;
+
+            if (_remainingRequests == 0)
+                _logger.Log(LogLevel.Warning, $"Bucket \"{_bucket}\" rate limit reached. Next reset at {_resetTime}.");
 
             if (response.StatusCode != System.Net.HttpStatusCode.TooManyRequests)
             {

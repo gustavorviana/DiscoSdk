@@ -17,7 +17,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     private const int BucketQueueLimit = 100;
 
     private readonly ConcurrentDictionary<string, BucketRequestQueue> _buckets = [];
-    private readonly GlobalRateLimitManager _globalRateLimiter = new();
+    private readonly GlobalRateLimitManager _globalRateLimiter;
     private readonly HttpClient _http = new();
     private readonly ILogger _logger;
     private bool _disposed;
@@ -41,6 +41,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         _logger = logger;
         JsonOptions = jsonOptions;
         _http.BaseAddress = apiUri;
+        _globalRateLimiter = new GlobalRateLimitManager(_logger);
         _http.DefaultRequestHeaders.UserAgent.ParseAdd($"{DeviceInfo.SdkName}/1.0");
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", botToken);
     }
@@ -162,7 +163,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
 
     private BucketRequestQueue GetOrCreateBucket(DiscordRoute path)
     {
-        return _buckets.GetOrAdd(path.GetBucketPath() ?? string.Empty, _ => new BucketRequestQueue(_globalRateLimiter, _http, BucketQueueLimit));
+        return _buckets.GetOrAdd(path.GetBucketPath() ?? string.Empty, bucket => new BucketRequestQueue(_globalRateLimiter, _logger, _http, bucket, BucketQueueLimit));
     }
 
     #region IDisposable

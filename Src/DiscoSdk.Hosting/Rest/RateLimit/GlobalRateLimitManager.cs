@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using DiscoSdk.Logging;
+using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Rest.RateLimit;
 
@@ -13,10 +14,9 @@ namespace DiscoSdk.Hosting.Rest.RateLimit;
 /// This is intentionally separate from per-route/per-bucket rate limiting.
 /// </para>
 /// </summary>
-internal sealed class GlobalRateLimitManager
+internal sealed class GlobalRateLimitManager(ILogger logger)
 {
     private readonly SemaphoreSlim _globalGate = new(1, 1);
-
     private long _globalUntilMs;
 
     /// <summary>
@@ -87,6 +87,8 @@ internal sealed class GlobalRateLimitManager
         var retryAfterSeconds = await GetGlobalRetryAfterSecondsAsync(message, cancellationToken).ConfigureAwait(false);
         if (retryAfterSeconds == null)
             return false;
+
+        logger.Log(LogLevel.Warning, $"Global rate limit encountered. Retrying after {retryAfterSeconds.Value} seconds.");
 
         var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var candidateUntilMs = nowMs + (long)Math.Ceiling(retryAfterSeconds.Value * 1000.0);
