@@ -233,10 +233,6 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
         // Validate content length if present
         if (!string.IsNullOrEmpty(content) && content.Length > MaxContentLength)
             throw new ArgumentException($"Message content cannot exceed {MaxContentLength} characters.", nameof(content));
-
-        // Check for invalid unicode characters that Discord will strip
-        if (!string.IsNullOrEmpty(content) && ContainsInvalidUnicodeCharacters(content))
-            throw new ArgumentException("Message content contains invalid unicode characters that will be stripped by Discord. Consider sanitizing the input.", nameof(_content));
     }
 
     /// <summary>
@@ -310,22 +306,6 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
 
         if (estimatedSize > MaxRequestSizeBytes)
             throw new InvalidOperationException($"Request size ({estimatedSize} bytes) exceeds maximum allowed size ({MaxRequestSizeBytes} bytes).");
-    }
-
-    /// <summary>
-    /// Checks if content contains invalid unicode characters that Discord will strip.
-    /// </summary>
-    private static bool ContainsInvalidUnicodeCharacters(string content)
-    {
-        foreach (var c in content)
-        {
-            var category = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
-            // Reject control characters and surrogates
-            if (category == System.Globalization.UnicodeCategory.Control ||
-                category == System.Globalization.UnicodeCategory.Surrogate)
-                return true;
-        }
-        return false;
     }
 
     /// <summary>
