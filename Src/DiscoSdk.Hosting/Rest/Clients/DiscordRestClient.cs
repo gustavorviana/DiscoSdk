@@ -78,22 +78,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
     public async Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
     {
-        using var req = new HttpRequestMessage(method, path.ToString());
-
-        if (body is not null)
-        {
-            if (body is HttpContent content)
-            {
-                req.Content = content;
-            }
-            else
-            {
-                var json = JsonSerializer.Serialize(body, JsonOptions);
-                req.Content = new StringContent(json, Encoding.UTF8, "application/json");
-            }
-        }
-
-        using var res = await GetOrCreateBucket(path).ExecuteAsync(() => new HttpRequestMessage(method, path.ToString()), ct);
+        using var res = await GetOrCreateBucket(path).ExecuteAsync(() => CreateRequestWithBody(path, method, body), ct);
         if (res.IsSuccessStatusCode)
         {
             if (res.StatusCode == HttpStatusCode.NoContent)
@@ -113,15 +98,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
 
     public async Task SendAsync(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
     {
-        using var req = new HttpRequestMessage(method, path.ToString());
-
-        if (body is not null)
-        {
-            var json = JsonSerializer.Serialize(body, JsonOptions);
-            req.Content = new StringContent(json, Encoding.UTF8, "application/json");
-        }
-
-        using var res = await GetOrCreateBucket(path).ExecuteAsync(() => new HttpRequestMessage(method, path.ToString()), ct);
+        using var res = await GetOrCreateBucket(path).ExecuteAsync(() => CreateRequestWithBody(path, method, body), ct);
         if (res.IsSuccessStatusCode || res.StatusCode == HttpStatusCode.NoContent)
             return;
 
@@ -152,6 +129,19 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
             error?.Message ?? $"Discord API error ({(int)res.StatusCode} {res.ReasonPhrase}).",
             res.StatusCode,
             error?.Code);
+    }
+
+    private HttpRequestMessage CreateRequestWithBody(DiscordRoute path, HttpMethod method, object? body)
+    {
+        var req = new HttpRequestMessage(method, path.ToString());
+
+        if (body is not null)
+        {
+            var json = JsonSerializer.Serialize(body, JsonOptions);
+            req.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        }
+
+        return req;
     }
 
     private async Task<DiscordErrorResponse?> TryReadDiscordErrorAsync(HttpResponseMessage res, CancellationToken ct)
