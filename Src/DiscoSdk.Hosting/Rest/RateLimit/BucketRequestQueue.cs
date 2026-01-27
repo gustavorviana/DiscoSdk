@@ -98,7 +98,7 @@ internal sealed class BucketRequestQueue : IDisposable
         };
     }
 
-    public Task<HttpResponseMessage> ExecuteAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    public Task<HttpResponseMessage> ExecuteAsync(Func<HttpRequestMessage> request, CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(request);
@@ -110,7 +110,7 @@ internal sealed class BucketRequestQueue : IDisposable
     }
 
     #region WorkerItem
-    private class WorkItem(HttpRequestMessage request, CancellationToken cancellationToken)
+    private class WorkItem(Func<HttpRequestMessage> requestFun, CancellationToken cancellationToken)
     {
         private readonly TaskCompletionSource<HttpResponseMessage> _taskCompletionSource =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -121,6 +121,7 @@ internal sealed class BucketRequestQueue : IDisposable
 
         public async Task<HttpResponseMessage> SendAsync(HttpClient httpClient)
         {
+            using var request = requestFun();
             return await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         }
 
