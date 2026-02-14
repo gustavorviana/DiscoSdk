@@ -77,6 +77,11 @@ await dsc.UpdateCommands()
         return x;
     })
     .AddGuild(betaGuild, x => x.WithName("shutdown").WithDescription("Shutdown bot"))
+    .AddGuild(betaGuild, x => x
+        .WithName("search")
+        .WithDescription("Search with autocomplete (example: fruits)")
+        .WithType(ApplicationCommandType.ChatInput)
+        .AddStringOption("query", "Type to see fruit suggestions", required: true, autocomplete: true))
     .DeletePrevious()
     .ExecuteAsync();
 
@@ -85,6 +90,9 @@ dsc.EventRegistry.Add(new MsgTest());
 
 // Register application command handler (for slash commands only)
 dsc.EventRegistry.Add(new ApplicationCommandHandler());
+
+// Register autocomplete handler (for options with autocomplete: true)
+dsc.EventRegistry.Add(new AutocompleteHandler());
 
 // Register modal submit handler (for modal submissions)
 dsc.EventRegistry.Add(new ModalSubmitHandler());

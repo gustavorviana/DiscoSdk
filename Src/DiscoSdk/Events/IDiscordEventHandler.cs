@@ -132,3 +132,11 @@ public interface IModalSubmitHandler : IDiscordEventHandler<IModalContext>
 public interface IComponentInteractionHandler : IDiscordEventHandler<IInteractionContext>
 {
 }
+
+/// <summary>
+/// Interface for handling application command autocomplete interactions.
+/// This handler is only called when interaction.Type == InteractionType.ApplicationCommandAutocomplete.
+/// </summary>
+public interface IAutocompleteHandler : IDiscordEventHandler<IAutocompleteContext>
+{
+}

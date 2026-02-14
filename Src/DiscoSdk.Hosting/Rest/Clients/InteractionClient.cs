@@ -1,6 +1,7 @@
 using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Models;
 using DiscoSdk.Models;
+using DiscoSdk.Models.Commands;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
@@ -81,6 +82,20 @@ internal class InteractionClient(DiscordClient discordClient)
 
         var route = new DiscordRoute("interactions/{interaction_id}/{interaction_token}/callback", interaction.Id, interaction.Token);
         await Client.SendAsync(route, HttpMethod.Post, request, cancellationToken);
+    }
+
+    public async Task RespondWithAutocompleteAsync(InteractionHandle interaction,
+        IReadOnlyList<ApplicationCommandOptionChoice> choices,
+        CancellationToken cancellationToken = default)
+    {
+        if (choices.Count > 25)
+            throw new ArgumentOutOfRangeException(nameof(choices), "Autocomplete response allows at most 25 choices.");
+
+        var data = new AutocompleteCallbackData
+        {
+            Choices = choices is ApplicationCommandOptionChoice[] arr ? arr : choices.ToArray()
+        };
+        await SendCallbackAsync(interaction, data, InteractionCallbackType.ApplicationCommandAutocompleteResult, cancellationToken);
     }
 
     public enum AcknowledgeType

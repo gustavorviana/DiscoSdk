@@ -347,6 +347,9 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
 
             try
             {
+                if (interaction.Type == InteractionType.ApplicationCommandAutocomplete)
+                    await HandleAutocompleteAsync(interactionWrapper);
+
                 if (interaction.Type == InteractionType.ApplicationCommand)
                     await HandleCommandAsync(interactionWrapper);
 
@@ -377,6 +380,16 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
 
         var commandContext = new ModalContext(_discordClient, interactionWrapper);
         await ProcessAllAsync(commandHandlers, x => x.HandleAsync(commandContext));
+    }
+
+    private async Task HandleAutocompleteAsync(InteractionWrapper interactionWrapper)
+    {
+        var autocompleteHandlers = GetHandlersOfType<IAutocompleteHandler>();
+        if (autocompleteHandlers.Count == 0)
+            return;
+
+        var autocompleteContext = new AutocompleteContext(_discordClient, interactionWrapper);
+        await ProcessAllAsync(autocompleteHandlers, x => x.HandleAsync(autocompleteContext));
     }
 
     private async Task HandleCommandAsync(InteractionWrapper interactionWrapper)
