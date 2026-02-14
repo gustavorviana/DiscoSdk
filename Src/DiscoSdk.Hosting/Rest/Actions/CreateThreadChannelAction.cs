@@ -130,7 +130,7 @@ internal class CreateThreadChannelAction : RestAction<IGuildThreadChannel>, ICre
 	}
 
 	/// <inheritdoc />
-	public ICreateIThreadChannelAction SetMessageComponents(params MessageComponent[] components)
+	public ICreateIThreadChannelAction SetMessageComponents(params IMessageComponent[] components)
 	{
 		if (components == null || components.Length == 0)
 		{
@@ -143,14 +143,14 @@ internal class CreateThreadChannelAction : RestAction<IGuildThreadChannel>, ICre
 
 		_messageComponents = components.Select(c =>
 		{
-			if (c.Type == ComponentType.ActionRow)
-				return c;
-
-			// Wrap non-ActionRow components in an ActionRow
+			if (c is not MessageComponent mc)
+				throw new ArgumentException("Message components must be MessageComponent (buttons, selects).", nameof(components));
+			if (mc.Type == ComponentType.ActionRow)
+				return mc;
 			return new MessageComponent
 			{
 				Type = ComponentType.ActionRow,
-				Components = [c]
+				Components = [mc]
 			};
 		}).ToList();
 

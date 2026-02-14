@@ -20,9 +20,9 @@ public class StreamingActivity(string name, string url) : IActivity
 		return this;
 	}
 
-	public Activity Build()
+	public ActivityUpdate Build()
 	{
-		return new Activity
+		return new ActivityUpdate
 		{
 			Name = name,
 			Type = ActivityType.Streaming,

@@ -1,11 +1,11 @@
-﻿using DiscoSdk.Models.Messages.Components;
+using DiscoSdk.Models.Messages.Components;
 
 namespace DiscoSdk.Models.Messages;
 
 /// <summary>
 /// Fluent builder for creating text input components in modals.
 /// </summary>
-public class TextInputBuilder
+public class TextInputBuilder : IModalComponentBuilder
 {
     private readonly TextInputComponent _textInput = new();
 
@@ -97,17 +97,20 @@ public class TextInputBuilder
         return this;
     }
 
-    /// <summary>
-    /// Builds the text input component.
-    /// </summary>
-    /// <returns>The built <see cref="TextInputComponent"/> instance.</returns>
-    public TextInputComponent Build()
-    {
-        if (string.IsNullOrWhiteSpace(_textInput.CustomId))
-            throw new InvalidOperationException("Text input custom ID is required.");
-        if (string.IsNullOrWhiteSpace(_textInput.Label))
-            throw new InvalidOperationException("Text input label is required.");
+	/// <summary>
+	/// Builds the text input component.
+	/// </summary>
+	/// <returns>The built <see cref="TextInputComponent"/> instance.</returns>
+	public TextInputComponent Build()
+	{
+		if (string.IsNullOrWhiteSpace(_textInput.CustomId))
+			throw new InvalidOperationException("Text input custom ID is required.");
+		if (string.IsNullOrWhiteSpace(_textInput.Label))
+			throw new InvalidOperationException("Text input label is required.");
 
-        return _textInput;
-    }
+		return _textInput;
+	}
+
+	IModalComponent IModalComponentBuilder.Build() => Build();
+	IInteractionComponent IInteractionComponentBuilder.Build() => Build();
 }

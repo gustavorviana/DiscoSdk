@@ -8,9 +8,12 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 internal class UpdatePresenceAction(DiscordClient client) : RestAction, IUpdatePresenceAction
 {
     private OnlineStatus? _status;
-    private Activity[]? _activities;
+    private ActivityUpdate? _activity;
+    private ActivityUpdate[]? _activities;
     private bool? _afk;
     private long? _since;
+
+    public ActivityUpdate? Activity => _activity;
 
     public IUpdatePresenceAction SetStatus(OnlineStatus status)
     {
@@ -18,16 +21,23 @@ internal class UpdatePresenceAction(DiscordClient client) : RestAction, IUpdateP
         return this;
     }
 
-    public IUpdatePresenceAction SetActivities(params Activity[] activities)
+    public IUpdatePresenceAction SetActivity(ActivityUpdate? activity)
     {
+        _activity = activity;
+        return this;
+    }
+
+    public IUpdatePresenceAction SetActivities(params ActivityUpdate[] activities)
+    {
+        _activity = null;
         _activities = activities;
         return this;
     }
 
-    public IUpdatePresenceAction AddActivity(Activity activity)
+    public IUpdatePresenceAction AddActivity(ActivityUpdate activity)
     {
+        _activity = null;
         _activities ??= [];
-
         var list = _activities.ToList();
         list.Add(activity);
         _activities = [.. list];
@@ -53,6 +63,7 @@ internal class UpdatePresenceAction(DiscordClient client) : RestAction, IUpdateP
 
     public IUpdatePresenceAction ClearActivities()
     {
+        _activity = null;
         _activities = [];
         return this;
     }
@@ -73,9 +84,13 @@ internal class UpdatePresenceAction(DiscordClient client) : RestAction, IUpdateP
             };
         }
 
-        if (_activities != null)
+        if (_activity != null)
         {
-            presenceData.Activities = _activities.Select(SerializeActivity).ToArray();
+            presenceData.Activities = [SerializeActivityUpdate(_activity)];
+        }
+        else if (_activities != null && _activities.Length > 0)
+        {
+            presenceData.Activities = _activities.Select(SerializeActivityUpdate).ToArray();
         }
 
         if (_afk.HasValue)
@@ -102,15 +117,14 @@ internal class UpdatePresenceAction(DiscordClient client) : RestAction, IUpdateP
         }
     }
 
-    private static ActivityPayload SerializeActivity(Activity activity)
+    private static ActivityPayload SerializeActivityUpdate(ActivityUpdate activity)
     {
         var payload = new ActivityPayload
         {
-            Name = activity.Name,
+            Name = activity.Name ?? string.Empty,
             Type = (int)activity.Type,
             Url = activity.Url,
-            CreatedAt = activity.CreatedAt,
-            ApplicationId = activity.ApplicationId?.ToString(),
+            CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Details = activity.Details,
             State = activity.State,
             Instance = activity.Instance,
@@ -158,7 +172,7 @@ internal class UpdatePresenceAction(DiscordClient client) : RestAction, IUpdateP
                 SmallImage = activity.Assets.SmallImage,
                 SmallText = activity.Assets.SmallText
             };
-            if (assets.LargeImage != null || assets.LargeText != null || 
+            if (assets.LargeImage != null || assets.LargeText != null ||
                 assets.SmallImage != null || assets.SmallText != null)
                 payload.Assets = assets;
         }

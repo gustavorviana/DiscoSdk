@@ -31,26 +31,38 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
     private const int MaxComponentRows = 5;
     private const int MaxContentLength = 2000;
 
-    public TSelf AddActionRow(params MessageComponent[] items)
-    {
-        ArgumentNullException.ThrowIfNull(items);
+	public TSelf AddActionRow(params IInteractionComponent[] items)
+	{
+		ArgumentNullException.ThrowIfNull(items);
 
-        if (items.Length == 0)
-            throw new ArgumentException("At least one component must be provided.", nameof(items));
+		if (items.Length == 0)
+			throw new ArgumentException("At least one component must be provided.", nameof(items));
 
-        if (_components.Count >= 5)
-            throw new InvalidOperationException("Message cannot have more than 5 component rows.");
+		if (_components.Count >= MaxComponentRows)
+			throw new InvalidOperationException("Message cannot have more than 5 component rows.");
 
-        // Create an ActionRow containing the items
-        var actionRow = new MessageComponent
-        {
-            Type = ComponentType.ActionRow,
-            Components = [.. items]
-        };
+		var messageComponents = items.Select(c =>
+		{
+			if (c is MessageComponent mc)
+				return mc;
+			throw new ArgumentException("Message action rows only support MessageComponent (buttons, selects).", nameof(items));
+		}).ToArray();
 
-        _components.Add(actionRow);
-        return Self();
-    }
+		var actionRow = new MessageComponent
+		{
+			Type = ComponentType.ActionRow,
+			Components = messageComponents
+		};
+
+		_components.Add(actionRow);
+		return Self();
+	}
+
+	public TSelf AddActionRow(IInteractionComponentBuilder builder)
+	{
+		ArgumentNullException.ThrowIfNull(builder);
+		return AddActionRow(builder.Build());
+	}
 
     public TSelf AttachFiles(params MessageFile[] files)
     {

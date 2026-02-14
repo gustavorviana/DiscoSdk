@@ -79,5 +79,5 @@ internal class InteractionDataWrapper(DiscordClient client, InteractionData data
     public string[]? Values => _data.Values;
 
     /// <inheritdoc />
-    public ModalComponent[]? Components => _data.Components;
+    public ModalSubmitRow[]? Components => _data.Components;
 }

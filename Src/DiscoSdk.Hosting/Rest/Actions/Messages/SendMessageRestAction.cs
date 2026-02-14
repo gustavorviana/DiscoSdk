@@ -73,32 +73,32 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
         return this;
     }
 
-    /// <inheritdoc />
-    public ISendMessageRestAction SetComponents(params MessageComponent[] components)
-    {
-        if (components == null || components.Length == 0)
-            return this;
+	/// <inheritdoc />
+	public ISendMessageRestAction SetComponents(params IInteractionComponent[] components)
+	{
+		if (components == null || components.Length == 0)
+			return this;
 
-        if (components.Length > 5)
-            throw new ArgumentException("Message cannot have more than 5 component rows.", nameof(components));
+		if (components.Length > 5)
+			throw new ArgumentException("Message cannot have more than 5 component rows.", nameof(components));
 
-        _components.Clear();
+		_components.Clear();
 
-        _components.AddRange(components.Select(c =>
-        {
-            if (c.Type == ComponentType.ActionRow)
-                return c;
+		_components.AddRange(components.Select(c =>
+		{
+			if (c is not MessageComponent mc)
+				throw new ArgumentException("Message components must be MessageComponent (buttons, selects).", nameof(components));
+			if (mc.Type == ComponentType.ActionRow)
+				return mc;
+			return new MessageComponent
+			{
+				Type = ComponentType.ActionRow,
+				Components = [mc]
+			};
+		}));
 
-            // Wrap non-ActionRow components in an ActionRow
-            return new MessageComponent
-            {
-                Type = ComponentType.ActionRow,
-                Components = [c]
-            };
-        }));
-
-        return this;
-    }
+		return this;
+	}
 
     /// <inheritdoc />
     public ISendMessageRestAction SetTts(bool tts)

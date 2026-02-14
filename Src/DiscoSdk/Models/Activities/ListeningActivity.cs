@@ -72,9 +72,9 @@ public class ListeningActivity(string name) : IActivity
 		return this;
 	}
 
-	public Activity Build()
+	public ActivityUpdate Build()
 	{
-		var activity = new Activity
+		var activity = new ActivityUpdate
 		{
 			Name = name,
 			Type = ActivityType.Listening,
@@ -103,9 +103,7 @@ public class ListeningActivity(string name) : IActivity
 		}
 
 		if (_buttons != null && _buttons.Length > 0)
-		{
 			activity.Buttons = _buttons;
-		}
 
 		return activity;
 	}

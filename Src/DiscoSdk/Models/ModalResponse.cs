@@ -27,7 +27,7 @@ public class ModalResponse
         return Interaction.Data?.Components?
             .SelectMany(row => row.Components ?? [])
             .FirstOrDefault(c => c.CustomId == customId)?
-            .Value;
+            .GetValueString();
     }
 
     /// <summary>
@@ -44,8 +44,8 @@ public class ModalResponse
                 .Components
                 .Where(x => x.Components != null)
                 .SelectMany(x => x.Components!)
-                .Where(component => !string.IsNullOrEmpty(component.CustomId) && !string.IsNullOrEmpty(component.Value))
-                .ToDictionary(x => x.CustomId, x => x.Value);
+                .Where(component => !string.IsNullOrEmpty(component.CustomId) && !string.IsNullOrEmpty(component.GetValueString()))
+                .ToDictionary(x => x.CustomId, x => x.GetValueString());
     }
 }
 

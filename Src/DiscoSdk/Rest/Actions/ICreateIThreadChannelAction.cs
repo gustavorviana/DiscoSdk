@@ -59,7 +59,7 @@ public interface ICreateIThreadChannelAction : IRestAction<IGuildThreadChannel>
 	/// </summary>
 	/// <param name="components">The message components (max 5 rows).</param>
 	/// <returns>The current <see cref="ICreateIThreadChannelAction"/> instance.</returns>
-	ICreateIThreadChannelAction SetMessageComponents(params MessageComponent[] components);
+	ICreateIThreadChannelAction SetMessageComponents(params IMessageComponent[] components);
 
 	/// <summary>
 	/// Sets the allowed mentions configuration for the initial message in forum posts.

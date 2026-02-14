@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Models.Messages;
+using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
 using DiscoSdk.Models.Messages.Mentions;
@@ -37,13 +37,19 @@ public interface IMessageBuilderAction<TSelf, TMessage> : IRestAction<TMessage>
     /// <returns>The current <see cref="TSelf"/> instance.</returns>
     TSelf SetEmbeds(params Embed[] embeds);
 
-    /// <summary>
-    /// Adds an action row containing the specified components.
-    /// Components will be wrapped in an ActionRow when required.
-    /// </summary>
-    /// <param name="items">The components to add (buttons, selects, etc.).</param>
-    /// <returns>The current <see cref="TSelf"/> instance.</returns>
-    TSelf AddActionRow(params MessageComponent[] items);
+	/// <summary>
+	/// Adds an action row containing the specified components (buttons, selects, etc.).
+	/// </summary>
+	/// <param name="items">The components to add.</param>
+	/// <returns>The current <see cref="TSelf"/> instance.</returns>
+	TSelf AddActionRow(params IInteractionComponent[] items);
+
+	/// <summary>
+	/// Adds an action row containing the component built from the given builder (one builder per call).
+	/// </summary>
+	/// <param name="builder">The component builder to build and add.</param>
+	/// <returns>The current <see cref="TSelf"/> instance.</returns>
+	TSelf AddActionRow(IInteractionComponentBuilder builder);
 
     /// <summary>
     /// Removes all components from the message.

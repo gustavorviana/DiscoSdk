@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.JsonConverters;
 using System.Text.Json.Serialization;
 
@@ -59,9 +59,9 @@ public class InteractionData
     public string[]? Values { get; set; }
 
     /// <summary>
-    /// Gets or sets the components submitted in a modal.
+    /// Gets or sets the rows of submitted fields when this interaction is MODAL_SUBMIT.
     /// </summary>
     [JsonPropertyName("components")]
-    public ModalComponent[]? Components { get; set; }
+    public ModalSubmitRow[]? Components { get; set; }
 }
 

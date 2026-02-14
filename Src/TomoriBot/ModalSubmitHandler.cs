@@ -11,12 +11,23 @@ internal class ModalSubmitHandler : IModalSubmitHandler
 {
     public async Task HandleAsync(IModalContext context)
     {
+        if (context.CustomId == "sdk_test_modal_submit" ||
+            context.CustomId == "sdk_test_label_submit" ||
+            context.CustomId == "sdk_test_checkbox_submit" ||
+            context.CustomId == "sdk_test_checkbox_group_submit")
+        {
+            Console.WriteLine($"[MODAL] Modal submitted: {context.CustomId}");
+            foreach (var option in context.Options)
+                Console.WriteLine($"[MODAL] Field: {option.CustomId} = {option.Value}");
+            await context.Reply("Ok").SetEphemeral().ExecuteAsync();
+            return;
+        }
+
         Console.WriteLine($"[MODAL] Modal submitted: {context.CustomId}");
 
         await context.Defer().ExecuteAsync();
         await Task.Delay(2000);
 
-        // Example: Handle feedback modal
         if (context.CustomId == "feedback_modal")
         {
             // Get values from modal components

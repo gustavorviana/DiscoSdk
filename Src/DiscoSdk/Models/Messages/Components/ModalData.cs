@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+using DiscoSdk.Models.JsonConverters;
+using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Messages.Components;
 
@@ -7,21 +8,22 @@ namespace DiscoSdk.Models.Messages.Components;
 /// </summary>
 public class ModalData
 {
-    /// <summary>
-    /// Gets or sets the custom ID for the modal (max 100 characters).
-    /// </summary>
-    [JsonPropertyName("custom_id")]
-    public string CustomId { get; set; } = default!;
+	/// <summary>
+	/// Gets or sets the custom ID for the modal (max 100 characters).
+	/// </summary>
+	[JsonPropertyName("custom_id")]
+	public string CustomId { get; set; } = default!;
 
-    /// <summary>
-    /// Gets or sets the title of the modal (max 45 characters).
-    /// </summary>
-    [JsonPropertyName("title")]
-    public string Title { get; set; } = default!;
+	/// <summary>
+	/// Gets or sets the title of the modal (max 45 characters).
+	/// </summary>
+	[JsonPropertyName("title")]
+	public string Title { get; set; } = default!;
 
-    /// <summary>
-    /// Gets or sets the components in the modal. Must be ActionRow components containing TextInput components.
-    /// </summary>
-    [JsonPropertyName("components")]
-    public ActionRowComponent[] Components { get; set; } = [];
+	/// <summary>
+	/// Gets or sets the components in the modal (ActionRow or Label).
+	/// </summary>
+	[JsonPropertyName("components")]
+	[JsonConverter(typeof(ModalComponentConverter))]
+	public IModalComponent[] Components { get; set; } = [];
 }

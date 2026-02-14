@@ -27,21 +27,21 @@ public interface IReplyModalRestAction : IRestAction
 	/// </summary>
 	/// <param name="textInput">The text input component to add.</param>
 	/// <returns>The current <see cref="IReplyModalRestAction"/> instance.</returns>
-	IReplyModalRestAction AddActionRow(TextInputComponent textInput);
+	IReplyModalRestAction AddActionRow(IModalComponent textInput);
 
 	/// <summary>
-	/// Adds an action row containing a text input component built from a <see cref="TextInputBuilder"/> to the modal.
+	/// Adds an action row containing a modal component built from an <see cref="IModalComponentBuilder"/> (e.g. <see cref="TextInputBuilder"/>).
 	/// </summary>
-	/// <param name="textInputBuilder">The text input builder to build and add.</param>
+	/// <param name="builder">The modal component builder to build and add.</param>
 	/// <returns>The current <see cref="IReplyModalRestAction"/> instance.</returns>
-	/// <exception cref="ArgumentNullException">Thrown when textInputBuilder is null.</exception>
-	IReplyModalRestAction AddActionRow(TextInputBuilder textInputBuilder);
+	/// <exception cref="ArgumentNullException">Thrown when builder is null.</exception>
+	IReplyModalRestAction AddActionRow(IModalComponentBuilder builder);
 
 	/// <summary>
-	/// Sets the components (action rows) of the modal.
+	/// Sets the components of the modal (action rows only; each row contains components that have their own label property).
 	/// </summary>
-	/// <param name="components">The action row components to set.</param>
+	/// <param name="components">The modal components to set.</param>
 	/// <returns>The current <see cref="IReplyModalRestAction"/> instance.</returns>
-	IReplyModalRestAction SetComponents(params ActionRowComponent[] components);
+	IReplyModalRestAction SetComponents(params IModalComponent[] components);
 }
 

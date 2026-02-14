@@ -52,8 +52,8 @@ public interface IInteractionData
 	string[]? Values { get; }
 
 	/// <summary>
-	/// Gets the components submitted in a modal (for modal submit interactions).
+	/// Gets the rows of submitted fields when this interaction is MODAL_SUBMIT.
 	/// </summary>
-	ModalComponent[]? Components { get; }
+	ModalSubmitRow[]? Components { get; }
 }
 

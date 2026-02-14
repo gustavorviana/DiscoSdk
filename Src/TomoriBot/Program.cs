@@ -1,4 +1,4 @@
-﻿using DiscoSdk;
+using DiscoSdk;
 using DiscoSdk.Hosting.Builders;
 using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Logging;
@@ -33,6 +33,36 @@ await dsc.UpdateCommands()
     .AddGlobal(x => x
         .WithName("feedback")
         .WithDescription("Open feedback modal")
+        .WithType(ApplicationCommandType.ChatInput)
+    )
+   .AddGuild(betaGuild, x => x
+        .WithName("sdk-test-modal")
+        .WithDescription("Test modal send and receive (TextInput).")
+        .WithType(ApplicationCommandType.ChatInput)
+    )
+   .AddGuild(betaGuild, x => x
+        .WithName("sdk-test-button")
+        .WithDescription("Test button send and receive in message.")
+        .WithType(ApplicationCommandType.ChatInput)
+    )
+   .AddGuild(betaGuild, x => x
+        .WithName("sdk-test-select")
+        .WithDescription("Test String Select send and receive.")
+        .WithType(ApplicationCommandType.ChatInput)
+    )
+    .AddGuild(betaGuild, x => x
+        .WithName("sdk-test-label")
+        .WithDescription("Test modal Label component (label + child).")
+        .WithType(ApplicationCommandType.ChatInput)
+    )
+    .AddGuild(betaGuild, x => x
+        .WithName("sdk-test-checkbox")
+        .WithDescription("Test modal Checkbox component.")
+        .WithType(ApplicationCommandType.ChatInput)
+    )
+    .AddGuild(betaGuild, x => x
+        .WithName("sdk-test-checkbox-group")
+        .WithDescription("Test modal CheckboxGroup component.")
         .WithType(ApplicationCommandType.ChatInput)
     )
     .AddGuild(betaGuild, x =>

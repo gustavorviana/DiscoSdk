@@ -42,6 +42,113 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
             return;
         }
 
+        if (context.Name == "sdk-test-modal")
+        {
+            var openModalButton = new MessageComponent
+            {
+                Type = ComponentType.Button,
+                Style = ButtonStyle.Primary,
+                Label = "Open modal",
+                CustomId = "sdk_test_open_modal"
+            };
+            await context
+                .Reply("**SDK Test — Modal** — Click the button to open the modal.")
+                .SetEphemeral()
+                .AddActionRow(openModalButton)
+                .ExecuteAsync();
+            return;
+        }
+
+        if (context.Name == "sdk-test-button")
+        {
+            var testButton = new MessageComponent
+            {
+                Type = ComponentType.Button,
+                Style = ButtonStyle.Primary,
+                Label = "Click here",
+                CustomId = "sdk_test_button"
+            };
+            await context
+                .Reply("**SDK Test — Button** — Click the button to test reception.")
+                .SetEphemeral()
+                .AddActionRow(testButton)
+                .ExecuteAsync();
+            return;
+        }
+
+        if (context.Name == "sdk-test-select")
+        {
+            var stringSelect = new MessageComponent
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "sdk_test_select",
+                Placeholder = "Choose an option",
+                Options =
+                [
+                    new SelectOption { Label = "Option A", Value = "opt_a" },
+                    new SelectOption { Label = "Option B", Value = "opt_b" },
+                    new SelectOption { Label = "Option C", Value = "opt_c" }
+                ]
+            };
+            await context
+                .Reply("**SDK Test — Select** — Choose an option to test reception.")
+                .SetEphemeral()
+                .AddActionRow(stringSelect)
+                .ExecuteAsync();
+            return;
+        }
+
+        if (context.Name == "sdk-test-label")
+        {
+            var openLabelModalButton = new MessageComponent
+            {
+                Type = ComponentType.Button,
+                Style = ButtonStyle.Primary,
+                Label = "Open modal",
+                CustomId = "sdk_test_open_label_modal"
+            };
+            await context
+                .Reply("**SDK Test — Label** — Click the button to open a modal with a Label component.")
+                .SetEphemeral()
+                .AddActionRow(openLabelModalButton)
+                .ExecuteAsync();
+            return;
+        }
+
+        if (context.Name == "sdk-test-checkbox")
+        {
+            var openCheckboxModalButton = new MessageComponent
+            {
+                Type = ComponentType.Button,
+                Style = ButtonStyle.Primary,
+                Label = "Open modal",
+                CustomId = "sdk_test_open_checkbox_modal"
+            };
+            await context
+                .Reply("**SDK Test — Checkbox** — Click the button to open a modal with a Checkbox component.")
+                .SetEphemeral()
+                .AddActionRow(openCheckboxModalButton)
+                .ExecuteAsync();
+            return;
+        }
+
+        if (context.Name == "sdk-test-checkbox-group")
+        {
+            var openCheckboxGroupModalButton = new MessageComponent
+            {
+                Type = ComponentType.Button,
+                Style = ButtonStyle.Primary,
+                Label = "Open modal",
+                CustomId = "sdk_test_open_checkbox_group_modal"
+            };
+            await context
+                .Reply("**SDK Test — Checkbox Group** — Click the button to open a modal with a CheckboxGroup.")
+                .SetEphemeral()
+                .AddActionRow(openCheckboxGroupModalButton)
+                .ExecuteAsync();
+            return;
+        }
+
         if (context.Name == "feedback")
         {
             var buttons = new MessageComponent[]

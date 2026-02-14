@@ -10,7 +10,7 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// </summary>
 internal class ReplyModalRestAction : RestAction, IReplyModalRestAction
 {
-    private readonly List<ActionRowComponent> _components = [];
+	private readonly List<IModalComponent> _components = [];
     private readonly InteractionHandle _interactionHandle;
     private readonly DiscordClient _client;
     private string? _customId;
@@ -53,45 +53,58 @@ internal class ReplyModalRestAction : RestAction, IReplyModalRestAction
         return this;
     }
 
-    /// <inheritdoc />
-    public IReplyModalRestAction AddActionRow(TextInputComponent textInput)
-    {
-        ArgumentNullException.ThrowIfNull(textInput);
+	/// <inheritdoc />
+	public IReplyModalRestAction AddActionRow(IModalComponent modalComponent)
+	{
+		ArgumentNullException.ThrowIfNull(modalComponent);
 
-        if (_components.Count >= 5)
-            throw new InvalidOperationException("Modal cannot have more than 5 components.");
+		if (modalComponent is not TextInputComponent and not CheckboxGroupComponent)
+			throw new ArgumentException("Action row in modal only supports TextInputComponent or CheckboxGroupComponent.", nameof(modalComponent));
 
-        var actionRow = new ActionRowComponent
-        {
-            Components = [textInput]
-        };
+		if (_components.Count >= 5)
+			throw new InvalidOperationException("Modal cannot have more than 5 components.");
 
-        _components.Add(actionRow);
-        return this;
-    }
+		if (modalComponent is CheckboxGroupComponent checkboxGroup)
+		{
+			ValidateCheckboxGroupForModal(checkboxGroup, nameof(modalComponent));
 
-    /// <inheritdoc />
-    public IReplyModalRestAction AddActionRow(TextInputBuilder textInputBuilder)
-    {
-        ArgumentNullException.ThrowIfNull(textInputBuilder);
+			var labelContainer = new LabelComponent
+			{
+				Label = checkboxGroup.Label,
+				Component = checkboxGroup
+			};
+			_components.Add(labelContainer);
+			return this;
+		}
 
-        var textInput = textInputBuilder.Build();
-        return AddActionRow(textInput);
-    }
+		var actionRow = new ActionRowComponent
+		{
+			Components = [modalComponent]
+		};
 
-    /// <inheritdoc />
-    public IReplyModalRestAction SetComponents(params ActionRowComponent[] components)
-    {
-        ArgumentNullException.ThrowIfNull(components);
+		_components.Add(actionRow);
+		return this;
+	}
 
-        if (components.Length > 5)
-            throw new ArgumentException("Modal cannot have more than 5 components.", nameof(components));
+	/// <inheritdoc />
+	public IReplyModalRestAction AddActionRow(IModalComponentBuilder builder)
+	{
+		ArgumentNullException.ThrowIfNull(builder);
+		return AddActionRow(builder.Build());
+	}
 
-        _components.Clear();
-        _components.AddRange(components.Where(c => c != null));
+	/// <inheritdoc />
+	public IReplyModalRestAction SetComponents(params IModalComponent[] components)
+	{
+		ArgumentNullException.ThrowIfNull(components);
 
-        return this;
-    }
+		if (components.Length > 5)
+			throw new ArgumentException("Modal cannot have more than 5 components.", nameof(components));
+
+		_components.Clear();
+		_components.AddRange(components.Where(c => c != null));
+		return this;
+	}
 
     /// <inheritdoc />
     public override Task ExecuteAsync(CancellationToken cancellationToken = default)
@@ -108,13 +121,46 @@ internal class ReplyModalRestAction : RestAction, IReplyModalRestAction
         if (_interactionHandle.IsDeferred)
             throw new InvalidOperationException("Cannot respond with modal after deferring the interaction.");
 
-        var modalData = new ModalData
-        {
-            CustomId = _customId,
-            Title = _title,
-            Components = [.. _components]
-        };
+		ValidateModalComponents(_components);
+
+		var modalData = new ModalData
+		{
+			CustomId = _customId,
+			Title = _title,
+			Components = [.. _components]
+		};
 
         return _client.InteractionClient.RespondWithModalAsync(_interactionHandle, modalData, cancellationToken);
     }
+
+	private static void ValidateModalComponents(List<IModalComponent> components)
+	{
+		foreach (var c in components)
+		{
+			if (c is LabelComponent label && label.Component is CheckboxGroupComponent checkboxGroup)
+				ValidateCheckboxGroupForModal(checkboxGroup, "components");
+		}
+	}
+
+	private static void ValidateCheckboxGroupForModal(CheckboxGroupComponent checkboxGroup, string paramName)
+	{
+		if (string.IsNullOrWhiteSpace(checkboxGroup.Label))
+			throw new ArgumentException("CheckboxGroupComponent must have Label set when used in a modal (required for the Label container type 18).", paramName);
+		if (checkboxGroup.Label.Length > 45)
+			throw new ArgumentException("CheckboxGroupComponent.Label cannot exceed 45 characters.", paramName);
+		if (string.IsNullOrWhiteSpace(checkboxGroup.CustomId))
+			throw new ArgumentException("CheckboxGroupComponent (type 22) requires custom_id.", paramName);
+		if (checkboxGroup.Options == null || checkboxGroup.Options.Length < 1)
+			throw new ArgumentException("CheckboxGroupComponent (type 22) requires at least one option in options.", paramName);
+		for (var i = 0; i < checkboxGroup.Options.Length; i++)
+		{
+			var opt = checkboxGroup.Options[i];
+			if (opt == null)
+				throw new ArgumentException($"CheckboxGroupComponent.Options[{i}] cannot be null.", paramName);
+			if (string.IsNullOrWhiteSpace(opt.Value))
+				throw new ArgumentException($"CheckboxGroupComponent.Options[{i}].Value is required.", paramName);
+			if (string.IsNullOrWhiteSpace(opt.Label))
+				throw new ArgumentException($"CheckboxGroupComponent.Options[{i}].Label is required.", paramName);
+		}
+	}
 }

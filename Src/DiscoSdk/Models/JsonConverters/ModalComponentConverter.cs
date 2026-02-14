@@ -6,13 +6,13 @@ using System.Text.Json.Serialization;
 namespace DiscoSdk.Models.JsonConverters;
 
 /// <summary>
-/// JSON converter for <see cref="IInteractionComponent"/> arrays.
-/// Handles serialization and deserialization of both <see cref="MessageComponent"/> and <see cref="ActionRowComponent"/>.
+/// JSON converter for <see cref="IModalComponent"/> arrays (modal payload).
+/// Supports ActionRow (type 1) for TextInput and Label (type 18) for Checkbox Group and similar components per Discord API.
 /// </summary>
-public class InteractionComponentConverter : JsonConverter<IInteractionComponent[]>
+public class ModalComponentConverter : JsonConverter<IModalComponent[]>
 {
 	/// <inheritdoc />
-	public override IInteractionComponent[]? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	public override IModalComponent[]? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
 		if (reader.TokenType == JsonTokenType.Null)
 			return null;
@@ -20,11 +20,10 @@ public class InteractionComponentConverter : JsonConverter<IInteractionComponent
 		if (reader.TokenType != JsonTokenType.StartArray)
 			throw new JsonException("Expected start of array.");
 
-		var components = new List<IInteractionComponent>();
+		var components = new List<IModalComponent>();
 
 		while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
 		{
-			// Read the entire object into a JsonDocument to inspect the "type" field
 			using var doc = JsonDocument.ParseValue(ref reader);
 			var root = doc.RootElement;
 
@@ -33,17 +32,14 @@ public class InteractionComponentConverter : JsonConverter<IInteractionComponent
 
 			var componentType = (ComponentType)typeElement.GetInt32();
 
-			// Deserialize based on component type
-			IInteractionComponent component = componentType switch
+			IModalComponent component = componentType switch
 			{
 				ComponentType.ActionRow => JsonSerializer.Deserialize<ActionRowComponent>(root.GetRawText(), options)
 					?? throw new JsonException("Failed to deserialize ActionRowComponent."),
 				ComponentType.Label => JsonSerializer.Deserialize<LabelComponent>(root.GetRawText(), options)
 					?? throw new JsonException("Failed to deserialize LabelComponent."),
-				_ => JsonSerializer.Deserialize<MessageComponent>(root.GetRawText(), options)
-					?? throw new JsonException("Failed to deserialize MessageComponent.")
+				_ => throw new JsonException($"Modal components must be ActionRow (type 1) or Label (type 18). Unexpected type: {componentType}.")
 			};
-
 			components.Add(component);
 		}
 
@@ -51,7 +47,7 @@ public class InteractionComponentConverter : JsonConverter<IInteractionComponent
 	}
 
 	/// <inheritdoc />
-	public override void Write(Utf8JsonWriter writer, IInteractionComponent[]? value, JsonSerializerOptions options)
+	public override void Write(Utf8JsonWriter writer, IModalComponent[]? value, JsonSerializerOptions options)
 	{
 		if (value == null)
 		{
@@ -60,11 +56,8 @@ public class InteractionComponentConverter : JsonConverter<IInteractionComponent
 		}
 
 		writer.WriteStartArray();
-
 		foreach (var component in value)
-            JsonSerializer.Serialize(writer, component, component.GetType(), options);
-
-        writer.WriteEndArray();
+			JsonSerializer.Serialize(writer, component, component.GetType(), options);
+		writer.WriteEndArray();
 	}
 }
-

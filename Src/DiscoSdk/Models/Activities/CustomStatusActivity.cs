@@ -17,10 +17,11 @@ public class CustomStatusActivity(string? state) : IActivity
 		return this;
     }
 
-    public Activity Build()
+    public ActivityUpdate Build()
 	{
-		var activity = new Activity
+		var activity = new ActivityUpdate
 		{
+			Name = "",
 			Type = ActivityType.Custom,
 			State = state
 		};

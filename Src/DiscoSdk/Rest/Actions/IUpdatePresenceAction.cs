@@ -1,4 +1,3 @@
-using DiscoSdk.Models;
 using DiscoSdk.Models.Activities;
 using DiscoSdk.Models.Enums;
 
@@ -17,23 +16,30 @@ public interface IUpdatePresenceAction : IRestAction
 	IUpdatePresenceAction SetStatus(OnlineStatus status);
 
 	/// <summary>
-	/// Sets the activities.
+	/// Sets the single activity for the presence update. Use for editing/updating; <see cref="Activity"/> is read-only model.
 	/// </summary>
-	/// <param name="activities">The activities to set, or null to clear all activities.</param>
+	/// <param name="activity">The activity update object, or null to clear.</param>
 	/// <returns>The current <see cref="IUpdatePresenceAction"/> instance.</returns>
-	IUpdatePresenceAction SetActivities(params Activity[] activities);
+	IUpdatePresenceAction SetActivity(ActivityUpdate? activity);
 
 	/// <summary>
-	/// Adds an activity to the presence.
+	/// Sets the activities for the presence update.
 	/// </summary>
-	/// <param name="activity">The activity to add.</param>
+	/// <param name="activities">The activity updates to set, or null to clear all.</param>
 	/// <returns>The current <see cref="IUpdatePresenceAction"/> instance.</returns>
-	IUpdatePresenceAction AddActivity(Activity activity);
+	IUpdatePresenceAction SetActivities(params ActivityUpdate[] activities);
 
 	/// <summary>
-	/// Adds an activity to the presence using an activity builder.
+	/// Adds an activity to the presence (for update).
 	/// </summary>
-	/// <param name="activity">The activity builder to add.</param>
+	/// <param name="activity">The activity update to add.</param>
+	/// <returns>The current <see cref="IUpdatePresenceAction"/> instance.</returns>
+	IUpdatePresenceAction AddActivity(ActivityUpdate activity);
+
+	/// <summary>
+	/// Adds an activity using a builder that produces an <see cref="ActivityUpdate"/>.
+	/// </summary>
+	/// <param name="activity">The activity builder.</param>
 	/// <returns>The current <see cref="IUpdatePresenceAction"/> instance.</returns>
 	IUpdatePresenceAction AddActivity(IActivity activity);
 

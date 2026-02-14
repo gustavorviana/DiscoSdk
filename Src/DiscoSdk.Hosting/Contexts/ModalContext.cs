@@ -16,7 +16,7 @@ internal class ModalContext : InteractionContextWrapper, IModalContext
     public ModalContext(DiscordClient client, InteractionWrapper interaction) : base(client, interaction)
     {
         var components = interaction.Data?.Components;
-        Options = components == null ? [] : [.. components.SelectMany(x => x.Components ?? []).Select(x => new ModalOption(x.CustomId, x.Value))];
+        Options = components == null ? [] : [.. components.SelectMany(x => x.Components ?? []).Select(x => new ModalOption(x.CustomId, x.GetValueString()))];
     }
 
     public string? GetOption(string customName) => Options.FirstOrDefault(x => x.CustomId.Equals(customName, StringComparison.OrdinalIgnoreCase))?.Value;

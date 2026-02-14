@@ -1,10 +1,11 @@
-﻿using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.Enums;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Activities;
 
 /// <summary>
-/// Represents an activity (presence) of a user.
+/// Represents an activity (presence) as received from Discord. Use for reading only.
+/// For updating the bot's presence, use <see cref="ActivityUpdate"/>.
 /// </summary>
 public class Activity
 {
@@ -93,8 +94,8 @@ public class Activity
     public int? Flags { get; set; }
 
     /// <summary>
-    /// Gets or sets the buttons for the activity.
+    /// Gets or sets the button labels for the activity (max 2). Discord returns this as an array of strings.
     /// </summary>
     [JsonPropertyName("buttons")]
-    public ActivityButton[]? Buttons { get; set; }
+    public string[]? Buttons { get; set; }
 }
