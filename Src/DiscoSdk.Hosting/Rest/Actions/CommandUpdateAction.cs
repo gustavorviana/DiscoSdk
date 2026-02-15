@@ -1,4 +1,4 @@
-using DiscoSdk.Hosting.Builders;
+using DiscoSdk.Hosting.Containers;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
@@ -10,67 +10,36 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <summary>
 /// Represents a fluent builder for queuing and registering Discord application commands.
 /// </summary>
-internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandUpdateAction
+internal class CommandUpdateAction(DiscordClient client, CommandContainer previousCommands) : RestAction, ICommandUpdateAction
 {
     private readonly ApplicationCommandClient _applicationCommandClient = new(client.HttpClient);
+    private readonly CommandContainer _newCommands = new();
 
-    private readonly List<ApplicationCommand> _globalCommands = [];
-    private readonly Dictionary<Snowflake, List<ApplicationCommand>> _guildCommands = [];
     private bool _deletePrevious = false;
 
 
-    public ICommandUpdateAction AddGlobal(params ApplicationCommand[] commands)
-    {
-        ArgumentNullException.ThrowIfNull(commands);
-        _globalCommands.AddRange(commands.Where(x => x != null));
-
-        return this;
-    }
-
     public ICommandUpdateAction AddGlobal(Func<IApplicationCommandBuilder, IApplicationCommandBuilder> configure)
     {
-        ArgumentNullException.ThrowIfNull(configure);
-        var command = BuildCommand(configure);
-        _globalCommands.Add(command);
+        _newCommands.AddGlobal(configure);
         return this;
     }
 
-    public ICommandUpdateAction AddGuild(Snowflake guildId, params ApplicationCommand[] commands)
+    public ICommandUpdateAction AddGlobal(params ApplicationCommand[] commands)
     {
-        if (guildId == default)
-            throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
-
-        ArgumentNullException.ThrowIfNull(commands);
-
-        if (!_guildCommands.ContainsKey(guildId))
-            _guildCommands[guildId] = [];
-
-        _guildCommands[guildId].AddRange(commands.Where(x => x != null));
-
+        _newCommands.AddGlobal(commands);
         return this;
     }
 
     public ICommandUpdateAction AddGuild(Snowflake guildId, Func<IApplicationCommandBuilder, IApplicationCommandBuilder> configure)
     {
-        if (guildId == default)
-            throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
-
-        var command = BuildCommand(configure);
-
-        if (!_guildCommands.ContainsKey(guildId))
-            _guildCommands[guildId] = [];
-
-        _guildCommands[guildId].Add(command);
+        _newCommands.AddGuild(guildId, configure);
         return this;
     }
 
-    private static ApplicationCommand BuildCommand(Func<IApplicationCommandBuilder, IApplicationCommandBuilder> configure)
+    public ICommandUpdateAction AddGuild(Snowflake guildId, params ApplicationCommand[] commands)
     {
-        ArgumentNullException.ThrowIfNull(configure);
-
-        var builder = new ApplicationCommandBuilder();
-        var configuredBuilder = configure(builder);
-        return configuredBuilder.Build();
+        _newCommands.AddGuild(guildId, commands);
+        return this;
     }
     public ICommandUpdateAction DeletePrevious()
     {
@@ -98,7 +67,7 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
     /// </summary>
     private async Task RegisterGlobalCommandsAsync(CancellationToken cancellationToken)
     {
-        if (_globalCommands.Count == 0 && !_deletePrevious)
+        if (_newCommands.GlobalCommands.Count == 0 && !_deletePrevious)
             return;
 
         List<ApplicationCommand> commandsToSend;
@@ -107,7 +76,7 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
         {
             client.Logger.Log(LogLevel.Debug, "Loading existing global commands from Discord...");
             var existingGlobal = await _applicationCommandClient.GetGlobalCommandsAsync(client.ApplicationId!.Value, cancellationToken);
-            commandsToSend = FilterChangedOrNewCommands(_globalCommands, existingGlobal);
+            commandsToSend = FilterChangedOrNewCommands(_newCommands.GlobalCommands, existingGlobal);
 
             if (commandsToSend.Count == 0)
             {
@@ -117,7 +86,8 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
         }
         else
         {
-            commandsToSend = _globalCommands;
+            previousCommands.GlobalCommands.AddRange(_newCommands.GlobalCommands);
+            commandsToSend = _newCommands.GlobalCommands;
         }
 
         if (commandsToSend.Count == 0 && _deletePrevious)
@@ -125,8 +95,10 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
             client.Logger.Log(LogLevel.Information, "DeletePrevious is true and no global commands are configured. Removing all global commands.");
         }
 
-        client.Logger.Log(LogLevel.Information, $"Registering {commandsToSend.Count} global command(s) (out of {_globalCommands.Count} total)...");
+        client.Logger.Log(LogLevel.Information, $"Registering {commandsToSend.Count} global command(s) (out of {_newCommands.GlobalCommands.Count} total)...");
         var registered = await _applicationCommandClient.RegisterGlobalCommandsAsync(client.ApplicationId!.Value, commandsToSend, cancellationToken);
+
+        previousCommands.GlobalCommands.AddRange(_newCommands.GlobalCommands);
         client.Logger.Log(LogLevel.Information, $"Successfully registered {registered.Count} global command(s).");
     }
 
@@ -135,10 +107,10 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
     /// </summary>
     private async Task RegisterGuildCommandsAsync(CancellationToken cancellationToken)
     {
-        if (_guildCommands.Count == 0 && !_deletePrevious)
+        if (_newCommands.GuildCommands.Count == 0 && !_deletePrevious)
             return;
 
-        foreach (var (guildId, commands) in _guildCommands)
+        foreach (var (guildId, commands) in _newCommands.GuildCommands)
         {
             List<ApplicationCommand> commandsToSend;
 
@@ -166,6 +138,8 @@ internal class CommandUpdateAction(DiscordClient client) : RestAction, ICommandU
 
             client.Logger.Log(LogLevel.Information, $"Registering {commandsToSend.Count} command(s) for guild {guildId} (out of {commands.Count} total)...");
             var guildRegistered = await _applicationCommandClient.RegisterGuildCommandsAsync(client.ApplicationId!.Value, guildId, commandsToSend, cancellationToken);
+
+            previousCommands.AddGuild(guildId, [..commands]);
             client.Logger.Log(LogLevel.Information, $"Successfully registered {guildRegistered.Count} command(s) for guild {guildId}.");
         }
     }

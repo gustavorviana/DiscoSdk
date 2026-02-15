@@ -5,6 +5,7 @@ using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Commands;
 using DiscoSdk.Models.Enums;
+using System.Reflection;
 using TomoriBot;
 
 var token = Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN") ?? throw new InvalidOperationException("DISCORD_BOT_TOKEN environment variable is not set.");
@@ -13,6 +14,7 @@ var dsc = await DiscordClientBuilder.Create(token)
     .WithIntents(DiscordIntent.All)
     .WithEventProcessorMaxConcurrency(100)
     .WithLogger(new ConsoleLogger(LogLevel.Trace))
+    .WithSlashCommands(Assembly.GetExecutingAssembly())
     .BuildAsync();
 
 var betaGuild = Snowflake.Parse("773618860875579422");
@@ -72,7 +74,7 @@ await dsc.UpdateCommands()
 
         var enums = Enum.GetNames(typeof(OnlineStatus));
 
-        x.AddStringOption("status", $"update bot status", choices: [..enums.Select(x => new ApplicationCommandOptionChoice { Name = x, Value = x })]);
+        x.AddStringOption("status", $"update bot status", choices: [.. enums.Select(x => new ApplicationCommandOptionChoice { Name = x, Value = x })]);
 
         return x;
     })

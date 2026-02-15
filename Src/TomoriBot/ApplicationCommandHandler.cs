@@ -200,18 +200,6 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
             return;
         }
 
-        if (context.Name == "search")
-        {
-            var query = context.GetOption<string>("query");
-            await context
-                .Reply(string.IsNullOrEmpty(query)
-                    ? "No search term provided."
-                    : $"You selected: **{query}**")
-                .SetEphemeral()
-                .ExecuteAsync();
-            return;
-        }
-
         if (context.Name == "status")
         {
             var status = context.GetOption<OnlineStatus>("status");

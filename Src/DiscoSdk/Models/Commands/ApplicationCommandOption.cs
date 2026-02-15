@@ -1,6 +1,5 @@
 ﻿using DiscoSdk.Models.Enums;
 using DiscoSdk.Utils;
-using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Commands;

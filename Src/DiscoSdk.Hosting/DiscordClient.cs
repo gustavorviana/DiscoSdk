@@ -1,4 +1,5 @@
 ﻿using DiscoSdk.Events;
+using DiscoSdk.Hosting.Containers;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Events;
 using DiscoSdk.Hosting.Gateway.Payloads;
@@ -23,13 +24,15 @@ namespace DiscoSdk.Hosting
     /// </summary>
     public class DiscordClient : IDiscordClient, IShardEventListener
     {
-        private readonly ShardPool _shardPool;
+        private readonly IReadOnlyList<IDiscoModule> _modules;
         private readonly EventProcessorPool<ReceivedGatewayMessage> _eventProcessorPool;
         private readonly ManualResetEventSlim _shutdownEvent = new(false);
         private readonly ManualResetEventSlim _readyEvent = new(false);
         private readonly DiscordEventDispatcher _eventDispatcher;
-        public IDiscordRestClient HttpClient { get; }
+        private readonly CommandContainer _commands = new();
         private readonly DiscordClientConfig _config;
+        private readonly ShardPool _shardPool;
+        public IDiscordRestClient HttpClient { get; }
         public GuildManager Guilds { get; }
         internal ChannelManager Channels { get; }
 
@@ -87,7 +90,7 @@ namespace DiscoSdk.Hosting
             if (ApplicationId == null)
                 throw new InvalidOperationException("ApplicationId is not available yet. Wait for the bot to be ready or provide the ApplicationId manually.");
 
-            return new CommandUpdateAction(this);
+            return new CommandUpdateAction(this, _commands);
         }
 
         /// <summary>
@@ -110,9 +113,18 @@ namespace DiscoSdk.Hosting
         /// </summary>
         public ICurrentUser BotUser { get; private set; } = new ReadyUser();
 
-        public DiscordClient(DiscordClientConfig config, JsonSerializerOptions jsonOptions, IObjectConverter converter)
+        public IServiceProvider Services { get; }
+
+        public DiscordClient(DiscordClientConfig config,
+            JsonSerializerOptions jsonOptions,
+            IObjectConverter converter,
+            IServiceProvider services,
+            IReadOnlyList<IDiscoModule> modules)
         {
             _config = config;
+            _modules = modules;
+
+            Services = services;
             SerializerOptions = jsonOptions;
             _shardPool = new ShardPool(this, config);
             Logger = config.Logger ?? NullLogger.Instance;
@@ -151,6 +163,13 @@ namespace DiscoSdk.Hosting
         {
             var gatewayInfo = await new DiscordGatewayClient(HttpClient).GetGatewayBotInfoAsync();
 
+            foreach (var item in _modules)
+            {
+                try { await item.OnPreInitializeAsync(this); } catch { }
+                if (item is IDiscordEventHandler handler)
+                    EventRegistry.Add(handler);
+            }
+
             // Start event processor pool
             _eventProcessorPool.Start();
             _shardPool.Init(gatewayInfo);
@@ -167,6 +186,9 @@ namespace DiscoSdk.Hosting
                 return;
 
             _isShuttingDown = true;
+
+            foreach (var item in _modules)
+                try { await item.OnShutdownAsync(this); } catch { }
 
             // Stop event processor pool
             await _eventProcessorPool.StopAsync();
@@ -367,6 +389,9 @@ namespace DiscoSdk.Hosting
 
                 Guilds.InitializePendingGuilds(guildIds);
             }
+
+            foreach (var item in _modules)
+                try { await item.OnGatewayReadyAsync(this); } catch { }
 
             if (IsReady && OnReady != null)
                 OnReady(this, EventArgs.Empty);

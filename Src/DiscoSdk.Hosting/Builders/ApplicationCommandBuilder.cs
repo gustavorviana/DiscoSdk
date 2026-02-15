@@ -140,7 +140,7 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// </summary>
     /// <param name="option">The option instance to add.</param>
     /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    private IApplicationCommandBuilder AddOption(ApplicationCommandOption option)
+    internal IApplicationCommandBuilder AddOption(ApplicationCommandOption option)
     {
         if (_options.Count >= 25)
             throw new InvalidOperationException("A command can have a maximum of 25 options. Discord API limit.");

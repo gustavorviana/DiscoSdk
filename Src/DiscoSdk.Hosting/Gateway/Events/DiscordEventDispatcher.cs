@@ -47,7 +47,8 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
         {
             // Add handler to the main list and get its index
             var index = _handlers.Count;
-            _handlers.Add(handler);
+            if (!_handlers.Contains(handler))
+                _handlers.Add(handler);
 
             // Discover all implemented interfaces that derive from IDiscordEventHandler
             var handlerType = handler.GetType();
