@@ -21,71 +21,60 @@ var betaGuild = Snowflake.Parse("773618860875579422");
 
 await dsc.WaitReadyAsync();
 
-await dsc.UpdateCommands()
-    .AddGlobal(x => x
-        .WithName("test")
-        .WithDescription("A test command")
-        .WithType(ApplicationCommandType.ChatInput)
-        .AddBooleanOption(
-            name: "ephemeral",
-            description: "An input Boolean",
-            required: false
-        )
-    )
-    .AddGlobal(x => x
-        .WithName("feedback")
-        .WithDescription("Open feedback modal")
-        .WithType(ApplicationCommandType.ChatInput)
-    )
-   .AddGuild(betaGuild, x => x
-        .WithName("sdk-test-modal")
-        .WithDescription("Test modal send and receive (TextInput).")
-        .WithType(ApplicationCommandType.ChatInput)
-    )
-   .AddGuild(betaGuild, x => x
-        .WithName("sdk-test-button")
-        .WithDescription("Test button send and receive in message.")
-        .WithType(ApplicationCommandType.ChatInput)
-    )
-   .AddGuild(betaGuild, x => x
-        .WithName("sdk-test-select")
-        .WithDescription("Test String Select send and receive.")
-        .WithType(ApplicationCommandType.ChatInput)
-    )
-    .AddGuild(betaGuild, x => x
-        .WithName("sdk-test-label")
-        .WithDescription("Test modal Label component (label + child).")
-        .WithType(ApplicationCommandType.ChatInput)
-    )
-    .AddGuild(betaGuild, x => x
-        .WithName("sdk-test-checkbox")
-        .WithDescription("Test modal Checkbox component.")
-        .WithType(ApplicationCommandType.ChatInput)
-    )
-    .AddGuild(betaGuild, x => x
-        .WithName("sdk-test-checkbox-group")
-        .WithDescription("Test modal CheckboxGroup component.")
-        .WithType(ApplicationCommandType.ChatInput)
-    )
-    .AddGuild(betaGuild, x =>
-    {
-        x.WithName("status")
-        .WithDescription("Update ot status");
-
-        var enums = Enum.GetNames(typeof(OnlineStatus));
-
-        x.AddStringOption("status", $"update bot status", choices: [.. enums.Select(x => new ApplicationCommandOptionChoice { Name = x, Value = x })]);
-
-        return x;
-    })
-    .AddGuild(betaGuild, x => x.WithName("shutdown").WithDescription("Shutdown bot"))
-    .AddGuild(betaGuild, x => x
-        .WithName("search")
-        .WithDescription("Search with autocomplete (example: fruits)")
-        .WithType(ApplicationCommandType.ChatInput)
-        .AddStringOption("query", "Type to see fruit suggestions", required: true, autocomplete: true))
-    .DeletePrevious()
-    .ExecuteAsync();
+//await dsc.UpdateCommands()
+//    .AddGlobal(x => x
+//        .WithName("test")
+//        .WithDescription("A test command")
+//        .WithType(ApplicationCommandType.ChatInput)
+//        .AddBooleanOption(
+//            name: "ephemeral",
+//            description: "An input Boolean",
+//            required: false
+//        )
+//    )
+//    .AddGlobal(x => x
+//        .WithName("feedback")
+//        .WithDescription("Open feedback modal")
+//        .WithType(ApplicationCommandType.ChatInput)
+//    )
+//   .AddGuild(betaGuild, x => x
+//        .WithName("sdk-test-modal")
+//        .WithDescription("Test modal send and receive (TextInput).")
+//        .WithType(ApplicationCommandType.ChatInput)
+//    )
+//   .AddGuild(betaGuild, x => x
+//        .WithName("sdk-test-button")
+//        .WithDescription("Test button send and receive in message.")
+//        .WithType(ApplicationCommandType.ChatInput)
+//    )
+//   .AddGuild(betaGuild, x => x
+//        .WithName("sdk-test-select")
+//        .WithDescription("Test String Select send and receive.")
+//        .WithType(ApplicationCommandType.ChatInput)
+//    )
+//    .AddGuild(betaGuild, x => x
+//        .WithName("sdk-test-label")
+//        .WithDescription("Test modal Label component (label + child).")
+//        .WithType(ApplicationCommandType.ChatInput)
+//    )
+//    .AddGuild(betaGuild, x => x
+//        .WithName("sdk-test-checkbox")
+//        .WithDescription("Test modal Checkbox component.")
+//        .WithType(ApplicationCommandType.ChatInput)
+//    )
+//    .AddGuild(betaGuild, x => x
+//        .WithName("sdk-test-checkbox-group")
+//        .WithDescription("Test modal CheckboxGroup component.")
+//        .WithType(ApplicationCommandType.ChatInput)
+//    )
+//    .AddGuild(betaGuild, x => x.WithName("shutdown").WithDescription("Shutdown bot"))
+//    .AddGuild(betaGuild, x => x
+//        .WithName("search")
+//        .WithDescription("Search with autocomplete (example: fruits)")
+//        .WithType(ApplicationCommandType.ChatInput)
+//        .AddStringOption("query", "Type to see fruit suggestions", required: true, autocomplete: true))
+//    .DeletePrevious()
+//    .ExecuteAsync();
 
 // Register message handler (for regular messages)
 dsc.EventRegistry.Add(new MsgTest());

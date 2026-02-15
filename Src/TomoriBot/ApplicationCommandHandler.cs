@@ -200,29 +200,6 @@ internal class ApplicationCommandHandler : IApplicationCommandHandler
             return;
         }
 
-        if (context.Name == "status")
-        {
-            var status = context.GetOption<OnlineStatus>("status");
-            if (status == null)
-            {
-                await context
-                    .Reply("Invalid option")
-                    .SetEphemeral()
-                    .ExecuteAsync();
-                return;
-            }
-
-            await context
-                .Client
-                .UpdatePresence()
-                .SetStatus(status.Value)
-                .ExecuteAsync();
-
-            await context.Reply("Ok").SetEphemeral().ExecuteAsync();
-
-            return;
-        }
-
         if (context.Name == "shutdown")
         {
             await context

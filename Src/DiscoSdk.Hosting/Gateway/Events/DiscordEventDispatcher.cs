@@ -358,9 +358,9 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
                     await HandleModalAsync(interactionWrapper);
 
                 if (interaction.Type == InteractionType.MessageComponent)
-                    await ProcessAllAsync<IComponentInteractionHandler>(x => x.HandleAsync(interactionContext));
+                    await ProcessAllAsync<IComponentInteractionHandler>(handle, x => x.HandleAsync(interactionContext));
 
-                await ProcessAllAsync<IInteractionCreateHandler>(x => x.HandleAsync(interactionContext));
+                await ProcessAllAsync<IInteractionCreateHandler>(handle, x => x.HandleAsync(interactionContext));
             }
             catch (Exception ex)
             {
@@ -380,7 +380,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
             return;
 
         var commandContext = new ModalContext(_discordClient, interactionWrapper);
-        await ProcessAllAsync(commandHandlers, x => x.HandleAsync(commandContext));
+        await ProcessAllAsync(interactionWrapper.Handle, commandHandlers, x => x.HandleAsync(commandContext));
     }
 
     private async Task HandleAutocompleteAsync(InteractionWrapper interactionWrapper)
@@ -390,7 +390,7 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
             return;
 
         var autocompleteContext = new AutocompleteContext(_discordClient, interactionWrapper);
-        await ProcessAllAsync(autocompleteHandlers, x => x.HandleAsync(autocompleteContext));
+        await ProcessAllAsync(interactionWrapper.Handle, autocompleteHandlers, x => x.HandleAsync(autocompleteContext));
     }
 
     private async Task HandleCommandAsync(InteractionWrapper interactionWrapper)
@@ -400,21 +400,42 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
             return;
 
         var commandContext = new CommandContext(_discordClient, interactionWrapper);
-        await ProcessAllAsync(commandHandlers, x => x.HandleAsync(commandContext));
+        await ProcessAllAsync(interactionWrapper.Handle, commandHandlers, x => x.HandleAsync(commandContext));
     }
 
     private async Task ProcessAllAsync<T>(Func<T, Task> calllback) where T : IDiscordEventHandler
     {
-        await ProcessAllAsync(GetHandlersOfType<T>(), calllback);
+        await ProcessAllAsync(GetHandlersOfType<T>(), async x =>
+        {
+            await calllback(x);
+            return false;
+        });
     }
 
-    private async Task ProcessAllAsync<T>(List<T> handlers, Func<T, Task> calllback) where T : IDiscordEventHandler
+    private async Task ProcessAllAsync<T>(InteractionHandle handle, Func<T, Task> calllback) where T : IDiscordEventHandler
+    {
+        await ProcessAllAsync(handle, GetHandlersOfType<T>(), calllback);
+    }
+
+    private async Task ProcessAllAsync<T>(InteractionHandle handle, List<T> handlers, Func<T, Task> calllback) where T : IDiscordEventHandler
+    {
+        if (!handle.Responded)
+            await ProcessAllAsync(handlers, async x =>
+            {
+                await calllback(x);
+                return handle.Responded;
+            });
+    }
+
+    private async Task ProcessAllAsync<T>(List<T> handlers, Func<T, Task<bool>> calllback) where T : IDiscordEventHandler
     {
         foreach (var handler in handlers)
         {
             try
             {
-                await calllback(handler);
+                var responded = await calllback(handler);
+                if (responded)
+                    break;
             }
             catch (Exception ex)
             {

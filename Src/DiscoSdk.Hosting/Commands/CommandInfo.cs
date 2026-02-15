@@ -8,16 +8,16 @@ namespace DiscoSdk.Hosting.Commands;
 
 internal class CommandInfo
 {
-    private readonly IReadOnlyDictionary<string, AutocompleteInfo> _autocompletes;
-    public Type Type { get; }
+    public IReadOnlyDictionary<string, AutocompleteInfo> Autocompletes { get; }
     public SlashCommandAttribute Info { get; }
+    public Type Type { get; }
 
     private CommandInfo(SlashCommandAttribute attribute, Type type)
     {
         Info = attribute;
         Type = type;
 
-        _autocompletes = GetAutocompletes(type);
+        Autocompletes = GetAutocompletes(type);
     }
 
     public IApplicationCommandBuilder GetCommandBuilder()
@@ -33,7 +33,7 @@ internal class CommandInfo
         {
             builder.AddOption(new Models.Commands.ApplicationCommandOption
             {
-                Autocomplete = _autocompletes.ContainsKey(option.Name),
+                Autocomplete = Autocompletes.ContainsKey(option.Name),
                 Name = option.Name,
                 ChannelTypes = option.ChannelTypes,
                 Choices = choices.TryGetValue(option.Name, out var choice) ? [.. choice.Select(x => x.ToCommandChoice())] : [],
@@ -54,11 +54,23 @@ internal class CommandInfo
     {
         var cmdChoices = new Dictionary<string, List<ChoiceAttribute>>();
 
+        var enumChoices = Type.GetCustomAttribute<EnumChoicesAttribute>();
+        if (enumChoices != null)
+        {
+            if (!cmdChoices.TryGetValue(enumChoices.OptionName, out var choices))
+            {
+                choices = [];
+                cmdChoices.Add(enumChoices.OptionName, choices);
+            }
+
+            choices.AddRange(enumChoices.GetChoices());
+        }
+
         foreach (var choice in Type.GetCustomAttributes<ChoiceAttribute>())
         {
             if (!cmdChoices.TryGetValue(choice.OptionName, out var choices))
             {
-                choices = new List<ChoiceAttribute>();
+                choices = [];
                 cmdChoices.Add(choice.OptionName, choices);
             }
 
@@ -76,11 +88,11 @@ internal class CommandInfo
 
     public async Task ExecuteAutocompleteAsync(IServiceProvider service, IAutocompleteContext context)
     {
-        if (!_autocompletes.TryGetValue(context.FocusedOption.Name, out var autocompleteInfo))
+        if (!Autocompletes.TryGetValue(context.FocusedOption.Name, out var autocompleteInfo))
             throw new InvalidOperationException(
                 $"No autocomplete handler registered for option '{context.FocusedOption.Name}'.");
 
-        var handler = service.GetRequiredService(Type);
+        var handler = service.GetRequiredService(autocompleteInfo.AutocompleteType);
         await autocompleteInfo.ExecuteAsync(handler, context);
     }
 
@@ -95,6 +107,8 @@ internal class CommandInfo
             if (autocompleteOption.AutocompleteType == null)
                 continue;
 
+            var autoCompleteType = autocompleteOption.AutocompleteType;
+
             if (!autocompleteHandlerType.IsAssignableFrom(autocompleteOption.AutocompleteType))
                 throw new InvalidOperationException(
                 $"Type '{autocompleteOption.AutocompleteType.FullName}' must implement or inherit '{autocompleteHandlerType.FullName}'.");
@@ -104,7 +118,7 @@ internal class CommandInfo
             if (items.ContainsKey(name))
                 throw new InvalidOperationException($"Command \"{name}\" already exists.");
 
-            items[name] = new AutocompleteInfo(commandType, typeof(IAutocompleteHandler).GetMethod(nameof(IAutocompleteHandler.CompleteAsync))!);
+            items[name] = new AutocompleteInfo(autoCompleteType, ReflectionUtils.FindInterfaceMethod(autoCompleteType, autocompleteHandlerType, nameof(IAutocompleteHandler.CompleteAsync))!);
         }
 
         foreach (var method in commandType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))

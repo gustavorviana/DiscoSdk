@@ -68,6 +68,9 @@ internal class InteractionWrapper(Interaction interaction,
 
     public IReplyModalRestAction ReplyModal()
     {
+        if (handle.Responded)
+            throw new InvalidOperationException("This interaction has already been responded to.");
+
         return new ReplyModalRestAction(_client, handle);
     }
 

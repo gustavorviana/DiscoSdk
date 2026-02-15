@@ -20,6 +20,10 @@ internal class SlashCommandRegistry
         {
             _commands[item.Info.Name] = item;
             serviceCollection.AddScoped(item.Type);
+
+            foreach (var autocomplete in item.Autocompletes.Values)
+                if (autocomplete.AutocompleteType != item.Type)
+                    serviceCollection.AddScoped(autocomplete.AutocompleteType);
         }
     }
 
