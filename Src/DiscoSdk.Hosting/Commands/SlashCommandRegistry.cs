@@ -1,13 +1,14 @@
 ﻿using DiscoSdk.Contexts.Interactions;
 using DiscoSdk.Events;
 using DiscoSdk.Models;
+using DiscoSdk.Modules;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
 namespace DiscoSdk.Hosting.Commands;
 
 internal class SlashCommandRegistry
-    : IDiscoModule,
+    : ILifetimeDiscoModule,
     IApplicationCommandHandler,
     IAutocompleteHandler
 {
@@ -27,7 +28,7 @@ internal class SlashCommandRegistry
         }
     }
 
-    Task IDiscoModule.OnPreInitializeAsync(IDiscordClient discordClient)
+    Task ILifetimeDiscoModule.OnPreInitializeAsync(IDiscordClient discordClient)
     {
         return Task.CompletedTask;
     }
@@ -46,12 +47,12 @@ internal class SlashCommandRegistry
         }
     }
 
-    Task IDiscoModule.OnGatewayReadyAsync(IDiscordClient discordClient)
+    Task ILifetimeDiscoModule.OnGatewayReadyAsync(IDiscordClient discordClient)
     {
         return Task.CompletedTask;
     }
 
-    Task IDiscoModule.OnShutdownAsync(IDiscordClient discordClient)
+    Task ILifetimeDiscoModule.OnShutdownAsync(IDiscordClient discordClient)
     {
         return Task.CompletedTask;
     }

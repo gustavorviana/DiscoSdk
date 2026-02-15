@@ -21,7 +21,7 @@ namespace DiscoSdk.Hosting.Gateway.Events;
 /// <summary>
 /// Dispatches Discord Gateway events to registered handlers.
 /// </summary>
-internal class DiscordEventDispatcher : IDiscordEventRegistry
+internal class DiscordEventDispatcher
 {
     private readonly List<IDiscordEventHandler> _handlers = [];
     private readonly Dictionary<Type, HashSet<int>> _handlerIndicesByType = [];
@@ -37,6 +37,14 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
         _discordClient = discordClient;
     }
 
+    public DiscordEventDispatcher AddAll(IEnumerable<IDiscordEventHandler> handlers)
+    {
+        foreach (var handler in handlers)
+            Add(handler);
+
+        return this;
+    }
+
     /// <summary>
     /// Registers a Discord event handler.
     /// </summary>
@@ -47,8 +55,10 @@ internal class DiscordEventDispatcher : IDiscordEventRegistry
         {
             // Add handler to the main list and get its index
             var index = _handlers.Count;
-            if (!_handlers.Contains(handler))
-                _handlers.Add(handler);
+            if (_handlers.Contains(handler))
+                return;
+
+            _handlers.Add(handler);
 
             // Discover all implemented interfaces that derive from IDiscordEventHandler
             var handlerType = handler.GetType();

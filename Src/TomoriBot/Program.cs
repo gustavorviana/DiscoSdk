@@ -14,6 +14,16 @@ var dsc = DiscordClientBuilder.Create(token)
     .WithEventProcessorMaxConcurrency(100)
     .WithLogger(new ConsoleLogger(LogLevel.Trace))
     .WithSlashCommands(Assembly.GetExecutingAssembly())
+    // Register message handler (for regular messages)
+    .AddEventHandler<MsgTest>()
+    // Register application command handler (for slash commands only)
+    .AddEventHandler<ApplicationCommandHandler>()
+    // Register autocomplete handler (for options with autocomplete: true)
+    .AddEventHandler<AutocompleteHandler>()
+    // Register modal submit handler (for modal submissions)
+    .AddEventHandler<ModalSubmitHandler>()
+    // Register component interaction handler (for button clicks, select menus, etc.)
+    .AddEventHandler<ComponentInteractionHandler>()
     .Build();
 
 var betaGuild = Snowflake.Parse("773618860875579422");
@@ -70,21 +80,6 @@ dsc.CommandsUpdateWindowOpened += (_, container) =>
 
 await dsc.StartAsync();
 await dsc.WaitReadyAsync();
-
-// Register message handler (for regular messages)
-dsc.EventRegistry.Add(new MsgTest());
-
-// Register application command handler (for slash commands only)
-dsc.EventRegistry.Add(new ApplicationCommandHandler());
-
-// Register autocomplete handler (for options with autocomplete: true)
-dsc.EventRegistry.Add(new AutocompleteHandler());
-
-// Register modal submit handler (for modal submissions)
-dsc.EventRegistry.Add(new ModalSubmitHandler());
-
-// Register component interaction handler (for button clicks, select menus, etc.)
-dsc.EventRegistry.Add(new ComponentInteractionHandler());
 
 Console.WriteLine("Bot is ready!");
 

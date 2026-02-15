@@ -40,11 +40,6 @@ public class DiscordClientConfig
     public int EventProcessorQueueCapacity { get; set; } = 100;
 
     /// <summary>
-    /// Gets or sets the logger instance. If null, uses NullLogger.
-    /// </summary>
-    public ILogger? Logger { get; set; }
-
-    /// <summary>
     /// Gets or sets the delay before attempting to reconnect after a connection loss.
     /// Default is 5 seconds.
     /// </summary>

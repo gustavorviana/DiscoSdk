@@ -5,7 +5,6 @@ using DiscoSdk.Hosting.Gateway.Events;
 using DiscoSdk.Hosting.Gateway.Payloads;
 using DiscoSdk.Hosting.Gateway.Payloads.Models;
 using DiscoSdk.Hosting.Gateway.Shards;
-using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Hosting.Managers;
 using DiscoSdk.Hosting.Repositories;
 using DiscoSdk.Hosting.Rest.Actions;
@@ -13,8 +12,10 @@ using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Modules;
 using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
+using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting
@@ -24,11 +25,11 @@ namespace DiscoSdk.Hosting
     /// </summary>
     public class DiscordClient : IDiscordClient, IShardEventListener
     {
-        private readonly IReadOnlyList<IDiscoModule> _modules;
         private readonly EventProcessorPool<ReceivedGatewayMessage> _eventProcessorPool;
         private readonly ManualResetEventSlim _shutdownEvent = new(false);
         private readonly ManualResetEventSlim _readyEvent = new(false);
         private readonly DiscordEventDispatcher _eventDispatcher;
+        private readonly IReadOnlyList<IDiscoModule> _modules;
         private readonly DiscordClientConfig _config;
         private readonly ShardPool _shardPool;
         public IDiscordRestClient HttpClient { get; }
@@ -68,11 +69,6 @@ namespace DiscoSdk.Hosting
         /// </summary>
         public int TotalShards => _shardPool.TotalShards;
 
-        /// <summary>
-        /// Gets the event dispatcher for handling Gateway events.
-        /// </summary>
-        public IDiscordEventRegistry EventRegistry => _eventDispatcher;
-
         internal InteractionClient InteractionClient { get; }
         internal MessageClient MessageClient { get; }
         internal ChannelClient ChannelClient { get; }
@@ -104,21 +100,19 @@ namespace DiscoSdk.Hosting
 
         public IServiceProvider Services { get; }
 
-        public DiscordClient(DiscordClientConfig config,
-            JsonSerializerOptions jsonOptions,
-            IObjectConverter converter,
-            IServiceProvider services,
-            IReadOnlyList<IDiscoModule> modules)
+        internal DiscordClient(IServiceProvider services,
+            DiscordClientConfig config,
+            IReadOnlyList<IDiscoModule> modules,
+            IReadOnlyList<IDiscordEventHandler> eventHandlers)
         {
             _config = config;
             _modules = modules;
-
             Services = services;
-            SerializerOptions = jsonOptions;
             _shardPool = new ShardPool(this, config);
-            Logger = config.Logger ?? NullLogger.Instance;
+            SerializerOptions = services.GetRequiredService<JsonSerializerOptions>();
+            Logger = services.GetRequiredService<ILogger>();
             _eventDispatcher = new DiscordEventDispatcher(this);
-            HttpClient = new DiscordRestClient(config.Token, new Uri("https://discord.com/api/v10"), jsonOptions, Logger);
+            HttpClient = new DiscordRestClient(config.Token, new Uri("https://discord.com/api/v10"), SerializerOptions, Logger);
             InteractionClient = new InteractionClient(this);
             MessageClient = new MessageClient(HttpClient);
             ChannelClient = new ChannelClient(HttpClient, MessageClient);
@@ -129,11 +123,15 @@ namespace DiscoSdk.Hosting
             Guilds = new GuildManager(this, Logger);
             Channels = new ChannelManager(this);
             DmRepository = new DmChannelRepository(this);
-            ObjectConverter = converter;
+            ObjectConverter = services.GetRequiredService<IObjectConverter>();
 
             var maxConcurrency = config.EventProcessorMaxConcurrency > 0
                 ? config.EventProcessorMaxConcurrency
                 : Environment.ProcessorCount * 2;
+
+            _eventDispatcher
+                .AddAll(modules.OfType<IDiscordEventHandler>())
+                .AddAll(eventHandlers);
 
             var queueCapacity = Math.Max(1, config.EventProcessorQueueCapacity);
             _eventProcessorPool = new EventProcessorPool<ReceivedGatewayMessage>(maxConcurrency, async (item) =>
@@ -152,11 +150,11 @@ namespace DiscoSdk.Hosting
         {
             var gatewayInfo = await new DiscordGatewayClient(HttpClient).GetGatewayBotInfoAsync();
 
-            foreach (var module in _modules)
+            foreach (var module in _modules.OfType<ILifetimeDiscoModule>())
             {
                 try { await module.OnPreInitializeAsync(this); } catch { }
                 if (module is IDiscordEventHandler handler)
-                    EventRegistry.Add(handler);
+                    _eventDispatcher.Add(handler);
             }
 
             // Start event processor pool
@@ -176,7 +174,7 @@ namespace DiscoSdk.Hosting
 
             _isShuttingDown = true;
 
-            foreach (var item in _modules)
+            foreach (var item in _modules.OfType<ILifetimeDiscoModule>())
                 try { await item.OnShutdownAsync(this); } catch { }
 
             // Stop event processor pool
@@ -379,7 +377,7 @@ namespace DiscoSdk.Hosting
                 Guilds.InitializePendingGuilds(guildIds);
             }
 
-            foreach (var item in _modules)
+            foreach (var item in _modules.OfType<ILifetimeDiscoModule>())
                 try { await item.OnGatewayReadyAsync(this); } catch { }
 
             await InitSlashCommandsAsync();
@@ -395,7 +393,7 @@ namespace DiscoSdk.Hosting
         {
             var commands = new CommandContainer();
 
-            foreach (var module in _modules)
+            foreach (var module in _modules.OfType<ICommandsUpdateWindowModule>())
                 module.OnCommandsUpdateWindowOpened(this, commands);
 
             CommandsUpdateWindowOpened?.Invoke(this, commands);

@@ -1,5 +1,4 @@
 ﻿using DiscoSdk.Commands;
-using DiscoSdk.Events;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
@@ -12,7 +11,6 @@ public interface IDiscordClient
 {
     IDiscordRestClient HttpClient { get; }
     Snowflake? ApplicationId { get; }
-    IDiscordEventRegistry EventRegistry { get; }
     bool IsFullyInitialized { get; }
     bool IsReady { get; }
     ILogger Logger { get; }

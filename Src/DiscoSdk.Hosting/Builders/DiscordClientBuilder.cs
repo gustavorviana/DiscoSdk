@@ -1,7 +1,10 @@
+using DiscoSdk.Events;
 using DiscoSdk.Hosting.Commands;
 using DiscoSdk.Hosting.Gateway;
+using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Logging;
 using DiscoSdk.Models.JsonConverters;
+using DiscoSdk.Modules;
 using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 using System.Reflection;
@@ -14,6 +17,8 @@ namespace DiscoSdk.Hosting.Builders;
 /// </summary>
 public class DiscordClientBuilder
 {
+    private readonly DiscoFactory<IDiscordEventHandler> _eventHandlers = new();
+    private readonly DiscoFactory<IDiscoModule> _modules = new();
     private readonly string _token;
     private DiscordIntent? _intents;
     private int? _totalShards;
@@ -24,7 +29,6 @@ public class DiscordClientBuilder
     private TimeSpan? _reconnectDelay;
     private IObjectConverter? _objectConverter;
     private GatewayCompressMode? _gatewayCompressMode;
-    private readonly List<IDiscoModule> _modules = [];
     private readonly ServiceCollection _services = new();
 
     /// <summary>
@@ -58,7 +62,43 @@ public class DiscordClientBuilder
 
     public DiscordClientBuilder AddModule(IDiscoModule module)
     {
-        _modules.Add(module);
+        _modules.AddInstance(module);
+
+        return this;
+    }
+
+    public DiscordClientBuilder AddModule<T>() where T : class, IDiscoModule
+    {
+        _modules.Add<T>();
+
+        return this;
+    }
+
+    public DiscordClientBuilder AddModule(Type type)
+    {
+        _modules.Add(type);
+
+        return this;
+    }
+
+    public DiscordClientBuilder AddEventHandler(IDiscordEventHandler module)
+    {
+        _eventHandlers.AddInstance(module);
+
+        return this;
+    }
+
+    public DiscordClientBuilder AddEventHandler<T>() where T : class, IDiscordEventHandler
+    {
+        _eventHandlers.Add<T>();
+
+        return this;
+    }
+
+    public DiscordClientBuilder AddEventHandler(Type type)
+    {
+        _eventHandlers.Add(type);
+
         return this;
     }
 
@@ -204,18 +244,24 @@ public class DiscordClientBuilder
             TotalShards = _totalShards,
             EventProcessorMaxConcurrency = _eventProcessorMaxConcurrency,
             EventProcessorQueueCapacity = _eventProcessorQueueCapacity,
-            Logger = _logger,
             ReconnectDelay = _reconnectDelay ?? TimeSpan.FromSeconds(5),
             GatewayCompressMode = _gatewayCompressMode ?? GatewayCompressMode.ZlibStream
         };
 
         var jsonOptions = _jsonOptions ?? DiscoJson.Create();
 
-        var builder = new DiscordClient(config,
-            jsonOptions,
-            _objectConverter ?? new ObjectConverter(CultureInfo.InvariantCulture),
-            _services.BuildServiceProvider(),
-            _modules);
+        _services.AddSingleton(config)
+            .AddSingleton(jsonOptions)
+            .AddSingleton(_objectConverter ?? new ObjectConverter(CultureInfo.InvariantCulture))
+            .AddSingleton(_logger ?? NullLogger.Instance);
+
+        var serviceProvider = _services.BuildServiceProvider();
+
+        var builder = new DiscordClient(serviceProvider,
+            config,
+            _modules.Build(serviceProvider),
+            _eventHandlers.Build(serviceProvider)
+        );
 
         return builder;
     }

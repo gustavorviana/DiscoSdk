@@ -1,15 +1,10 @@
-﻿using DiscoSdk.Commands;
+﻿namespace DiscoSdk.Modules;
 
-namespace DiscoSdk;
-
-public interface IDiscoModule
+public interface ILifetimeDiscoModule : IDiscoModule
 {
     Task OnPreInitializeAsync(IDiscordClient discordClient);
 
     Task OnGatewayReadyAsync(IDiscordClient discordClient);
 
     Task OnShutdownAsync(IDiscordClient discordClient);
-
-    void OnCommandsUpdateWindowOpened(IDiscordClient discordClient, CommandContainer container);
 }
-
