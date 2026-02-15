@@ -2,12 +2,12 @@ using System.Text.RegularExpressions;
 using DiscoSdk.Models.Commands;
 using DiscoSdk.Models.Enums;
 
-namespace DiscoSdk.Hosting.Builders;
+namespace DiscoSdk.Commands;
 
 /// <summary>
 /// Fluent builder for <see cref="ApplicationCommand"/>.
 /// </summary>
-public class ApplicationCommandBuilder() : IApplicationCommandBuilder
+public class SlashCommandBuilder()
 {
     private ApplicationCommandType? _type;
     private string? _name;
@@ -24,8 +24,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// Sets the command name (1-32 characters, lowercase).
     /// </summary>
     /// <param name="name">The command name as shown in the Discord client.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder WithName(string name)
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder WithName(string name)
     {
         ValidateCommandName(name);
         _name = name.ToLowerInvariant();
@@ -36,8 +36,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// Sets the command description (1-100 characters).
     /// </summary>
     /// <param name="description">The description shown in the Discord client.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder WithDescription(string description)
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder WithDescription(string description)
     {
         ValidateCommandDescription(description);
         _description = description;
@@ -48,8 +48,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// Sets the command type.
     /// </summary>
     /// <param name="type">The <see cref="ApplicationCommandType"/> for this command.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder WithType(ApplicationCommandType type)
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder WithType(ApplicationCommandType type)
     {
         _type = type;
         return this;
@@ -62,8 +62,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// A dictionary mapping locale codes (for example, <c>\"pt-BR\"</c>, <c>\"en-US\"</c>)
     /// to the localized command name.
     /// </param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder WithNameLocalizations(Dictionary<string, string> localizations)
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder WithNameLocalizations(Dictionary<string, string> localizations)
     {
         ValidateLocalizations(localizations, "name");
         _nameLocalizations = localizations;
@@ -77,8 +77,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// A dictionary mapping locale codes (for example, <c>\"pt-BR\"</c>, <c>\"en-US\"</c>)
     /// to the localized command description.
     /// </param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder WithDescriptionLocalizations(Dictionary<string, string> localizations)
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder WithDescriptionLocalizations(Dictionary<string, string> localizations)
     {
         ValidateLocalizations(localizations, "description");
         _descriptionLocalizations = localizations;
@@ -91,8 +91,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="permissions">
     /// A permissions bitfield represented as a string, matching Discord's API format.
     /// </param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder WithDefaultMemberPermissions(string permissions)
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder WithDefaultMemberPermissions(string permissions)
     {
         _defaultMemberPermissions = permissions;
         return this;
@@ -104,8 +104,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="dmPermission">
     /// <c>true</c> to allow the command in DMs; <c>false</c> to restrict it to guilds.
     /// </param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder WithDmPermission(bool dmPermission)
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder WithDmPermission(bool dmPermission)
     {
         _dmPermission = dmPermission;
         return this;
@@ -115,8 +115,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// Sets whether the command is age-restricted (NSFW).
     /// </summary>
     /// <param name="nsfw"><c>true</c> if the command is NSFW; otherwise, <c>false</c>.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder WithNsfw(bool nsfw)
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder WithNsfw(bool nsfw)
     {
         _nsfw = nsfw;
         return this;
@@ -128,8 +128,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="version">
     /// The version string as provided by Discord. Normally set by the API response.
     /// </param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder WithVersion(string version)
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder WithVersion(string version)
     {
         _version = version;
         return this;
@@ -139,8 +139,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// Adds an option to the command.
     /// </summary>
     /// <param name="option">The option instance to add.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    internal IApplicationCommandBuilder AddOption(ApplicationCommandOption option)
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    internal SlashCommandBuilder AddOption(ApplicationCommandOption option)
     {
         if (_options.Count >= 25)
             throw new InvalidOperationException("A command can have a maximum of 25 options. Discord API limit.");
@@ -156,8 +156,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="name">The subcommand name.</param>
     /// <param name="description">The subcommand description.</param>
     /// <param name="options">Nested options (parameters) for this subcommand.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder AddSubCommandOption(
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder AddSubCommandOption(
         string name,
         string description,
         params ApplicationCommandOption[] options)
@@ -181,8 +181,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="name">The subcommand group name.</param>
     /// <param name="description">The subcommand group description.</param>
     /// <param name="options">Subcommands that belong to this group.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder AddSubCommandGroupOption(
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder AddSubCommandGroupOption(
         string name,
         string description,
         params ApplicationCommandOption[] options)
@@ -210,8 +210,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="maxLength">Maximum length for the string value.</param>
     /// <param name="autocomplete">Whether autocomplete is enabled for this option.</param>
     /// <param name="choices">Static choices available for this option.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder AddStringOption(
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder AddStringOption(
         string name,
         string description,
         bool required = false,
@@ -249,8 +249,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="maxValue">Maximum numeric value.</param>
     /// <param name="autocomplete">Whether autocomplete is enabled for this option.</param>
     /// <param name="choices">Static choices available for this option.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder AddIntegerOption(
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder AddIntegerOption(
         string name,
         string description,
         bool required = false,
@@ -284,8 +284,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
     /// <param name="required">Whether the option must be provided by the user.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder AddBooleanOption(
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder AddBooleanOption(
         string name,
         string description,
         bool required = false)
@@ -307,8 +307,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
     /// <param name="required">Whether the option must be provided by the user.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder AddUserOption(
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder AddUserOption(
         string name,
         string description,
         bool required = false)
@@ -331,8 +331,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="description">The option description.</param>
     /// <param name="required">Whether the option must be provided by the user.</param>
     /// <param name="channelTypes">Allowed channel types for this option.</param>
-    /// <returns>The current <see cref="ApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder AddChannelOption(
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder AddChannelOption(
         string name,
         string description,
         bool required = false,
@@ -356,8 +356,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
     /// <param name="required">Whether the option must be provided by the user.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder AddRoleOption(
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder AddRoleOption(
         string name,
         string description,
         bool required = false)
@@ -379,8 +379,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
     /// <param name="required">Whether the option must be provided by the user.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder AddMentionableOption(
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder AddMentionableOption(
         string name,
         string description,
         bool required = false)
@@ -406,8 +406,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="maxValue">Maximum numeric value.</param>
     /// <param name="autocomplete">Whether autocomplete is enabled for this option.</param>
     /// <param name="choices">Static choices available for this option.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder AddNumberOption(
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder AddNumberOption(
         string name,
         string description,
         bool required = false,
@@ -441,8 +441,8 @@ public class ApplicationCommandBuilder() : IApplicationCommandBuilder
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
     /// <param name="required">Whether the option must be provided by the user.</param>
-    /// <returns>The current <see cref="IApplicationCommandBuilder"/> instance.</returns>
-    public IApplicationCommandBuilder AddAttachmentOption(
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder AddAttachmentOption(
         string name,
         string description,
         bool required = false)

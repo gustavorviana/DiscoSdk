@@ -192,7 +192,7 @@ public class DiscordClientBuilder
     /// </summary>
     /// <returns>A task that represents the asynchronous build operation. The result contains the configured and started <see cref="DiscordClient"/>.</returns>
     /// <exception cref="InvalidOperationException">Thrown when required properties (Intents) are not set.</exception>
-    public async Task<DiscordClient> BuildAsync()
+    public DiscordClient Build()
     {
         if (!_intents.HasValue)
             throw new InvalidOperationException("Intents are required. Use WithIntents() to set them.");
@@ -216,8 +216,6 @@ public class DiscordClientBuilder
             _objectConverter ?? new ObjectConverter(CultureInfo.InvariantCulture),
             _services.BuildServiceProvider(),
             _modules);
-
-        await builder.StartAsync();
 
         return builder;
     }

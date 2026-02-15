@@ -25,7 +25,7 @@ internal class ShardPool(IShardEventListener listener, DiscordClientConfig confi
 
     public GatewayDecompressFactory DecompressFactory { get; } = new(config.GatewayCompressMode);
 
-    public async Task InitShards()
+    public async Task InitShardsAsync()
     {
         await ClearShardsAsync();
         _shards.Clear();
@@ -38,7 +38,7 @@ internal class ShardPool(IShardEventListener listener, DiscordClientConfig confi
         }
     }
 
-    public void Init(DiscordGatewayInfo gatewayInfo)
+    public void SetGateway(DiscordGatewayInfo gatewayInfo)
     {
         _totalShards = Math.Max(config.TotalShards ?? gatewayInfo.Shards, 1);
         Gate.SetMaxConcurrency(gatewayInfo.SessionInfo.MaxConcurrency);
@@ -58,23 +58,53 @@ internal class ShardPool(IShardEventListener listener, DiscordClientConfig confi
         }
     }
 
-    public Task OnConnectionLostAsync(Shard shard, Exception exception)
+    public async Task OnConnectionLostAsync(Shard shard, Exception exception)
     {
-        return listener.OnConnectionLostAsync(shard, exception);
+        try
+        {
+            await listener.OnConnectionLostAsync(shard, exception);
+        }
+        catch (Exception ex)
+        {
+            OnUnhandledError(ex);
+        }
     }
 
-    public Task OnReadyAsync(Shard shard, ReadyPayload payload)
+    public async Task OnReadyAsync(Shard shard, ReadyPayload payload)
     {
-        return listener.OnReadyAsync(shard, payload);
+        try
+        {
+            await listener.OnReadyAsync(shard, payload);
+        }
+        catch (Exception ex)
+        {
+            OnUnhandledError(ex);
+        }
     }
 
-    public Task OnReceiveMessageAsync(Shard shard, ReceivedGatewayMessage message)
+    public async Task OnReceiveMessageAsync(Shard shard, ReceivedGatewayMessage message)
     {
-        return listener.OnReceiveMessageAsync(shard, message);
+        try
+        {
+            await listener.OnReceiveMessageAsync(shard, message);
+        }
+        catch (Exception ex)
+        {
+            OnUnhandledError(ex);
+        }
     }
 
-    public Task OnResumeAsync(Shard shard)
+    public async Task OnResumeAsync(Shard shard)
     {
-        return listener.OnResumeAsync(shard);
+        try
+        {
+            await listener.OnResumeAsync(shard);
+        }
+        catch (Exception ex)
+        {
+            OnUnhandledError(ex);
+        }
     }
+
+    public void OnUnhandledError(Exception exception) => listener.OnUnhandledError(exception);
 }

@@ -23,4 +23,6 @@ internal interface IShardEventListener
     /// Event raised when the shard loses connection to the Gateway.
     /// </summary>
     Task OnConnectionLostAsync(Shard shard, Exception exception);
+
+    void OnUnhandledError(Exception exception);
 }

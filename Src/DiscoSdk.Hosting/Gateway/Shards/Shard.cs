@@ -92,15 +92,15 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
 
         if (message.IsSystem())
         {
-            await OnProcessSystemMessages(message);
+            await OnProcessSystemMessagesAsync(message);
             return;
         }
 
         if (message.Opcode == OpCodes.Dispatch)
-            await OnDispatch(message);
+            await OnDispatchAsync(message);
     }
 
-    private async Task OnProcessSystemMessages(ReceivedGatewayMessage message)
+    private async Task OnProcessSystemMessagesAsync(ReceivedGatewayMessage message)
     {
         using var doc = message.ToJsonDocument();
         var payload = doc.RootElement;
@@ -110,7 +110,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
             case OpCodes.Hello:
                 _heartbeatIntervalMs = payload.GetProperty("heartbeat_interval").GetInt32();
 
-                await SetupIdentify();
+                await SetupIdentifyAsync();
                 StartHeartbeat();
                 break;
 
@@ -167,10 +167,10 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
         _sessionId = null;
         _resumeGatewayUrl = null;
         await _socket.ConnectAsync(pool.GatewayUri.ToUri(), pool.CancellationToken);
-        await SetupIdentify();
+        await SetupIdentifyAsync();
     }
 
-    private async Task OnDispatch(ReceivedGatewayMessage message)
+    private async Task OnDispatchAsync(ReceivedGatewayMessage message)
     {
         if (string.Equals(message.EventType, "READY", StringComparison.Ordinal))
         {
@@ -193,7 +193,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
         await pool.OnReceiveMessageAsync(this, message);
     }
 
-    private async Task SetupIdentify()
+    private async Task SetupIdentifyAsync()
     {
         await pool.Gate.WaitAsync();
         _status = ShardStatus.PendingAck;

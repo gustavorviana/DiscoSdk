@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Hosting.Rest.RateLimit;
+﻿using DiscoSdk.Exceptions;
+using DiscoSdk.Hosting.Rest.RateLimit;
 using DiscoSdk.Logging;
 using DiscoSdk.Rest;
 using System.Collections.Concurrent;
@@ -6,6 +7,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
 
@@ -87,14 +89,10 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
 
             var result = await res.Content.ReadAsStringAsync(ct);
             var data = JsonSerializer.Deserialize<T>(result, JsonOptions);
-            return data ?? throw new DiscordApiException("Discord API returned empty JSON.", res.StatusCode, null);
+            return data ?? throw new DiscordApiException(res.StatusCode, "Discord API returned empty JSON.", null);
         }
 
-        var error = await TryReadDiscordErrorAsync(res, ct);
-        throw new DiscordApiException(
-            error?.Message ?? $"Discord API error ({(int)res.StatusCode} {res.ReasonPhrase}).",
-            res.StatusCode,
-            error?.Code);
+        throw await GetDiscordExceptionAsync(res, ct);
     }
 
     public async Task SendAsync(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
@@ -103,11 +101,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         if (res.IsSuccessStatusCode || res.StatusCode == HttpStatusCode.NoContent)
             return;
 
-        var error = await TryReadDiscordErrorAsync(res, ct);
-        throw new DiscordApiException(
-            error?.Message ?? $"Discord API error ({(int)res.StatusCode} {res.ReasonPhrase}).",
-            res.StatusCode,
-            error?.Code);
+        throw await GetDiscordExceptionAsync(res, ct);
     }
 
     /// <summary>
@@ -125,11 +119,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         if (res.IsSuccessStatusCode)
             return;
 
-        var error = await TryReadDiscordErrorAsync(res, ct);
-        throw new DiscordApiException(
-            error?.Message ?? $"Discord API error ({(int)res.StatusCode} {res.ReasonPhrase}).",
-            res.StatusCode,
-            error?.Code);
+        throw await GetDiscordExceptionAsync(res, ct);
     }
 
     private HttpRequestMessage CreateRequestWithBody(DiscordRoute path, HttpMethod method, object? body)
@@ -145,21 +135,21 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         return req;
     }
 
-    private async Task<DiscordErrorResponse?> TryReadDiscordErrorAsync(HttpResponseMessage res, CancellationToken ct)
+    private async Task<DiscordApiException> GetDiscordExceptionAsync(HttpResponseMessage res, CancellationToken ct)
     {
+        DiscordApiError? error = null;
         try
         {
             var raw = await res.Content.ReadAsStringAsync(ct);
-            if (string.IsNullOrWhiteSpace(raw))
-                return null;
-
-            return JsonSerializer.Deserialize<DiscordErrorResponse>(raw, JsonOptions);
+            error = DiscordErrorParser.Parse(raw);
         }
         catch
         {
-            return null;
         }
+
+        return new DiscordApiException(res.StatusCode, res.ReasonPhrase, error);
     }
+
 
     private BucketRequestQueue GetOrCreateBucket(DiscordRoute path)
     {

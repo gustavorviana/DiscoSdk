@@ -1,3 +1,4 @@
+using DiscoSdk.Exceptions;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;

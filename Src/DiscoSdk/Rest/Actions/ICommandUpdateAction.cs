@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Models;
+﻿using DiscoSdk.Commands;
+using DiscoSdk.Models;
 using DiscoSdk.Models.Commands;
 
 namespace DiscoSdk.Rest.Actions;
@@ -13,7 +14,7 @@ public interface ICommandUpdateAction : IRestAction
     /// </summary>
     /// <param name="configure">A function that configures the command builder.</param>
     /// <returns>The current <see cref="ICommandUpdateAction"/> instance for method chaining.</returns>
-    ICommandUpdateAction AddGlobal(Func<IApplicationCommandBuilder, IApplicationCommandBuilder> configure);
+    ICommandUpdateAction AddGlobal(Func<SlashCommandBuilder, SlashCommandBuilder> configure);
 
     /// <summary>
     /// Adds multiple global application commands to the queue.
@@ -28,7 +29,7 @@ public interface ICommandUpdateAction : IRestAction
     /// <param name="guildId">The guild ID where the command should be registered.</param>
     /// <param name="configure">A function that configures the command builder.</param>
     /// <returns>The current <see cref="ICommandUpdateAction"/> instance for method chaining.</returns>
-    ICommandUpdateAction AddGuild(Snowflake guildId, Func<IApplicationCommandBuilder, IApplicationCommandBuilder> configure);
+    ICommandUpdateAction AddGuild(Snowflake guildId, Func<SlashCommandBuilder, SlashCommandBuilder> configure);
 
     /// <summary>
     /// Adds multiple guild-specific application commands to the queue.

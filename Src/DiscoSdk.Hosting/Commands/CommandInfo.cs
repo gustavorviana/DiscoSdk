@@ -1,6 +1,5 @@
 ﻿using DiscoSdk.Commands;
 using DiscoSdk.Contexts.Interactions;
-using DiscoSdk.Hosting.Builders;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
@@ -20,9 +19,9 @@ internal class CommandInfo
         Autocompletes = GetAutocompletes(type);
     }
 
-    public IApplicationCommandBuilder GetCommandBuilder()
+    public SlashCommandBuilder GetCommandBuilder()
     {
-        var builder = new ApplicationCommandBuilder();
+        var builder = new SlashCommandBuilder();
         var choices = GetChoices();
 
         builder.WithName(Info.Name);

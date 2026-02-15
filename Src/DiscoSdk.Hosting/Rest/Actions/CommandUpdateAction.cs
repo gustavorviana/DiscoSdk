@@ -1,4 +1,4 @@
-using DiscoSdk.Hosting.Containers;
+using DiscoSdk.Commands;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
@@ -10,35 +10,34 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <summary>
 /// Represents a fluent builder for queuing and registering Discord application commands.
 /// </summary>
-internal class CommandUpdateAction(DiscordClient client, CommandContainer previousCommands) : RestAction, ICommandUpdateAction
+internal class CommandUpdateAction(DiscordClient client, CommandContainer commandContainer) : RestAction, ICommandUpdateAction
 {
     private readonly ApplicationCommandClient _applicationCommandClient = new(client.HttpClient);
-    private readonly CommandContainer _newCommands = new();
 
     private bool _deletePrevious = false;
 
 
-    public ICommandUpdateAction AddGlobal(Func<IApplicationCommandBuilder, IApplicationCommandBuilder> configure)
+    public ICommandUpdateAction AddGlobal(Func<SlashCommandBuilder, SlashCommandBuilder> configure)
     {
-        _newCommands.AddGlobal(configure);
+        commandContainer.AddGlobal(configure);
         return this;
     }
 
     public ICommandUpdateAction AddGlobal(params ApplicationCommand[] commands)
     {
-        _newCommands.AddGlobal(commands);
+        commandContainer.AddGlobal(commands);
         return this;
     }
 
-    public ICommandUpdateAction AddGuild(Snowflake guildId, Func<IApplicationCommandBuilder, IApplicationCommandBuilder> configure)
+    public ICommandUpdateAction AddGuild(Snowflake guildId, Func<SlashCommandBuilder, SlashCommandBuilder> configure)
     {
-        _newCommands.AddGuild(guildId, configure);
+        commandContainer.AddGuild(guildId, configure);
         return this;
     }
 
     public ICommandUpdateAction AddGuild(Snowflake guildId, params ApplicationCommand[] commands)
     {
-        _newCommands.AddGuild(guildId, commands);
+        commandContainer.AddGuild(guildId, commands);
         return this;
     }
     public ICommandUpdateAction DeletePrevious()
@@ -67,7 +66,7 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer previo
     /// </summary>
     private async Task RegisterGlobalCommandsAsync(CancellationToken cancellationToken)
     {
-        if (_newCommands.GlobalCommands.Count == 0 && !_deletePrevious)
+        if (commandContainer.GlobalCommands.Count == 0 && !_deletePrevious)
             return;
 
         List<ApplicationCommand> commandsToSend;
@@ -76,7 +75,7 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer previo
         {
             client.Logger.Log(LogLevel.Debug, "Loading existing global commands from Discord...");
             var existingGlobal = await _applicationCommandClient.GetGlobalCommandsAsync(client.ApplicationId!.Value, cancellationToken);
-            commandsToSend = FilterChangedOrNewCommands(_newCommands.GlobalCommands, existingGlobal);
+            commandsToSend = FilterChangedOrNewCommands(commandContainer.GlobalCommands, existingGlobal);
 
             if (commandsToSend.Count == 0)
             {
@@ -86,8 +85,7 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer previo
         }
         else
         {
-            previousCommands.GlobalCommands.AddRange(_newCommands.GlobalCommands);
-            commandsToSend = _newCommands.GlobalCommands;
+            commandsToSend = [.. commandContainer.GlobalCommands];
         }
 
         if (commandsToSend.Count == 0 && _deletePrevious)
@@ -95,10 +93,8 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer previo
             client.Logger.Log(LogLevel.Information, "DeletePrevious is true and no global commands are configured. Removing all global commands.");
         }
 
-        client.Logger.Log(LogLevel.Information, $"Registering {commandsToSend.Count} global command(s) (out of {_newCommands.GlobalCommands.Count} total)...");
+        client.Logger.Log(LogLevel.Information, $"Registering {commandsToSend.Count} global command(s) (out of {commandContainer.GlobalCommands.Count} total)...");
         var registered = await _applicationCommandClient.RegisterGlobalCommandsAsync(client.ApplicationId!.Value, commandsToSend, cancellationToken);
-
-        previousCommands.GlobalCommands.AddRange(_newCommands.GlobalCommands);
         client.Logger.Log(LogLevel.Information, $"Successfully registered {registered.Count} global command(s).");
     }
 
@@ -107,10 +103,10 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer previo
     /// </summary>
     private async Task RegisterGuildCommandsAsync(CancellationToken cancellationToken)
     {
-        if (_newCommands.GuildCommands.Count == 0 && !_deletePrevious)
+        if (commandContainer.GuildCommands.Count == 0 && !_deletePrevious)
             return;
 
-        foreach (var (guildId, commands) in _newCommands.GuildCommands)
+        foreach (var (guildId, commands) in commandContainer.GuildCommands)
         {
             List<ApplicationCommand> commandsToSend;
 
@@ -128,7 +124,7 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer previo
             }
             else
             {
-                commandsToSend = commands;
+                commandsToSend = [.. commands];
 
                 if (commandsToSend.Count == 0)
                 {
@@ -138,8 +134,6 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer previo
 
             client.Logger.Log(LogLevel.Information, $"Registering {commandsToSend.Count} command(s) for guild {guildId} (out of {commands.Count} total)...");
             var guildRegistered = await _applicationCommandClient.RegisterGuildCommandsAsync(client.ApplicationId!.Value, guildId, commandsToSend, cancellationToken);
-
-            previousCommands.AddGuild(guildId, [..commands]);
             client.Logger.Log(LogLevel.Information, $"Successfully registered {guildRegistered.Count} command(s) for guild {guildId}.");
         }
     }
@@ -148,7 +142,7 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer previo
     /// Filters the local commands to only include those that are new or have changed compared to existing commands.
     /// Commands that are equivalent are excluded from the result.
     /// </summary>
-    private static List<ApplicationCommand> FilterChangedOrNewCommands(List<ApplicationCommand> local, List<ApplicationCommand> existing)
+    private static List<ApplicationCommand> FilterChangedOrNewCommands(HashSet<ApplicationCommand> local, List<ApplicationCommand> existing)
     {
         var existingByName = existing
             .Where(c => !string.IsNullOrEmpty(c.Name))

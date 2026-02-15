@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Events;
+﻿using DiscoSdk.Commands;
+using DiscoSdk.Events;
 using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
@@ -19,12 +20,14 @@ public interface IDiscordClient
     ICurrentUser BotUser { get; }
     IServiceProvider Services { get; }
 
+    event EventHandler<CommandContainer>? CommandsUpdateWindowOpened;
+    event EventHandler<UnhandledErrorEventArgs>? UnhandledError;
     event EventHandler? OnConnectionLost;
+
     event EventHandler? OnReady;
 
     Task StartAsync();
     Task StopAsync();
-    ICommandUpdateAction UpdateCommands();
     Task WaitReadyAsync(CancellationToken cancellationToken = default);
     Task WaitReadyAsync(TimeSpan timeout);
     Task WaitShutdownAsync(CancellationToken ct = default);

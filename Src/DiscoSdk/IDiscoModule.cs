@@ -1,4 +1,6 @@
-﻿namespace DiscoSdk;
+﻿using DiscoSdk.Commands;
+
+namespace DiscoSdk;
 
 public interface IDiscoModule
 {
@@ -7,5 +9,7 @@ public interface IDiscoModule
     Task OnGatewayReadyAsync(IDiscordClient discordClient);
 
     Task OnShutdownAsync(IDiscordClient discordClient);
+
+    void OnCommandsUpdateWindowOpened(IDiscordClient discordClient, CommandContainer container);
 }
 

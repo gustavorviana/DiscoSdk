@@ -1,6 +1,6 @@
 ﻿namespace DiscoSdk.Exceptions;
 
-public sealed class DiscordWebhookException : Exception
+public sealed class DiscordWebhookException : DiscoException
 {
     public int StatusCode { get; }
     public string? Reason { get; }

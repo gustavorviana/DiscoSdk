@@ -1,5 +1,5 @@
-﻿using DiscoSdk.Events;
-using DiscoSdk.Hosting.Containers;
+﻿using DiscoSdk.Commands;
+using DiscoSdk.Events;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Events;
 using DiscoSdk.Hosting.Gateway.Payloads;
@@ -29,12 +29,14 @@ namespace DiscoSdk.Hosting
         private readonly ManualResetEventSlim _shutdownEvent = new(false);
         private readonly ManualResetEventSlim _readyEvent = new(false);
         private readonly DiscordEventDispatcher _eventDispatcher;
-        private readonly CommandContainer _commands = new();
         private readonly DiscordClientConfig _config;
         private readonly ShardPool _shardPool;
         public IDiscordRestClient HttpClient { get; }
         public GuildManager Guilds { get; }
         internal ChannelManager Channels { get; }
+
+        public event EventHandler<CommandContainer>? CommandsUpdateWindowOpened;
+        public event EventHandler<UnhandledErrorEventArgs>? UnhandledError;
 
         /// <summary>
         /// Gets the gateway intents configured for this client.
@@ -79,19 +81,6 @@ namespace DiscoSdk.Hosting
         internal GuildClient GuildClient { get; }
         internal UserRepository Users { get; }
         internal DmChannelRepository DmRepository { get; }
-
-        /// <summary>
-        /// Creates a new command update action that allows queuing commands and registering them all at once.
-        /// </summary>
-        /// <returns>A new <see cref="CommandUpdateAction"/> instance.</returns>
-        /// <exception cref="InvalidOperationException">Thrown when ApplicationId is not yet available.</exception>
-        public ICommandUpdateAction UpdateCommands()
-        {
-            if (ApplicationId == null)
-                throw new InvalidOperationException("ApplicationId is not available yet. Wait for the bot to be ready or provide the ApplicationId manually.");
-
-            return new CommandUpdateAction(this, _commands);
-        }
 
         /// <summary>
         /// Gets or sets the application ID of the bot.
@@ -163,17 +152,17 @@ namespace DiscoSdk.Hosting
         {
             var gatewayInfo = await new DiscordGatewayClient(HttpClient).GetGatewayBotInfoAsync();
 
-            foreach (var item in _modules)
+            foreach (var module in _modules)
             {
-                try { await item.OnPreInitializeAsync(this); } catch { }
-                if (item is IDiscordEventHandler handler)
+                try { await module.OnPreInitializeAsync(this); } catch { }
+                if (module is IDiscordEventHandler handler)
                     EventRegistry.Add(handler);
             }
 
             // Start event processor pool
             _eventProcessorPool.Start();
-            _shardPool.Init(gatewayInfo);
-            await _shardPool.InitShards();
+            _shardPool.SetGateway(gatewayInfo);
+            await _shardPool.InitShardsAsync();
         }
 
         /// <summary>
@@ -393,11 +382,25 @@ namespace DiscoSdk.Hosting
             foreach (var item in _modules)
                 try { await item.OnGatewayReadyAsync(this); } catch { }
 
+            await InitSlashCommandsAsync();
+
             if (IsReady && OnReady != null)
                 OnReady(this, EventArgs.Empty);
 
             if (IsReady)
                 _readyEvent.Set();
+        }
+
+        private async Task InitSlashCommandsAsync()
+        {
+            var commands = new CommandContainer();
+
+            foreach (var module in _modules)
+                module.OnCommandsUpdateWindowOpened(this, commands);
+
+            CommandsUpdateWindowOpened?.Invoke(this, commands);
+
+            await new CommandUpdateAction(this, commands).ExecuteAsync();
         }
 
         Task IShardEventListener.OnResumeAsync(Shard shard)
@@ -413,6 +416,15 @@ namespace DiscoSdk.Hosting
             OnConnectionLost?.Invoke(this, EventArgs.Empty);
 
             return Task.CompletedTask;
+        }
+
+        void IShardEventListener.OnUnhandledError(Exception exception)
+        {
+            Logger.Log(LogLevel.Error,
+                $"Unhandled shard error: {exception.GetType().FullName}: {exception.Message}",
+                exception);
+
+            UnhandledError?.Invoke(this, new UnhandledErrorEventArgs(exception));
         }
     }
 }

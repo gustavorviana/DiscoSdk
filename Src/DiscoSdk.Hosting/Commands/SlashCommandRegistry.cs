@@ -32,21 +32,23 @@ internal class SlashCommandRegistry
         return Task.CompletedTask;
     }
 
-    async Task IDiscoModule.OnGatewayReadyAsync(IDiscordClient discordClient)
-    {
-        var commandRegistry = discordClient.UpdateCommands();
 
+    public void OnCommandsUpdateWindowOpened(IDiscordClient discordClient, DiscoSdk.Commands.CommandContainer container)
+    {
         foreach (var item in _commands.Values)
         {
             var command = item.GetCommandBuilder().Build();
             if (item.Info.IsGuildCommand())
                 foreach (var guildId in item.Info.GuildIds)
-                    commandRegistry.AddGuild(Snowflake.Parse(guildId), command);
+                    container.AddGuild(Snowflake.Parse(guildId), command);
             else
-                commandRegistry.AddGlobal(command);
+                container.AddGlobal(command);
         }
+    }
 
-        await commandRegistry.DeletePrevious().ExecuteAsync();
+    Task IDiscoModule.OnGatewayReadyAsync(IDiscordClient discordClient)
+    {
+        return Task.CompletedTask;
     }
 
     Task IDiscoModule.OnShutdownAsync(IDiscordClient discordClient)
