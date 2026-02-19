@@ -23,7 +23,7 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer comman
         return this;
     }
 
-    public ICommandUpdateAction AddGlobal(params ApplicationCommand[] commands)
+    public ICommandUpdateAction AddGlobal(params SlashCommand[] commands)
     {
         commandContainer.AddGlobal(commands);
         return this;
@@ -35,7 +35,7 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer comman
         return this;
     }
 
-    public ICommandUpdateAction AddGuild(Snowflake guildId, params ApplicationCommand[] commands)
+    public ICommandUpdateAction AddGuild(Snowflake guildId, params SlashCommand[] commands)
     {
         commandContainer.AddGuild(guildId, commands);
         return this;
@@ -69,7 +69,7 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer comman
         if (commandContainer.GlobalCommands.Count == 0 && !_deletePrevious)
             return;
 
-        List<ApplicationCommand> commandsToSend;
+        List<SlashCommand> commandsToSend;
 
         if (!_deletePrevious)
         {
@@ -108,7 +108,7 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer comman
 
         foreach (var (guildId, commands) in commandContainer.GuildCommands)
         {
-            List<ApplicationCommand> commandsToSend;
+            List<SlashCommand> commandsToSend;
 
             if (!_deletePrevious)
             {
@@ -142,13 +142,13 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer comman
     /// Filters the local commands to only include those that are new or have changed compared to existing commands.
     /// Commands that are equivalent are excluded from the result.
     /// </summary>
-    private static List<ApplicationCommand> FilterChangedOrNewCommands(HashSet<ApplicationCommand> local, List<ApplicationCommand> existing)
+    private static List<SlashCommand> FilterChangedOrNewCommands(HashSet<SlashCommand> local, List<SlashCommand> existing)
     {
         var existingByName = existing
             .Where(c => !string.IsNullOrEmpty(c.Name))
             .ToDictionary(c => c.Name, c => c, StringComparer.OrdinalIgnoreCase);
 
-        var commandsToSend = new List<ApplicationCommand>();
+        var commandsToSend = new List<SlashCommand>();
 
         foreach (var localCmd in local)
         {

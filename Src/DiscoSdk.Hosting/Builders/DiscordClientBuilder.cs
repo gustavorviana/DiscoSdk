@@ -1,5 +1,9 @@
+using DiscoSdk.Commands;
+using DiscoSdk.Contexts;
 using DiscoSdk.Events;
 using DiscoSdk.Hosting.Commands;
+using DiscoSdk.Hosting.Commands.Providers;
+using DiscoSdk.Hosting.Contexts;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Logging;
@@ -224,6 +228,31 @@ public class DiscordClientBuilder
         return this;
     }
 
+    public DiscordClientBuilder WithParamProvider<TProvider>()
+            where TProvider : class, IParamProvider
+    {
+        var providerType = typeof(TProvider);
+
+        // Ensure the incoming provider implements at least one IParamProvider<T>.
+        var typedInterfaces = providerType
+            .GetInterfaces()
+            .Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IParamProvider<>))
+            .ToHashSet();
+
+        if (typedInterfaces.Count == 0)
+            throw new InvalidOperationException(
+                $"{providerType.FullName} must implement at least one {typeof(IParamProvider<>).FullName} interface.");
+
+        // Register each IParamProvider<T> interface as scoped -> TProvider
+        // plus the concrete provider itself (optional but useful).
+        _services.AddScoped(providerType);
+
+        foreach (var @interface in typedInterfaces)
+            _services.AddScoped(@interface, providerType);
+
+        return this;
+    }
+
     /// <summary>
     /// Builds the <see cref="DiscordClient"/> instance, starts the connection to Discord Gateway,
     /// and returns the client ready for use. The client will be connecting in the background.
@@ -250,10 +279,17 @@ public class DiscordClientBuilder
 
         var jsonOptions = _jsonOptions ?? DiscoJson.Create();
 
+        WithParamProvider<ChannelParamProvider>();
+        WithParamProvider<MemberParamProvider>();
+        WithParamProvider<GuildParamProvider>();
+        WithParamProvider<UserParamProvider>();
+
         _services.AddSingleton(config)
             .AddSingleton(jsonOptions)
             .AddSingleton(_objectConverter ?? new ObjectConverter(CultureInfo.InvariantCulture))
-            .AddSingleton(_logger ?? NullLogger.Instance);
+            .AddSingleton(_logger ?? NullLogger.Instance)
+            .AddScoped<SdkContextProvider>()
+            .AddScoped<ISdkContextProvider>(svc => svc.GetRequiredService<SdkContextProvider>());
 
         var serviceProvider = _services.BuildServiceProvider();
 

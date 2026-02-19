@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Contexts.Messages;
+﻿using DiscoSdk.Contexts.Channels;
+using DiscoSdk.Contexts.Messages;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Messages;
@@ -20,4 +21,6 @@ internal class MessageCreateContextWrapper(DiscordClient client,
     public IMember? Member => member;
 
     public IUser Author => message.Author;
+
+    IChannel IChannelContextBase.Channel => Channel;
 }

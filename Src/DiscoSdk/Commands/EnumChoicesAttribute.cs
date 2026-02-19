@@ -1,7 +1,7 @@
-﻿namespace DiscoSdk.Commands;
+namespace DiscoSdk.Commands;
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-public sealed class EnumChoicesAttribute<T>(string optionName) : EnumChoicesAttribute(optionName, typeof(T)) where T : struct, Enum
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Parameter | AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
+public sealed class EnumChoicesAttribute<T>() : EnumChoicesAttribute(typeof(T)) where T : struct, Enum
 {
     public T[] ExceptValues = [];
 
@@ -15,18 +15,19 @@ public sealed class EnumChoicesAttribute<T>(string optionName) : EnumChoicesAttr
             .Where(v => Array.IndexOf(except, v) < 0)
             .Select(v => v.ToString())
             .Order()
-            .Select(name => new ChoiceAttribute(OptionName, name, name))];
+            .Select(name => new ChoiceAttribute(name, name))];
     }
 }
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-public class EnumChoicesAttribute(string optionName, Type enumType) : Attribute
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Parameter | AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
+public class EnumChoicesAttribute(Type enumType) : Attribute
 {
-    public string OptionName => optionName;
+    public string? OptionName { get; set; }
+
     public Type EnumType => enumType;
 
     internal virtual ChoiceAttribute[] GetChoices()
     {
-        return [.. Enum.GetNames(enumType).Order().Select(x => new ChoiceAttribute(optionName, x, x))];
+        return [.. Enum.GetNames(enumType).Order().Select(x => new ChoiceAttribute(x, x))];
     }
 }

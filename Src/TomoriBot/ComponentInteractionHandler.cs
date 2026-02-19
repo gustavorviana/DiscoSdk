@@ -11,7 +11,7 @@ namespace TomoriBot;
 /// </summary>
 internal class ComponentInteractionHandler : IComponentInteractionHandler
 {
-    public async Task HandleAsync(IInteractionContext eventData)
+    public async Task HandleAsync(IInteractionContext eventData, IServiceProvider services)
     {
         var interaction = eventData.Interaction;
 

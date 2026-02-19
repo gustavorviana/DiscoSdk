@@ -33,5 +33,5 @@ public interface IAutocompleteContext : IInteractionContext
 	/// </summary>
 	/// <param name="choices">The suggestions to display. Maximum 25 choices; can be empty.</param>
 	/// <returns>An <see cref="IRestAction"/> that sends the autocomplete response when executed.</returns>
-	IRestAction ReplyWithChoices(IEnumerable<ApplicationCommandOptionChoice> choices);
+	IRestAction ReplyWithChoices(IEnumerable<SlashCommandOptionChoice> choices);
 }

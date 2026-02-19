@@ -16,7 +16,7 @@ internal class AutocompleteHandler : IAutocompleteHandler
 		"Pear", "Pineapple", "Plum", "Raspberry", "Strawberry", "Watermelon"
 	];
 
-	public async Task HandleAsync(IAutocompleteContext context)
+	public async Task HandleAsync(IAutocompleteContext context, IServiceProvider services)
 	{
 		// Example: autocomplete for "search" command, option "query"
 		if (context.CommandName != "search")
@@ -30,7 +30,7 @@ internal class AutocompleteHandler : IAutocompleteHandler
 		var filtered = FruitSuggestions
 			.Where(s => s.Contains(partial, StringComparison.OrdinalIgnoreCase))
 			.Take(25)
-			.Select(s => new ApplicationCommandOptionChoice { Name = s, Value = s })
+			.Select(s => new SlashCommandOptionChoice { Name = s, Value = s })
 			.ToList();
 
 		await context.ReplyWithChoices(filtered).ExecuteAsync();

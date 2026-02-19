@@ -2,18 +2,18 @@
 
 namespace DiscoSdk.Commands;
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-public sealed class OptionAttribute(
-    ApplicationCommandOptionType type,
-    string name,
+[AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
+public sealed class SlashOptionAttribute(
+    SlashCommandOptionType type,
     string description,
+    string? name = null,
     bool required = false) : Attribute
 {
     private int? minLength = null;
     private int? maxLength = null;
 
-    public ApplicationCommandOptionType Type => type;
-    public string Name => name;
+    public SlashCommandOptionType Type => type;
+    public string? Name => name;
     public string Description => description;
     public bool Required => required;
 

@@ -79,17 +79,7 @@ internal class ChannelWrapper(DiscordClient client, Channel channel) : IChannel
 
         var unionWrapper = new GuildChannelUnionWrapper(client, channel, guild!);
 
-        return channel.Type switch
-        {
-            ChannelType.GuildText => unionWrapper.AsTextChannel() ?? (IChannel)unionWrapper,
-            ChannelType.GuildAnnouncement => unionWrapper.AsNewsChannel() ?? (IChannel)unionWrapper,
-            ChannelType.AnnouncementThread or ChannelType.PublicThread or ChannelType.PrivateThread => unionWrapper.AsThreadChannel() ?? (IChannel)unionWrapper,
-            ChannelType.GuildVoice => unionWrapper.AsVoiceChannel() ?? (IChannel)unionWrapper,
-            ChannelType.GuildStageVoice => unionWrapper.AsStageChannel() ?? (IChannel)unionWrapper,
-            ChannelType.GuildForum => unionWrapper.AsForumChannel() ?? (IChannel)unionWrapper,
-            ChannelType.GuildMedia => unionWrapper.AsMediaChannel() ?? (IChannel)unionWrapper,
-            _ => unionWrapper
-        };
+        return unionWrapper.ToExpectedChannel() ?? unionWrapper;
     }
 
     internal void OnUpdate(Channel channel)

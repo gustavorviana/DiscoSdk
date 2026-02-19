@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents the type of an application command option.
 /// </summary>
-public enum ApplicationCommandOptionType
+public enum SlashCommandOptionType
 {
     SubCommand = 1,
     SubCommandGroup = 2,

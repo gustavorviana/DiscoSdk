@@ -19,7 +19,7 @@ public class InteractionOption
     /// Gets or sets the type of option.
     /// </summary>
     [JsonPropertyName("type")]
-    public ApplicationCommandOptionType Type { get; set; }
+    public SlashCommandOptionType Type { get; set; }
 
     /// <summary>
     /// Gets or sets the value of the option.

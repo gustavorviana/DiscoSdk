@@ -29,7 +29,7 @@ namespace DiscoSdk.Hosting
         private readonly ManualResetEventSlim _shutdownEvent = new(false);
         private readonly ManualResetEventSlim _readyEvent = new(false);
         private readonly DiscordEventDispatcher _eventDispatcher;
-        private readonly IReadOnlyList<IDiscoModule> _modules;
+        internal IReadOnlyList<IDiscoModule> Modules { get; }
         private readonly DiscordClientConfig _config;
         private readonly ShardPool _shardPool;
         public IDiscordRestClient HttpClient { get; }
@@ -106,7 +106,7 @@ namespace DiscoSdk.Hosting
             IReadOnlyList<IDiscordEventHandler> eventHandlers)
         {
             _config = config;
-            _modules = modules;
+            Modules = modules;
             Services = services;
             _shardPool = new ShardPool(this, config);
             SerializerOptions = services.GetRequiredService<JsonSerializerOptions>();
@@ -150,7 +150,7 @@ namespace DiscoSdk.Hosting
         {
             var gatewayInfo = await new DiscordGatewayClient(HttpClient).GetGatewayBotInfoAsync();
 
-            foreach (var module in _modules.OfType<ILifetimeDiscoModule>())
+            foreach (var module in Modules.OfType<ILifetimeDiscoModule>())
             {
                 try { await module.OnPreInitializeAsync(this); } catch { }
                 if (module is IDiscordEventHandler handler)
@@ -174,7 +174,7 @@ namespace DiscoSdk.Hosting
 
             _isShuttingDown = true;
 
-            foreach (var item in _modules.OfType<ILifetimeDiscoModule>())
+            foreach (var item in Modules.OfType<ILifetimeDiscoModule>())
                 try { await item.OnShutdownAsync(this); } catch { }
 
             // Stop event processor pool
@@ -377,7 +377,7 @@ namespace DiscoSdk.Hosting
                 Guilds.InitializePendingGuilds(guildIds);
             }
 
-            foreach (var item in _modules.OfType<ILifetimeDiscoModule>())
+            foreach (var item in Modules.OfType<ILifetimeDiscoModule>())
                 try { await item.OnGatewayReadyAsync(this); } catch { }
 
             await InitSlashCommandsAsync();
@@ -393,7 +393,7 @@ namespace DiscoSdk.Hosting
         {
             var commands = new CommandContainer();
 
-            foreach (var module in _modules.OfType<ICommandsUpdateWindowModule>())
+            foreach (var module in Modules.OfType<ICommandsUpdateWindowModule>())
                 module.OnCommandsUpdateWindowOpened(this, commands);
 
             CommandsUpdateWindowOpened?.Invoke(this, commands);

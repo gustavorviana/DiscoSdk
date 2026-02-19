@@ -1,20 +1,20 @@
-﻿using DiscoSdk.Models.Commands;
+using DiscoSdk.Models.Commands;
 
 namespace DiscoSdk.Commands;
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-public sealed class ChoiceAttribute(string optionName, string name, object value) : Attribute
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Parameter | AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
+public sealed class ChoiceAttribute(string name, object value) : Attribute
 {
-    public string OptionName => optionName;
+    public string? OptionName { get; set; }
     public string Name => name;
     public object Value => value;
 
-    public ApplicationCommandOptionChoice ToCommandChoice()
+    public SlashCommandOptionChoice ToCommandChoice()
     {
-        return new ApplicationCommandOptionChoice
+        return new SlashCommandOptionChoice
         {
             Name = Name,
-            Value = Value
+            Value = Value,
         };
     }
 }

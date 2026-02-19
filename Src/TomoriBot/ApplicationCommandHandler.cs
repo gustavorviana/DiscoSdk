@@ -11,7 +11,7 @@ namespace TomoriBot;
 /// </summary>
 internal class ApplicationCommandHandler : IApplicationCommandHandler
 {
-    public async Task HandleAsync(ICommandContext context)
+    public async Task HandleAsync(ICommandContext context, IServiceProvider services)
     {
         Console.WriteLine($"[INTERACTION] Command received: {context.Name}");
 

@@ -5,7 +5,7 @@ namespace DiscoSdk.Models.Commands;
 /// <summary>
 /// Represents a choice for an application command option.
 /// </summary>
-public class ApplicationCommandOptionChoice : IEquatable<ApplicationCommandOptionChoice?>
+public class SlashCommandOptionChoice : IEquatable<SlashCommandOptionChoice?>
 {
     /// <summary>
     /// Gets or sets the name of the choice (1-100 characters).
@@ -27,10 +27,10 @@ public class ApplicationCommandOptionChoice : IEquatable<ApplicationCommandOptio
 
     public override bool Equals(object? obj)
     {
-        return Equals(obj as ApplicationCommandOptionChoice);
+        return Equals(obj as SlashCommandOptionChoice);
     }
 
-    public bool Equals(ApplicationCommandOptionChoice? other)
+    public bool Equals(SlashCommandOptionChoice? other)
     {
         return other is not null &&
                Name == other.Name &&
@@ -43,12 +43,12 @@ public class ApplicationCommandOptionChoice : IEquatable<ApplicationCommandOptio
         return HashCode.Combine(Name, NameLocalizations, Value);
     }
 
-    public static bool operator ==(ApplicationCommandOptionChoice? left, ApplicationCommandOptionChoice? right)
+    public static bool operator ==(SlashCommandOptionChoice? left, SlashCommandOptionChoice? right)
     {
-        return EqualityComparer<ApplicationCommandOptionChoice>.Default.Equals(left, right);
+        return EqualityComparer<SlashCommandOptionChoice>.Default.Equals(left, right);
     }
 
-    public static bool operator !=(ApplicationCommandOptionChoice? left, ApplicationCommandOptionChoice? right)
+    public static bool operator !=(SlashCommandOptionChoice? left, SlashCommandOptionChoice? right)
     {
         return !(left == right);
     }

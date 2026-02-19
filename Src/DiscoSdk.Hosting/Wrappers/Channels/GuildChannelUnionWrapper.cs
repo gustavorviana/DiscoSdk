@@ -4,7 +4,7 @@ using DiscoSdk.Models.Enums;
 
 namespace DiscoSdk.Hosting.Wrappers.Channels;
 
-internal class GuildChannelUnionWrapper(DiscordClient client, Channel channel, IGuild guild) 
+internal class GuildChannelUnionWrapper(DiscordClient client, Channel channel, IGuild guild)
     : GuildChannelWrapperBase(client, channel, guild), IGuildChannelUnion
 {
     public virtual IGuildTextChannel? AsTextChannel()
@@ -42,5 +42,20 @@ internal class GuildChannelUnionWrapper(DiscordClient client, Channel channel, I
     public virtual IGuildMediaChannel? AsMediaChannel()
     {
         return _channel.Type == ChannelType.GuildMedia ? new GuildMediaChannelWrapper(_channel, Guild, _client) : null;
+    }
+
+    public IChannel? ToExpectedChannel()
+    {
+        return channel.Type switch
+        {
+            ChannelType.GuildText => AsTextChannel(),
+            ChannelType.GuildAnnouncement => AsNewsChannel(),
+            ChannelType.AnnouncementThread or ChannelType.PublicThread or ChannelType.PrivateThread => AsThreadChannel(),
+            ChannelType.GuildVoice => AsVoiceChannel(),
+            ChannelType.GuildStageVoice => AsStageChannel(),
+            ChannelType.GuildForum => AsForumChannel(),
+            ChannelType.GuildMedia => AsMediaChannel(),
+            _ => null
+        };
     }
 }

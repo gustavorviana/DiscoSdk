@@ -1,9 +1,10 @@
-﻿using DiscoSdk.Contexts.Messages;
+﻿using DiscoSdk.Contexts.Channels;
+using DiscoSdk.Contexts.Messages;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Messages;
 
-namespace DiscoSdk.Hosting.Contexts.Wrappers;
+namespace DiscoSdk.Hosting.Contexts.Messages;
 
 internal class MessageUpdateContextWrapper(DiscordClient client,
     IGuild? guild,
@@ -15,4 +16,6 @@ internal class MessageUpdateContextWrapper(DiscordClient client,
     public IMessage Message => message;
 
     public ITextBasedChannel Channel => channel;
+
+    IChannel IChannelContextBase.Channel => Channel;
 }

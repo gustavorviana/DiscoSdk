@@ -21,7 +21,7 @@ public interface ICommandUpdateAction : IRestAction
     /// </summary>
     /// <param name="commands">The commands to add.</param>
     /// <returns>The current <see cref="CommandUpdateAction"/> instance for method chaining.</returns>
-    ICommandUpdateAction AddGlobal(params ApplicationCommand[] commands);
+    ICommandUpdateAction AddGlobal(params SlashCommand[] commands);
 
     /// <summary>
     /// Adds a guild-specific application command to the queue using a fluent builder configuration.
@@ -37,7 +37,7 @@ public interface ICommandUpdateAction : IRestAction
     /// <param name="guildId">The guild ID where the commands should be registered.</param>
     /// <param name="commands">The commands to add.</param>
     /// <returns>The current <see cref="ICommandUpdateAction"/> instance for method chaining.</returns>
-    ICommandUpdateAction AddGuild(Snowflake guildId, params ApplicationCommand[] commands);
+    ICommandUpdateAction AddGuild(Snowflake guildId, params SlashCommand[] commands);
 
     /// <summary>
     /// Marks that previously registered commands should be deleted before registering new ones.

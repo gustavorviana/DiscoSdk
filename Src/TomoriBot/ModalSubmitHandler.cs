@@ -9,7 +9,7 @@ namespace TomoriBot;
 /// </summary>
 internal class ModalSubmitHandler : IModalSubmitHandler
 {
-    public async Task HandleAsync(IModalContext context)
+    public async Task HandleAsync(IModalContext context, IServiceProvider services)
     {
         if (context.CustomId == "sdk_test_modal_submit" ||
             context.CustomId == "sdk_test_label_submit" ||

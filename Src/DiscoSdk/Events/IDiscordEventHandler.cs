@@ -15,7 +15,7 @@ public interface IDiscordEventHandler
 /// </summary>
 public interface IDiscordEventHandler<TContext> : IDiscordEventHandler
 {
-    Task HandleAsync(TContext context);
+    Task HandleAsync(TContext context, IServiceProvider services);
 }
 
 /// <summary>

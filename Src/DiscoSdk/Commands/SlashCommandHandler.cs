@@ -1,13 +1,18 @@
-﻿using DiscoSdk.Contexts.Interactions;
+﻿using DiscoSdk.Contexts;
+using DiscoSdk.Contexts.Interactions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscoSdk.Commands;
 
 public abstract class SlashCommandHandler
 {
-    internal Task ExecuteAsync(ICommandContext context)
-    {
-        return OnExecuteAsync(context);
-    }
+    protected IServiceProvider Services { get; private set; } = null!;
+    protected IInteractionContext Context { get; private set; } = null!;
 
-    protected abstract Task OnExecuteAsync(ICommandContext context);
+    internal void Init(IServiceProvider services)
+    {
+        Services = services;
+        var contextProvider = services.GetRequiredService<ISdkContextProvider>();
+        Context = (IInteractionContext)contextProvider.GetContext();
+    }
 }

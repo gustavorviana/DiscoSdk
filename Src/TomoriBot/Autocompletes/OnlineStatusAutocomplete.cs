@@ -4,14 +4,14 @@ using DiscoSdk.Models.Enums;
 
 namespace TomoriBot.Autocompletes;
 
-public class OnlineStatusAutocomplete : IAutocompleteHandler
+public class OnlineStatusAutocomplete : IAutocomplete
 {
-    public Task CompleteAsync(IAutocompleteContext context)
+    public Task ExecuteAsync(IAutocompleteContext context)
     {
         var value = context.FocusedOption.Value?.ToString() ?? "";
         var enums = Enum.GetNames(typeof(OnlineStatus)).Where(x => x.Contains(value, StringComparison.OrdinalIgnoreCase));
 
-        return context.ReplyWithChoices(enums.Select(x => new DiscoSdk.Models.Commands.ApplicationCommandOptionChoice
+        return context.ReplyWithChoices(enums.Select(x => new DiscoSdk.Models.Commands.SlashCommandOptionChoice
         {
             Name = x,
             Value = x

@@ -15,7 +15,7 @@ public interface IAutocompleteFocusedOption
 	/// <summary>
 	/// Gets the type of the option (String, Integer, Number, etc.).
 	/// </summary>
-	ApplicationCommandOptionType Type { get; }
+	SlashCommandOptionType Type { get; }
 
 	/// <summary>
 	/// Gets the current partial value entered by the user (string for STRING, number for INTEGER/NUMBER, etc.).

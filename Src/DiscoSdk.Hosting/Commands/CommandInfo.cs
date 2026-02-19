@@ -1,172 +1,155 @@
-﻿using DiscoSdk.Commands;
+using DiscoSdk.Commands;
 using DiscoSdk.Contexts.Interactions;
-using Microsoft.Extensions.DependencyInjection;
+using DiscoSdk.Hosting.Commands.Callers.Parameters;
+using DiscoSdk.Hosting.Commands.Callers.Results;
+using DiscoSdk.Models.Enums;
+using DiscoSdk.Utils;
 using System.Reflection;
 
 namespace DiscoSdk.Hosting.Commands;
 
-internal class CommandInfo
+internal class CommandInfo : SlashCommandHandlerCaller
 {
-    public IReadOnlyDictionary<string, AutocompleteInfo> Autocompletes { get; }
+    private readonly MethodCaller _method;
+    private readonly ParameterCollection _parameters;
+    private readonly SlashOptionAttribute[]? _methodOptions;
     public SlashCommandAttribute Info { get; }
-    public Type Type { get; }
+    public override Type Type => _method.Method.DeclaringType!;
 
-    private CommandInfo(SlashCommandAttribute attribute, Type type)
+    private CommandInfo(
+        SlashCommandAttribute info,
+        MethodCaller method,
+        ParameterCollection parameters,
+        SlashOptionAttribute[]? methodOptions)
     {
-        Info = attribute;
-        Type = type;
-
-        Autocompletes = GetAutocompletes(type);
+        Info = info;
+        _method = method;
+        _parameters = parameters;
+        _methodOptions = methodOptions;
     }
 
-    public SlashCommandBuilder GetCommandBuilder()
+    public AutocompleteInfo[] GetAutocompletes()
+    {
+        if (_methodOptions != null)
+        {
+            return _methodOptions
+                .Select(o => AutocompleteInfo.GetOfOption(o, Info.Name, o.Name!))
+                .Where(a => a != null)
+                .ToArray()!;
+        }
+
+        return _parameters
+            .OfType<SlashParamInfo>()
+            .Where(x => x.Autocomplete != null)
+            .Select(x => x.Autocomplete)
+            .ToArray()!;
+    }
+
+    public SlashCommandBuilder GetCommandBuilder(Func<AutocompleteName, bool> hasAutocomplete)
     {
         var builder = new SlashCommandBuilder();
-        var choices = GetChoices();
 
         builder.WithName(Info.Name);
         builder.WithDescription(Info.Description);
-        builder.WithType(Models.Enums.ApplicationCommandType.ChatInput);
+        builder.WithType(ApplicationCommandType.ChatInput);
 
-        foreach (var option in Type.GetCustomAttributes<OptionAttribute>())
+        if (_methodOptions != null)
         {
-            builder.AddOption(new Models.Commands.ApplicationCommandOption
+            foreach (var option in _methodOptions)
             {
-                Autocomplete = Autocompletes.ContainsKey(option.Name),
-                Name = option.Name,
-                ChannelTypes = option.ChannelTypes,
-                Choices = choices.TryGetValue(option.Name, out var choice) ? [.. choice.Select(x => x.ToCommandChoice())] : [],
-                Description = option.Description,
-                MinLength = option.GetMinLength(),
-                MaxLength = option.GetMaxLength(),
-                MinValue = option.MinValue,
-                MaxValue = option.MaxValue,
-                Required = option.Required,
-                Type = option.Type,
-            });
+                if (option.Name == null)
+                    throw new InvalidOperationException(
+                        $"Method-level '{nameof(SlashOptionAttribute)}' on command '{Info.Name}' must have a Name.");
+
+                builder.AddOption(new Models.Commands.SlashCommandOption
+                {
+                    Autocomplete = option.AutocompleteType != null || hasAutocomplete(new AutocompleteName(Info.Name, option.Name)),
+                    Name = option.Name,
+                    ChannelTypes = option.ChannelTypes,
+                    Choices = [.. SlashOptionTypeUtils.GetChoices(_method.Method, option.Name).Select(x => x.ToCommandChoice())],
+                    Description = option.Description,
+                    MinLength = option.GetMinLength(),
+                    MaxLength = option.GetMaxLength(),
+                    MinValue = option.MinValue,
+                    MaxValue = option.MaxValue,
+                    Required = option.Required,
+                    Type = option.Type,
+                });
+            }
+        }
+        else
+        {
+            foreach (var parameter in _parameters.OfType<ParamFactoryInfo>())
+            {
+                if (parameter.Type == null)
+                    continue;
+
+                builder.AddOption(new Models.Commands.SlashCommandOption
+                {
+                    Autocomplete = parameter.Autocomplete != null || hasAutocomplete(new AutocompleteName(Info.Name, parameter.Name)),
+                    Name = parameter.Name,
+                    ChannelTypes = parameter.Option?.ChannelTypes,
+                    Choices = [.. parameter.GetChoices().Select(x => x.ToCommandChoice())],
+                    Description = parameter.Option?.Description ?? parameter.Name,
+                    MinLength = parameter.Option?.GetMinLength(),
+                    MaxLength = parameter.MaxLength,
+                    MinValue = parameter.MinValue,
+                    MaxValue = parameter.MaxValue,
+                    Required = parameter.Required,
+                    Type = parameter.Type.Value,
+                });
+            }
         }
 
         return builder;
     }
 
-    private IReadOnlyDictionary<string, List<ChoiceAttribute>> GetChoices()
+    internal static IEnumerable<CommandInfo> GetAll(Type commandClass)
     {
-        var cmdChoices = new Dictionary<string, List<ChoiceAttribute>>();
+        if (commandClass.IsAbstract || commandClass.IsInterface || !typeof(SlashCommandHandler).IsAssignableFrom(commandClass))
+            yield break;
 
-        var enumChoices = Type.GetCustomAttribute<EnumChoicesAttribute>();
-        if (enumChoices != null)
+        var methods = commandClass.GetMethods(CommandReflection.Flags);
+
+        foreach (var method in methods)
         {
-            if (!cmdChoices.TryGetValue(enumChoices.OptionName, out var choices))
-            {
-                choices = [];
-                cmdChoices.Add(enumChoices.OptionName, choices);
-            }
-
-            choices.AddRange(enumChoices.GetChoices());
-        }
-
-        foreach (var choice in Type.GetCustomAttributes<ChoiceAttribute>())
-        {
-            if (!cmdChoices.TryGetValue(choice.OptionName, out var choices))
-            {
-                choices = [];
-                cmdChoices.Add(choice.OptionName, choices);
-            }
-
-            choices.Add(choice);
-        }
-
-        return cmdChoices;
-    }
-
-    public Task ExecuteCommandAsync(IServiceProvider service, ICommandContext context)
-    {
-        var handler = service.GetRequiredService(Type) as SlashCommandHandler;
-        return handler!.ExecuteAsync(context);
-    }
-
-    public async Task ExecuteAutocompleteAsync(IServiceProvider service, IAutocompleteContext context)
-    {
-        if (!Autocompletes.TryGetValue(context.FocusedOption.Name, out var autocompleteInfo))
-            throw new InvalidOperationException(
-                $"No autocomplete handler registered for option '{context.FocusedOption.Name}'.");
-
-        var handler = service.GetRequiredService(autocompleteInfo.AutocompleteType);
-        await autocompleteInfo.ExecuteAsync(handler, context);
-    }
-
-    private IReadOnlyDictionary<string, AutocompleteInfo> GetAutocompletes(Type commandType)
-    {
-        var items = new Dictionary<string, AutocompleteInfo>(StringComparer.OrdinalIgnoreCase);
-        var contextType = typeof(IAutocompleteContext);
-        var autocompleteHandlerType = typeof(IAutocompleteHandler);
-
-        foreach (var autocompleteOption in commandType.GetCustomAttributes<OptionAttribute>())
-        {
-            if (autocompleteOption.AutocompleteType == null)
-                continue;
-
-            var autoCompleteType = autocompleteOption.AutocompleteType;
-
-            if (!autocompleteHandlerType.IsAssignableFrom(autocompleteOption.AutocompleteType))
-                throw new InvalidOperationException(
-                $"Type '{autocompleteOption.AutocompleteType.FullName}' must implement or inherit '{autocompleteHandlerType.FullName}'.");
-
-            var name = autocompleteOption.Name;
-
-            if (items.ContainsKey(name))
-                throw new InvalidOperationException($"Command \"{name}\" already exists.");
-
-            items[name] = new AutocompleteInfo(autoCompleteType, ReflectionUtils.FindInterfaceMethod(autoCompleteType, autocompleteHandlerType, nameof(IAutocompleteHandler.CompleteAsync))!);
-        }
-
-        foreach (var method in commandType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
-        {
-            var attribute = method.GetCustomAttribute<AutocompleteHandlerAttribute>();
-            if (attribute == null)
-                continue;
-
-            var methodParams = method.GetParameters();
-            if (methodParams.Length != 1 || methodParams.First().ParameterType != contextType)
-                continue;
-
-            if (items.ContainsKey(attribute.OptionName))
-                throw new InvalidOperationException($"Command \"{attribute.OptionName}\" already exists.");
-
-            items[attribute.OptionName] = new AutocompleteInfo(commandType, method);
-        }
-
-        return items;
-    }
-
-    internal static IEnumerable<CommandInfo> GetAll(Assembly[] assemblies)
-    {
-        foreach (var type in FindSlashCommandHandlers(assemblies))
-        {
-            var commandAttribute = type.GetCustomAttribute<SlashCommandAttribute>();
+            var commandAttribute = method.GetCustomAttribute<SlashCommandAttribute>();
             if (commandAttribute != null)
-                yield return new CommandInfo(commandAttribute, type);
+                yield return Create(method, commandAttribute);
         }
     }
 
-    private static IEnumerable<Type> FindSlashCommandHandlers(Assembly[] assemblies)
+    private static CommandInfo Create(MethodInfo method, SlashCommandAttribute commandClass)
     {
-        return assemblies
-            .SelectMany(GetLoadableTypes)
-            .Where(t =>
-                t is { IsClass: true, IsAbstract: false } &&
-                typeof(SlashCommandHandler).IsAssignableFrom(t));
+        ArgumentNullException.ThrowIfNull(method);
+
+        if (!typeof(SlashCommandHandler).IsAssignableFrom(method.DeclaringType))
+            throw new ArgumentException($"Method must be declared on a type assignable to {nameof(SlashCommandHandler)}.", nameof(method));
+
+        var methodOptions = method.GetCustomAttributes<SlashOptionAttribute>().ToArray();
+
+        var hasMethodOptions = methodOptions.Length > 0;
+
+        var parameters = method.GetParameters();
+        var resolvers = new ParamInfo[parameters.Length];
+
+        for (var i = 0; i < parameters.Length; i++)
+        {
+            var param = parameters[i];
+            resolvers[i] = hasMethodOptions
+                ? ParamInfo.Create(param)
+                : ParamFactoryInfo.CreateParameterResolver(param, commandClass.Name);
+        }
+
+        return new CommandInfo(commandClass, MethodCaller.From(method), new ParameterCollection(resolvers),
+            hasMethodOptions ? methodOptions : null);
     }
 
-    private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+    public async Task ExecuteAsync(ICommandContext context, IServiceProvider services, CancellationToken token)
     {
-        try
-        {
-            return assembly.GetTypes();
-        }
-        catch (ReflectionTypeLoadException ex)
-        {
-            return ex.Types.Where(t => t != null)!;
-        }
+        var handler = GetHandler(services);
+        var args = _parameters.CreateInstances(services, context, token);
+
+        await _method.ExecuteAsync(handler, args, token);
     }
 }

@@ -31,7 +31,7 @@ internal class AutocompleteContext : InteractionContextWrapper, IAutocompleteCon
 	public IAutocompleteFocusedOption FocusedOption { get; }
 	public IReadOnlyCollection<IAutocompleteOptionValue> Options { get; }
 
-	public IRestAction ReplyWithChoices(IEnumerable<ApplicationCommandOptionChoice> choices)
+	public IRestAction ReplyWithChoices(IEnumerable<SlashCommandOptionChoice> choices)
 	{
 		var list = choices?.Take(MaxAutocompleteChoices + 1).ToList() ?? [];
 		if (list.Count > MaxAutocompleteChoices)
@@ -69,9 +69,9 @@ internal class AutocompleteContext : InteractionContextWrapper, IAutocompleteCon
 
 		foreach (var opt in options)
 		{
-			if (opt.Type == ApplicationCommandOptionType.SubCommand)
+			if (opt.Type == SlashCommandOptionType.SubCommand)
 				return opt.Name;
-			if (opt.Type == ApplicationCommandOptionType.SubCommandGroup && opt.Options is { Length: > 0 } nested)
+			if (opt.Type == SlashCommandOptionType.SubCommandGroup && opt.Options is { Length: > 0 } nested)
 			{
 				var sub = GetSubcommand(nested);
 				if (sub is not null)
@@ -103,8 +103,8 @@ internal class AutocompleteContext : InteractionContextWrapper, IAutocompleteCon
 			if (ReferenceEquals(opt, excludeFocused))
 				continue;
 
-			if (opt.Type == ApplicationCommandOptionType.SubCommand ||
-				opt.Type == ApplicationCommandOptionType.SubCommandGroup)
+			if (opt.Type == SlashCommandOptionType.SubCommand ||
+				opt.Type == SlashCommandOptionType.SubCommandGroup)
 			{
 				CollectOtherOptionsCore(opt.Options, excludeFocused, list);
 				continue;

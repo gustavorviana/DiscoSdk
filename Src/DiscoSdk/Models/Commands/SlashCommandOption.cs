@@ -7,13 +7,13 @@ namespace DiscoSdk.Models.Commands;
 /// <summary>
 /// Represents an option (parameter) for an application command.
 /// </summary>
-public class ApplicationCommandOption : IEquatable<ApplicationCommandOption?>
+public class SlashCommandOption : IEquatable<SlashCommandOption?>
 {
     /// <summary>
     /// Gets or sets the type of option.
     /// </summary>
     [JsonPropertyName("type")]
-    public ApplicationCommandOptionType Type { get; set; }
+    public SlashCommandOptionType Type { get; set; }
 
     /// <summary>
     /// Gets or sets the name of the option (1-32 characters, lowercase).
@@ -49,13 +49,13 @@ public class ApplicationCommandOption : IEquatable<ApplicationCommandOption?>
     /// Gets or sets the choices for the option (only for STRING, INTEGER, and NUMBER types).
     /// </summary>
     [JsonPropertyName("choices")]
-    public ApplicationCommandOptionChoice[]? Choices { get; set; }
+    public SlashCommandOptionChoice[]? Choices { get; set; }
 
     /// <summary>
     /// Gets or sets the nested options (for subcommands and subcommand groups).
     /// </summary>
     [JsonPropertyName("options")]
-    public ApplicationCommandOption[]? Options { get; set; }
+    public SlashCommandOption[]? Options { get; set; }
 
     /// <summary>
     /// Gets or sets the channel types to include (only for CHANNEL type).
@@ -95,10 +95,10 @@ public class ApplicationCommandOption : IEquatable<ApplicationCommandOption?>
 
     public override bool Equals(object? obj)
     {
-        return Equals(obj as ApplicationCommandOption);
+        return Equals(obj as SlashCommandOption);
     }
 
-    public bool Equals(ApplicationCommandOption? other)
+    public bool Equals(SlashCommandOption? other)
     {
         return other is not null &&
                Type == other.Type &&
@@ -138,12 +138,12 @@ public class ApplicationCommandOption : IEquatable<ApplicationCommandOption?>
         return hash.ToHashCode();
     }
 
-    public static bool operator ==(ApplicationCommandOption? left, ApplicationCommandOption? right)
+    public static bool operator ==(SlashCommandOption? left, SlashCommandOption? right)
     {
-        return EqualityComparer<ApplicationCommandOption>.Default.Equals(left, right);
+        return EqualityComparer<SlashCommandOption>.Default.Equals(left, right);
     }
 
-    public static bool operator !=(ApplicationCommandOption? left, ApplicationCommandOption? right)
+    public static bool operator !=(SlashCommandOption? left, SlashCommandOption? right)
     {
         return !(left == right);
     }

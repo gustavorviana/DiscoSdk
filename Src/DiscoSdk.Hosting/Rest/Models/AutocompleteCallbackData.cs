@@ -12,5 +12,5 @@ public class AutocompleteCallbackData
 	/// Gets or sets the autocomplete choices (max 25).
 	/// </summary>
 	[JsonPropertyName("choices")]
-	public ApplicationCommandOptionChoice[] Choices { get; set; } = [];
+	public SlashCommandOptionChoice[] Choices { get; set; } = [];
 }

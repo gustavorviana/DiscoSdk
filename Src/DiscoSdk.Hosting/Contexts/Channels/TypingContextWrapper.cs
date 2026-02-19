@@ -14,4 +14,6 @@ internal class TypingContextWrapper(DiscordClient client,
     public DateTimeOffset StartedAt => startedAt;
 
     public ITextBasedChannel Channel => channel;
+
+    IChannel IChannelContextBase.Channel => Channel;
 }

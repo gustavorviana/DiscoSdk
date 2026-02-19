@@ -7,4 +7,6 @@ namespace DiscoSdk.Hosting.Contexts.Channels;
 internal class ChannelContext(DiscordClient client, IGuildChannelUnion channel) : GuildContextWrapper(client, channel.Guild), IChannelContext
 {
     public IGuildChannelUnion Channel => channel;
+
+    IChannel IChannelContextBase.Channel => Channel;
 }

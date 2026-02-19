@@ -1,9 +1,9 @@
-﻿using DiscoSdk.Models;
+﻿using DiscoSdk.Contexts.Guilds;
+using DiscoSdk.Models;
 
 namespace DiscoSdk.Contexts;
 
-public interface IMemberContext : IContext
+public interface IMemberContext : IContext, IGuildContext
 {
-    IGuild? Guild { get; }
     IMember? Member { get; }
 }

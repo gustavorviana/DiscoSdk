@@ -6,9 +6,9 @@ namespace DiscoSdk.Commands;
 
 public sealed class CommandContainer
 {
-    private static readonly  ApplicationCommandComparer _comparer = new ApplicationCommandComparer();
-    internal HashSet<ApplicationCommand> GlobalCommands { get; } = new HashSet<ApplicationCommand>(_comparer);
-    internal Dictionary<Snowflake, HashSet<ApplicationCommand>> GuildCommands { get; } = [];
+    private static readonly  SlashCommandComparer _comparer = new SlashCommandComparer();
+    internal HashSet<SlashCommand> GlobalCommands { get; } = new HashSet<SlashCommand>(_comparer);
+    internal Dictionary<Snowflake, HashSet<SlashCommand>> GuildCommands { get; } = [];
 
     public CommandContainer AddGlobal(Func<SlashCommandBuilder, SlashCommandBuilder> configure)
     {
@@ -17,7 +17,7 @@ public sealed class CommandContainer
         return this;
     }
 
-    public CommandContainer AddGlobal(params ApplicationCommand[] commands)
+    public CommandContainer AddGlobal(params SlashCommand[] commands)
     {
         ArgumentNullException.ThrowIfNull(commands);
         AddCommands(GlobalCommands, commands.Where(x => x != null));
@@ -34,7 +34,7 @@ public sealed class CommandContainer
         return this;
     }
 
-    public CommandContainer AddGuild(Snowflake guildId, params ApplicationCommand[] commands)
+    public CommandContainer AddGuild(Snowflake guildId, params SlashCommand[] commands)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -42,14 +42,14 @@ public sealed class CommandContainer
         ArgumentNullException.ThrowIfNull(commands);
 
         if (!GuildCommands.ContainsKey(guildId))
-            GuildCommands[guildId] = new HashSet<ApplicationCommand>(_comparer);
+            GuildCommands[guildId] = new HashSet<SlashCommand>(_comparer);
 
         AddCommands(GuildCommands[guildId], commands.Where(x => x != null));
 
         return this;
     }
 
-    private static ApplicationCommand BuildCommand(Func<SlashCommandBuilder, SlashCommandBuilder> configure)
+    private static SlashCommand BuildCommand(Func<SlashCommandBuilder, SlashCommandBuilder> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
 
@@ -58,7 +58,7 @@ public sealed class CommandContainer
         return configuredBuilder.Build();
     }
 
-    private static void AddCommands(HashSet<ApplicationCommand> commands, IEnumerable<ApplicationCommand> newCommands)
+    private static void AddCommands(HashSet<SlashCommand> commands, IEnumerable<SlashCommand> newCommands)
     {
         foreach (var newCommand in newCommands)
             if (!commands.Add(newCommand))

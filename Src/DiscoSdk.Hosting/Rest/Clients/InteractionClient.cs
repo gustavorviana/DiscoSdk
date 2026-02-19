@@ -85,7 +85,7 @@ internal class InteractionClient(DiscordClient discordClient)
     }
 
     public async Task RespondWithAutocompleteAsync(InteractionHandle interaction,
-        IReadOnlyList<ApplicationCommandOptionChoice> choices,
+        IReadOnlyList<SlashCommandOptionChoice> choices,
         CancellationToken cancellationToken = default)
     {
         if (choices.Count > 25)
@@ -93,7 +93,7 @@ internal class InteractionClient(DiscordClient discordClient)
 
         var data = new AutocompleteCallbackData
         {
-            Choices = choices is ApplicationCommandOptionChoice[] arr ? arr : choices.ToArray()
+            Choices = choices is SlashCommandOptionChoice[] arr ? arr : choices.ToArray()
         };
         await SendCallbackAsync(interaction, data, InteractionCallbackType.ApplicationCommandAutocompleteResult, cancellationToken);
     }

@@ -5,7 +5,7 @@ using DiscoSdk.Models.Enums;
 namespace DiscoSdk.Commands;
 
 /// <summary>
-/// Fluent builder for <see cref="ApplicationCommand"/>.
+/// Fluent builder for <see cref="SlashCommand"/>.
 /// </summary>
 public class SlashCommandBuilder()
 {
@@ -14,7 +14,7 @@ public class SlashCommandBuilder()
     private Dictionary<string, string>? _nameLocalizations;
     private string? _description;
     private Dictionary<string, string>? _descriptionLocalizations;
-    private readonly List<ApplicationCommandOption> _options = [];
+    private readonly List<SlashCommandOption> _options = [];
     private string? _defaultMemberPermissions;
     private bool? _dmPermission;
     private bool? _nsfw;
@@ -85,6 +85,41 @@ public class SlashCommandBuilder()
         return this;
     }
 
+    public SlashCommandBuilder AddNameLocalization(string locale, string name)
+    {
+        EnsureLocale(locale);
+
+        _nameLocalizations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        _nameLocalizations[locale] = EnsureNotBlank(name, "name");
+
+        ValidateLocalizations(_nameLocalizations, "name");
+        return this;
+    }
+
+    public SlashCommandBuilder AddDescriptionLocalization(string locale, string description)
+    {
+        EnsureLocale(locale);
+
+        _descriptionLocalizations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        _descriptionLocalizations[locale] = EnsureNotBlank(description, "description");
+
+        ValidateLocalizations(_descriptionLocalizations, "description");
+        return this;
+    }
+
+    private static void EnsureLocale(string locale)
+    {
+        if (string.IsNullOrWhiteSpace(locale))
+            throw new ArgumentException("Locale cannot be null or empty.", nameof(locale));
+
+        locale = locale.Trim();
+
+        if (!DiscordLocales.Has(locale))
+            throw new ArgumentException(
+                $"Locale '{locale}' is not supported by Discord.",
+                nameof(locale));
+    }
+
     /// <summary>
     /// Sets the default member permissions required to use the command.
     /// </summary>
@@ -140,7 +175,7 @@ public class SlashCommandBuilder()
     /// </summary>
     /// <param name="option">The option instance to add.</param>
     /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
-    internal SlashCommandBuilder AddOption(ApplicationCommandOption option)
+    internal SlashCommandBuilder AddOption(SlashCommandOption option)
     {
         if (_options.Count >= 25)
             throw new InvalidOperationException("A command can have a maximum of 25 options. Discord API limit.");
@@ -151,7 +186,7 @@ public class SlashCommandBuilder()
     }
 
     /// <summary>
-    /// Adds a <see cref="ApplicationCommandOptionType.SubCommand"/> option.
+    /// Adds a <see cref="SlashCommandOptionType.SubCommand"/> option.
     /// </summary>
     /// <param name="name">The subcommand name.</param>
     /// <param name="description">The subcommand description.</param>
@@ -160,23 +195,23 @@ public class SlashCommandBuilder()
     public SlashCommandBuilder AddSubCommandOption(
         string name,
         string description,
-        params ApplicationCommandOption[] options)
+        params SlashCommandOption[] options)
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
-        ValidateNestedOptions(options, ApplicationCommandOptionType.SubCommand);
+        ValidateNestedOptions(options, SlashCommandOptionType.SubCommand);
 
-        return AddOption(new ApplicationCommandOption
+        return AddOption(new SlashCommandOption
         {
             Name = name.ToLowerInvariant(),
             Description = description,
-            Type = ApplicationCommandOptionType.SubCommand,
+            Type = SlashCommandOptionType.SubCommand,
             Options = options.Length > 0 ? options : null,
         });
     }
 
     /// <summary>
-    /// Adds a <see cref="ApplicationCommandOptionType.SubCommandGroup"/> option.
+    /// Adds a <see cref="SlashCommandOptionType.SubCommandGroup"/> option.
     /// </summary>
     /// <param name="name">The subcommand group name.</param>
     /// <param name="description">The subcommand group description.</param>
@@ -185,23 +220,23 @@ public class SlashCommandBuilder()
     public SlashCommandBuilder AddSubCommandGroupOption(
         string name,
         string description,
-        params ApplicationCommandOption[] options)
+        params SlashCommandOption[] options)
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
-        ValidateNestedOptions(options, ApplicationCommandOptionType.SubCommandGroup);
+        ValidateNestedOptions(options, SlashCommandOptionType.SubCommandGroup);
 
-        return AddOption(new ApplicationCommandOption
+        return AddOption(new SlashCommandOption
         {
             Name = name.ToLowerInvariant(),
             Description = description,
-            Type = ApplicationCommandOptionType.SubCommandGroup,
+            Type = SlashCommandOptionType.SubCommandGroup,
             Options = options.Length > 0 ? options : null,
         });
     }
 
     /// <summary>
-    /// Adds a <see cref="ApplicationCommandOptionType.String"/> option.
+    /// Adds a <see cref="SlashCommandOptionType.String"/> option.
     /// </summary>
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
@@ -218,19 +253,19 @@ public class SlashCommandBuilder()
         int? minLength = null,
         int? maxLength = null,
         bool? autocomplete = null,
-        params ApplicationCommandOptionChoice[] choices)
+        params SlashCommandOptionChoice[] choices)
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
         ValidateStringLengthBounds(minLength, maxLength);
-        ValidateChoices(choices, ApplicationCommandOptionType.String);
+        ValidateChoices(choices, SlashCommandOptionType.String);
         ValidateAutocompleteAndChoices(autocomplete, choices);
 
-        return AddOption(new ApplicationCommandOption
+        return AddOption(new SlashCommandOption
         {
             Name = name.ToLowerInvariant(),
             Description = description,
-            Type = ApplicationCommandOptionType.String,
+            Type = SlashCommandOptionType.String,
             Required = required,
             Choices = choices.Length > 0 ? choices : null,
             MinLength = minLength,
@@ -240,7 +275,7 @@ public class SlashCommandBuilder()
     }
 
     /// <summary>
-    /// Adds an <see cref="ApplicationCommandOptionType.Integer"/> option.
+    /// Adds an <see cref="SlashCommandOptionType.Integer"/> option.
     /// </summary>
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
@@ -257,19 +292,19 @@ public class SlashCommandBuilder()
         object? minValue = null,
         object? maxValue = null,
         bool? autocomplete = null,
-        params ApplicationCommandOptionChoice[] choices)
+        params SlashCommandOptionChoice[] choices)
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
-        ValidateNumericBounds(minValue, maxValue, ApplicationCommandOptionType.Integer);
-        ValidateChoices(choices, ApplicationCommandOptionType.Integer);
+        ValidateNumericBounds(minValue, maxValue, SlashCommandOptionType.Integer);
+        ValidateChoices(choices, SlashCommandOptionType.Integer);
         ValidateAutocompleteAndChoices(autocomplete, choices);
 
-        return AddOption(new ApplicationCommandOption
+        return AddOption(new SlashCommandOption
         {
             Name = name.ToLowerInvariant(),
             Description = description,
-            Type = ApplicationCommandOptionType.Integer,
+            Type = SlashCommandOptionType.Integer,
             Required = required,
             Choices = choices.Length > 0 ? choices : null,
             MinValue = minValue,
@@ -279,7 +314,7 @@ public class SlashCommandBuilder()
     }
 
     /// <summary>
-    /// Adds a <see cref="ApplicationCommandOptionType.Boolean"/> option.
+    /// Adds a <see cref="SlashCommandOptionType.Boolean"/> option.
     /// </summary>
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
@@ -292,17 +327,17 @@ public class SlashCommandBuilder()
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
-        return AddOption(new ApplicationCommandOption
+        return AddOption(new SlashCommandOption
         {
             Name = name.ToLowerInvariant(),
             Description = description,
-            Type = ApplicationCommandOptionType.Boolean,
+            Type = SlashCommandOptionType.Boolean,
             Required = required,
         });
     }
 
     /// <summary>
-    /// Adds a <see cref="ApplicationCommandOptionType.User"/> option.
+    /// Adds a <see cref="SlashCommandOptionType.User"/> option.
     /// </summary>
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
@@ -315,17 +350,17 @@ public class SlashCommandBuilder()
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
-        return AddOption(new ApplicationCommandOption
+        return AddOption(new SlashCommandOption
         {
             Name = name.ToLowerInvariant(),
             Description = description,
-            Type = ApplicationCommandOptionType.User,
+            Type = SlashCommandOptionType.User,
             Required = required,
         });
     }
 
     /// <summary>
-    /// Adds a <see cref="ApplicationCommandOptionType.Channel"/> option.
+    /// Adds a <see cref="SlashCommandOptionType.Channel"/> option.
     /// </summary>
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
@@ -340,18 +375,18 @@ public class SlashCommandBuilder()
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
-        return AddOption(new ApplicationCommandOption
+        return AddOption(new SlashCommandOption
         {
             Name = name.ToLowerInvariant(),
             Description = description,
-            Type = ApplicationCommandOptionType.Channel,
+            Type = SlashCommandOptionType.Channel,
             Required = required,
             ChannelTypes = channelTypes,
         });
     }
 
     /// <summary>
-    /// Adds a <see cref="ApplicationCommandOptionType.Role"/> option.
+    /// Adds a <see cref="SlashCommandOptionType.Role"/> option.
     /// </summary>
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
@@ -364,17 +399,17 @@ public class SlashCommandBuilder()
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
-        return AddOption(new ApplicationCommandOption
+        return AddOption(new SlashCommandOption
         {
             Name = name.ToLowerInvariant(),
             Description = description,
-            Type = ApplicationCommandOptionType.Role,
+            Type = SlashCommandOptionType.Role,
             Required = required,
         });
     }
 
     /// <summary>
-    /// Adds a <see cref="ApplicationCommandOptionType.Mentionable"/> option.
+    /// Adds a <see cref="SlashCommandOptionType.Mentionable"/> option.
     /// </summary>
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
@@ -387,17 +422,17 @@ public class SlashCommandBuilder()
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
-        return AddOption(new ApplicationCommandOption
+        return AddOption(new SlashCommandOption
         {
             Name = name.ToLowerInvariant(),
             Description = description,
-            Type = ApplicationCommandOptionType.Mentionable,
+            Type = SlashCommandOptionType.Mentionable,
             Required = required,
         });
     }
 
     /// <summary>
-    /// Adds a <see cref="ApplicationCommandOptionType.Number"/> option.
+    /// Adds a <see cref="SlashCommandOptionType.Number"/> option.
     /// </summary>
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
@@ -414,19 +449,19 @@ public class SlashCommandBuilder()
         object? minValue = null,
         object? maxValue = null,
         bool? autocomplete = null,
-        params ApplicationCommandOptionChoice[] choices)
+        params SlashCommandOptionChoice[] choices)
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
-        ValidateNumericBounds(minValue, maxValue, ApplicationCommandOptionType.Number);
-        ValidateChoices(choices, ApplicationCommandOptionType.Number);
+        ValidateNumericBounds(minValue, maxValue, SlashCommandOptionType.Number);
+        ValidateChoices(choices, SlashCommandOptionType.Number);
         ValidateAutocompleteAndChoices(autocomplete, choices);
 
-        return AddOption(new ApplicationCommandOption
+        return AddOption(new SlashCommandOption
         {
             Name = name.ToLowerInvariant(),
             Description = description,
-            Type = ApplicationCommandOptionType.Number,
+            Type = SlashCommandOptionType.Number,
             Required = required,
             Choices = choices.Length > 0 ? choices : null,
             MinValue = minValue,
@@ -436,7 +471,7 @@ public class SlashCommandBuilder()
     }
 
     /// <summary>
-    /// Adds an <see cref="ApplicationCommandOptionType.Attachment"/> option.
+    /// Adds an <see cref="SlashCommandOptionType.Attachment"/> option.
     /// </summary>
     /// <param name="name">The option name.</param>
     /// <param name="description">The option description.</param>
@@ -449,22 +484,22 @@ public class SlashCommandBuilder()
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
-        return AddOption(new ApplicationCommandOption
+        return AddOption(new SlashCommandOption
         {
             Name = name.ToLowerInvariant(),
             Description = description,
-            Type = ApplicationCommandOptionType.Attachment,
+            Type = SlashCommandOptionType.Attachment,
             Required = required,
         });
     }
 
     /// <summary>
-    /// Builds the configured <see cref="ApplicationCommand"/> instance.
+    /// Builds the configured <see cref="SlashCommand"/> instance.
     /// </summary>
-    /// <returns>The configured <see cref="ApplicationCommand"/>.</returns>
-    public ApplicationCommand Build()
+    /// <returns>The configured <see cref="SlashCommand"/>.</returns>
+    public SlashCommand Build()
     {
-        return new ApplicationCommand
+        return new SlashCommand
         {
             Type = _type,
             Name = _name ?? throw new InvalidOperationException("Command name is required."),
@@ -543,74 +578,8 @@ public class SlashCommandBuilder()
             throw new ArgumentException($"Minimum length ({minLength.Value}) cannot be greater than maximum length ({maxLength.Value}).");
     }
 
-    private static void ValidateNumericBounds(object? minValue, object? maxValue, ApplicationCommandOptionType optionType)
+    private static void ValidateNumericBounds(object? minValue, object? maxValue, SlashCommandOptionType optionType)
     {
-        const long minInteger = -9007199254740991L; // -2^53 + 1
-        const long maxInteger = 9007199254740991L;  // 2^53 - 1
-        const double minNumber = -9007199254740991.0; // -2^53 + 1
-        const double maxNumber = 9007199254740991.0;  // 2^53 - 1
-
-        if (optionType == ApplicationCommandOptionType.Integer)
-        {
-            if (minValue is long minLong)
-            {
-                if (minLong < minInteger || minLong > maxInteger)
-                    throw new ArgumentOutOfRangeException(nameof(minValue), $"Integer minimum value must be between {minInteger} and {maxInteger} (Discord API limit). Provided value: {minLong}.");
-            }
-            else if (minValue is int minInt)
-            {
-                if (minInt < minInteger || minInt > maxInteger)
-                    throw new ArgumentOutOfRangeException(nameof(minValue), $"Integer minimum value must be between {minInteger} and {maxInteger} (Discord API limit). Provided value: {minInt}.");
-            }
-
-            if (maxValue is long maxLong)
-            {
-                if (maxLong < minInteger || maxLong > maxInteger)
-                    throw new ArgumentOutOfRangeException(nameof(maxValue), $"Integer maximum value must be between {minInteger} and {maxInteger} (Discord API limit). Provided value: {maxLong}.");
-            }
-            else if (maxValue is int maxInt)
-            {
-                if (maxInt < minInteger || maxInt > maxInteger)
-                    throw new ArgumentOutOfRangeException(nameof(maxValue), $"Integer maximum value must be between {minInteger} and {maxInteger} (Discord API limit). Provided value: {maxInt}.");
-            }
-        }
-        else if (optionType == ApplicationCommandOptionType.Number)
-        {
-            if (minValue is double minDouble)
-            {
-                if (minDouble < minNumber || minDouble > maxNumber)
-                    throw new ArgumentOutOfRangeException(nameof(minValue), $"Number minimum value must be between {minNumber} and {maxNumber} (Discord API limit). Provided value: {minDouble}.");
-            }
-            else if (minValue is decimal minDecimal)
-            {
-                var minDecimalDouble = (double)minDecimal;
-                if (minDecimalDouble < minNumber || minDecimalDouble > maxNumber)
-                    throw new ArgumentOutOfRangeException(nameof(minValue), $"Number minimum value must be between {minNumber} and {maxNumber} (Discord API limit). Provided value: {minDecimal}.");
-            }
-            else if (minValue is float minFloat)
-            {
-                if (minFloat < minNumber || minFloat > maxNumber)
-                    throw new ArgumentOutOfRangeException(nameof(minValue), $"Number minimum value must be between {minNumber} and {maxNumber} (Discord API limit). Provided value: {minFloat}.");
-            }
-
-            if (maxValue is double maxDouble)
-            {
-                if (maxDouble < minNumber || maxDouble > maxNumber)
-                    throw new ArgumentOutOfRangeException(nameof(maxValue), $"Number maximum value must be between {minNumber} and {maxNumber} (Discord API limit). Provided value: {maxDouble}.");
-            }
-            else if (maxValue is decimal maxDecimal)
-            {
-                var maxDecimalDouble = (double)maxDecimal;
-                if (maxDecimalDouble < minNumber || maxDecimalDouble > maxNumber)
-                    throw new ArgumentOutOfRangeException(nameof(maxValue), $"Number maximum value must be between {minNumber} and {maxNumber} (Discord API limit). Provided value: {maxDecimal}.");
-            }
-            else if (maxValue is float maxFloat)
-            {
-                if (maxFloat < minNumber || maxFloat > maxNumber)
-                    throw new ArgumentOutOfRangeException(nameof(maxValue), $"Number maximum value must be between {minNumber} and {maxNumber} (Discord API limit). Provided value: {maxFloat}.");
-            }
-        }
-
         if (minValue is IComparable min && maxValue is IComparable max)
         {
             if (min.GetType() == max.GetType() && min.CompareTo(max) > 0)
@@ -618,7 +587,7 @@ public class SlashCommandBuilder()
         }
     }
 
-    private static void ValidateChoices(ApplicationCommandOptionChoice[] choices, ApplicationCommandOptionType optionType)
+    private static void ValidateChoices(SlashCommandOptionChoice[] choices, SlashCommandOptionType optionType)
     {
         if (choices.Length == 0)
             return;
@@ -626,9 +595,9 @@ public class SlashCommandBuilder()
         if (choices.Length > 25)
             throw new ArgumentException($"An option can have a maximum of 25 choices. Provided count: {choices.Length}.", nameof(choices));
 
-        if (optionType != ApplicationCommandOptionType.String &&
-            optionType != ApplicationCommandOptionType.Integer &&
-            optionType != ApplicationCommandOptionType.Number)
+        if (optionType != SlashCommandOptionType.String &&
+            optionType != SlashCommandOptionType.Integer &&
+            optionType != SlashCommandOptionType.Number)
         {
             throw new ArgumentException($"Choices are only allowed for String, Integer, or Number option types. Provided type: {optionType}.", nameof(choices));
         }
@@ -650,24 +619,24 @@ public class SlashCommandBuilder()
                 throw new ArgumentException($"Choice value at index {i} cannot be null.", nameof(choices));
 
             // Validate value type based on option type
-            if (optionType == ApplicationCommandOptionType.String && choice.Value is not string)
+            if (optionType == SlashCommandOptionType.String && choice.Value is not string)
                 throw new ArgumentException($"Choice value at index {i} must be a string for String option type. Provided type: {choice.Value.GetType().Name}.", nameof(choices));
 
-            if (optionType == ApplicationCommandOptionType.Integer && choice.Value is not int and not long)
+            if (optionType == SlashCommandOptionType.Integer && choice.Value is not int and not long)
                 throw new ArgumentException($"Choice value at index {i} must be an integer (int or long) for Integer option type. Provided type: {choice.Value.GetType().Name}.", nameof(choices));
 
-            if (optionType == ApplicationCommandOptionType.Number && choice.Value is not double and not decimal and not float)
+            if (optionType == SlashCommandOptionType.Number && choice.Value is not double and not decimal and not float)
                 throw new ArgumentException($"Choice value at index {i} must be a number (double, decimal, or float) for Number option type. Provided type: {choice.Value.GetType().Name}.", nameof(choices));
         }
     }
 
-    private static void ValidateAutocompleteAndChoices(bool? autocomplete, ApplicationCommandOptionChoice[] choices)
+    private static void ValidateAutocompleteAndChoices(bool? autocomplete, SlashCommandOptionChoice[] choices)
     {
         if (autocomplete == true && choices.Length > 0)
             throw new ArgumentException("Cannot use autocomplete and choices at the same time. Choose one option.", nameof(autocomplete));
     }
 
-    private static void ValidateNestedOptions(ApplicationCommandOption[] options, ApplicationCommandOptionType parentType)
+    private static void ValidateNestedOptions(SlashCommandOption[] options, SlashCommandOptionType parentType)
     {
         if (options.Length == 0)
             return;
@@ -682,15 +651,15 @@ public class SlashCommandBuilder()
 
             ValidateOption(option);
 
-            if (parentType == ApplicationCommandOptionType.SubCommandGroup)
+            if (parentType == SlashCommandOptionType.SubCommandGroup)
             {
-                if (option.Type != ApplicationCommandOptionType.SubCommand)
+                if (option.Type != SlashCommandOptionType.SubCommand)
                     throw new ArgumentException($"SubCommandGroups can only contain SubCommands. Provided type: {option.Type}.", nameof(options));
             }
         }
     }
 
-    private static void ValidateOption(ApplicationCommandOption option)
+    private static void ValidateOption(SlashCommandOption option)
     {
         if (option == null)
             throw new ArgumentNullException(nameof(option), "Option cannot be null.");
@@ -712,43 +681,47 @@ public class SlashCommandBuilder()
         }
     }
 
-    private static void ValidateLocalizations(Dictionary<string, string>? localizations, string fieldName)
+    private void ValidateLocalizations(Dictionary<string, string>? localizations, string fieldName)
     {
         if (localizations == null)
             return;
 
-        // Locales válidos do Discord
-        var validLocales = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "id", "da", "de", "en-GB", "en-US", "es-ES", "fr", "hr", "it", "lt", "hu", "nl", "no", "pl", "pt-BR", "ro", "fi", "sv-SE", "vi", "tr", "cs", "el", "bg", "ru", "uk", "hi", "th", "zh-CN", "ja", "zh-TW", "ko"
-        };
-
         foreach (var (locale, value) in localizations)
+            ValidateLocalization(locale, value, fieldName);
+    }
+
+    private static void ValidateLocalization(string locale, string value, string fieldName)
+    {
+        EnsureNotBlank(value, fieldName);
+
+        if (!DiscordLocales.Has(locale))
+            throw new ArgumentException($"Locale code '{locale}' is not a valid Discord locale. Valid locales: {string.Join(", ", DiscordLocales.GetAll())}.", nameof(locale));
+
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException($"Localization value for locale '{locale}' cannot be null, empty, or contain only whitespace in {fieldName} localizations dictionary.", nameof(locale));
+
+        if (fieldName == "name")
         {
-            if (string.IsNullOrWhiteSpace(locale))
-                throw new ArgumentException($"Locale code cannot be null, empty, or contain only whitespace in {fieldName} localizations dictionary.", nameof(localizations));
+            var trimmedValue = value.Trim();
+            if (trimmedValue.Length is < 1 or > 32)
+                throw new ArgumentOutOfRangeException(nameof(locale), $"Localized name value for locale '{locale}' must be between 1 and 32 characters. Current length: {trimmedValue.Length}.");
 
-            if (!validLocales.Contains(locale))
-                throw new ArgumentException($"Locale code '{locale}' is not a valid Discord locale. Valid locales: {string.Join(", ", validLocales)}.", nameof(localizations));
-
-            if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentException($"Localization value for locale '{locale}' cannot be null, empty, or contain only whitespace in {fieldName} localizations dictionary.", nameof(localizations));
-
-            if (fieldName == "name")
-            {
-                var trimmedValue = value.Trim();
-                if (trimmedValue.Length is < 1 or > 32)
-                    throw new ArgumentOutOfRangeException(nameof(localizations), $"Localized name value for locale '{locale}' must be between 1 and 32 characters. Current length: {trimmedValue.Length}.");
-
-                if (!Regex.IsMatch(trimmedValue, @"^[a-z0-9-_]+$"))
-                    throw new ArgumentException($"Localized name value for locale '{locale}' can only contain lowercase letters (a-z), numbers (0-9), hyphens (-), or underscores (_).", nameof(localizations));
-            }
-            else if (fieldName == "description")
-            {
-                var trimmedValue = value.Trim();
-                if (trimmedValue.Length is < 1 or > 100)
-                    throw new ArgumentOutOfRangeException(nameof(localizations), $"Localized description value for locale '{locale}' must be between 1 and 100 characters. Current length: {trimmedValue.Length}.");
-            }
+            if (!Regex.IsMatch(trimmedValue, @"^[a-z0-9-_]+$"))
+                throw new ArgumentException($"Localized name value for locale '{locale}' can only contain lowercase letters (a-z), numbers (0-9), hyphens (-), or underscores (_).", nameof(locale));
         }
+        else if (fieldName == "description")
+        {
+            var trimmedValue = value.Trim();
+            if (trimmedValue.Length is < 1 or > 100)
+                throw new ArgumentOutOfRangeException(nameof(locale), $"Localized description value for locale '{locale}' must be between 1 and 100 characters. Current length: {trimmedValue.Length}.");
+        }
+    }
+
+    private static string EnsureNotBlank(string value, string field)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException($"Localization value for '{field}' cannot be null, empty, or contain only whitespace.", nameof(value));
+
+        return value.Trim();
     }
 }
