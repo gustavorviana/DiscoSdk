@@ -31,6 +31,7 @@ internal class InteractionWrapper(Interaction interaction,
     private readonly Interaction _interaction = interaction ?? throw new ArgumentNullException(nameof(interaction));
     private readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
     internal InteractionHandle Handle => handle;
+    internal Interaction RawInteraction => _interaction;
 
     public Snowflake Id => _interaction.Id;
     public Snowflake ApplicationId => _interaction.ApplicationId;

@@ -49,11 +49,61 @@ public sealed class CommandContainer
         return this;
     }
 
+    public CommandContainer AddGlobal(Func<UserCommandBuilder, UserCommandBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        AddGlobal(BuildCommand(configure));
+        return this;
+    }
+
+    public CommandContainer AddGlobal(Func<MessageCommandBuilder, MessageCommandBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        AddGlobal(BuildCommand(configure));
+        return this;
+    }
+
+    public CommandContainer AddGuild(Snowflake guildId, Func<UserCommandBuilder, UserCommandBuilder> configure)
+    {
+        if (guildId == default)
+            throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
+
+        AddGuild(guildId, BuildCommand(configure));
+        return this;
+    }
+
+    public CommandContainer AddGuild(Snowflake guildId, Func<MessageCommandBuilder, MessageCommandBuilder> configure)
+    {
+        if (guildId == default)
+            throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
+
+        AddGuild(guildId, BuildCommand(configure));
+        return this;
+    }
+
     private static SlashCommand BuildCommand(Func<SlashCommandBuilder, SlashCommandBuilder> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
 
         var builder = new SlashCommandBuilder();
+        var configuredBuilder = configure(builder);
+        return configuredBuilder.Build();
+    }
+
+    private static SlashCommand BuildCommand(Func<UserCommandBuilder, UserCommandBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+
+        var builder = new UserCommandBuilder();
+        var configuredBuilder = configure(builder);
+        return configuredBuilder.Build();
+    }
+
+    private static SlashCommand BuildCommand(Func<MessageCommandBuilder, MessageCommandBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+
+        var builder = new MessageCommandBuilder();
         var configuredBuilder = configure(builder);
         return configuredBuilder.Build();
     }

@@ -64,6 +64,11 @@ public class DiscordClientBuilder
         return AddModule(new SlashCommandRegistry(_services, assemblies));
     }
 
+    public DiscordClientBuilder WithContextMenuCommands(params Assembly[] assemblies)
+    {
+        return AddModule(new ContextMenuCommandRegistry(_services, assemblies));
+    }
+
     public DiscordClientBuilder AddModule(IDiscoModule module)
     {
         _modules.AddInstance(module);

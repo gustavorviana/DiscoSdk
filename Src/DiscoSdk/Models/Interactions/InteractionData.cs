@@ -29,6 +29,12 @@ public class InteractionData
     public ApplicationCommandType Type { get; set; }
 
     /// <summary>
+    /// Gets or sets the ID of the target user or message for context menu commands.
+    /// </summary>
+    [JsonPropertyName("target_id")]
+    public Snowflake? TargetId { get; set; }
+
+    /// <summary>
     /// Gets or sets the converted users.
     /// </summary>
     [JsonPropertyName("resolved")]

@@ -40,6 +40,30 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer comman
         commandContainer.AddGuild(guildId, commands);
         return this;
     }
+    public ICommandUpdateAction AddGlobal(Func<UserCommandBuilder, UserCommandBuilder> configure)
+    {
+        commandContainer.AddGlobal(configure);
+        return this;
+    }
+
+    public ICommandUpdateAction AddGlobal(Func<MessageCommandBuilder, MessageCommandBuilder> configure)
+    {
+        commandContainer.AddGlobal(configure);
+        return this;
+    }
+
+    public ICommandUpdateAction AddGuild(Snowflake guildId, Func<UserCommandBuilder, UserCommandBuilder> configure)
+    {
+        commandContainer.AddGuild(guildId, configure);
+        return this;
+    }
+
+    public ICommandUpdateAction AddGuild(Snowflake guildId, Func<MessageCommandBuilder, MessageCommandBuilder> configure)
+    {
+        commandContainer.AddGuild(guildId, configure);
+        return this;
+    }
+
     public ICommandUpdateAction DeletePrevious()
     {
         _deletePrevious = true;

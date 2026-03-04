@@ -140,3 +140,19 @@ public interface IComponentInteractionHandler : IDiscordEventHandler<IInteractio
 public interface IAutocompleteHandler : IDiscordEventHandler<IAutocompleteContext>
 {
 }
+
+/// <summary>
+/// Interface for handling user context menu command interactions.
+/// This handler is only called when interaction.Data.Type == ApplicationCommandType.User.
+/// </summary>
+public interface IUserCommandHandler : IDiscordEventHandler<IUserCommandContext>
+{
+}
+
+/// <summary>
+/// Interface for handling message context menu command interactions.
+/// This handler is only called when interaction.Data.Type == ApplicationCommandType.Message.
+/// </summary>
+public interface IMessageCommandHandler : IDiscordEventHandler<IMessageCommandContext>
+{
+}

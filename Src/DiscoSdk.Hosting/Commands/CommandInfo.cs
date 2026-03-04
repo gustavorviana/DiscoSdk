@@ -14,18 +14,24 @@ internal class CommandInfo : SlashCommandHandlerCaller
     private readonly ParameterCollection _parameters;
     private readonly SlashOptionAttribute[]? _methodOptions;
     public SlashCommandAttribute Info { get; }
+    public SubCommandAttribute? SubCommand { get; }
+    public SubCommandGroupAttribute? SubCommandGroup { get; }
     public override Type Type => _method.Method.DeclaringType!;
 
     private CommandInfo(
         SlashCommandAttribute info,
         MethodCaller method,
         ParameterCollection parameters,
-        SlashOptionAttribute[]? methodOptions)
+        SlashOptionAttribute[]? methodOptions,
+        SubCommandAttribute? subCommand,
+        SubCommandGroupAttribute? subCommandGroup)
     {
         Info = info;
         _method = method;
         _parameters = parameters;
         _methodOptions = methodOptions;
+        SubCommand = subCommand;
+        SubCommandGroup = subCommandGroup;
     }
 
     public AutocompleteInfo[] GetAutocompletes()
@@ -53,6 +59,16 @@ internal class CommandInfo : SlashCommandHandlerCaller
         builder.WithDescription(Info.Description);
         builder.WithType(ApplicationCommandType.ChatInput);
 
+        foreach (var option in BuildLeafOptions(hasAutocomplete))
+            builder.AddOption(option);
+
+        return builder;
+    }
+
+    internal Models.Commands.SlashCommandOption[] BuildLeafOptions(Func<AutocompleteName, bool> hasAutocomplete)
+    {
+        var options = new List<Models.Commands.SlashCommandOption>();
+
         if (_methodOptions != null)
         {
             foreach (var option in _methodOptions)
@@ -61,9 +77,9 @@ internal class CommandInfo : SlashCommandHandlerCaller
                     throw new InvalidOperationException(
                         $"Method-level '{nameof(SlashOptionAttribute)}' on command '{Info.Name}' must have a Name.");
 
-                builder.AddOption(new Models.Commands.SlashCommandOption
+                options.Add(new Models.Commands.SlashCommandOption
                 {
-                    Autocomplete = option.AutocompleteType != null || hasAutocomplete(new AutocompleteName(Info.Name, option.Name)),
+                    Autocomplete = option.AutocompleteType != null || hasAutocomplete(new AutocompleteName(Info.Name, option.Name, SubCommand?.Name, SubCommandGroup?.Name)),
                     Name = option.Name,
                     ChannelTypes = option.ChannelTypes,
                     Choices = [.. SlashOptionTypeUtils.GetChoices(_method.Method, option.Name).Select(x => x.ToCommandChoice())],
@@ -84,9 +100,9 @@ internal class CommandInfo : SlashCommandHandlerCaller
                 if (parameter.Type == null)
                     continue;
 
-                builder.AddOption(new Models.Commands.SlashCommandOption
+                options.Add(new Models.Commands.SlashCommandOption
                 {
-                    Autocomplete = parameter.Autocomplete != null || hasAutocomplete(new AutocompleteName(Info.Name, parameter.Name)),
+                    Autocomplete = parameter.Autocomplete != null || hasAutocomplete(new AutocompleteName(Info.Name, parameter.Name, SubCommand?.Name, SubCommandGroup?.Name)),
                     Name = parameter.Name,
                     ChannelTypes = parameter.Option?.ChannelTypes,
                     Choices = [.. parameter.GetChoices().Select(x => x.ToCommandChoice())],
@@ -101,7 +117,7 @@ internal class CommandInfo : SlashCommandHandlerCaller
             }
         }
 
-        return builder;
+        return [.. options];
     }
 
     internal static IEnumerable<CommandInfo> GetAll(Type commandClass)
@@ -141,8 +157,15 @@ internal class CommandInfo : SlashCommandHandlerCaller
                 : ParamFactoryInfo.CreateParameterResolver(param, commandClass.Name);
         }
 
+        var subCommand = method.GetCustomAttribute<SubCommandAttribute>();
+        var subCommandGroup = method.GetCustomAttribute<SubCommandGroupAttribute>();
+
+        if (subCommandGroup != null && subCommand == null)
+            throw new InvalidOperationException(
+                $"Method '{method.Name}' on '{method.DeclaringType!.FullName}' has [SubCommandGroup] without [SubCommand]. A [SubCommand] attribute is required when [SubCommandGroup] is present.");
+
         return new CommandInfo(commandClass, MethodCaller.From(method), new ParameterCollection(resolvers),
-            hasMethodOptions ? methodOptions : null);
+            hasMethodOptions ? methodOptions : null, subCommand, subCommandGroup);
     }
 
     public async Task ExecuteAsync(ICommandContext context, IServiceProvider services, CancellationToken token)

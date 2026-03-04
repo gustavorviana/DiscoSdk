@@ -38,7 +38,7 @@ internal class AutocompleteInfo(Type type, MethodInfo method, string commandName
             if (methodParams.Length != 1 || methodParams.First().ParameterType != contextType)
                 continue;
 
-            var name = new AutocompleteName(attribute.CommandName, attribute.OptionName);
+            var name = new AutocompleteName(attribute.CommandName, attribute.OptionName, attribute.Subcommand, attribute.SubcommandGroup);
 
             if (items.ContainsKey(name))
                 throw new InvalidOperationException($"Autocomplete \"{name}\" already exists.");

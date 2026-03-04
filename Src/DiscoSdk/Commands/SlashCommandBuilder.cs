@@ -506,7 +506,7 @@ public class SlashCommandBuilder()
             NameLocalizations = _nameLocalizations,
             Description = _description ?? throw new InvalidOperationException("Command description is required."),
             DescriptionLocalizations = _descriptionLocalizations,
-            Options = _options.Count > 0 ? [.. _options] : null,
+            Options = [.. _options],
             DefaultMemberPermissions = _defaultMemberPermissions,
             DmPermission = _dmPermission,
             Nsfw = _nsfw,
@@ -514,7 +514,7 @@ public class SlashCommandBuilder()
         };
     }
 
-    private static void ValidateCommandName(string name)
+    internal static void ValidateCommandName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Command name cannot be null, empty, or contain only whitespace.", nameof(name));
@@ -527,7 +527,7 @@ public class SlashCommandBuilder()
             throw new ArgumentException("Command name can only contain lowercase letters (a-z), numbers (0-9), hyphens (-), or underscores (_). Spaces and special characters are not allowed.", nameof(name));
     }
 
-    private static void ValidateCommandDescription(string description)
+    internal static void ValidateCommandDescription(string description)
     {
         if (string.IsNullOrWhiteSpace(description))
             throw new ArgumentException("Command description cannot be null, empty, or contain only whitespace.", nameof(description));
@@ -666,6 +666,10 @@ public class SlashCommandBuilder()
 
         if (string.IsNullOrWhiteSpace(option.Name))
             throw new ArgumentException("Option name cannot be null, empty, or contain only whitespace.", nameof(option));
+
+        // Reuse the same validation rules applied when adding options via the public API
+        // to ensure that options created via reflection also respect the no-spaces rule.
+        ValidateOptionName(option.Name);
 
         if (string.IsNullOrWhiteSpace(option.Description))
             throw new ArgumentException("Option description cannot be null, empty, or contain only whitespace.", nameof(option));

@@ -1,4 +1,4 @@
-﻿namespace DiscoSdk.Commands;
+namespace DiscoSdk.Commands;
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
 public sealed class SlashCommandAttribute : Attribute
@@ -15,6 +15,9 @@ public sealed class SlashCommandAttribute : Attribute
 
         if (string.IsNullOrWhiteSpace(description))
             throw new ArgumentException("Command description cannot be null, empty, or whitespace.", nameof(description));
+
+        SlashCommandBuilder.ValidateCommandName(name);
+        SlashCommandBuilder.ValidateCommandDescription(description);
 
         Name = name;
         Description = description;

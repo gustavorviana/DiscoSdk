@@ -5,10 +5,16 @@ namespace DiscoSdk.Commands;
 [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
 public sealed class SlashOptionAttribute(
     SlashCommandOptionType type,
+    string? name,
     string description,
-    string? name = null,
     bool required = false) : Attribute
 {
+    public SlashOptionAttribute(SlashCommandOptionType type, string description, bool required = false)
+        :this(type, null, description, required)
+    {
+
+    }
+
     private int? minLength = null;
     private int? maxLength = null;
 

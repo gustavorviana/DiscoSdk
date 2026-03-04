@@ -40,6 +40,36 @@ public interface ICommandUpdateAction : IRestAction
     ICommandUpdateAction AddGuild(Snowflake guildId, params SlashCommand[] commands);
 
     /// <summary>
+    /// Adds a global user context menu command to the queue using a fluent builder configuration.
+    /// </summary>
+    /// <param name="configure">A function that configures the user command builder.</param>
+    /// <returns>The current <see cref="ICommandUpdateAction"/> instance for method chaining.</returns>
+    ICommandUpdateAction AddGlobal(Func<UserCommandBuilder, UserCommandBuilder> configure);
+
+    /// <summary>
+    /// Adds a global message context menu command to the queue using a fluent builder configuration.
+    /// </summary>
+    /// <param name="configure">A function that configures the message command builder.</param>
+    /// <returns>The current <see cref="ICommandUpdateAction"/> instance for method chaining.</returns>
+    ICommandUpdateAction AddGlobal(Func<MessageCommandBuilder, MessageCommandBuilder> configure);
+
+    /// <summary>
+    /// Adds a guild-specific user context menu command to the queue using a fluent builder configuration.
+    /// </summary>
+    /// <param name="guildId">The guild ID where the command should be registered.</param>
+    /// <param name="configure">A function that configures the user command builder.</param>
+    /// <returns>The current <see cref="ICommandUpdateAction"/> instance for method chaining.</returns>
+    ICommandUpdateAction AddGuild(Snowflake guildId, Func<UserCommandBuilder, UserCommandBuilder> configure);
+
+    /// <summary>
+    /// Adds a guild-specific message context menu command to the queue using a fluent builder configuration.
+    /// </summary>
+    /// <param name="guildId">The guild ID where the command should be registered.</param>
+    /// <param name="configure">A function that configures the message command builder.</param>
+    /// <returns>The current <see cref="ICommandUpdateAction"/> instance for method chaining.</returns>
+    ICommandUpdateAction AddGuild(Snowflake guildId, Func<MessageCommandBuilder, MessageCommandBuilder> configure);
+
+    /// <summary>
     /// Marks that previously registered commands should be deleted before registering new ones.
     /// </summary>
     /// <returns>The current <see cref="ICommandUpdateAction"/> instance for method chaining.</returns>

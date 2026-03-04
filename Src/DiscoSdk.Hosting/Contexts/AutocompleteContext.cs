@@ -16,18 +16,32 @@ internal class AutocompleteContext : InteractionContextWrapper, IAutocompleteCon
 	public AutocompleteContext(DiscordClient client, InteractionWrapper interaction)
 		: base(client, interaction)
 	{
-		var options = interaction.Data?.Options;
-		var focused = FindFocusedOption(options);
-		CommandName = interaction.Data?.Name ?? string.Empty;
-		Subcommand = GetSubcommand(options);
-		FocusedOption = focused is not null
-			? new AutocompleteFocusedOption(focused.Name, focused.Type, focused.Value)
-			: throw new InvalidOperationException("Autocomplete interaction has no focused option.");
-		Options = CollectOtherOptions(options, focused);
+        var options = interaction.Data?.Options;
+        var focused = FindFocusedOption(options);
+        CommandName = interaction.Data?.Name ?? string.Empty;
+        ExtractSubcommandInfo(options, out var subcommandGroup, out var subcommand);
+        SubcommandGroup = subcommandGroup;
+        Subcommand = subcommand;
+
+        if (focused is null)
+        {
+            if (options is { Length: > 0 })
+            {
+                focused = options[0];
+            }
+            else
+            {
+                throw new InvalidOperationException("Autocomplete interaction has no focused option or options.");
+            }
+        }
+
+        FocusedOption = new AutocompleteFocusedOption(focused.Name, focused.Type, focused.Value);
+        Options = CollectOtherOptions(options, focused);
 	}
 
 	public string CommandName { get; }
 	public string? Subcommand { get; }
+	public string? SubcommandGroup { get; }
 	public IAutocompleteFocusedOption FocusedOption { get; }
 	public IReadOnlyCollection<IAutocompleteOptionValue> Options { get; }
 
@@ -62,23 +76,29 @@ internal class AutocompleteContext : InteractionContextWrapper, IAutocompleteCon
 		return null;
 	}
 
-	private static string? GetSubcommand(InteractionOptionModel[]? options)
+	private static void ExtractSubcommandInfo(
+		InteractionOptionModel[]? options,
+		out string? subcommandGroup,
+		out string? subcommand)
 	{
-		if (options is null)
-			return null;
+		subcommandGroup = null;
+		subcommand = null;
 
-		foreach (var opt in options)
+		if (options is null or { Length: 0 })
+			return;
+
+		var first = options[0];
+
+		if (first.Type == SlashCommandOptionType.SubCommandGroup)
 		{
-			if (opt.Type == SlashCommandOptionType.SubCommand)
-				return opt.Name;
-			if (opt.Type == SlashCommandOptionType.SubCommandGroup && opt.Options is { Length: > 0 } nested)
-			{
-				var sub = GetSubcommand(nested);
-				if (sub is not null)
-					return sub;
-			}
+			subcommandGroup = first.Name;
+			if (first.Options is { Length: > 0 } nested && nested[0].Type == SlashCommandOptionType.SubCommand)
+				subcommand = nested[0].Name;
 		}
-		return null;
+		else if (first.Type == SlashCommandOptionType.SubCommand)
+		{
+			subcommand = first.Name;
+		}
 	}
 
 	private static IReadOnlyCollection<IAutocompleteOptionValue> CollectOtherOptions(

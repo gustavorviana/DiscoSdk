@@ -19,6 +19,11 @@ public interface IAutocompleteContext : IInteractionContext
 	string? Subcommand { get; }
 
 	/// <summary>
+	/// Gets the subcommand group name when the command has subcommand groups; otherwise null.
+	/// </summary>
+	string? SubcommandGroup { get; }
+
+	/// <summary>
 	/// Gets the option that is currently focused (the field being autocompleted).
 	/// </summary>
 	IAutocompleteFocusedOption FocusedOption { get; }

@@ -375,10 +375,23 @@ internal class DiscordEventDispatcher
                         (IAutocompleteContext)interactionContext);
 
                 if (interaction.Type == InteractionType.ApplicationCommand)
-                    await HandleAllAsync<IApplicationCommandHandler, ICommandContext>(
-                        interactionWrapper.Handle,
-                        scoped.ServiceProvider,
-                        (ICommandContext)interactionContext);
+                {
+                    if (interaction.Data?.Type == ApplicationCommandType.User)
+                        await HandleAllAsync<IUserCommandHandler, IUserCommandContext>(
+                            interactionWrapper.Handle,
+                            scoped.ServiceProvider,
+                            (IUserCommandContext)interactionContext);
+                    else if (interaction.Data?.Type == ApplicationCommandType.Message)
+                        await HandleAllAsync<IMessageCommandHandler, IMessageCommandContext>(
+                            interactionWrapper.Handle,
+                            scoped.ServiceProvider,
+                            (IMessageCommandContext)interactionContext);
+                    else
+                        await HandleAllAsync<IApplicationCommandHandler, ICommandContext>(
+                            interactionWrapper.Handle,
+                            scoped.ServiceProvider,
+                            (ICommandContext)interactionContext);
+                }
 
                 if (interaction.Type == InteractionType.ModalSubmit)
                     await HandleAllAsync<IModalSubmitHandler, IModalContext>(
@@ -408,13 +421,20 @@ internal class DiscordEventDispatcher
         }
     }
 
-    private InteractionContextWrapper GetInteractionContext(InteractionWrapper interactionWrapper)
+    internal InteractionContextWrapper GetInteractionContext(InteractionWrapper interactionWrapper)
     {
         if (interactionWrapper.Type == InteractionType.ApplicationCommandAutocomplete)
             return new AutocompleteContext(_discordClient, interactionWrapper);
 
         if (interactionWrapper.Type == InteractionType.ApplicationCommand)
+        {
+            var commandType = interactionWrapper.RawInteraction.Data?.Type;
+            if (commandType == ApplicationCommandType.User)
+                return new UserCommandContext(_discordClient, interactionWrapper);
+            if (commandType == ApplicationCommandType.Message)
+                return new MessageCommandContext(_discordClient, interactionWrapper);
             return new CommandContext(_discordClient, interactionWrapper);
+        }
 
         if (interactionWrapper.Type == InteractionType.ModalSubmit)
             return new ModalContext(_discordClient, interactionWrapper);

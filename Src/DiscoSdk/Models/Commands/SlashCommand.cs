@@ -118,4 +118,36 @@ public class SlashCommand : IEquatable<SlashCommand?>
     {
         return !(left == right);
     }
+
+    public override string ToString()
+    {
+        var sb = new System.Text.StringBuilder(128);
+
+        sb.Append('/').Append(Name);
+
+        if (Type.HasValue)
+            sb.Append(" (").Append(Type.Value).Append(')');
+
+        if (!string.IsNullOrWhiteSpace(Description))
+            sb.Append(" - ").Append(Description.Trim());
+
+        var details = new List<string>(4);
+
+        if (DefaultMemberPermissions is not null)
+            details.Add($"perm={DefaultMemberPermissions}");
+
+        if (DmPermission.HasValue)
+            details.Add($"dm={DmPermission.Value}");
+
+        if (Nsfw.HasValue)
+            details.Add($"nsfw={Nsfw.Value}");
+
+        if (Version is not null)
+            details.Add($"v={Version}");
+
+        if (details.Count > 0)
+            sb.Append(" { ").Append(string.Join("; ", details)).Append(" }");
+
+        return sb.ToString();
+    }
 }

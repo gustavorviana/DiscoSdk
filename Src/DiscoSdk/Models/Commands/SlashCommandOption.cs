@@ -1,5 +1,6 @@
 ﻿using DiscoSdk.Models.Enums;
 using DiscoSdk.Utils;
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Commands;
@@ -146,5 +147,87 @@ public class SlashCommandOption : IEquatable<SlashCommandOption?>
     public static bool operator !=(SlashCommandOption? left, SlashCommandOption? right)
     {
         return !(left == right);
+    }
+
+    public override string ToString()
+    {
+        var sb = new StringBuilder(256);
+
+        // Main signature-like line
+        sb.Append('<').Append(Name).Append(": ").Append(Type);
+
+        if (Required == true) sb.Append(", required");
+        if (Autocomplete == true) sb.Append(", autocomplete");
+
+        sb.Append('>');
+
+        // Description
+        if (!string.IsNullOrWhiteSpace(Description))
+        {
+            sb.Append(" - ").Append(Description.Trim());
+        }
+
+        // Constraints/details
+        var details = new List<string>(8);
+
+        if (Type == SlashCommandOptionType.Channel && ChannelTypes is { Length: > 0 })
+            details.Add($"channels=[{string.Join(", ", ChannelTypes)}]");
+
+        if (Type == SlashCommandOptionType.String)
+        {
+            if (MinLength.HasValue) details.Add($"minLen={MinLength.Value}");
+            if (MaxLength.HasValue) details.Add($"maxLen={MaxLength.Value}");
+        }
+
+        if (Type == SlashCommandOptionType.Integer || Type == SlashCommandOptionType.Number)
+        {
+            if (MinValue is not null) details.Add($"min={MinValue}");
+            if (MaxValue is not null) details.Add($"max={MaxValue}");
+        }
+
+        if (Choices is { Length: > 0 })
+            details.Add($"choices={FormatChoices(Choices)}");
+
+        if (Options is { Length: > 0 })
+            details.Add($"options={FormatNestedOptions(Options)}");
+
+        if (details.Count > 0)
+        {
+            sb.Append(" { ").Append(string.Join("; ", details)).Append(" }");
+        }
+
+        return sb.ToString();
+
+        static string FormatChoices(SlashCommandOptionChoice[] choices)
+        {
+            // Example: ["foo"=foo, "bar"=bar]
+            var parts = new string[choices.Length];
+            for (var i = 0; i < choices.Length; i++)
+            {
+                var c = choices[i];
+                parts[i] = $"{Escape(c.Name)}={c.Value}";
+            }
+            return "[" + string.Join(", ", parts) + "]";
+        }
+
+        static string FormatNestedOptions(SlashCommandOption[] options)
+        {
+            // Example: (<user:User, required>, <reason:String>)
+            var parts = new string[options.Length];
+            for (var i = 0; i < options.Length; i++)
+            {
+                parts[i] = options[i].ToString();
+            }
+            return "(" + string.Join(", ", parts) + ")";
+        }
+
+        static string Escape(string? s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return "";
+
+            // Keep it simple; avoid multi-line logs.
+            return s.Replace("\r", " ").Replace("\n", " ").Trim();
+        }
     }
 }
