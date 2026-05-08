@@ -1,12 +1,16 @@
-﻿using DiscoSdk.Commands.Comparisions;
+using DiscoSdk.Commands.Comparisions;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Commands;
+using DiscoSdk.Models.Enums;
 
 namespace DiscoSdk.Commands;
 
 public sealed class CommandContainer
 {
-    private static readonly  SlashCommandComparer _comparer = new SlashCommandComparer();
+    private static readonly SlashCommandComparer _comparer = new SlashCommandComparer();
+
+    private const int MaxUserContextMenuCommands = 15;
+    private const int MaxMessageContextMenuCommands = 15;
     internal HashSet<SlashCommand> GlobalCommands { get; } = new HashSet<SlashCommand>(_comparer);
     internal Dictionary<Snowflake, HashSet<SlashCommand>> GuildCommands { get; } = [];
 
@@ -110,7 +114,30 @@ public sealed class CommandContainer
 
     private static void AddCommands(HashSet<SlashCommand> commands, IEnumerable<SlashCommand> newCommands)
     {
-        foreach (var newCommand in newCommands)
+        if (commands is null)
+            throw new ArgumentNullException(nameof(commands));
+
+        var pending = newCommands?.Where(c => c != null).ToList()
+                     ?? throw new ArgumentNullException(nameof(newCommands));
+
+        if (pending.Count == 0)
+            return;
+
+        var existingUser = commands.Count(c => c.Type == ApplicationCommandType.User);
+        var existingMessage = commands.Count(c => c.Type == ApplicationCommandType.Message);
+
+        var incomingUser = pending.Count(c => c.Type == ApplicationCommandType.User);
+        var incomingMessage = pending.Count(c => c.Type == ApplicationCommandType.Message);
+
+        if (existingUser + incomingUser > MaxUserContextMenuCommands)
+            throw new InvalidOperationException(
+                $"User context menu command limit of {MaxUserContextMenuCommands} exceeded for this scope.");
+
+        if (existingMessage + incomingMessage > MaxMessageContextMenuCommands)
+            throw new InvalidOperationException(
+                $"Message context menu command limit of {MaxMessageContextMenuCommands} exceeded for this scope.");
+
+        foreach (var newCommand in pending)
             if (!commands.Add(newCommand))
                 throw new InvalidOperationException(
                     $"A command with the same identity is already registered: '{newCommand.Name}'.");

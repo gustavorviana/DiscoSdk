@@ -156,4 +156,50 @@ public class CommandContainerContextMenuTests
 
         Assert.Same(container, result);
     }
+
+    [Fact]
+    public void AddGlobal_UserContextMenus_EnforcesMaxLimit()
+    {
+        var container = new CommandContainer();
+
+        for (var i = 0; i < 15; i++)
+        {
+            var name = $"user_cmd_{i}";
+            container.AddGlobal((UserCommandBuilder b) => b.WithName(name));
+        }
+
+        Assert.Throws<InvalidOperationException>(() =>
+            container.AddGlobal((UserCommandBuilder b) => b.WithName("user_cmd_overflow")));
+    }
+
+    [Fact]
+    public void AddGlobal_MessageContextMenus_EnforcesMaxLimit()
+    {
+        var container = new CommandContainer();
+
+        for (var i = 0; i < 15; i++)
+        {
+            var name = $"msg_cmd_{i}";
+            container.AddGlobal((MessageCommandBuilder b) => b.WithName(name));
+        }
+
+        Assert.Throws<InvalidOperationException>(() =>
+            container.AddGlobal((MessageCommandBuilder b) => b.WithName("msg_cmd_overflow")));
+    }
+
+    [Fact]
+    public void AddGuild_UserContextMenus_EnforcesMaxLimitPerGuild()
+    {
+        var container = new CommandContainer();
+        var guildId = new Snowflake(999);
+
+        for (var i = 0; i < 15; i++)
+        {
+            var name = $"guild_user_cmd_{i}";
+            container.AddGuild(guildId, (UserCommandBuilder b) => b.WithName(name));
+        }
+
+        Assert.Throws<InvalidOperationException>(() =>
+            container.AddGuild(guildId, (UserCommandBuilder b) => b.WithName("guild_user_cmd_overflow")));
+    }
 }
