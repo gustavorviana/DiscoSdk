@@ -14,10 +14,17 @@ namespace DiscoSdk.Hosting.Rest.RateLimit;
 /// This is intentionally separate from per-route/per-bucket rate limiting.
 /// </para>
 /// </summary>
-internal sealed class GlobalRateLimitManager(ILogger logger)
+internal sealed class GlobalRateLimitManager
 {
     private readonly SemaphoreSlim _globalGate = new(1, 1);
+    private readonly ILogger _logger;
     private long _globalUntilMs;
+
+    public GlobalRateLimitManager(ILogger logger)
+    {
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
+    }
 
     /// <summary>
     /// Waits until the current global rate limit window (if any) has elapsed.
@@ -81,6 +88,8 @@ internal sealed class GlobalRateLimitManager(ILogger logger)
     /// </returns>
     public async Task<bool> ReadAndWaitForGlobalAsync(HttpResponseMessage message, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(message);
+
         if (message.StatusCode != System.Net.HttpStatusCode.TooManyRequests)
             return false;
 
@@ -88,7 +97,7 @@ internal sealed class GlobalRateLimitManager(ILogger logger)
         if (retryAfterSeconds == null)
             return false;
 
-        logger.Log(LogLevel.Warning, $"Global rate limit encountered. Retrying after {retryAfterSeconds.Value} seconds.");
+        _logger.Log(LogLevel.Warning, $"Global rate limit encountered. Retrying after {retryAfterSeconds.Value} seconds.");
 
         var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var candidateUntilMs = nowMs + (long)Math.Ceiling(retryAfterSeconds.Value * 1000.0);

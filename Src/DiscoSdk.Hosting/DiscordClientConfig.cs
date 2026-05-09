@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Hosting.Gateway;
+using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Logging;
 
 namespace DiscoSdk.Hosting;

@@ -5,6 +5,13 @@ namespace DiscoSdk.Hosting.Rest.RateLimit;
 
 internal sealed class BucketRequestQueue : IDisposable
 {
+    /// <summary>
+    /// Fallback backoff applied to a 429 response that did not include a usable
+    /// <c>X-RateLimit-Reset-After</c> header. Conservative on purpose — better to wait an
+    /// extra second than to spam Discord during a malformed-response window.
+    /// </summary>
+    private static readonly TimeSpan DefaultRateLimitBackoff = TimeSpan.FromSeconds(1);
+
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly GlobalRateLimitManager _globalRateLimiter;
     private readonly Channel<WorkItem> _channel;
@@ -15,7 +22,7 @@ internal sealed class BucketRequestQueue : IDisposable
     private string _bucket;
     private string? _learnedHash;
     private int _remainingRequests;
-    private bool _disposed;
+    private volatile bool _disposed;
 
     public BucketRequestQueue(
         GlobalRateLimitManager globalRateLimiter,
@@ -25,8 +32,14 @@ internal sealed class BucketRequestQueue : IDisposable
         int bucketQueueLimit,
         Action<string>? onHashLearned = null)
     {
-        _globalRateLimiter = globalRateLimiter ?? throw new ArgumentNullException(nameof(globalRateLimiter));
-        _http = http ?? throw new ArgumentNullException(nameof(http));
+        ArgumentNullException.ThrowIfNull(globalRateLimiter);
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(http);
+        ArgumentException.ThrowIfNullOrWhiteSpace(bucket);
+        ArgumentOutOfRangeException.ThrowIfLessThan(bucketQueueLimit, 1);
+
+        _globalRateLimiter = globalRateLimiter;
+        _http = http;
         _logger = logger;
         _bucket = bucket;
         _onHashLearned = onHashLearned;
@@ -38,7 +51,10 @@ internal sealed class BucketRequestQueue : IDisposable
             SingleWriter = false
         });
 
-        _ = Task.Run(ProcessQueueAsync, _cancellationTokenSource.Token);
+        // Schedule the worker on the thread pool. The cancellation token argument is omitted
+        // intentionally — Task.Run only checks it before the task starts, and the worker has
+        // its own cancellation handling via _cancellationTokenSource inside the loop.
+        _ = Task.Run(ProcessQueueAsync);
     }
 
     /// <summary>
@@ -80,7 +96,7 @@ internal sealed class BucketRequestQueue : IDisposable
         }
         catch (Exception ex)
         {
-            _logger?.Log(LogLevel.Error, $"Bucket \"{_bucket}\" queue loop terminated unexpectedly: {ex}");
+            _logger.Log(LogLevel.Error, $"Bucket \"{_bucket}\" queue loop terminated unexpectedly: {ex}");
         }
     }
 
@@ -109,7 +125,13 @@ internal sealed class BucketRequestQueue : IDisposable
 
             var rateLimit = ParseHeaders(response);
             _remainingRequests = rateLimit.Remaining ?? 0;
-            _resetTime = rateLimit.ResetAt;
+
+            // Bind the reset deadline to the local clock using the relative X-RateLimit-Reset-After
+            // header. The absolute X-RateLimit-Reset header would require client/Discord clocks to be
+            // in sync — at fleet scale (multi-region, drifting clocks) that assumption is unsafe.
+            _resetTime = rateLimit.ResetAfter is { } resetAfter
+                ? DateTimeOffset.UtcNow + TimeSpan.FromSeconds(resetAfter)
+                : DateTimeOffset.UtcNow;
 
             if (rateLimit.Bucket is { Length: > 0 } observedHash && observedHash != _learnedHash)
             {
@@ -118,7 +140,7 @@ internal sealed class BucketRequestQueue : IDisposable
             }
 
             if (_remainingRequests == 0)
-                _logger.Log(LogLevel.Warning, $"Bucket \"{_bucket}\" rate limit reached. Next reset at {_resetTime}.");
+                _logger.Log(LogLevel.Warning, $"Bucket \"{_bucket}\" rate limit reached. Resets in {(_resetTime - DateTimeOffset.UtcNow).TotalSeconds:F2}s.");
 
             if (response.StatusCode != System.Net.HttpStatusCode.TooManyRequests)
             {
@@ -126,8 +148,13 @@ internal sealed class BucketRequestQueue : IDisposable
                 return;
             }
 
-            if (rateLimit.ResetAfter.HasValue)
-                await Task.Delay(TimeSpan.FromSeconds(rateLimit.ResetAfter.Value), workItem.CancellationToken);
+            // Always back off before retrying a 429 — if Discord (or an intermediary) omitted
+            // the Reset-After header, a small fixed delay is far safer than retrying immediately
+            // and piling more 429s onto the bucket.
+            var retryDelay = rateLimit.ResetAfter is { } retryAfterSeconds
+                ? TimeSpan.FromSeconds(retryAfterSeconds)
+                : DefaultRateLimitBackoff;
+            await Task.Delay(retryDelay, workItem.CancellationToken);
 
             response.Dispose();
         }
@@ -137,17 +164,12 @@ internal sealed class BucketRequestQueue : IDisposable
 
     private static DiscordRateLimitHeader ParseHeaders(HttpResponseMessage response)
     {
-        var resetAfter = response.GetDouble("X-RateLimit-Reset-After");
-        var reset = (long)((response.GetDouble("X-RateLimit-Reset") ?? 0) * 1000);
-        return new DiscordRateLimitHeader
-        {
-            Bucket = response.GetString("X-RateLimit-Bucket"),
-            Limit = response.GetInt("X-RateLimit-Limit"),
-            Remaining = response.GetInt("X-RateLimit-Remaining"),
-            Scope = response.GetString("X-RateLimit-Scope"),
-            ResetAfter = resetAfter,
-            ResetAt = DateTimeOffset.FromUnixTimeMilliseconds(reset)
-        };
+        return new DiscordRateLimitHeader(
+            Bucket: response.GetString("X-RateLimit-Bucket"),
+            Limit: response.GetInt("X-RateLimit-Limit"),
+            Remaining: response.GetInt("X-RateLimit-Remaining"),
+            ResetAfter: response.GetDouble("X-RateLimit-Reset-After"),
+            Scope: response.GetString("X-RateLimit-Scope"));
     }
 
     public async Task<HttpResponseMessage> ExecuteAsync(Func<HttpRequestMessage> request, CancellationToken cancellationToken)
@@ -156,7 +178,18 @@ internal sealed class BucketRequestQueue : IDisposable
         ArgumentNullException.ThrowIfNull(request);
 
         var item = new WorkItem(request, cancellationToken, _cancellationTokenSource.Token);
-        await _channel.Writer.WriteAsync(item, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _channel.Writer.WriteAsync(item, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // WriteAsync failed (cancellation while backpressured, channel completed, etc.) —
+            // the WorkItem never reached the worker, so dispose its linked CTS / registration
+            // here to avoid leaking them onto the caller's cancellation token.
+            item.DiscardCancelled();
+            throw;
+        }
 
         return await item.Task.ConfigureAwait(false);
     }
@@ -181,7 +214,10 @@ internal sealed class BucketRequestQueue : IDisposable
         /// <see cref="TaskCompletionSource{TResult}"/> backing <see cref="Task"/> so the awaiting
         /// caller is never left hanging.
         /// </summary>
-        public WorkItem(Func<HttpRequestMessage> requestFun, CancellationToken callerToken, CancellationToken queueToken)
+        public WorkItem(
+            Func<HttpRequestMessage> requestFun,
+            CancellationToken callerToken,
+            CancellationToken queueToken)
         {
             _requestFun = requestFun;
             _linkedCts = CancellationTokenSource.CreateLinkedTokenSource(callerToken, queueToken);
@@ -200,8 +236,19 @@ internal sealed class BucketRequestQueue : IDisposable
 
         public async Task<HttpResponseMessage> SendAsync(HttpClient httpClient)
         {
-            using var request = _requestFun();
-            return await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, _linkedCts.Token);
+            // Transient failures (network errors, 5xx, 408) are handled by the process-wide
+            // resilience pipeline. The request is rebuilt on every attempt because
+            // HttpRequestMessage is single-use. Discord-specific 429 handling stays at the
+            // bucket-queue level so it is never double-counted.
+            return await TransientRetryPolicy.DefaultPipeline.ExecuteAsync(
+                async ct =>
+                {
+                    using var request = _requestFun();
+                    return await httpClient
+                        .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct)
+                        .ConfigureAwait(false);
+                },
+                _linkedCts.Token).ConfigureAwait(false);
         }
 
         public void Complete(HttpResponseMessage response)
@@ -236,7 +283,7 @@ internal sealed class BucketRequestQueue : IDisposable
     #endregion
 
     #region IDisposable
-    private void Dispose(bool disposing)
+    public void Dispose()
     {
         if (_disposed)
             return;
@@ -250,20 +297,7 @@ internal sealed class BucketRequestQueue : IDisposable
         // faulting their TCS with OperationCanceledException so callers awaiting the
         // request observe shutdown immediately.
         _cancellationTokenSource.Cancel();
-
-        if (disposing)
-            _cancellationTokenSource.Dispose();
-    }
-
-    ~BucketRequestQueue()
-    {
-        Dispose(disposing: false);
-    }
-
-    void IDisposable.Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        _cancellationTokenSource.Dispose();
     }
     #endregion
 }

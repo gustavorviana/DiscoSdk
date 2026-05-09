@@ -279,7 +279,7 @@ public class DiscordClientBuilder
             EventProcessorMaxConcurrency = _eventProcessorMaxConcurrency,
             EventProcessorQueueCapacity = _eventProcessorQueueCapacity,
             ReconnectDelay = _reconnectDelay ?? TimeSpan.FromSeconds(5),
-            GatewayCompressMode = _gatewayCompressMode ?? GatewayCompressMode.ZlibStream
+            GatewayCompressMode = _gatewayCompressMode ?? GatewayCompressMode.ZlibStream,
         };
 
         var jsonOptions = _jsonOptions ?? DiscoJson.Create();

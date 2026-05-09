@@ -187,7 +187,7 @@ public class BucketRequestQueueTests
         Assert.False(third.IsCompleted, "Third should be queued");
 
         // Act — simulate bot shutdown by disposing the queue.
-        ((IDisposable)queue).Dispose();
+        queue.Dispose();
 
         // Assert — every pending awaiter observes cancellation, including the in-flight one.
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => first)
@@ -343,11 +343,63 @@ public class BucketRequestQueueTests
         var handler = new StubHttpMessageHandler(_ => Ok());
         using var http = new HttpClient(handler);
         var queue = NewQueue(http);
-        ((IDisposable)queue).Dispose();
+        queue.Dispose();
 
         // Act & Assert
         await Assert.ThrowsAsync<ObjectDisposedException>(async () =>
             await queue.ExecuteAsync(NewRequest, CancellationToken.None));
+    }
+
+    /// <summary>
+    /// Verifies the transient-failure retry policy promotes a flaky 5xx to a successful
+    /// outcome without the bucket-queue retry loop being involved.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsync_OnTransient5xxFollowedBySuccess_RetriesAndCompletesAsync()
+    {
+        // Arrange — first response is 503 (transient), second is 200.
+        var responses = new Queue<HttpResponseMessage>(
+        [
+            new HttpResponseMessage(HttpStatusCode.ServiceUnavailable) { Content = new StringContent("{}") },
+            Ok()
+        ]);
+        var handler = new StubHttpMessageHandler(_ => responses.Dequeue());
+        using var http = new HttpClient(handler);
+        using var queue = NewQueue(http);
+
+        // Act
+        var response = await queue.ExecuteAsync(NewRequest, CancellationToken.None);
+
+        // Assert — Polly retried the 5xx and the eventual 200 was returned.
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(2, handler.RequestCount);
+    }
+
+    /// <summary>
+    /// Verifies the transient policy does <b>not</b> retry on 429 — that path is owned by the
+    /// bucket-queue retry loop. Otherwise the two layers would double-retry and burn the
+    /// rate-limit budget unnecessarily.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsync_On429_TransientPolicyDoesNotRetryAsync()
+    {
+        // Arrange — first response is bucket-429 (no global header), second is 200.
+        var responses = new Queue<HttpResponseMessage>(
+        [
+            CreateBucket429(resetAfterSeconds: 0.01),
+            Ok()
+        ]);
+        var handler = new StubHttpMessageHandler(_ => responses.Dequeue());
+        using var http = new HttpClient(handler);
+        using var queue = NewQueue(http);
+
+        // Act
+        var response = await queue.ExecuteAsync(NewRequest, CancellationToken.None);
+
+        // Assert — exactly two requests: one 429, one OK. If the transient policy were also
+        // retrying on 429, we would see >2 attempts before the bucket loop saw a clean response.
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(2, handler.RequestCount);
     }
 
     private static HttpResponseMessage CreateBucket429(double resetAfterSeconds)

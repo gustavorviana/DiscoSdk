@@ -112,7 +112,11 @@ namespace DiscoSdk.Hosting
             SerializerOptions = services.GetRequiredService<JsonSerializerOptions>();
             Logger = services.GetRequiredService<ILogger>();
             _eventDispatcher = new DiscordEventDispatcher(this);
-            HttpClient = new DiscordRestClient(config.Token, new Uri("https://discord.com/api/v10"), SerializerOptions, Logger);
+            HttpClient = new DiscordRestClient(
+                config.Token,
+                new Uri("https://discord.com/api/v10"),
+                SerializerOptions,
+                Logger);
             InteractionClient = new InteractionClient(this);
             MessageClient = new MessageClient(HttpClient);
             ChannelClient = new ChannelClient(HttpClient, MessageClient);

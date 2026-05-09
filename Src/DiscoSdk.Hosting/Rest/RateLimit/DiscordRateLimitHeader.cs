@@ -1,16 +1,13 @@
-﻿namespace DiscoSdk.Hosting.Rest.RateLimit;
+namespace DiscoSdk.Hosting.Rest.RateLimit;
 
-internal class DiscordRateLimitHeader
-{
-    public string? Bucket { get; set; }
-    public int? Limit { get; set; }
-    public int? Remaining { get; set; }
-    public double? ResetAfter { get; set; }
-    public string? Scope { get; set; }
-    public DateTimeOffset ResetAt { get; set; }
-
-    public override string ToString()
-    {
-        return $"BucketHash={Bucket}, Limit={Limit}, Remaining={Remaining}, Scope={Scope}";
-    }
-}
+/// <summary>
+/// Strongly-typed view of Discord's rate-limit response headers. Modeled as a record struct
+/// because every Discord response builds one — keeping it on the stack avoids per-request
+/// heap allocations at fleet scale.
+/// </summary>
+internal readonly record struct DiscordRateLimitHeader(
+    string? Bucket,
+    int? Limit,
+    int? Remaining,
+    double? ResetAfter,
+    string? Scope);

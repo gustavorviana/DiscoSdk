@@ -4,6 +4,7 @@ using DiscoSdk.Models;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Requests.Messages;
 using DiscoSdk.Rest;
+using System.Text;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
 
@@ -137,14 +138,15 @@ internal sealed class WebhookMessageClient(IDiscordRestClient client)
 
     private static string AppendQuery(string path, bool wait, Snowflake? threadId)
     {
+        var sb = new StringBuilder(path.Length + 32).Append(path);
         var hasQuery = false;
 
-        path = AppendQueryParam(path, "wait", wait ? "true" : "false", ref hasQuery);
+        AppendQueryParam(sb, "wait", wait ? "true" : "false", ref hasQuery);
 
         if (threadId.HasValue && threadId.Value != default)
-            path = AppendQueryParam(path, "thread_id", threadId.Value.ToString(), ref hasQuery);
+            AppendQueryParam(sb, "thread_id", threadId.Value.ToString(), ref hasQuery);
 
-        return path;
+        return sb.ToString();
     }
 
     private static string AppendThreadQueryIfPresent(string path, Snowflake? threadId)
@@ -152,17 +154,18 @@ internal sealed class WebhookMessageClient(IDiscordRestClient client)
         if (!threadId.HasValue || threadId.Value == default)
             return path;
 
+        var sb = new StringBuilder(path.Length + 32).Append(path);
         var hasQuery = false;
-        return AppendQueryParam(path, "thread_id", threadId.Value.ToString(), ref hasQuery);
+        AppendQueryParam(sb, "thread_id", threadId.Value.ToString(), ref hasQuery);
+        return sb.ToString();
     }
 
-    private static string AppendQueryParam(string path, string name, string value, ref bool hasQuery)
+    private static void AppendQueryParam(StringBuilder sb, string name, string value, ref bool hasQuery)
     {
-        path += hasQuery ? "&" : "?";
-        path += name;
-        path += "=";
-        path += value;
+        sb.Append(hasQuery ? '&' : '?');
+        sb.Append(name);
+        sb.Append('=');
+        sb.Append(value);
         hasQuery = true;
-        return path;
     }
 }

@@ -15,6 +15,7 @@ internal static class ClientUtils
         IReadOnlyList<MessageFile> files,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(method);
         ArgumentNullException.ThrowIfNull(payload);
         ArgumentNullException.ThrowIfNull(files);

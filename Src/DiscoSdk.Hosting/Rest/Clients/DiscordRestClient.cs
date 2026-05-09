@@ -5,7 +5,6 @@ using DiscoSdk.Rest;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
@@ -20,9 +19,33 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     private readonly ConcurrentDictionary<string, BucketRequestQueue> _buckets = [];
     private readonly ConcurrentDictionary<string, string> _routeToHash = [];
     private readonly GlobalRateLimitManager _globalRateLimiter;
-    private readonly HttpClient _http = new();
+
+    /// <summary>
+    /// Process-wide HTTP transport handler shared across every <see cref="DiscordRestClient"/>
+    /// instance. The single connection pool maximises HTTP/2 stream reuse, lets DNS refresh on
+    /// every <see cref="SocketsHttpHandler.PooledConnectionLifetime"/> tick (so Discord failovers
+    /// don't pin us to a stale IP), and enables transparent <c>gzip / deflate / brotli</c>
+    /// decoding of responses. The handler is never disposed — it lives for the process lifetime.
+    /// </summary>
+    private static readonly SocketsHttpHandler s_handler = new()
+    {
+        AutomaticDecompression = DecompressionMethods.All,
+        PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+        EnableMultipleHttp2Connections = true,
+    };
+
+    // disposeHandler:false because s_handler is static and shared.
+    private readonly HttpClient _http = new(s_handler, disposeHandler: false)
+    {
+        // Negotiate HTTP/2 with HTTP/1.1 fallback. Discord supports HTTP/2 today; multiplexing
+        // many concurrent requests over a single TCP connection cuts handshake overhead in
+        // bursts and reduces socket churn at fleet scale.
+        DefaultRequestVersion = HttpVersion.Version20,
+        DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower,
+    };
+
     private readonly ILogger _logger;
-    private bool _disposed;
+    private volatile bool _disposed;
 
     public JsonSerializerOptions JsonOptions { get; }
 
@@ -48,6 +71,10 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <exception cref="ArgumentException">Thrown when the bot token is null or whitespace.</exception>
     public DiscordRestClient(Uri apiUri, JsonSerializerOptions jsonOptions, ILogger logger, TimeSpan? timeout = null)
     {
+        ArgumentNullException.ThrowIfNull(apiUri);
+        ArgumentNullException.ThrowIfNull(jsonOptions);
+        ArgumentNullException.ThrowIfNull(logger);
+
         if (timeout.HasValue)
             _http.Timeout = timeout.Value;
 
@@ -75,14 +102,18 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
     public async Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(method);
+
         using var res = await GetOrCreateBucket(path, method).ExecuteAsync(() => CreateRequestWithBody(path, method, body), ct);
         if (res.IsSuccessStatusCode)
         {
             if (res.StatusCode == HttpStatusCode.NoContent)
                 return default!;
 
-            var result = await res.Content.ReadAsStringAsync(ct);
-            var data = JsonSerializer.Deserialize<T>(result, JsonOptions);
+            // Stream-based deserialization avoids materialising the response body as a string before parsing —
+            // at fleet scale the duplicate allocation per response is meaningful GC pressure.
+            await using var stream = await res.Content.ReadAsStreamAsync(ct);
+            var data = await JsonSerializer.DeserializeAsync<T>(stream, JsonOptions, ct);
             return data ?? throw new DiscordApiException(res.StatusCode, "Discord API returned empty JSON.", null);
         }
 
@@ -91,6 +122,8 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
 
     public async Task SendAsync(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(method);
+
         using var res = await GetOrCreateBucket(path, method).ExecuteAsync(() => CreateRequestWithBody(path, method, body), ct);
         if (res.IsSuccessStatusCode || res.StatusCode == HttpStatusCode.NoContent)
             return;
@@ -108,6 +141,8 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
     public async Task SendAsync(DiscordRoute path, HttpMethod method, CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(method);
+
         using var res = await GetOrCreateBucket(path, method).ExecuteAsync(() => new HttpRequestMessage(method, path.ToString()), ct);
 
         if (res.IsSuccessStatusCode)
@@ -124,15 +159,18 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         {
             case null:
                 break;
-            case HttpContent content:
-                req.Content = content;
-                break;
             case Func<HttpContent> contentFactory:
+                // Caller-supplied factory rebuilds the HttpContent on every attempt; required for
+                // multipart uploads (single-use streams) and any retry-safe arbitrary content.
                 req.Content = contentFactory();
                 break;
             default:
-                var json = JsonSerializer.Serialize(body, JsonOptions);
-                req.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                // Serialise straight to UTF-8 bytes — avoids the intermediate UTF-16 string +
+                // re-encoding pass that StringContent would force.
+                var bytes = JsonSerializer.SerializeToUtf8Bytes(body, JsonOptions);
+                var content = new ByteArrayContent(bytes);
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json") { CharSet = "utf-8" };
+                req.Content = content;
                 break;
         }
 
@@ -206,16 +244,27 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         if (_disposed)
             return;
 
+        _disposed = true;
+
         if (disposing)
         {
+            // Dispose every bucket defensively — a single bucket throwing during Dispose must
+            // not prevent the rest from being released, otherwise shutdown leaks worker tasks.
             foreach (var bucket in _buckets.Values)
-                (bucket as IDisposable)?.Dispose();
+            {
+                try
+                {
+                    bucket.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    _logger.Log(LogLevel.Warning, $"Bucket dispose threw during shutdown: {ex}");
+                }
+            }
 
             _buckets.Clear();
             _http.Dispose();
         }
-
-        _disposed = true;
     }
 
     public void Dispose()

@@ -33,8 +33,12 @@ public class DiscordRestClientTests
         Assert.Equal(HttpMethod.Get, req.Method);
     }
 
+    /// <summary>
+    /// Verifies the JSON body path produces UTF-8 <see cref="ByteArrayContent"/> with the
+    /// correct content-type (no UTF-16 string + re-encoding pass via <see cref="StringContent"/>).
+    /// </summary>
     [Fact]
-    public async Task CreateRequestWithBody_WithPlainObject_SerializesAsJsonAsync()
+    public async Task CreateRequestWithBody_WithPlainObject_ProducesUtf8ByteArrayContentAsync()
     {
         // Arrange
         using var client = NewClient();
@@ -46,32 +50,12 @@ public class DiscordRestClientTests
 
         // Assert
         Assert.NotNull(req.Content);
+        Assert.IsType<ByteArrayContent>(req.Content);
         Assert.Equal("application/json", req.Content!.Headers.ContentType?.MediaType);
-        var serialized = await req.Content.ReadAsStringAsync();
-        Assert.Contains("\"name\":\"general\"", serialized);
-    }
+        Assert.Equal("utf-8", req.Content.Headers.ContentType?.CharSet);
 
-    /// <summary>
-    /// Regression test for the multipart bug: previously a <see cref="MultipartFormDataContent"/>
-    /// passed via <c>SendMultipartAsync</c> was JSON-serialized into a string, breaking every
-    /// file upload. The fix recognises <see cref="HttpContent"/> and assigns it directly.
-    /// </summary>
-    [Fact]
-    public void CreateRequestWithBody_WithHttpContent_AssignsContentDirectly()
-    {
-        // Arrange
-        using var client = NewClient();
-        var route = new DiscordRoute("channels/{channel_id}/messages", new Snowflake(1));
-
-        var multipart = new MultipartFormDataContent();
-        multipart.Add(new StringContent("{}", Encoding.UTF8, "application/json"), "payload_json");
-
-        // Act
-        var req = client.CreateRequestWithBody(route, HttpMethod.Post, multipart);
-
-        // Assert
-        Assert.Same(multipart, req.Content);
-        Assert.IsType<MultipartFormDataContent>(req.Content);
+        var bytes = await req.Content.ReadAsByteArrayAsync();
+        Assert.Equal(Encoding.UTF8.GetBytes("""{"name":"general"}"""), bytes);
     }
 
     /// <summary>
