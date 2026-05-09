@@ -7,7 +7,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
 
@@ -19,6 +18,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     private const int BucketQueueLimit = 100;
 
     private readonly ConcurrentDictionary<string, BucketRequestQueue> _buckets = [];
+    private readonly ConcurrentDictionary<string, string> _routeToHash = [];
     private readonly GlobalRateLimitManager _globalRateLimiter;
     private readonly HttpClient _http = new();
     private readonly ILogger _logger;
@@ -33,18 +33,11 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <param name="apiUri">The base URI of the Discord API.</param>
     /// <exception cref="ArgumentException">Thrown when the bot token is null or whitespace.</exception>
     public DiscordRestClient(string botToken, Uri apiUri, JsonSerializerOptions jsonOptions, ILogger logger, TimeSpan? timeout = null)
+    : this(apiUri, jsonOptions, logger, timeout)
     {
         if (string.IsNullOrWhiteSpace(botToken))
             throw new ArgumentException("Bot token is required.", nameof(botToken));
 
-        if (timeout.HasValue)
-            _http.Timeout = timeout.Value;
-
-        _logger = logger;
-        JsonOptions = jsonOptions;
-        _http.BaseAddress = apiUri;
-        _globalRateLimiter = new GlobalRateLimitManager(_logger);
-        _http.DefaultRequestHeaders.UserAgent.ParseAdd($"{DeviceInfo.SdkName}/1.0");
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", botToken);
     }
 
@@ -61,6 +54,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         _logger = logger;
         JsonOptions = jsonOptions;
         _http.BaseAddress = apiUri;
+        _globalRateLimiter = new GlobalRateLimitManager(_logger);
         _http.DefaultRequestHeaders.UserAgent.ParseAdd($"{DeviceInfo.SdkName}/1.0");
     }
 
@@ -81,7 +75,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
     public async Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
     {
-        using var res = await GetOrCreateBucket(path).ExecuteAsync(() => CreateRequestWithBody(path, method, body), ct);
+        using var res = await GetOrCreateBucket(path, method).ExecuteAsync(() => CreateRequestWithBody(path, method, body), ct);
         if (res.IsSuccessStatusCode)
         {
             if (res.StatusCode == HttpStatusCode.NoContent)
@@ -97,7 +91,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
 
     public async Task SendAsync(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
     {
-        using var res = await GetOrCreateBucket(path).ExecuteAsync(() => CreateRequestWithBody(path, method, body), ct);
+        using var res = await GetOrCreateBucket(path, method).ExecuteAsync(() => CreateRequestWithBody(path, method, body), ct);
         if (res.IsSuccessStatusCode || res.StatusCode == HttpStatusCode.NoContent)
             return;
 
@@ -114,7 +108,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
     public async Task SendAsync(DiscordRoute path, HttpMethod method, CancellationToken ct)
     {
-        using var res = await GetOrCreateBucket(path).ExecuteAsync(() => new HttpRequestMessage(method, path.ToString()), ct);
+        using var res = await GetOrCreateBucket(path, method).ExecuteAsync(() => new HttpRequestMessage(method, path.ToString()), ct);
 
         if (res.IsSuccessStatusCode)
             return;
@@ -122,14 +116,24 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         throw await GetDiscordExceptionAsync(res, ct);
     }
 
-    private HttpRequestMessage CreateRequestWithBody(DiscordRoute path, HttpMethod method, object? body)
+    internal HttpRequestMessage CreateRequestWithBody(DiscordRoute path, HttpMethod method, object? body)
     {
         var req = new HttpRequestMessage(method, path.ToString());
 
-        if (body is not null)
+        switch (body)
         {
-            var json = JsonSerializer.Serialize(body, JsonOptions);
-            req.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            case null:
+                break;
+            case HttpContent content:
+                req.Content = content;
+                break;
+            case Func<HttpContent> contentFactory:
+                req.Content = contentFactory();
+                break;
+            default:
+                var json = JsonSerializer.Serialize(body, JsonOptions);
+                req.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                break;
         }
 
         return req;
@@ -151,9 +155,48 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     }
 
 
-    private BucketRequestQueue GetOrCreateBucket(DiscordRoute path)
+    /// <summary>
+    /// Resolves the queue for a request using a two-level mapping:
+    /// route → bucket-hash (learned from <c>X-RateLimit-Bucket</c>) → queue.
+    /// Until the hash is known, the queue is keyed by the route itself.
+    /// </summary>
+    internal BucketRequestQueue GetOrCreateBucket(DiscordRoute path, HttpMethod method)
     {
-        return _buckets.GetOrAdd(path.GetBucketPath() ?? string.Empty, bucket => new BucketRequestQueue(_globalRateLimiter, _logger, _http, bucket, BucketQueueLimit));
+        var bucketPath = path.GetBucketPath() ?? path.Template;
+        var routeKey = $"{method.Method} {bucketPath}";
+        var bucketKey = _routeToHash.TryGetValue(routeKey, out var knownHashKey) ? knownHashKey : routeKey;
+
+        return _buckets.GetOrAdd(bucketKey, key => new BucketRequestQueue(
+            _globalRateLimiter,
+            _logger,
+            _http,
+            key,
+            BucketQueueLimit,
+            observedHash => OnBucketHashLearned(routeKey, bucketPath, observedHash)));
+    }
+
+    /// <summary>
+    /// Registers the route → bucket-hash mapping discovered from a Discord response and migrates
+    /// the existing route-keyed queue under the hash key so subsequent requests for unrelated
+    /// routes that share the same hash converge on a single queue.
+    /// </summary>
+    internal void OnBucketHashLearned(string routeKey, string bucketPath, string observedHash)
+    {
+        var hashKey = $"{observedHash}:{bucketPath}";
+
+        if (_routeToHash.TryGetValue(routeKey, out var existing) && existing == hashKey)
+            return;
+
+        _routeToHash[routeKey] = hashKey;
+
+        if (!_buckets.TryGetValue(routeKey, out var queue))
+            return;
+
+        if (_buckets.TryAdd(hashKey, queue))
+        {
+            _buckets.TryRemove(new KeyValuePair<string, BucketRequestQueue>(routeKey, queue));
+            queue.SetBucketName(hashKey);
+        }
     }
 
     #region IDisposable
@@ -164,14 +207,15 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
             return;
 
         if (disposing)
+        {
+            foreach (var bucket in _buckets.Values)
+                (bucket as IDisposable)?.Dispose();
+
+            _buckets.Clear();
             _http.Dispose();
+        }
 
         _disposed = true;
-    }
-
-    ~DiscordRestClient()
-    {
-        Dispose(disposing: false);
     }
 
     public void Dispose()

@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Models.Messages;
+using DiscoSdk.Models.Messages;
 using DiscoSdk.Rest;
 using System.Net.Http.Headers;
 using System.Text;
@@ -8,27 +8,29 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 
 internal static class ClientUtils
 {
-    public static async Task<TResponse> SendMultipartAsync<TResponse>(this IDiscordRestClient client,
+    public static Task<TResponse> SendMultipartAsync<TResponse>(this IDiscordRestClient client,
         DiscordRoute route,
         HttpMethod method,
         object payload,
         IReadOnlyList<MessageFile> files,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(route);
         ArgumentNullException.ThrowIfNull(method);
         ArgumentNullException.ThrowIfNull(payload);
         ArgumentNullException.ThrowIfNull(files);
 
-        using var content = client.BuildMultipartContent(payload, files);
-        return await client.SendAsync<TResponse>(route, method, content, cancellationToken);
+        var jsonOptions = client.JsonOptions;
+        // Pass a factory so the multipart body can be rebuilt on rate-limit retries
+        // (HttpContent streams are not re-readable once sent).
+        Func<HttpContent> factory = () => BuildMultipartContent(payload, files, jsonOptions);
+        return client.SendAsync<TResponse>(route, method, factory, cancellationToken);
     }
 
-    public static MultipartFormDataContent BuildMultipartContent(this IDiscordRestClient client, object payload, IReadOnlyList<MessageFile> files)
+    private static MultipartFormDataContent BuildMultipartContent(object payload, IReadOnlyList<MessageFile> files, JsonSerializerOptions jsonOptions)
     {
         var form = new MultipartFormDataContent();
 
-        var payloadJson = JsonSerializer.Serialize(payload, client.JsonOptions);
+        var payloadJson = JsonSerializer.Serialize(payload, jsonOptions);
         var payloadContent = new StringContent(payloadJson, Encoding.UTF8, "application/json");
         form.Add(payloadContent, "payload_json");
 

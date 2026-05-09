@@ -15,7 +15,8 @@ internal static class DiscordErrorParser
 
         string? message = null;
         int? code = null;
-        JsonElement errorsElement;
+        JsonElement errorsElement = default;
+        bool hasErrors;
 
         // Detect envelope vs map-only
         if (root.TryGetProperty("message", out var msgProp) &&
@@ -23,23 +24,27 @@ internal static class DiscordErrorParser
         {
             message = msgProp.GetString();
             code = codeProp.GetInt32();
-            errorsElement = root.GetProperty("errors");
+            hasErrors = root.TryGetProperty("errors", out errorsElement);
         }
         else
         {
             errorsElement = root;
+            hasErrors = root.ValueKind == JsonValueKind.Object;
         }
 
         var validationErrors = new List<DiscordValidationError>();
 
-        foreach (var property in errorsElement.EnumerateObject())
+        if (hasErrors && errorsElement.ValueKind == JsonValueKind.Object)
         {
-            ParseNode(
-                property.Value,
-                property.Name,
-                null,
-                validationErrors,
-                parentIsIndex: false);
+            foreach (var property in errorsElement.EnumerateObject())
+            {
+                ParseNode(
+                    property.Value,
+                    property.Name,
+                    null,
+                    validationErrors,
+                    parentIsIndex: false);
+            }
         }
 
         return new DiscordApiError
@@ -101,10 +106,14 @@ internal static class DiscordErrorParser
                     });
                 }
 
+                // Suppress Name when the current key is itself a numeric index
+                // (e.g. "0" in {"errors":{"0":{"_errors":[...]}}}), otherwise the key is a real field
+                // name (e.g. "name" in {"errors":{"0":{"name":{"_errors":[...]}}}}) and must be kept.
+                var isIndexedKey = int.TryParse(currentName, out _);
                 output.Add(new DiscordValidationError
                 {
                     Index = currentIndex,
-                    Name = parentIsIndex ? null : currentName,
+                    Name = isIndexedKey ? null : currentName,
                     FieldErrors = fieldErrors
                 });
 

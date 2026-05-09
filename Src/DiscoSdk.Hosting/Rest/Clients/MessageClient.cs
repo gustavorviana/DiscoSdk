@@ -143,7 +143,7 @@ internal class MessageClient(IDiscordRestClient client)
             throw new ArgumentException("Emoji cannot be null or empty.", nameof(emoji));
 
         var encodedEmoji = Uri.EscapeDataString(emoji);
-        var route = new DiscordRoute($"channels/{{channel_id}}/messages/{{message_id}}/reactions/{encodedEmoji}/@me", channelId, messageId);
+        var route = new DiscordRoute("channels/{channel_id}/messages/{message_id}/reactions/{emoji}/@me", channelId, messageId, encodedEmoji);
         return client.SendAsync(route, HttpMethod.Put, null, cancellationToken);
     }
 
@@ -167,7 +167,7 @@ internal class MessageClient(IDiscordRestClient client)
             throw new ArgumentException("Emoji cannot be null or empty.", nameof(emoji));
 
         var encodedEmoji = Uri.EscapeDataString(emoji);
-        var route = new DiscordRoute($"channels/{{channel_id}}/messages/{{message_id}}/reactions/{encodedEmoji}/@me", channelId, messageId);
+        var route = new DiscordRoute("channels/{channel_id}/messages/{message_id}/reactions/{emoji}/@me", channelId, messageId, encodedEmoji);
         return client.SendAsync(route, HttpMethod.Delete, null, cancellationToken);
     }
 
@@ -195,7 +195,7 @@ internal class MessageClient(IDiscordRestClient client)
             throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
         var encodedEmoji = Uri.EscapeDataString(emoji);
-        var route = new DiscordRoute($"channels/{{channel_id}}/messages/{{message_id}}/reactions/{encodedEmoji}/{{user_id}}", channelId, messageId, userId);
+        var route = new DiscordRoute("channels/{channel_id}/messages/{message_id}/reactions/{emoji}/{user_id}", channelId, messageId, encodedEmoji, userId);
         return client.SendAsync(route, HttpMethod.Delete, null, cancellationToken);
     }
 
@@ -233,7 +233,7 @@ internal class MessageClient(IDiscordRestClient client)
             queryParams.Add($"limit={limit.Value}");
 
         var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
-        var route = new DiscordRoute($"channels/{{channel_id}}/messages/{{message_id}}/reactions/{encodedEmoji}{query}", channelId, messageId);
+        var route = new DiscordRoute($"channels/{{channel_id}}/messages/{{message_id}}/reactions/{{emoji}}{query}", channelId, messageId, encodedEmoji);
         return client.SendAsync<User[]>(route, HttpMethod.Get, null, cancellationToken);
     }
 
@@ -257,7 +257,7 @@ internal class MessageClient(IDiscordRestClient client)
             throw new ArgumentException("Emoji cannot be null or empty.", nameof(emoji));
 
         var encodedEmoji = Uri.EscapeDataString(emoji);
-        var route = new DiscordRoute($"channels/{{channel_id}}/messages/{{message_id}}/reactions/{encodedEmoji}", channelId, messageId);
+        var route = new DiscordRoute("channels/{channel_id}/messages/{message_id}/reactions/{emoji}", channelId, messageId, encodedEmoji);
         return client.SendAsync(route, HttpMethod.Delete, null, cancellationToken);
     }
 
