@@ -1,5 +1,5 @@
 using DiscoSdk.Hosting.Rest.Clients;
-using DiscoSdk.Logging;
+using Microsoft.Extensions.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Rest;
 using NSubstitute;

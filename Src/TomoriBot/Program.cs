@@ -1,18 +1,21 @@
 using DiscoSdk;
 using DiscoSdk.Hosting.Builders;
-using DiscoSdk.Hosting.Logging;
-using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
+using Microsoft.Extensions.Logging;
 using System.Reflection;
 using TomoriBot;
 
 var token = Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN") ?? throw new InvalidOperationException("DISCORD_BOT_TOKEN environment variable is not set.");
 
+using var loggerFactory = LoggerFactory.Create(builder => builder
+    .SetMinimumLevel(LogLevel.Trace)
+    .AddSimpleConsole(o => { o.SingleLine = true; o.TimestampFormat = "HH:mm:ss "; }));
+
 var dsc = DiscordClientBuilder.Create(token)
     .WithIntents(DiscordIntent.All)
     .WithEventProcessorMaxConcurrency(100)
-    .WithLogger(new ConsoleLogger(LogLevel.Trace))
+    .WithLogger(loggerFactory.CreateLogger("DiscoSdk"))
     .WithSlashCommands(Assembly.GetExecutingAssembly())
     .WithContextMenuCommands(Assembly.GetExecutingAssembly())
     // Register message handler (for regular messages)

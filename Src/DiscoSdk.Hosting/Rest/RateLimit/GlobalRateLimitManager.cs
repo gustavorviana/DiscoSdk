@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Rest.RateLimit;
@@ -97,7 +97,7 @@ internal sealed class GlobalRateLimitManager
         if (retryAfterSeconds == null)
             return false;
 
-        _logger.Log(LogLevel.Warning, $"Global rate limit encountered. Retrying after {retryAfterSeconds.Value} seconds.");
+        _logger.Log(LogLevel.Warning, "Global rate limit encountered. Retrying after {RetryAfterSeconds} seconds.", retryAfterSeconds.Value);
 
         var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var candidateUntilMs = nowMs + (long)Math.Ceiling(retryAfterSeconds.Value * 1000.0);

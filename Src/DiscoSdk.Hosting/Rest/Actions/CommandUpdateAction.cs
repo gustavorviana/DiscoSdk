@@ -1,9 +1,9 @@
 using DiscoSdk.Commands;
 using DiscoSdk.Hosting.Rest.Clients;
-using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Commands;
 using DiscoSdk.Rest.Actions;
+using Microsoft.Extensions.Logging;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
 
@@ -80,7 +80,7 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer comman
         }
         catch (Exception ex)
         {
-            client.Logger.Log(LogLevel.Error, "Failed to register commands", ex);
+            client.Logger.Log(LogLevel.Error, ex, "Failed to register commands");
             throw;
         }
     }
@@ -117,9 +117,9 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer comman
             client.Logger.Log(LogLevel.Information, "DeletePrevious is true and no global commands are configured. Removing all global commands.");
         }
 
-        client.Logger.Log(LogLevel.Information, $"Registering {commandsToSend.Count} global command(s) (out of {commandContainer.GlobalCommands.Count} total)...");
+        client.Logger.Log(LogLevel.Information, "Registering {Count} global command(s) (out of {Total} total)...", commandsToSend.Count, commandContainer.GlobalCommands.Count);
         var registered = await _applicationCommandClient.RegisterGlobalCommandsAsync(client.ApplicationId!.Value, commandsToSend, cancellationToken);
-        client.Logger.Log(LogLevel.Information, $"Successfully registered {registered.Count} global command(s).");
+        client.Logger.Log(LogLevel.Information, "Successfully registered {Count} global command(s).", registered.Count);
     }
 
     /// <summary>
@@ -136,13 +136,13 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer comman
 
             if (!_deletePrevious)
             {
-                client.Logger.Log(LogLevel.Debug, $"Loading existing commands for guild {guildId} from Discord...");
+                client.Logger.Log(LogLevel.Debug, "Loading existing commands for guild {GuildId} from Discord...", guildId);
                 var existingGuild = await _applicationCommandClient.GetGuildCommandsAsync(client.ApplicationId!.Value, guildId, cancellationToken);
                 commandsToSend = FilterChangedOrNewCommands(commands, existingGuild);
 
                 if (commandsToSend.Count == 0)
                 {
-                    client.Logger.Log(LogLevel.Information, $"No changes detected in commands for guild {guildId}. Skipping registration.");
+                    client.Logger.Log(LogLevel.Information, "No changes detected in commands for guild {GuildId}. Skipping registration.", guildId);
                     continue;
                 }
             }
@@ -152,13 +152,13 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer comman
 
                 if (commandsToSend.Count == 0)
                 {
-                    client.Logger.Log(LogLevel.Information, $"DeletePrevious is true and commands for guild {guildId} is empty. Removing all commands for this guild.");
+                    client.Logger.Log(LogLevel.Information, "DeletePrevious is true and commands for guild {GuildId} is empty. Removing all commands for this guild.", guildId);
                 }
             }
 
-            client.Logger.Log(LogLevel.Information, $"Registering {commandsToSend.Count} command(s) for guild {guildId} (out of {commands.Count} total)...");
+            client.Logger.Log(LogLevel.Information, "Registering {Count} command(s) for guild {GuildId} (out of {Total} total)...", commandsToSend.Count, guildId, commands.Count);
             var guildRegistered = await _applicationCommandClient.RegisterGuildCommandsAsync(client.ApplicationId!.Value, guildId, commandsToSend, cancellationToken);
-            client.Logger.Log(LogLevel.Information, $"Successfully registered {guildRegistered.Count} command(s) for guild {guildId}.");
+            client.Logger.Log(LogLevel.Information, "Successfully registered {Count} command(s) for guild {GuildId}.", guildRegistered.Count, guildId);
         }
     }
 

@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System.Threading.Channels;
 
 namespace DiscoSdk.Hosting.Rest.RateLimit;
@@ -105,7 +105,7 @@ internal sealed class BucketRequestQueue : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Log(LogLevel.Error, $"Bucket \"{_bucket}\" queue loop terminated unexpectedly: {ex}");
+            _logger.Log(LogLevel.Error, ex, "Bucket {Bucket} queue loop terminated unexpectedly", _bucket);
         }
     }
 
@@ -149,7 +149,7 @@ internal sealed class BucketRequestQueue : IDisposable
             }
 
             if (_remainingRequests == 0)
-                _logger.Log(LogLevel.Warning, $"Bucket \"{_bucket}\" rate limit reached. Resets in {(_resetTime - DateTimeOffset.UtcNow).TotalSeconds:F2}s.");
+                _logger.Log(LogLevel.Warning, "Bucket {Bucket} rate limit reached. Resets in {ResetSeconds:F2}s.", _bucket, (_resetTime - DateTimeOffset.UtcNow).TotalSeconds);
 
             if (response.StatusCode != System.Net.HttpStatusCode.TooManyRequests)
             {

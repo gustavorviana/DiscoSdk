@@ -1,8 +1,8 @@
 ﻿using DiscoSdk.Hosting.Contexts.Models;
-using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Models;
 using DiscoSdk.Models.JsonConverters;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Builders;
@@ -41,7 +41,7 @@ public sealed class DiscordWebhookClientBuilder
     public async Task<IDiscordWebhookClient> BuildAsync(CancellationToken cancellationToken = default)
     {
         var jsonOptions = _jsonOptions ?? DiscoJson.Create();
-        var client = new WebhookMessageClient(new DiscordRestClient(new Uri("https://discord.com/api/"), jsonOptions, new ConsoleLogger(), _timeout));
+        var client = new WebhookMessageClient(new DiscordRestClient(new Uri("https://discord.com/api/"), jsonOptions, NullLogger.Instance, _timeout));
         var info = await client.GetInfoAsync(_identity, cancellationToken);
 
         return new DiscordWebhookClient(client, info, _identity);

@@ -1,6 +1,6 @@
 ﻿using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Rest.RateLimit;
-using DiscoSdk.Logging;
+using Microsoft.Extensions.Logging;
 using DiscoSdk.Rest;
 using System.Collections.Concurrent;
 using System.Net;
@@ -284,7 +284,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
                 }
                 catch (Exception ex)
                 {
-                    _logger.Log(LogLevel.Warning, $"Bucket eviction sweep failed: {ex}");
+                    _logger.Log(LogLevel.Warning, ex, "Bucket eviction sweep failed");
                 }
             }
         }
@@ -363,7 +363,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
                 }
                 catch (Exception ex)
                 {
-                    _logger.Log(LogLevel.Warning, $"Bucket dispose threw during shutdown: {ex}");
+                    _logger.Log(LogLevel.Warning, ex, "Bucket dispose threw during shutdown");
                 }
             }
 

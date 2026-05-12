@@ -9,13 +9,13 @@ using DiscoSdk.Hosting.Managers;
 using DiscoSdk.Hosting.Repositories;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Rest.Clients;
-using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Modules;
 using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting
@@ -352,7 +352,7 @@ namespace DiscoSdk.Hosting
             if (message.Opcode != OpCodes.Dispatch || string.IsNullOrEmpty(message.EventType))
                 return;
 
-            Logger.Log(LogLevel.Trace, $"Received {message.EventType} event from shard {shard.ShardId}");
+            Logger.Log(LogLevel.Trace, "Received {EventType} event from shard {ShardId}", message.EventType, shard.ShardId);
 
             await _eventProcessorPool.EnqueueAsync(message);
         }
@@ -366,7 +366,7 @@ namespace DiscoSdk.Hosting
             if (ApplicationId == null)
                 ApplicationId = Snowflake.Parse(payload.Application.Id);
 
-            Logger.Log(LogLevel.Information, $"Shard {shard.ShardId} of {BotUser.Username} is ready.");
+            Logger.Log(LogLevel.Information, "Shard {ShardId} of {BotUsername} is ready.", shard.ShardId, BotUser.Username);
 
             // Initialize pending guilds list from Ready payload (only once, on shard 0)
             if (IsReady && shard.ShardId == 0 && !_isInitialized)
@@ -422,9 +422,7 @@ namespace DiscoSdk.Hosting
 
         void IShardEventListener.OnUnhandledError(Exception exception)
         {
-            Logger.Log(LogLevel.Error,
-                $"Unhandled shard error: {exception.GetType().FullName}: {exception.Message}",
-                exception);
+            Logger.Log(LogLevel.Error, exception, "Unhandled shard error");
 
             UnhandledError?.Invoke(this, new UnhandledErrorEventArgs(exception));
         }

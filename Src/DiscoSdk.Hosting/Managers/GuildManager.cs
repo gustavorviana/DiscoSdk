@@ -1,8 +1,8 @@
-using DiscoSdk.Hosting.Logging;
 using DiscoSdk.Hosting.Wrappers;
-using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Concurrent;
 
 namespace DiscoSdk.Hosting.Managers;
@@ -64,7 +64,7 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
                 if (!guildId.Empty)
                     _pendingGuilds.Add(guildId);
 
-            _logger.Log(LogLevel.Information, $"Initialized {_pendingGuilds.Count} pending guild(s) from Ready payload.");
+            _logger.Log(LogLevel.Information, "Initialized {PendingGuildCount} pending guild(s) from Ready payload.", _pendingGuilds.Count);
         }
     }
 
@@ -87,10 +87,10 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
             if (_pendingGuilds.Remove(guild.Id))
             {
                 var remaining = _pendingGuilds.Count;
-                _logger.Log(LogLevel.Debug, $"Guild {guild.Name} ({guild.Id}) loaded. {remaining} guild(s) remaining.");
+                _logger.Log(LogLevel.Debug, "Guild {GuildName} ({GuildId}) loaded. {Remaining} guild(s) remaining.", guild.Name, guild.Id, remaining);
 
                 if (remaining == 0)
-                    _logger.Log(LogLevel.Information, $"All guilds loaded! Bot is fully initialized. Total guilds: {_guildCache.Count}");
+                    _logger.Log(LogLevel.Information, "All guilds loaded! Bot is fully initialized. Total guilds: {TotalGuilds}", _guildCache.Count);
             }
 
             return wrappedGuild;

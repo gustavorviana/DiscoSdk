@@ -1,5 +1,5 @@
 using DiscoSdk.Hosting.Rest.RateLimit;
-using DiscoSdk.Logging;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using System.Net;
 using System.Text;

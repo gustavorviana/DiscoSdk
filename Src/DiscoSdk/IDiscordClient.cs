@@ -1,8 +1,8 @@
 ﻿using DiscoSdk.Commands;
-using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Rest;
+using Microsoft.Extensions.Logging;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk;

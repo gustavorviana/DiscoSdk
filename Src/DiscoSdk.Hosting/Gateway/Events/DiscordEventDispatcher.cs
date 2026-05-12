@@ -13,7 +13,6 @@ using DiscoSdk.Hosting.Contexts.Wrappers;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Hosting.Wrappers.Channels;
 using DiscoSdk.Hosting.Wrappers.Messages;
-using DiscoSdk.Logging;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
@@ -21,6 +20,7 @@ using DiscoSdk.Models.Interactions;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Modules;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Gateway.Events;
@@ -161,7 +161,7 @@ internal class DiscordEventDispatcher
         catch (Exception ex)
         {
             // Log error but don't throw to prevent breaking the event loop
-            _discordClient.Logger.Log(LogLevel.Error, $"Error processing event {message.EventType}", ex);
+            _discordClient.Logger.Log(LogLevel.Error, ex, "Error processing event {EventType}", message.EventType);
         }
     }
 
@@ -412,12 +412,12 @@ internal class DiscordEventDispatcher
             }
             catch (Exception ex)
             {
-                _discordClient.Logger.Log(LogLevel.Error, $"Error processing handlers for interaction {interaction.Id}", ex);
+                _discordClient.Logger.Log(LogLevel.Error, ex, "Error processing handlers for interaction {InteractionId}", interaction.Id);
             }
         }
         catch (Exception ex)
         {
-            _discordClient.Logger.Log(LogLevel.Error, "Error processing INTERACTION_CREATE", ex);
+            _discordClient.Logger.Log(LogLevel.Error, ex, "Error processing INTERACTION_CREATE");
         }
     }
 
@@ -474,7 +474,7 @@ internal class DiscordEventDispatcher
         }
         catch (Exception ex)
         {
-            _discordClient.Logger.Log(LogLevel.Error, $"Error in {typeof(THandler).Name}", ex);
+            _discordClient.Logger.Log(LogLevel.Error, ex, "Error in {HandlerType}", typeof(THandler).Name);
         }
     }
 

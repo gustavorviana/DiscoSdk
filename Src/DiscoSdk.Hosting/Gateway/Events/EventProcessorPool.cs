@@ -1,6 +1,6 @@
 using System.Threading.Channels;
-using DiscoSdk.Hosting.Logging;
-using DiscoSdk.Logging;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace DiscoSdk.Hosting.Gateway.Events;
 
@@ -122,12 +122,12 @@ internal class EventProcessorPool<T> : IDisposable
                 }
                 catch (Exception ex)
                 {
-                    _logger.Log(LogLevel.Error, $"Event processor worker {workerId} crashed", ex);
+                    _logger.Log(LogLevel.Error, ex, "Event processor worker {WorkerId} crashed", workerId);
                 }
             }, cts.Token);
         }
 
-        _logger.Log(LogLevel.Debug, $"Started {_workerCount} worker(s) with max concurrency {_maxConcurrency} (using managed ThreadPool).");
+        _logger.Log(LogLevel.Debug, "Started {WorkerCount} worker(s) with max concurrency {MaxConcurrency} (using managed ThreadPool).", _workerCount, _maxConcurrency);
     }
 
     /// <summary>
@@ -150,7 +150,7 @@ internal class EventProcessorPool<T> : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.Error, "Error stopping event processor workers", ex);
+                _logger.Log(LogLevel.Error, ex, "Error stopping event processor workers");
             }
         }
 
@@ -174,7 +174,7 @@ internal class EventProcessorPool<T> : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.Error, $"Error processing item on worker {workerId}", ex);
+                _logger.Log(LogLevel.Error, ex, "Error processing item on worker {WorkerId}", workerId);
             }
             finally
             {
