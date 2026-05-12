@@ -22,6 +22,7 @@ internal sealed class BucketRequestQueue : IDisposable
     private string _bucket;
     private string? _learnedHash;
     private int _remainingRequests;
+    private long _lastUsedAtTicks;
     private volatile bool _disposed;
 
     public BucketRequestQueue(
@@ -43,6 +44,7 @@ internal sealed class BucketRequestQueue : IDisposable
         _logger = logger;
         _bucket = bucket;
         _onHashLearned = onHashLearned;
+        _lastUsedAtTicks = Environment.TickCount64;
 
         _channel = Channel.CreateBounded<WorkItem>(new BoundedChannelOptions(bucketQueueLimit)
         {
@@ -61,6 +63,13 @@ internal sealed class BucketRequestQueue : IDisposable
     /// Updates the human-readable bucket name. Used when a route-keyed queue is migrated to a hash-keyed slot.
     /// </summary>
     internal void SetBucketName(string bucket) => _bucket = bucket;
+
+    /// <summary>
+    /// Monotonic <see cref="Environment.TickCount64"/> snapshot taken on the last
+    /// <see cref="ExecuteAsync"/> call. Used by <see cref="DiscordRestClient"/>'s eviction
+    /// sweeper to identify queues that have been idle long enough to be safely released.
+    /// </summary>
+    internal long LastUsedAtTicks => Interlocked.Read(ref _lastUsedAtTicks);
 
     private async Task ProcessQueueAsync()
     {
@@ -176,6 +185,10 @@ internal sealed class BucketRequestQueue : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(request);
+
+        // Refresh the idle-tracking timestamp before any awaits so the eviction sweeper sees
+        // the queue as recently active even if WriteAsync blocks under backpressure.
+        Interlocked.Exchange(ref _lastUsedAtTicks, Environment.TickCount64);
 
         var item = new WorkItem(request, cancellationToken, _cancellationTokenSource.Token);
         try

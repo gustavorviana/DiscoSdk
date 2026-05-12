@@ -16,9 +16,24 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
 {
     private const int BucketQueueLimit = 100;
 
+    /// <summary>
+    /// How often the background sweeper walks the bucket dictionary looking for idle queues
+    /// to evict. The interval is intentionally coarse — eviction is a memory-leak guard for
+    /// long-running processes, not a hot-path concern.
+    /// </summary>
+    private static readonly TimeSpan BucketEvictionInterval = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// A bucket queue must have been idle (no <see cref="BucketRequestQueue.ExecuteAsync"/>
+    /// activity) for at least this long before the sweeper releases it. Generous on purpose:
+    /// at fleet scale a brief 429-induced pause should not look like idleness.
+    /// </summary>
+    private static readonly TimeSpan BucketEvictionIdleThreshold = TimeSpan.FromMinutes(15);
+
     private readonly ConcurrentDictionary<string, BucketRequestQueue> _buckets = [];
     private readonly ConcurrentDictionary<string, string> _routeToHash = [];
     private readonly GlobalRateLimitManager _globalRateLimiter;
+    private readonly CancellationTokenSource _shutdownCts = new();
 
     /// <summary>
     /// Process-wide HTTP transport handler shared across every <see cref="DiscordRestClient"/>
@@ -82,7 +97,16 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         JsonOptions = jsonOptions;
         _http.BaseAddress = apiUri;
         _globalRateLimiter = new GlobalRateLimitManager(_logger);
-        _http.DefaultRequestHeaders.UserAgent.ParseAdd($"{DeviceInfo.SdkName}/1.0");
+
+        // Read the SDK version from assembly metadata so the User-Agent stays in sync with
+        // package releases automatically. AssemblyName.Version is preferred over the
+        // InformationalVersion attribute because it is always valid token format (digits +
+        // dots) — InformationalVersion may carry SemVer build metadata (e.g. "+gitsha")
+        // that ProductInfoHeaderValue would reject.
+        var version = typeof(DiscordRestClient).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(DeviceInfo.SdkName, version));
+
+        _ = Task.Run(EvictionLoopAsync);
     }
 
     public Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, CancellationToken ct)
@@ -237,6 +261,84 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         }
     }
 
+    /// <summary>
+    /// Background loop that periodically evicts <see cref="BucketRequestQueue"/> instances
+    /// that have been idle for longer than <see cref="BucketEvictionIdleThreshold"/>. Without
+    /// this sweeper, <see cref="_buckets"/> and <see cref="_routeToHash"/> accumulate one
+    /// entry per unique <c>(method, route, major-id)</c> for the entire process lifetime —
+    /// at fleet scale that is a linear memory leak and a parked worker task per slot.
+    /// </summary>
+    private async Task EvictionLoopAsync()
+    {
+        try
+        {
+            while (!_disposed)
+            {
+                await Task.Delay(BucketEvictionInterval, _shutdownCts.Token).ConfigureAwait(false);
+                if (_disposed)
+                    return;
+
+                try
+                {
+                    EvictIdleBuckets(BucketEvictionIdleThreshold);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Log(LogLevel.Warning, $"Bucket eviction sweep failed: {ex}");
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected on dispose.
+        }
+    }
+
+    /// <summary>
+    /// Walks every bucket queue and removes those whose last activity was more than
+    /// <paramref name="idleThreshold"/> ago. Returns the number of queues evicted.
+    /// </summary>
+    /// <remarks>
+    /// Exposed as <c>internal</c> so tests can drive the sweep with a short threshold rather
+    /// than waiting on the production interval.
+    /// </remarks>
+    internal int EvictIdleBuckets(TimeSpan idleThreshold)
+    {
+        var nowTicks = Environment.TickCount64;
+        var thresholdMs = (long)idleThreshold.TotalMilliseconds;
+        var evicted = 0;
+
+        foreach (var entry in _buckets)
+        {
+            if (nowTicks - entry.Value.LastUsedAtTicks < thresholdMs)
+                continue;
+
+            // Atomic remove keyed by both bucket-key and instance — guards against the
+            // (very narrow) race where the queue was just replaced via OnBucketHashLearned.
+            if (!_buckets.TryRemove(new KeyValuePair<string, BucketRequestQueue>(entry.Key, entry.Value)))
+                continue;
+
+            // Drop any route-to-hash mappings pointing at the evicted bucket so the next
+            // request for the route gets a fresh queue rather than a dangling hash key.
+            foreach (var routeEntry in _routeToHash)
+            {
+                if (routeEntry.Value == entry.Key)
+                    _routeToHash.TryRemove(new KeyValuePair<string, string>(routeEntry.Key, routeEntry.Value));
+            }
+
+            entry.Value.Dispose();
+            evicted++;
+        }
+
+        return evicted;
+    }
+
+    /// <summary>Test seam: number of live bucket queues.</summary>
+    internal int BucketCount => _buckets.Count;
+
+    /// <summary>Test seam: number of learned route-to-hash mappings.</summary>
+    internal int RouteToHashCount => _routeToHash.Count;
+
     #region IDisposable
 
     protected virtual void Dispose(bool disposing)
@@ -245,6 +347,9 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
             return;
 
         _disposed = true;
+
+        // Wake the eviction loop so it does not sleep through shutdown.
+        try { _shutdownCts.Cancel(); } catch (ObjectDisposedException) { }
 
         if (disposing)
         {
@@ -263,6 +368,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
             }
 
             _buckets.Clear();
+            _shutdownCts.Dispose();
             _http.Dispose();
         }
     }

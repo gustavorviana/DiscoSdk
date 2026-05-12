@@ -170,6 +170,57 @@ public class DiscordRestClientTests
         Assert.Same(getQueue, resolvedGet);
     }
 
+    // ---------- Idle bucket eviction ----------
+
+    /// <summary>
+    /// Verifies that the eviction sweep removes bucket queues that have been idle longer
+    /// than the supplied threshold, along with any matching route-to-hash mappings — closing
+    /// the unbounded-growth memory leak that long-running bots would otherwise accumulate.
+    /// </summary>
+    [Fact]
+    public async Task EvictIdleBuckets_RemovesIdleQueuesAndRouteMappingsAsync()
+    {
+        // Arrange — create a queue and learn a hash so both dictionaries have entries.
+        using var client = NewClient();
+        var route = new DiscordRoute("channels/{channel_id}/messages", new Snowflake(123));
+
+        client.GetOrCreateBucket(route, HttpMethod.Get);
+        client.OnBucketHashLearned("GET /channels/123", "/channels/123", "abc-hash");
+        Assert.Equal(1, client.BucketCount);
+        Assert.Equal(1, client.RouteToHashCount);
+
+        // Wait long enough that the queue is idle past the threshold.
+        await Task.Delay(50);
+
+        // Act
+        var evicted = client.EvictIdleBuckets(TimeSpan.FromMilliseconds(10));
+
+        // Assert
+        Assert.Equal(1, evicted);
+        Assert.Equal(0, client.BucketCount);
+        Assert.Equal(0, client.RouteToHashCount);
+    }
+
+    [Fact]
+    public async Task EvictIdleBuckets_KeepsRecentlyUsedQueuesAsync()
+    {
+        // Arrange
+        using var client = NewClient();
+        var route = new DiscordRoute("channels/{channel_id}", new Snowflake(456));
+        client.GetOrCreateBucket(route, HttpMethod.Get);
+        Assert.Equal(1, client.BucketCount);
+
+        // Brief delay; the queue is still well within the idle threshold.
+        await Task.Delay(10);
+
+        // Act — threshold an order of magnitude larger than the elapsed delay.
+        var evicted = client.EvictIdleBuckets(TimeSpan.FromSeconds(30));
+
+        // Assert — queue is preserved.
+        Assert.Equal(0, evicted);
+        Assert.Equal(1, client.BucketCount);
+    }
+
     [Fact]
     public void OnBucketHashLearned_Idempotent_DoesNotChangeQueueOnDuplicateCall()
     {
