@@ -5,7 +5,7 @@ namespace DiscoSdk.Rest.Actions;
 /// <summary>
 /// Represents a pagination action for retrieving banned members from a guild.
 /// </summary>
-public interface IBanPaginationAction : IPaginationAction<Ban, IBanPaginationAction>
+public interface IBanPaginationAction : IPaginationAction<IBan, IBanPaginationAction>
 {
 	/// <summary>
 	/// Gets bans before this user ID.
@@ -21,4 +21,3 @@ public interface IBanPaginationAction : IPaginationAction<Ban, IBanPaginationAct
 	/// <returns>The current <see cref="IBanPaginationAction"/> instance.</returns>
 	IBanPaginationAction After(Snowflake userId);
 }
-

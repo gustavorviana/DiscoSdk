@@ -9,7 +9,7 @@
     <Project Path="Src/TomoriBot/TomoriBot.csproj" Id="92857d12-ad40-4060-8617-7b1011e47b9a" />
   </Folder>
   <Folder Name="/Tests/">
-    <Project Path="DiscoSdk.Hosting.Tests/DiscoSdk.Hosting.Tests.csproj" Id="dadcdb86-4298-4ee0-9f0f-098b1cce7072" />
+    <Project Path="Tests/DiscoSdk.Hosting.Tests/DiscoSdk.Hosting.Tests.csproj" Id="dadcdb86-4298-4ee0-9f0f-098b1cce7072" />
     <Project Path="Tests/DiscoSdk.Tests/DiscoSdk.Tests.csproj" />
   </Folder>
 </Solution>

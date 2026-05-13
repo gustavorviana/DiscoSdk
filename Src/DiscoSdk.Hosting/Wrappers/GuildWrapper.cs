@@ -412,6 +412,127 @@ internal class GuildWrapper : IGuild
     public IRestAction<IGuildTemplate> CreateTemplate(string name, string? description = null)
         => RestAction<IGuildTemplate>.Create(async ct => new GuildTemplateWrapper(_client, await _client.GuildTemplateClient.CreateGuildTemplateAsync(_guild.Id, name, description, ct)));
 
+    public IBanPaginationAction GetBans()
+        => new BanPaginationAction(_client, _guild.Id);
+
+    public IRestAction<IReadOnlyList<Snowflake>> BulkBan(IEnumerable<Snowflake> userIds, int? deleteMessageSeconds = null)
+    {
+        ArgumentNullException.ThrowIfNull(userIds);
+        return RestAction<IReadOnlyList<Snowflake>>.Create(async ct =>
+        {
+            var response = await _client.GuildClient.BulkBanAsync(_guild.Id, userIds, deleteMessageSeconds, ct);
+            var banned = new List<Snowflake>();
+            if (response.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                response.TryGetProperty("banned_users", out var bannedArr) &&
+                bannedArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var item in bannedArr.EnumerateArray())
+                {
+                    if (item.ValueKind == System.Text.Json.JsonValueKind.String &&
+                        Snowflake.TryParse(item.GetString()!, out var id))
+                        banned.Add(id);
+                }
+            }
+            return banned.AsReadOnly();
+        });
+    }
+
+    public IRestAction<IReadOnlyList<IMember>> SearchMembers(string query, int? limit = null)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            throw new ArgumentException("Query cannot be null or empty.", nameof(query));
+        return RestAction<IReadOnlyList<IMember>>.Create(async ct =>
+        {
+            var members = await _client.GuildClient.SearchMembersAsync(_guild.Id, query, limit, ct);
+            return members
+                .Where(m => m.User != null)
+                .Select(m => (IMember)new GuildMemberWrapper(_client, m, this))
+                .ToList()
+                .AsReadOnly();
+        });
+    }
+
+    public IRestAction<IMember?> AddMember(Snowflake userId, string accessToken, string? nick = null, IEnumerable<Snowflake>? roles = null, bool? mute = null, bool? deaf = null)
+    {
+        return RestAction<IMember?>.Create(async ct =>
+        {
+            var member = await _client.GuildClient.AddMemberAsync(_guild.Id, userId, accessToken, nick, roles, mute, deaf, ct);
+            return member is null ? null : new GuildMemberWrapper(_client, member, this);
+        });
+    }
+
+    public IRestAction<IMember> ModifyCurrentMember(string? nick)
+    {
+        return RestAction<IMember>.Create(async ct =>
+        {
+            var member = await _client.GuildClient.ModifyCurrentMemberAsync(_guild.Id, nick, ct);
+            return new GuildMemberWrapper(_client, member, this);
+        });
+    }
+
+    public IRestAction<IMember> ModifyMember(Snowflake userId, string? nick = null, IEnumerable<Snowflake>? roles = null, bool? mute = null, bool? deaf = null, Snowflake? channelId = null, DateTimeOffset? communicationDisabledUntil = null, int? flags = null)
+    {
+        return RestAction<IMember>.Create(async ct =>
+        {
+            var body = new Dictionary<string, object?>();
+            if (nick is not null) body["nick"] = nick;
+            if (roles is not null) body["roles"] = roles.Select(r => r.ToString()).ToArray();
+            if (mute.HasValue) body["mute"] = mute.Value;
+            if (deaf.HasValue) body["deaf"] = deaf.Value;
+            if (channelId.HasValue) body["channel_id"] = channelId.Value == default ? null : channelId.Value.ToString();
+            if (communicationDisabledUntil.HasValue)
+                body["communication_disabled_until"] = communicationDisabledUntil.Value == DateTimeOffset.MinValue
+                    ? null
+                    : communicationDisabledUntil.Value.ToString("o");
+            if (flags.HasValue) body["flags"] = flags.Value;
+
+            var member = await _client.GuildClient.ModifyMemberAsync(_guild.Id, userId, body, ct);
+            return new GuildMemberWrapper(_client, member, this);
+        });
+    }
+
+    public IRestAction AddMemberRole(Snowflake userId, Snowflake roleId)
+        => RestAction.Create(ct => _client.GuildClient.AddMemberRoleAsync(_guild.Id, userId, roleId, ct));
+
+    public IRestAction RemoveMemberRole(Snowflake userId, Snowflake roleId)
+        => RestAction.Create(ct => _client.GuildClient.RemoveMemberRoleAsync(_guild.Id, userId, roleId, ct));
+
+    public IRestAction ModifyMfaLevel(MfaLevel level)
+        => RestAction.Create(ct => _client.GuildClient.ModifyMfaLevelAsync(_guild.Id, level, ct));
+
+    public IRestAction ModifyChannelPositions(IEnumerable<ChannelPosition> positions)
+    {
+        ArgumentNullException.ThrowIfNull(positions);
+        return RestAction.Create(ct =>
+        {
+            var payload = positions.Select(p => new Dictionary<string, object?>
+            {
+                ["id"] = p.Id.ToString(),
+                ["position"] = p.Position,
+                ["lock_permissions"] = p.LockPermissions,
+                ["parent_id"] = p.ParentId.HasValue ? p.ParentId.Value.ToString() : null
+            });
+            return _client.GuildClient.ModifyChannelPositionsAsync(_guild.Id, payload, ct);
+        });
+    }
+
+    public IRestAction<IReadOnlyList<IIntegration>> GetIntegrations()
+        => RestAction<IReadOnlyList<IIntegration>>.Create(async ct =>
+        {
+            var integrations = await _client.GuildClient.ListIntegrationsAsync(_guild.Id, ct);
+            return integrations.Select(i => (IIntegration)new IntegrationWrapper(_client, _guild.Id, i)).ToList().AsReadOnly();
+        });
+
+    public IRestAction<IncidentsData> ModifyIncidentActions(DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil)
+        => RestAction<IncidentsData>.Create(ct => _client.GuildClient.ModifyIncidentActionsAsync(_guild.Id, invitesDisabledUntil, dmsDisabledUntil, ct));
+
+    public IRestAction<IReadOnlyList<IWebhook>> GetWebhooks()
+        => RestAction<IReadOnlyList<IWebhook>>.Create(async ct =>
+        {
+            var webhooks = await _client.WebhookClient.GetGuildWebhooksAsync(_guild.Id, ct);
+            return webhooks.Select(w => (IWebhook)new WebhookWrapper(_client, w)).ToList().AsReadOnly();
+        });
+
     internal void OnUpdate(Guild guild)
     {
         lock (_updateLock)

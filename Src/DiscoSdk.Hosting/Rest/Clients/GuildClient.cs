@@ -3,6 +3,7 @@ using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest;
+using System.Text;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
@@ -608,5 +609,173 @@ internal class GuildClient(IDiscordRestClient client)
 
         var route = new DiscordRoute("guilds/{guild_id}/welcome-screen", guildId);
         return client.SendAsync<WelcomeScreen>(route, HttpMethod.Patch, request, cancellationToken);
+    }
+
+    /// <summary>
+    /// Modifies the positions of a set of channel objects in the guild. <paramref name="positions"/> is
+    /// a list of <c>{ id, position, lock_permissions, parent_id }</c>-shaped objects.
+    /// </summary>
+    public Task ModifyChannelPositionsAsync(Snowflake guildId, IEnumerable<object> positions, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(positions);
+        var route = new DiscordRoute("guilds/{guild_id}/channels", guildId);
+        return client.SendAsync(route, HttpMethod.Patch, positions, cancellationToken);
+    }
+
+    /// <summary>
+    /// Lists bans in a guild with pagination support.
+    /// </summary>
+    public Task<Ban[]> GetBansAsync(Snowflake guildId, int? limit = null, Snowflake? before = null, Snowflake? after = null, CancellationToken cancellationToken = default)
+    {
+        if (limit.HasValue && (limit.Value < 1 || limit.Value > 1000))
+            throw new ArgumentOutOfRangeException(nameof(limit), "Limit must be between 1 and 1000.");
+
+        var sb = new StringBuilder("guilds/{guild_id}/bans");
+        var hasQuery = false;
+        void Append(string k, string v) { sb.Append(hasQuery ? '&' : '?').Append(k).Append('=').Append(v); hasQuery = true; }
+        if (limit.HasValue) Append("limit", limit.Value.ToString());
+        if (before.HasValue) Append("before", before.Value.ToString());
+        if (after.HasValue) Append("after", after.Value.ToString());
+
+        var route = new DiscordRoute(sb.ToString(), guildId);
+        return client.SendAsync<Ban[]>(route, HttpMethod.Get, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// Bulk-bans up to 200 users from a guild in a single call. Returns the user IDs that were banned
+    /// and those that failed (via the response object's <c>banned_users</c> / <c>failed_users</c> fields).
+    /// </summary>
+    public Task<JsonElement> BulkBanAsync(Snowflake guildId, IEnumerable<Snowflake> userIds, int? deleteMessageSeconds = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(userIds);
+        var route = new DiscordRoute("guilds/{guild_id}/bulk-ban", guildId);
+        var body = deleteMessageSeconds.HasValue
+            ? (object)new { user_ids = userIds.Select(u => u.ToString()).ToArray(), delete_message_seconds = deleteMessageSeconds.Value }
+            : new { user_ids = userIds.Select(u => u.ToString()).ToArray() };
+        return client.SendAsync<JsonElement>(route, HttpMethod.Post, body, cancellationToken);
+    }
+
+    /// <summary>
+    /// Adds a user to a guild using an OAuth2 access token granted with the <c>guilds.join</c> scope.
+    /// Returns the resulting guild member, or null if the user was already a member.
+    /// </summary>
+    public async Task<GuildMember?> AddMemberAsync(Snowflake guildId, Snowflake userId, string accessToken, string? nick = null, IEnumerable<Snowflake>? roles = null, bool? mute = null, bool? deaf = null, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new ArgumentException("Access token cannot be null or empty.", nameof(accessToken));
+
+        var body = new Dictionary<string, object?> { ["access_token"] = accessToken };
+        if (nick is not null) body["nick"] = nick;
+        if (roles is not null) body["roles"] = roles.Select(r => r.ToString()).ToArray();
+        if (mute.HasValue) body["mute"] = mute.Value;
+        if (deaf.HasValue) body["deaf"] = deaf.Value;
+
+        var route = new DiscordRoute("guilds/{guild_id}/members/{user_id}", guildId, userId);
+        try
+        {
+            return await client.SendAsync<GuildMember>(route, HttpMethod.Put, body, cancellationToken);
+        }
+        catch (DiscordApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NoContent)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Modifies the bot's own nickname in a guild.
+    /// </summary>
+    public Task<GuildMember> ModifyCurrentMemberAsync(Snowflake guildId, string? nick, CancellationToken cancellationToken = default)
+    {
+        var route = new DiscordRoute("guilds/{guild_id}/members/@me", guildId);
+        return client.SendAsync<GuildMember>(route, HttpMethod.Patch, new { nick }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Modifies attributes of a guild member. The body should be a partial shape with any subset of
+    /// <c>nick</c>, <c>roles</c>, <c>mute</c>, <c>deaf</c>, <c>channel_id</c>, <c>communication_disabled_until</c>, <c>flags</c>.
+    /// </summary>
+    public Task<GuildMember> ModifyMemberAsync(Snowflake guildId, Snowflake userId, object request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var route = new DiscordRoute("guilds/{guild_id}/members/{user_id}", guildId, userId);
+        return client.SendAsync<GuildMember>(route, HttpMethod.Patch, request, cancellationToken);
+    }
+
+    /// <summary>
+    /// Adds a role to a guild member.
+    /// </summary>
+    public Task AddMemberRoleAsync(Snowflake guildId, Snowflake userId, Snowflake roleId, CancellationToken cancellationToken = default)
+    {
+        var route = new DiscordRoute("guilds/{guild_id}/members/{user_id}/roles/{role_id}", guildId, userId, roleId);
+        return client.SendAsync(route, HttpMethod.Put, body: null, cancellationToken);
+    }
+
+    /// <summary>
+    /// Removes a role from a guild member.
+    /// </summary>
+    public Task RemoveMemberRoleAsync(Snowflake guildId, Snowflake userId, Snowflake roleId, CancellationToken cancellationToken = default)
+    {
+        var route = new DiscordRoute("guilds/{guild_id}/members/{user_id}/roles/{role_id}", guildId, userId, roleId);
+        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+    }
+
+    /// <summary>
+    /// Modifies the required MFA level for the guild. Caller must be the guild owner.
+    /// </summary>
+    public Task ModifyMfaLevelAsync(Snowflake guildId, MfaLevel level, CancellationToken cancellationToken = default)
+    {
+        var route = new DiscordRoute("guilds/{guild_id}/mfa", guildId);
+        return client.SendAsync(route, HttpMethod.Post, new { level = (int)level }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Lists the integrations attached to the guild (Twitch / YouTube subs, Discord bots, etc.).
+    /// </summary>
+    public Task<Integration[]> ListIntegrationsAsync(Snowflake guildId, CancellationToken cancellationToken = default)
+    {
+        var route = new DiscordRoute("guilds/{guild_id}/integrations", guildId);
+        return client.SendAsync<Integration[]>(route, HttpMethod.Get, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// Deletes a guild integration and removes the linked role.
+    /// </summary>
+    public Task DeleteIntegrationAsync(Snowflake guildId, Snowflake integrationId, CancellationToken cancellationToken = default)
+    {
+        var route = new DiscordRoute("guilds/{guild_id}/integrations/{integration_id}", guildId, integrationId);
+        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+    }
+
+    /// <summary>
+    /// Modifies the guild's incident actions — temporarily disables invites and/or DMs until the
+    /// specified timestamps. Pass <c>null</c> to clear the suspension.
+    /// </summary>
+    public Task<IncidentsData> ModifyIncidentActionsAsync(Snowflake guildId, DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil, CancellationToken cancellationToken = default)
+    {
+        var body = new
+        {
+            invites_disabled_until = invitesDisabledUntil?.ToString("o"),
+            dms_disabled_until = dmsDisabledUntil?.ToString("o")
+        };
+        var route = new DiscordRoute("guilds/{guild_id}/incident-actions", guildId);
+        return client.SendAsync<IncidentsData>(route, HttpMethod.Put, body, cancellationToken);
+    }
+
+    /// <summary>
+    /// Searches the guild's member list by username/nickname prefix. Returns up to <paramref name="limit"/>
+    /// members (1–1000, default 1).
+    /// </summary>
+    public Task<GuildMember[]> SearchMembersAsync(Snowflake guildId, string query, int? limit = null, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            throw new ArgumentException("Query cannot be null or empty.", nameof(query));
+        if (limit.HasValue && (limit.Value < 1 || limit.Value > 1000))
+            throw new ArgumentOutOfRangeException(nameof(limit), "Limit must be between 1 and 1000.");
+
+        var sb = new StringBuilder("guilds/{guild_id}/members/search?query=").Append(Uri.EscapeDataString(query));
+        if (limit.HasValue) sb.Append("&limit=").Append(limit.Value);
+
+        var route = new DiscordRoute(sb.ToString(), guildId);
+        return client.SendAsync<GuildMember[]>(route, HttpMethod.Get, null, cancellationToken);
     }
 }

@@ -81,6 +81,8 @@ namespace DiscoSdk.Hosting
         internal AutoModerationClient AutoModerationClient { get; }
         internal ApplicationClient ApplicationClient { get; }
         internal GuildTemplateClient GuildTemplateClient { get; }
+        internal UserClient UserClient { get; }
+        internal WebhookClient WebhookClient { get; }
         internal UserRepository Users { get; }
         internal DmChannelRepository DmRepository { get; }
 
@@ -132,6 +134,8 @@ namespace DiscoSdk.Hosting
             AutoModerationClient = new AutoModerationClient(HttpClient);
             ApplicationClient = new ApplicationClient(HttpClient);
             GuildTemplateClient = new GuildTemplateClient(HttpClient);
+            UserClient = new UserClient(HttpClient);
+            WebhookClient = new WebhookClient(HttpClient);
             Users = new UserRepository(this);
             Guilds = new GuildManager(this, Logger);
             Channels = new ChannelManager(this);
@@ -405,6 +409,104 @@ namespace DiscoSdk.Hosting
             ArgumentNullException.ThrowIfNull(records);
             return RestAction<IReadOnlyList<IApplicationRoleConnectionMetadata>>.Create(async ct => await ApplicationClient.UpdateRoleConnectionMetadataAsync(RequireApplicationId(), records, ct));
         }
+
+        /// <inheritdoc />
+        public IRestAction<IInvite?> GetInvite(string code, bool? withCounts = null, bool? withExpiration = null, Snowflake? guildScheduledEventId = null)
+            => RestAction<IInvite?>.Create(async ct =>
+            {
+                var invite = await InviteClient.GetAsync(code, withCounts, withExpiration, guildScheduledEventId, ct);
+                if (invite is null) return null;
+
+                if (invite.Channel?.Id is { } chId)
+                {
+                    var channel = await GetChannel(chId).ExecuteAsync(ct);
+                    if (channel is IGuildChannelBase guildChannel)
+                        return new InviteWrapper(invite, guildChannel, this);
+                }
+
+                return null;
+            });
+
+        /// <inheritdoc />
+        public IRestAction<IUser> GetCurrentUser()
+            => RestAction<IUser>.Create(async ct => new UserWrapper(this, await UserClient.GetCurrentAsync(ct)));
+
+        /// <inheritdoc />
+        public IRestAction<IUser> ModifyCurrentUser(string? username = null, string? avatar = null, string? banner = null)
+            => RestAction<IUser>.Create(async ct =>
+            {
+                var body = new Dictionary<string, object?>();
+                if (username is not null) body["username"] = username;
+                if (avatar is not null) body["avatar"] = avatar.Length == 0 ? null : avatar;
+                if (banner is not null) body["banner"] = banner.Length == 0 ? null : banner;
+                var user = await UserClient.ModifyCurrentAsync(body, ct);
+                return new UserWrapper(this, user);
+            });
+
+        /// <inheritdoc />
+        public IRestAction<IReadOnlyList<IGuild>> GetCurrentUserGuilds(int? limit = null, Snowflake? before = null, Snowflake? after = null, bool? withCounts = null)
+            => RestAction<IReadOnlyList<IGuild>>.Create(async ct =>
+            {
+                var guilds = await UserClient.GetCurrentGuildsAsync(limit, before, after, withCounts, ct);
+                return guilds.Select(g => (IGuild)new GuildWrapper(g, this)).ToList().AsReadOnly();
+            });
+
+        /// <inheritdoc />
+        public IRestAction<IMember> GetCurrentUserGuildMember(Snowflake guildId)
+            => RestAction<IMember>.Create(async ct =>
+            {
+                var member = await UserClient.GetCurrentGuildMemberAsync(guildId, ct);
+                var guild = await Guilds.GetAsync(guildId, ct)
+                    ?? throw new InvalidOperationException($"Guild {guildId} not found.");
+                return new GuildMemberWrapper(this, member, guild);
+            });
+
+        /// <inheritdoc />
+        public IRestAction<IReadOnlyList<IConnection>> GetCurrentUserConnections()
+            => RestAction<IReadOnlyList<IConnection>>.Create(async ct =>
+            {
+                var connections = await UserClient.GetConnectionsAsync(ct);
+                return connections.Cast<IConnection>().ToList().AsReadOnly();
+            });
+
+        /// <inheritdoc />
+        public IRestAction<IApplicationRoleConnection> GetCurrentUserApplicationRoleConnection(Snowflake applicationId)
+            => RestAction<IApplicationRoleConnection>.Create(async ct => await UserClient.GetApplicationRoleConnectionAsync(applicationId, ct));
+
+        /// <inheritdoc />
+        public IRestAction<IApplicationRoleConnection> UpdateCurrentUserApplicationRoleConnection(Snowflake applicationId, ApplicationRoleConnection record)
+        {
+            ArgumentNullException.ThrowIfNull(record);
+            return RestAction<IApplicationRoleConnection>.Create(async ct => await UserClient.UpdateApplicationRoleConnectionAsync(applicationId, record, ct));
+        }
+
+        /// <inheritdoc />
+        public IRestAction<IWebhook?> GetWebhook(Snowflake webhookId)
+            => RestAction<IWebhook?>.Create(async ct =>
+            {
+                var webhook = await WebhookClient.GetAsync(webhookId, ct);
+                return webhook is null ? null : new WebhookWrapper(this, webhook);
+            });
+
+        /// <inheritdoc />
+        public IRestAction<IWebhook?> GetWebhook(Snowflake webhookId, string token)
+            => RestAction<IWebhook?>.Create(async ct =>
+            {
+                var webhook = await WebhookClient.GetWithTokenAsync(webhookId, token, ct);
+                return webhook is null ? null : new WebhookWrapper(this, webhook);
+            });
+
+        /// <inheritdoc />
+        public IRestAction<IWebhook> CreateChannelWebhook(Snowflake channelId, string name, string? avatar = null)
+            => RestAction<IWebhook>.Create(async ct => new WebhookWrapper(this, await WebhookClient.CreateAsync(channelId, name, avatar, ct)));
+
+        /// <inheritdoc />
+        public IRestAction<IReadOnlyList<IWebhook>> GetChannelWebhooks(Snowflake channelId)
+            => RestAction<IReadOnlyList<IWebhook>>.Create(async ct =>
+            {
+                var webhooks = await WebhookClient.GetChannelWebhooksAsync(channelId, ct);
+                return webhooks.Select(w => (IWebhook)new WebhookWrapper(this, w)).ToList().AsReadOnly();
+            });
 
         async Task IShardEventListener.OnReceiveMessageAsync(Shard shard, ReceivedGatewayMessage message)
         {

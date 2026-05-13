@@ -9,7 +9,7 @@ namespace DiscoSdk.Tests.Gateway.Compression;
 public class GatewayZlibDecompressTests
 {
     [Fact]
-    public async Task ReceiveBytesAsync_WithCompressedData_DecompressesCorrectly()
+    public async Task ReceiveBytesAsync_WithCompressedData_DecompressesCorrectlyAsync()
     {
         // Arrange
         var webSocket = Substitute.For<WebSocket>();
@@ -53,7 +53,7 @@ public class GatewayZlibDecompressTests
     }
 
     [Fact]
-    public async Task ReceiveBytesAsync_WithMultipleChunks_DecompressesCorrectly()
+    public async Task ReceiveBytesAsync_WithMultipleChunks_DecompressesCorrectlyAsync()
     {
         // Arrange
         var webSocket = Substitute.For<WebSocket>();
@@ -103,7 +103,7 @@ public class GatewayZlibDecompressTests
     }
 
     [Fact]
-    public async Task ReceiveBytesAsync_WhenWebSocketCloses_ThrowsDiscordSocketException()
+    public async Task ReceiveBytesAsync_WhenWebSocketCloses_ThrowsDiscordSocketExceptionAsync()
     {
         // Arrange
         var webSocket = Substitute.For<WebSocket>();
@@ -122,7 +122,7 @@ public class GatewayZlibDecompressTests
     }
 
     [Fact]
-    public async Task ReceiveAsync_WithCompressedData_ReturnsCorrectString()
+    public async Task ReceiveAsync_WithCompressedData_ReturnsCorrectStringAsync()
     {
         // Arrange
         var webSocket = Substitute.For<WebSocket>();
@@ -174,7 +174,7 @@ public class GatewayZlibDecompressTests
     }
 
     [Fact]
-    public async Task ReceiveBytesAsync_WithCancellationToken_ThrowsOperationCanceledException()
+    public async Task ReceiveBytesAsync_WithCancellationToken_ThrowsOperationCanceledExceptionAsync()
     {
         // Arrange
         var webSocket = Substitute.For<WebSocket>();

@@ -522,4 +522,87 @@ public interface IGuild
     /// Gets a REST action that creates a template from this guild's current configuration.
     /// </summary>
     IRestAction<IGuildTemplate> CreateTemplate(string name, string? description = null);
+
+    /// <summary>
+    /// Gets a paginated REST action that lists this guild's bans.
+    /// </summary>
+    IBanPaginationAction GetBans();
+
+    /// <summary>
+    /// Gets a REST action that bans multiple users at once (up to 200 in a single call). Returns the
+    /// IDs of users that were successfully banned.
+    /// </summary>
+    /// <param name="userIds">The users to ban.</param>
+    /// <param name="deleteMessageSeconds">If set, the number of seconds of recent message history to wipe (0 to 604 800 / 7 days).</param>
+    IRestAction<IReadOnlyList<Snowflake>> BulkBan(IEnumerable<Snowflake> userIds, int? deleteMessageSeconds = null);
+
+    /// <summary>
+    /// Gets a REST action that searches the guild's member list by username/nickname prefix.
+    /// </summary>
+    /// <param name="query">The username/nickname prefix to match.</param>
+    /// <param name="limit">Maximum number of members to return (1–1000). Defaults to 1.</param>
+    IRestAction<IReadOnlyList<IMember>> SearchMembers(string query, int? limit = null);
+
+    /// <summary>
+    /// Gets a REST action that uses an OAuth2 access token (with the <c>guilds.join</c> scope) to add a
+    /// user to this guild. Returns the resulting member, or <c>null</c> if the user was already in the guild.
+    /// </summary>
+    IRestAction<IMember?> AddMember(Snowflake userId, string accessToken, string? nick = null, IEnumerable<Snowflake>? roles = null, bool? mute = null, bool? deaf = null);
+
+    /// <summary>
+    /// Gets a REST action that updates the bot's own nickname in this guild. Pass <c>null</c> to clear it.
+    /// </summary>
+    IRestAction<IMember> ModifyCurrentMember(string? nick);
+
+    /// <summary>
+    /// Gets a REST action that modifies a member's nickname, roles, voice state and timeout. Pass <c>null</c>
+    /// for any field to leave it untouched.
+    /// </summary>
+    /// <param name="userId">The member to modify.</param>
+    /// <param name="nick">New nickname, or <c>null</c> to leave unchanged.</param>
+    /// <param name="roles">New full role list, or <c>null</c> to leave unchanged.</param>
+    /// <param name="mute">New mute state (voice).</param>
+    /// <param name="deaf">New deafen state (voice).</param>
+    /// <param name="channelId">If set, moves the member to this voice channel.</param>
+    /// <param name="communicationDisabledUntil">If set, applies a timeout until this timestamp; pass <see cref="DateTimeOffset.MinValue"/> to clear.</param>
+    /// <param name="flags">If set, the new member flags raw value.</param>
+    IRestAction<IMember> ModifyMember(Snowflake userId, string? nick = null, IEnumerable<Snowflake>? roles = null, bool? mute = null, bool? deaf = null, Snowflake? channelId = null, DateTimeOffset? communicationDisabledUntil = null, int? flags = null);
+
+    /// <summary>
+    /// Gets a REST action that adds a role to a guild member.
+    /// </summary>
+    IRestAction AddMemberRole(Snowflake userId, Snowflake roleId);
+
+    /// <summary>
+    /// Gets a REST action that removes a role from a guild member.
+    /// </summary>
+    IRestAction RemoveMemberRole(Snowflake userId, Snowflake roleId);
+
+    /// <summary>
+    /// Gets a REST action that updates the required MFA level for this guild. The caller must be the guild owner.
+    /// </summary>
+    IRestAction ModifyMfaLevel(MfaLevel level);
+
+    /// <summary>
+    /// Gets a REST action that reorders channels in this guild. Each item specifies a channel ID, its
+    /// new position and optionally a new parent / lock_permissions flag.
+    /// </summary>
+    /// <param name="positions">The set of channel-position updates to apply.</param>
+    IRestAction ModifyChannelPositions(IEnumerable<ChannelPosition> positions);
+
+    /// <summary>
+    /// Gets a REST action that lists this guild's integrations (Twitch / YouTube subs, Discord bots, etc.).
+    /// </summary>
+    IRestAction<IReadOnlyList<IIntegration>> GetIntegrations();
+
+    /// <summary>
+    /// Gets a REST action that suspends invites and/or DMs for this guild until the supplied
+    /// timestamps. Pass <c>null</c> to clear either suspension.
+    /// </summary>
+    IRestAction<IncidentsData> ModifyIncidentActions(DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil);
+
+    /// <summary>
+    /// Gets a REST action that lists all webhooks attached to channels in this guild.
+    /// </summary>
+    IRestAction<IReadOnlyList<IWebhook>> GetWebhooks();
 }

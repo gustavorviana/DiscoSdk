@@ -138,4 +138,74 @@ public interface IDiscordClient
     /// Gets a REST action that replaces the application role-connection metadata records (max 5).
     /// </summary>
     IRestAction<IReadOnlyList<IApplicationRoleConnectionMetadata>> UpdateRoleConnectionMetadata(IEnumerable<ApplicationRoleConnectionMetadata> records);
+
+    /// <summary>
+    /// Gets a REST action that resolves an invite by its code. Returns <c>null</c> if the code does not exist.
+    /// </summary>
+    /// <param name="code">The invite code to resolve.</param>
+    /// <param name="withCounts">If set, include approximate member and presence counts.</param>
+    /// <param name="withExpiration">If set, include the invite's <c>expires_at</c> timestamp.</param>
+    /// <param name="guildScheduledEventId">If set, embed the matching guild scheduled event in the response.</param>
+    IRestAction<IInvite?> GetInvite(string code, bool? withCounts = null, bool? withExpiration = null, Snowflake? guildScheduledEventId = null);
+
+    /// <summary>
+    /// Gets a REST action that returns the current user (the bot).
+    /// </summary>
+    IRestAction<IUser> GetCurrentUser();
+
+    /// <summary>
+    /// Gets a REST action that modifies the current user. Pass <c>null</c> for any field to leave it unchanged.
+    /// </summary>
+    /// <param name="username">If set, the new username.</param>
+    /// <param name="avatar">If set, the new avatar as a base64-encoded data URI, or empty string to remove.</param>
+    /// <param name="banner">If set, the new banner as a base64-encoded data URI, or empty string to remove.</param>
+    IRestAction<IUser> ModifyCurrentUser(string? username = null, string? avatar = null, string? banner = null);
+
+    /// <summary>
+    /// Gets a REST action that lists the guilds the bot is a member of. Paginate with <paramref name="before"/> / <paramref name="after"/>.
+    /// </summary>
+    IRestAction<IReadOnlyList<IGuild>> GetCurrentUserGuilds(int? limit = null, Snowflake? before = null, Snowflake? after = null, bool? withCounts = null);
+
+    /// <summary>
+    /// Gets a REST action that returns the bot's member object in a specific guild.
+    /// </summary>
+    IRestAction<IMember> GetCurrentUserGuildMember(Snowflake guildId);
+
+    /// <summary>
+    /// Gets a REST action that lists the bot's third-party account connections.
+    /// </summary>
+    IRestAction<IReadOnlyList<IConnection>> GetCurrentUserConnections();
+
+    /// <summary>
+    /// Gets a REST action that retrieves the bot's role-connection data for the given application (linked roles).
+    /// </summary>
+    IRestAction<IApplicationRoleConnection> GetCurrentUserApplicationRoleConnection(Snowflake applicationId);
+
+    /// <summary>
+    /// Gets a REST action that updates the bot's role-connection data for the given application (linked roles).
+    /// </summary>
+    IRestAction<IApplicationRoleConnection> UpdateCurrentUserApplicationRoleConnection(Snowflake applicationId, ApplicationRoleConnection record);
+
+    /// <summary>
+    /// Gets a REST action that resolves a webhook by ID. Returns <c>null</c> if the webhook does not exist.
+    /// </summary>
+    IRestAction<IWebhook?> GetWebhook(Snowflake webhookId);
+
+    /// <summary>
+    /// Gets a REST action that resolves a webhook by ID and token (no permission check). Returns <c>null</c> if not found.
+    /// </summary>
+    IRestAction<IWebhook?> GetWebhook(Snowflake webhookId, string token);
+
+    /// <summary>
+    /// Gets a REST action that creates a new webhook on a channel.
+    /// </summary>
+    /// <param name="channelId">The channel to host the webhook on.</param>
+    /// <param name="name">The default name (1–80 chars).</param>
+    /// <param name="avatar">Optional base64 image data URI for the default avatar.</param>
+    IRestAction<IWebhook> CreateChannelWebhook(Snowflake channelId, string name, string? avatar = null);
+
+    /// <summary>
+    /// Gets a REST action that lists the webhooks attached to a channel.
+    /// </summary>
+    IRestAction<IReadOnlyList<IWebhook>> GetChannelWebhooks(Snowflake channelId);
 }

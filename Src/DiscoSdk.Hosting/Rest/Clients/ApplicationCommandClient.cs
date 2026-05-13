@@ -91,5 +91,51 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
         var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands/{command_id}", applicationId, guildId, commandId);
         await client.SendAsync(route, HttpMethod.Delete, ct);
     }
+
+    /// <summary>Gets a single global application command by ID.</summary>
+    public Task<SlashCommand> GetGlobalCommandAsync(Snowflake applicationId, Snowflake commandId, CancellationToken ct = default)
+    {
+        var route = new DiscordRoute("applications/{application_id}/commands/{command_id}", applicationId, commandId);
+        return client.SendAsync<SlashCommand>(route, HttpMethod.Get, null, ct);
+    }
+
+    /// <summary>Creates a single new global application command (does not bulk-overwrite).</summary>
+    public Task<SlashCommand> CreateGlobalCommandAsync(Snowflake applicationId, SlashCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        var route = new DiscordRoute("applications/{application_id}/commands", applicationId);
+        return client.SendAsync<SlashCommand>(route, HttpMethod.Post, command, ct);
+    }
+
+    /// <summary>Edits an existing global application command. Only the supplied fields will be updated.</summary>
+    public Task<SlashCommand> EditGlobalCommandAsync(Snowflake applicationId, Snowflake commandId, object request, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var route = new DiscordRoute("applications/{application_id}/commands/{command_id}", applicationId, commandId);
+        return client.SendAsync<SlashCommand>(route, HttpMethod.Patch, request, ct);
+    }
+
+    /// <summary>Gets a single guild-scoped application command by ID.</summary>
+    public Task<SlashCommand> GetGuildCommandAsync(Snowflake applicationId, Snowflake guildId, Snowflake commandId, CancellationToken ct = default)
+    {
+        var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands/{command_id}", applicationId, guildId, commandId);
+        return client.SendAsync<SlashCommand>(route, HttpMethod.Get, null, ct);
+    }
+
+    /// <summary>Creates a single new guild-scoped application command (does not bulk-overwrite).</summary>
+    public Task<SlashCommand> CreateGuildCommandAsync(Snowflake applicationId, Snowflake guildId, SlashCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands", applicationId, guildId);
+        return client.SendAsync<SlashCommand>(route, HttpMethod.Post, command, ct);
+    }
+
+    /// <summary>Edits an existing guild-scoped application command. Only the supplied fields will be updated.</summary>
+    public Task<SlashCommand> EditGuildCommandAsync(Snowflake applicationId, Snowflake guildId, Snowflake commandId, object request, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands/{command_id}", applicationId, guildId, commandId);
+        return client.SendAsync<SlashCommand>(route, HttpMethod.Patch, request, ct);
+    }
 }
 

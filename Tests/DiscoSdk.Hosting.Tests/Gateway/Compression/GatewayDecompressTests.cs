@@ -9,7 +9,7 @@ namespace DiscoSdk.Tests.Gateway.Compression;
 public class GatewayDecompressTests
 {
 	[Fact]
-	public async Task ReceiveAsync_CallsReceiveBytesAsyncAndConvertsToString()
+	public async Task ReceiveAsync_CallsReceiveBytesAsyncAndConvertsToStringAsync()
 	{
 		// Arrange
 		var webSocket = Substitute.For<WebSocket>();
@@ -35,7 +35,7 @@ public class GatewayDecompressTests
 	}
 
 	[Fact]
-	public async Task ReceiveAsync_WithInvalidUtf8_HandlesGracefully()
+	public async Task ReceiveAsync_WithInvalidUtf8_HandlesGracefullyAsync()
 	{
 		// Arrange
 		var webSocket = Substitute.For<WebSocket>();
@@ -91,7 +91,7 @@ public class GatewayDecompressTests
 	}
 
 	[Fact]
-	public async Task ThrowIfClosed_WhenWebSocketCloses_ThrowsDiscordSocketException()
+	public async Task ThrowIfClosed_WhenWebSocketCloses_ThrowsDiscordSocketExceptionAsync()
 	{
 		// Arrange
 		var webSocket = Substitute.For<WebSocket>();
@@ -110,7 +110,7 @@ public class GatewayDecompressTests
 	}
 
 	[Fact]
-	public async Task ThrowIfClosed_WhenWebSocketClosesWithoutStatus_UsesDefaultStatus()
+	public async Task ThrowIfClosed_WhenWebSocketClosesWithoutStatus_UsesDefaultStatusAsync()
 	{
 		// Arrange
 		var webSocket = Substitute.For<WebSocket>();
