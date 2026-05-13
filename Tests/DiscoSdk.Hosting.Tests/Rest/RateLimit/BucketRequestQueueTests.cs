@@ -10,6 +10,10 @@ public class BucketRequestQueueTests
 {
     private readonly ILogger _logger = Substitute.For<ILogger>();
 
+    // These tests assert behavior over a few tens of ms of real delay (429-retry, reset-after).
+    // Using TimeProvider.System keeps the existing assertions working without going through virtual time.
+    private readonly TimeProvider _timeProvider = TimeProvider.System;
+
     private static HttpResponseMessage Ok(string? bucketHash = null, int? remaining = null, double? resetAfter = null)
     {
         var response = new HttpResponseMessage(HttpStatusCode.OK)
@@ -27,13 +31,13 @@ public class BucketRequestQueueTests
         return response;
     }
 
-    private GlobalRateLimitManager NewGlobalLimiter() => new(_logger);
+    private GlobalRateLimitManager NewGlobalLimiter() => new(_logger, _timeProvider);
 
     private BucketRequestQueue NewQueue(
         HttpClient http,
         CancellationToken shutdownToken = default,
         Action<string>? onHashLearned = null) =>
-        new(NewGlobalLimiter(), _logger, http, "test-bucket", shutdownToken, onHashLearned);
+        new(NewGlobalLimiter(), _logger, http, "test-bucket", shutdownToken, _timeProvider, onHashLearned);
 
     private static HttpRequestMessage NewRequest() =>
         new(HttpMethod.Get, "https://discord.local/test");

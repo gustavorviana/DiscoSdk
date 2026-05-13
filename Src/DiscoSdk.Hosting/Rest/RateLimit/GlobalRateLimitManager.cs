@@ -18,12 +18,15 @@ internal sealed class GlobalRateLimitManager
 {
     private readonly SemaphoreSlim _globalGate = new(1, 1);
     private readonly ILogger _logger;
+    private readonly TimeProvider _timeProvider;
     private long _globalUntilMs;
 
-    public GlobalRateLimitManager(ILogger logger)
+    public GlobalRateLimitManager(ILogger logger, TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(timeProvider);
         _logger = logger;
+        _timeProvider = timeProvider;
     }
 
     /// <summary>
@@ -45,7 +48,7 @@ internal sealed class GlobalRateLimitManager
             // Fast-path: read the current deadline without taking the semaphore.
             // Volatile ensures we observe the latest value published by other threads.
             var untilMs = Volatile.Read(ref _globalUntilMs);
-            var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var nowMs = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
 
             if (nowMs >= untilMs)
                 return;
@@ -58,13 +61,13 @@ internal sealed class GlobalRateLimitManager
                 // - another thread extended/shortened the deadline, or
                 // - the deadline elapsed while waiting to acquire the semaphore.
                 untilMs = Volatile.Read(ref _globalUntilMs);
-                nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                nowMs = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
 
                 if (nowMs >= untilMs)
                     return;
 
                 var delayMs = (int)Math.Min(int.MaxValue, untilMs - nowMs);
-                await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromMilliseconds(delayMs), _timeProvider, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -99,7 +102,7 @@ internal sealed class GlobalRateLimitManager
 
         _logger.Log(LogLevel.Warning, "Global rate limit encountered. Retrying after {RetryAfterSeconds} seconds.", retryAfterSeconds.Value);
 
-        var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var nowMs = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
         var candidateUntilMs = nowMs + (long)Math.Ceiling(retryAfterSeconds.Value * 1000.0);
 
         // Ensure the global deadline is monotonic (never moves backwards).

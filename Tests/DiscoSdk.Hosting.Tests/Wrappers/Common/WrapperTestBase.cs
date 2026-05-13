@@ -1,29 +1,26 @@
 using DiscoSdk.Hosting.Builders;
-using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest;
 using NSubstitute;
-using System.Reflection;
 using System.Text.Json;
 
 namespace DiscoSdk.Hosting.Tests.Wrappers.Common;
 
 /// <summary>
-/// Base class for wrapper tests. Builds a real <see cref="DiscordClient"/> and then swaps its
-/// <see cref="DiscordClient.HttpClient"/> and every internal REST client backing field for ones
-/// wrapping a single NSubstitute-backed <see cref="IDiscordRestClient"/>. The mock never makes
-/// network calls — the tests assert what each wrapper sends to it (route / verb / body).
+/// Base class for wrapper tests. Builds a real <see cref="DiscordClient"/> with an NSubstitute-backed
+/// <see cref="IDiscordRestClient"/> injected through <see cref="DiscordClientBuilder.WithRestClient"/>.
+/// The mock never makes network calls — tests assert what each wrapper sends to it (route / verb / body).
 /// </summary>
 /// <remarks>
-/// Inherited by per-wrapper test classes. xUnit instantiates one test class per test method, so
-/// each test gets a fresh <see cref="DiscordClient"/> + mock — no state leaks between tests.
+/// xUnit instantiates one test class per test method, so each test gets a fresh
+/// <see cref="DiscordClient"/> + mock — no state leaks between tests.
 /// </remarks>
 public abstract class WrapperTestBase
 {
 	/// <summary>The mocked REST surface every wrapper call lands on.</summary>
 	protected IDiscordRestClient Http { get; }
 
-	/// <summary>The real <see cref="DiscordClient"/>, with all its REST clients re-wired through <see cref="Http"/>.</summary>
+	/// <summary>The real <see cref="DiscordClient"/>, wired to <see cref="Http"/> for all REST calls.</summary>
 	protected DiscordClient Client { get; }
 
 	protected WrapperTestBase()
@@ -41,21 +38,8 @@ public abstract class WrapperTestBase
 				DiscordIntent.DirectMessages |
 				DiscordIntent.DirectMessageReactions |
 				DiscordIntent.MessageContent)
+			.WithRestClient(Http)
 			.Build();
-
-		SetBackingField(Client, nameof(DiscordClient.HttpClient), Http);
-
-		var msg = new MessageClient(Http);
-		SetBackingField(Client, "MessageClient", msg);
-		SetBackingField(Client, "ChannelClient", new ChannelClient(Http, msg));
-		SetBackingField(Client, "InviteClient", new InviteClient(Http));
-		SetBackingField(Client, "RoleClient", new RoleClient(Http));
-		SetBackingField(Client, "GuildClient", new GuildClient(Http));
-		SetBackingField(Client, "AutoModerationClient", new AutoModerationClient(Http));
-		SetBackingField(Client, "ApplicationClient", new ApplicationClient(Http));
-		SetBackingField(Client, "GuildTemplateClient", new GuildTemplateClient(Http));
-		SetBackingField(Client, "UserClient", new UserClient(Http));
-		SetBackingField(Client, "WebhookClient", new WebhookClient(Http));
 	}
 
 	/// <summary>
@@ -87,12 +71,5 @@ public abstract class WrapperTestBase
 		var prop = body.GetType().GetProperty(propertyName);
 		if (prop is null) return false;
 		return Equals(prop.GetValue(body), expected);
-	}
-
-	private static void SetBackingField(object target, string propertyName, object value)
-	{
-		var field = target.GetType().GetField($"<{propertyName}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)
-			?? throw new InvalidOperationException($"Missing backing field for property '{propertyName}' on {target.GetType().Name}.");
-		field.SetValue(target, value);
 	}
 }

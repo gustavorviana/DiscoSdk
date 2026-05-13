@@ -116,15 +116,13 @@ namespace DiscoSdk.Hosting
             _config = config;
             Modules = modules;
             Services = services;
-            _shardPool = new ShardPool(this, config);
+            var timeProvider = services.GetRequiredService<TimeProvider>();
+            var socketFactory = services.GetRequiredService<IGatewaySocketFactory>();
+            _shardPool = new ShardPool(this, config, socketFactory, timeProvider);
             SerializerOptions = services.GetRequiredService<JsonSerializerOptions>();
             Logger = services.GetRequiredService<ILogger>();
             _eventDispatcher = new DiscordEventDispatcher(this);
-            HttpClient = new DiscordRestClient(
-                config.Token,
-                new Uri("https://discord.com/api/v10"),
-                SerializerOptions,
-                Logger);
+            HttpClient = services.GetRequiredService<IDiscordRestClient>();
             InteractionClient = new InteractionClient(this);
             MessageClient = new MessageClient(HttpClient);
             ChannelClient = new ChannelClient(HttpClient, MessageClient);

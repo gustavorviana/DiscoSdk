@@ -12,9 +12,10 @@ public class DiscordRestClientTests
 {
     private readonly ILogger _logger = Substitute.For<ILogger>();
     private readonly JsonSerializerOptions _jsonOptions = new();
+    private readonly Microsoft.Extensions.Time.Testing.FakeTimeProvider _timeProvider = new();
 
     private DiscordRestClient NewClient() =>
-        new("test-token", new Uri("https://discord.local/api/v10/"), _jsonOptions, _logger);
+        new("test-token", new Uri("https://discord.local/api/v10/"), _jsonOptions, _logger, _timeProvider);
 
     // ---------- CreateRequestWithBody (multipart fix regression) ----------
 
@@ -189,11 +190,13 @@ public class DiscordRestClientTests
         Assert.Equal(1, client.BucketCount);
         Assert.Equal(1, client.RouteToHashCount);
 
-        // Wait long enough that the queue is idle past the threshold.
-        await Task.Delay(50);
+        // Advance virtual time past the threshold (the bucket queue uses TimeProvider for
+        // last-used timestamps; real Task.Delay would not move virtual time).
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(50));
 
         // Act
         var evicted = client.EvictIdleBuckets(TimeSpan.FromMilliseconds(10));
+        await Task.Yield();
 
         // Assert
         Assert.Equal(1, evicted);
@@ -210,8 +213,9 @@ public class DiscordRestClientTests
         client.GetOrCreateBucket(route, HttpMethod.Get);
         Assert.Equal(1, client.BucketCount);
 
-        // Brief delay; the queue is still well within the idle threshold.
-        await Task.Delay(10);
+        // Brief virtual advance; the queue is still well within the idle threshold.
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(10));
+        await Task.Yield();
 
         // Act — threshold an order of magnitude larger than the elapsed delay.
         var evicted = client.EvictIdleBuckets(TimeSpan.FromSeconds(30));

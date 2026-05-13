@@ -37,12 +37,13 @@ internal sealed class BucketRequestQueue : IDisposable
     private readonly HttpClient _http;
     private readonly Action<string>? _onHashLearned;
     private readonly ILogger _logger;
+    private readonly TimeProvider _timeProvider;
 
     private DateTimeOffset _resetTime;
     private string _bucket;
     private string? _learnedHash;
     private int _remainingRequests;
-    private long _lastUsedAtTicks;
+    private long _lastUsedAtMs;
     private volatile bool _disposed;
 
     /// <param name="shutdownToken">
@@ -56,19 +57,22 @@ internal sealed class BucketRequestQueue : IDisposable
         HttpClient http,
         string bucket,
         CancellationToken shutdownToken,
+        TimeProvider timeProvider,
         Action<string>? onHashLearned = null)
     {
         ArgumentNullException.ThrowIfNull(globalRateLimiter);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(http);
         ArgumentException.ThrowIfNullOrWhiteSpace(bucket);
+        ArgumentNullException.ThrowIfNull(timeProvider);
 
         _globalRateLimiter = globalRateLimiter;
         _http = http;
         _logger = logger;
         _bucket = bucket;
         _onHashLearned = onHashLearned;
-        _lastUsedAtTicks = Environment.TickCount64;
+        _timeProvider = timeProvider;
+        _lastUsedAtMs = timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
         _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(shutdownToken);
     }
 
@@ -78,17 +82,17 @@ internal sealed class BucketRequestQueue : IDisposable
     internal void SetBucketName(string bucket) => _bucket = bucket;
 
     /// <summary>
-    /// Monotonic <see cref="Environment.TickCount64"/> snapshot taken on the last
+    /// Monotonic milliseconds (from <see cref="TimeProvider.GetUtcNow"/>) snapshot taken on the last
     /// <see cref="ExecuteAsync"/> call. Used by <see cref="DiscordRestClient"/>'s eviction sweeper.
     /// </summary>
-    internal long LastUsedAtTicks => Interlocked.Read(ref _lastUsedAtTicks);
+    internal long LastUsedAtMs => Interlocked.Read(ref _lastUsedAtMs);
 
     public async Task<HttpResponseMessage> ExecuteAsync(Func<HttpRequestMessage> requestFactory, CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(requestFactory);
 
-        Interlocked.Exchange(ref _lastUsedAtTicks, Environment.TickCount64);
+        Interlocked.Exchange(ref _lastUsedAtMs, _timeProvider.GetUtcNow().ToUnixTimeMilliseconds());
 
         // Combine the caller's token with the bucket's shutdown-linked token. A linked source is
         // only allocated when the caller actually passed a cancellable token (the common internal
@@ -123,9 +127,9 @@ internal sealed class BucketRequestQueue : IDisposable
         // Wait out the local bucket window if the last response said it was exhausted. Bound to the
         // local clock via X-RateLimit-Reset-After (not the absolute X-RateLimit-Reset) so fleet
         // clock skew never affects the delay.
-        var now = DateTimeOffset.UtcNow;
+        var now = _timeProvider.GetUtcNow();
         if (_remainingRequests == 0 && _resetTime > now)
-            await Task.Delay(_resetTime - now, token).ConfigureAwait(false);
+            await Task.Delay(_resetTime - now, _timeProvider, token).ConfigureAwait(false);
 
         for (var attempt = 0; attempt < MaxRateLimitRetries; attempt++)
         {
@@ -143,8 +147,8 @@ internal sealed class BucketRequestQueue : IDisposable
             var rateLimit = ParseHeaders(response);
             _remainingRequests = rateLimit.Remaining ?? 0;
             _resetTime = rateLimit.ResetAfter is { } resetAfter
-                ? DateTimeOffset.UtcNow + TimeSpan.FromSeconds(resetAfter)
-                : DateTimeOffset.UtcNow;
+                ? _timeProvider.GetUtcNow() + TimeSpan.FromSeconds(resetAfter)
+                : _timeProvider.GetUtcNow();
 
             if (rateLimit.Bucket is { Length: > 0 } observedHash && observedHash != _learnedHash)
             {
@@ -153,7 +157,7 @@ internal sealed class BucketRequestQueue : IDisposable
             }
 
             if (_remainingRequests == 0)
-                _logger.Log(LogLevel.Warning, "Bucket {Bucket} rate limit reached. Resets in {ResetSeconds:F2}s.", _bucket, (_resetTime - DateTimeOffset.UtcNow).TotalSeconds);
+                _logger.Log(LogLevel.Warning, "Bucket {Bucket} rate limit reached. Resets in {ResetSeconds:F2}s.", _bucket, (_resetTime - _timeProvider.GetUtcNow()).TotalSeconds);
 
             if (response.StatusCode != HttpStatusCode.TooManyRequests)
                 return response;
@@ -163,7 +167,7 @@ internal sealed class BucketRequestQueue : IDisposable
             var retryDelay = rateLimit.ResetAfter is { } retryAfterSeconds
                 ? TimeSpan.FromSeconds(retryAfterSeconds)
                 : DefaultRateLimitBackoff;
-            await Task.Delay(retryDelay, token).ConfigureAwait(false);
+            await Task.Delay(retryDelay, _timeProvider, token).ConfigureAwait(false);
             response.Dispose();
         }
 

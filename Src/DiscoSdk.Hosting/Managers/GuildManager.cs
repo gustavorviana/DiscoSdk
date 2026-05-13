@@ -99,7 +99,7 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
 
     internal IGuild? HandleGuildUpdate(Guild? guildUpdate)
     {
-        if (guildUpdate is null || _guildCache.TryGetValue(guildUpdate.Id, out var guild))
+        if (guildUpdate is null || !_guildCache.TryGetValue(guildUpdate.Id, out var guild))
             return null;
 
         (guild as GuildWrapper)?.OnUpdate(guildUpdate);

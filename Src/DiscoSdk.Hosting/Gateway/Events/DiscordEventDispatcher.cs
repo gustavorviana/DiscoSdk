@@ -238,7 +238,7 @@ internal class DiscordEventDispatcher
     private async Task ProcessChannelCreateAsync(JsonElement payload)
     {
         var channel = payload.Deserialize<Channel>(_discordClient.SerializerOptions);
-        if (TryGetChannelGuild(channel, out var guild)) return;
+        if (!TryGetChannelGuild(channel, out var guild)) return;
 
         _discordClient.Guilds.HandleChannelCreate(channel!);
 
@@ -249,7 +249,7 @@ internal class DiscordEventDispatcher
     private async Task ProcessChannelUpdateAsync(JsonElement payload)
     {
         var channel = payload.Deserialize<Channel>(_discordClient.SerializerOptions);
-        if (TryGetChannelGuild(channel, out var guild)) return;
+        if (!TryGetChannelGuild(channel, out var guild)) return;
 
         _discordClient.Guilds.HandleChannelUpdate(channel!);
 
@@ -260,7 +260,7 @@ internal class DiscordEventDispatcher
     private async Task ProcessChannelDeleteAsync(JsonElement payload)
     {
         var channel = payload.Deserialize<Channel>(_discordClient.SerializerOptions);
-        if (TryGetChannelGuild(channel, out var guild)) return;
+        if (!TryGetChannelGuild(channel, out var guild)) return;
 
         _discordClient.Guilds.HandleChannelDelete(channel);
         var eventData = new ChannelDeleteContext(_discordClient, guild!, channel.Id);

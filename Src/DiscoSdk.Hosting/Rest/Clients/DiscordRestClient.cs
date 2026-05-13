@@ -69,6 +69,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     };
 
     private readonly ILogger _logger;
+    private readonly TimeProvider _timeProvider;
     private volatile bool _disposed;
 
     public JsonSerializerOptions JsonOptions { get; }
@@ -79,8 +80,8 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <param name="botToken">The bot token for authentication.</param>
     /// <param name="apiUri">The base URI of the Discord API.</param>
     /// <exception cref="ArgumentException">Thrown when the bot token is null or whitespace.</exception>
-    public DiscordRestClient(string botToken, Uri apiUri, JsonSerializerOptions jsonOptions, ILogger logger, TimeSpan? timeout = null)
-    : this(apiUri, jsonOptions, logger, timeout)
+    public DiscordRestClient(string botToken, Uri apiUri, JsonSerializerOptions jsonOptions, ILogger logger, TimeProvider timeProvider, TimeSpan? timeout = null)
+    : this(apiUri, jsonOptions, logger, timeProvider, timeout)
     {
         if (string.IsNullOrWhiteSpace(botToken))
             throw new ArgumentException("Bot token is required.", nameof(botToken));
@@ -93,19 +94,21 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// </summary>
     /// <param name="apiUri">The base URI of the Discord API.</param>
     /// <exception cref="ArgumentException">Thrown when the bot token is null or whitespace.</exception>
-    public DiscordRestClient(Uri apiUri, JsonSerializerOptions jsonOptions, ILogger logger, TimeSpan? timeout = null)
+    public DiscordRestClient(Uri apiUri, JsonSerializerOptions jsonOptions, ILogger logger, TimeProvider timeProvider, TimeSpan? timeout = null)
     {
         ArgumentNullException.ThrowIfNull(apiUri);
         ArgumentNullException.ThrowIfNull(jsonOptions);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(timeProvider);
 
         if (timeout.HasValue)
             _http.Timeout = timeout.Value;
 
         _logger = logger;
+        _timeProvider = timeProvider;
         JsonOptions = jsonOptions;
         _http.BaseAddress = apiUri;
-        _globalRateLimiter = new GlobalRateLimitManager(_logger);
+        _globalRateLimiter = new GlobalRateLimitManager(_logger, _timeProvider);
 
         // Read the SDK version from assembly metadata so the User-Agent stays in sync with
         // package releases automatically. AssemblyName.Version is preferred over the
@@ -262,6 +265,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
             _http,
             key,
             _shutdownCts.Token,
+            _timeProvider,
             observedHash => OnBucketHashLearned(routeKey, bucketPath, observedHash)));
     }
 
@@ -302,7 +306,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         {
             while (!_disposed)
             {
-                await Task.Delay(BucketEvictionInterval, _shutdownCts.Token).ConfigureAwait(false);
+                await Task.Delay(BucketEvictionInterval, _timeProvider, _shutdownCts.Token).ConfigureAwait(false);
                 if (_disposed)
                     return;
 
@@ -332,13 +336,13 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// </remarks>
     internal int EvictIdleBuckets(TimeSpan idleThreshold)
     {
-        var nowTicks = Environment.TickCount64;
+        var nowMs = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
         var thresholdMs = (long)idleThreshold.TotalMilliseconds;
         var evicted = 0;
 
         foreach (var entry in _buckets)
         {
-            if (nowTicks - entry.Value.LastUsedAtTicks < thresholdMs)
+            if (nowMs - entry.Value.LastUsedAtMs < thresholdMs)
                 continue;
 
             // Atomic remove keyed by both bucket-key and instance — guards against the

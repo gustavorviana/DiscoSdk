@@ -4,7 +4,10 @@ using DiscoSdk.Hosting.Rest.Messages;
 
 namespace DiscoSdk.Hosting.Gateway.Shards;
 
-internal class ShardPool(IShardEventListener listener, DiscordClientConfig config) : IShardPool
+internal class ShardPool(IShardEventListener listener,
+                        DiscordClientConfig config,
+                        IGatewaySocketFactory socketFactory,
+                        TimeProvider timeProvider) : IShardPool
 {
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private int _totalShards = 0;
@@ -23,7 +26,9 @@ internal class ShardPool(IShardEventListener listener, DiscordClientConfig confi
 
     public CancellationToken CancellationToken => _cancellationTokenSource.Token;
 
-    public GatewayDecompressFactory DecompressFactory { get; } = new(config.GatewayCompressMode);
+    public IGatewaySocketFactory SocketFactory { get; } = socketFactory ?? throw new ArgumentNullException(nameof(socketFactory));
+
+    public TimeProvider TimeProvider { get; } = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
     public async Task InitShardsAsync()
     {

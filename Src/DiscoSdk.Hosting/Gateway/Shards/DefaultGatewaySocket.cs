@@ -1,4 +1,5 @@
 ﻿using DiscoSdk.Hosting.Gateway.Compression;
+using DiscoSdk.Hosting.Gateway.Payloads;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -6,9 +7,11 @@ using System.Text.Json;
 namespace DiscoSdk.Hosting.Gateway.Shards;
 
 /// <summary>
-/// Manages the WebSocket connection for a shard.
+/// Default <see cref="IGatewaySocket"/> implementation backed by <see cref="ClientWebSocket"/>.
+/// Owns the WebSocket and the decompressor; <see cref="ReadAsync"/> yields already-decompressed
+/// <see cref="ReceivedGatewayMessage"/> instances.
 /// </summary>
-internal class ShardSocket(GatewayDecompressFactory decompressFactory) : IDisposable
+internal sealed class DefaultGatewaySocket(GatewayDecompressFactory decompressFactory) : IGatewaySocket
 {
     private GatewayDecompress? _decompressor;
     private ClientWebSocket? _websocket;
@@ -119,30 +122,13 @@ internal class ShardSocket(GatewayDecompressFactory decompressFactory) : IDispos
         }
     }
 
-    #region IDisposable
-    protected virtual void Dispose(bool disposing)
+    public void Dispose()
     {
         if (_disposed)
             return;
 
-        if (disposing)
-        {
-            _decompressor?.Dispose();
-            _websocket?.Dispose();
-        }
-
+        _decompressor?.Dispose();
+        _websocket?.Dispose();
         _disposed = true;
     }
-
-    ~ShardSocket()
-    {
-        Dispose(disposing: false);
-    }
-
-    void IDisposable.Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
-    #endregion
 }

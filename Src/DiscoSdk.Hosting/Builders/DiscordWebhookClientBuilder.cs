@@ -41,7 +41,7 @@ public sealed class DiscordWebhookClientBuilder
     public async Task<IDiscordWebhookClient> BuildAsync(CancellationToken cancellationToken = default)
     {
         var jsonOptions = _jsonOptions ?? DiscoJson.Create();
-        var client = new WebhookMessageClient(new DiscordRestClient(new Uri("https://discord.com/api/"), jsonOptions, NullLogger.Instance, _timeout));
+        var client = new WebhookMessageClient(new DiscordRestClient(new Uri("https://discord.com/api/"), jsonOptions, NullLogger.Instance, TimeProvider.System, _timeout));
         var info = await client.GetInfoAsync(_identity, cancellationToken);
 
         return new DiscordWebhookClient(client, info, _identity);

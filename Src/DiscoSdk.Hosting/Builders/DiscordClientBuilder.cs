@@ -5,8 +5,12 @@ using DiscoSdk.Hosting.Commands;
 using DiscoSdk.Hosting.Commands.Providers;
 using DiscoSdk.Hosting.Contexts;
 using DiscoSdk.Hosting.Gateway;
+using DiscoSdk.Hosting.Gateway.Compression;
+using DiscoSdk.Hosting.Gateway.Shards;
+using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Models.JsonConverters;
 using DiscoSdk.Modules;
+using DiscoSdk.Rest;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -33,6 +37,9 @@ public class DiscordClientBuilder
     private TimeSpan? _reconnectDelay;
     private IObjectConverter? _objectConverter;
     private GatewayCompressMode? _gatewayCompressMode;
+    private TimeProvider? _timeProvider;
+    private IGatewaySocketFactory? _socketFactory;
+    private IDiscordRestClient? _restClient;
     private readonly ServiceCollection _services = new();
 
     /// <summary>
@@ -190,6 +197,41 @@ public class DiscordClientBuilder
     }
 
     /// <summary>
+    /// Sets the <see cref="TimeProvider"/> used by gateway heartbeat / reconnect logic and the REST
+    /// rate-limit windows. Default is <see cref="TimeProvider.System"/>. Tests inject a
+    /// <c>FakeTimeProvider</c> here to fast-forward virtual time without real sleeps.
+    /// </summary>
+    public DiscordClientBuilder WithTimeProvider(TimeProvider? timeProvider)
+    {
+        _timeProvider = timeProvider;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the <see cref="IGatewaySocketFactory"/> used by each shard. Default is the production
+    /// <see cref="DefaultGatewaySocketFactory"/>. Tests inject a factory that returns a controllable
+    /// fake socket so the shard can be driven with arbitrary inbound frames.
+    /// </summary>
+    internal DiscordClientBuilder WithGatewaySocketFactory(IGatewaySocketFactory? socketFactory)
+    {
+        _socketFactory = socketFactory;
+        return this;
+    }
+
+    /// <summary>
+    /// Replaces the REST transport (<see cref="IDiscordRestClient"/>) used by every per-resource
+    /// REST client (<c>ChannelClient</c>, <c>MessageClient</c>, etc.). Default is a real
+    /// <c>DiscordRestClient</c> built against <c>https://discord.com/api/v10</c>. Tests inject a
+    /// substituted instance to assert on outbound calls and stub responses without touching the
+    /// network.
+    /// </summary>
+    internal DiscordClientBuilder WithRestClient(IDiscordRestClient? restClient)
+    {
+        _restClient = restClient;
+        return this;
+    }
+
+    /// <summary>
     /// Sets the delay before attempting to reconnect after a connection loss.
     /// Default is 5 seconds.
     /// </summary>
@@ -289,10 +331,23 @@ public class DiscordClientBuilder
         WithParamProvider<GuildParamProvider>();
         WithParamProvider<UserParamProvider>();
 
+        var timeProvider = _timeProvider ?? TimeProvider.System;
+        var socketFactory = _socketFactory ?? new DefaultGatewaySocketFactory(new GatewayDecompressFactory(config.GatewayCompressMode));
+        var logger = _logger ?? NullLogger.Instance;
+        var restClient = _restClient ?? new DiscordRestClient(
+            _token,
+            new Uri("https://discord.com/api/v10"),
+            jsonOptions,
+            logger,
+            timeProvider);
+
         _services.AddSingleton(config)
             .AddSingleton(jsonOptions)
             .AddSingleton(_objectConverter ?? new ObjectConverter(CultureInfo.InvariantCulture))
-            .AddSingleton(_logger ?? NullLogger.Instance)
+            .AddSingleton(logger)
+            .AddSingleton(timeProvider)
+            .AddSingleton(socketFactory)
+            .AddSingleton(restClient)
             .AddScoped<SdkContextProvider>()
             .AddScoped<ISdkContextProvider>(svc => svc.GetRequiredService<SdkContextProvider>());
 

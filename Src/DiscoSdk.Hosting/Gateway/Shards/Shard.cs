@@ -8,7 +8,7 @@ namespace DiscoSdk.Hosting.Gateway.Shards;
 /// </summary>
 internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool pool)
 {
-    private readonly ShardSocket _socket = new(pool.DecompressFactory);
+    private readonly IGatewaySocket _socket = pool.SocketFactory.Create();
     private CancellationTokenRegistration _tokenRegistration;
     private ShardStatus _status = ShardStatus.PendingHello;
     private CancellationTokenSource? _heartbeatCts;
@@ -67,7 +67,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
             }
             catch (OperationCanceledException)
             {
-                break;
+                continue;
             }
             catch (Exception ex)
             {
@@ -77,7 +77,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
                 if (ex is DiscordSocketException)
                 {
                     if (config.ReconnectDelay > TimeSpan.Zero)
-                        await Task.Delay(config.ReconnectDelay, pool.CancellationToken).ConfigureAwait(false);
+                        await Task.Delay(config.ReconnectDelay, pool.TimeProvider, pool.CancellationToken).ConfigureAwait(false);
 
                     await ReconnectAsync();
                 }
@@ -128,7 +128,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
                 StopHeartbeat();
                 await _socket.Close();
                 if (config.ReconnectDelay > TimeSpan.Zero)
-                    await Task.Delay(config.ReconnectDelay, pool.CancellationToken);
+                    await Task.Delay(config.ReconnectDelay, pool.TimeProvider, pool.CancellationToken);
 
                 SignalConnectionLost();
                 var canReconnect = message.Opcode == OpCodes.Reconnect || payload.TryGetBoolean() == true;
@@ -217,7 +217,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
 
         while (!token.IsCancellationRequested)
         {
-            await Task.Delay(_heartbeatIntervalMs, token);
+            await Task.Delay(TimeSpan.FromMilliseconds(_heartbeatIntervalMs), pool.TimeProvider, token);
 
             if (!_heartbeatAck)
                 throw new WebSocketException($"Shard {ShardId} missed HEARTBEAT_ACK.");

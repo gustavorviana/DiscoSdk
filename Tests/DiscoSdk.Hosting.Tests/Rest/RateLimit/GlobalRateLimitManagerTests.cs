@@ -1,5 +1,6 @@
 using DiscoSdk.Hosting.Rest.RateLimit;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
 using System.Net;
 using System.Text;
@@ -9,10 +10,12 @@ namespace DiscoSdk.Hosting.Tests.Rest.RateLimit;
 public class GlobalRateLimitManagerTests
 {
     private readonly ILogger _logger;
+    private readonly FakeTimeProvider _timeProvider;
 
     public GlobalRateLimitManagerTests()
     {
         _logger = Substitute.For<ILogger>();
+        _timeProvider = new FakeTimeProvider();
     }
 
     private static HttpResponseMessage CreateGlobalRateLimitResponse(double retryAfterSeconds)
@@ -45,7 +48,7 @@ public class GlobalRateLimitManagerTests
     public void WaitForGlobalAsync_WhenNoRateLimit_ReturnsImmediately()
     {
         // Arrange
-        var manager = new GlobalRateLimitManager(_logger);
+        var manager = new GlobalRateLimitManager(_logger, _timeProvider);
 
         // Act
         var task = manager.WaitForGlobalAsync();
@@ -58,7 +61,7 @@ public class GlobalRateLimitManagerTests
     public async Task ReadAndWaitForGlobalAsync_WhenNot429_ReturnsFalse_Async()
     {
         // Arrange
-        var manager = new GlobalRateLimitManager(_logger);
+        var manager = new GlobalRateLimitManager(_logger, _timeProvider);
         var response = new HttpResponseMessage(HttpStatusCode.OK);
 
         // Act
@@ -72,7 +75,7 @@ public class GlobalRateLimitManagerTests
     public async Task ReadAndWaitForGlobalAsync_When429WithoutGlobalHeader_ReturnsFalse_Async()
     {
         // Arrange
-        var manager = new GlobalRateLimitManager(_logger);
+        var manager = new GlobalRateLimitManager(_logger, _timeProvider);
         var response = Create429ResponseWithoutGlobalHeader();
 
         // Act
@@ -86,7 +89,7 @@ public class GlobalRateLimitManagerTests
     public async Task ReadAndWaitForGlobalAsync_When429WithoutRetryAfter_ReturnsFalse_Async()
     {
         // Arrange
-        var manager = new GlobalRateLimitManager(_logger);
+        var manager = new GlobalRateLimitManager(_logger, _timeProvider);
         var response = Create429ResponseWithoutRetryAfter();
 
         // Act
@@ -100,7 +103,7 @@ public class GlobalRateLimitManagerTests
     public async Task ReadAndWaitForGlobalAsync_WithZeroRetryAfter_HandlesCorrectly_Async()
     {
         // Arrange
-        var manager = new GlobalRateLimitManager(_logger);
+        var manager = new GlobalRateLimitManager(_logger, _timeProvider);
         var response = CreateGlobalRateLimitResponse(0.0);
         var startTime = DateTimeOffset.UtcNow;
 
@@ -119,7 +122,7 @@ public class GlobalRateLimitManagerTests
     public async Task ReadAndWaitForGlobalAsync_WithNegativeRetryAfter_HandlesCorrectly_Async()
     {
         // Arrange
-        var manager = new GlobalRateLimitManager(_logger);
+        var manager = new GlobalRateLimitManager(_logger, _timeProvider);
         var response = CreateGlobalRateLimitResponse(-1.0);
         var startTime = DateTimeOffset.UtcNow;
 
@@ -138,7 +141,7 @@ public class GlobalRateLimitManagerTests
     public async Task ReadAndWaitForGlobalAsync_WithCancellationToken_RespectsCancellation_Async()
     {
         // Arrange
-        var manager = new GlobalRateLimitManager(_logger);
+        var manager = new GlobalRateLimitManager(_logger, _timeProvider);
         var response = CreateGlobalRateLimitResponse(1.0);
         using var cts = new CancellationTokenSource();
         cts.CancelAfter(10);
