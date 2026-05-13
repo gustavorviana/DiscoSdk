@@ -2,6 +2,8 @@ using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Wrappers.Managers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Models.Enums;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Wrappers.Channels;
@@ -40,8 +42,43 @@ internal class GuildStageChannelWrapper : GuildVoiceChannelWrapper, IGuildStageC
 		});
 	}
 
-    public new IStageChannelManager GetManager()
-    {
-        return new StageChannelManagerWrapper(Id, _client.ChannelClient);
-    }
+	public new IStageChannelManager GetManager()
+	{
+		return new StageChannelManagerWrapper(Id, _client.ChannelClient);
+	}
+
+	/// <inheritdoc />
+	public IRestAction<IStageInstance> GetStageInstance()
+	{
+		return RestAction<IStageInstance>.Create(async ct =>
+		{
+			var model = await _client.StageInstanceClient.GetAsync(Id, ct);
+			return (IStageInstance)new StageInstanceWrapper(_client, model);
+		});
+	}
+
+	/// <inheritdoc />
+	public IRestAction<IStageInstance> CreateStageInstance(
+		string topic,
+		StagePrivacyLevel? privacyLevel = null,
+		bool? sendStartNotification = null,
+		Snowflake? guildScheduledEventId = null)
+	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(topic);
+
+		return RestAction<IStageInstance>.Create(async ct =>
+		{
+			var body = new Dictionary<string, object?>
+			{
+				["channel_id"] = Id.ToString(),
+				["topic"] = topic,
+			};
+			if (privacyLevel is { } p) body["privacy_level"] = (int)p;
+			if (sendStartNotification is { } s) body["send_start_notification"] = s;
+			if (guildScheduledEventId is { } e) body["guild_scheduled_event_id"] = e.ToString();
+
+			var model = await _client.StageInstanceClient.CreateAsync(body, ct);
+			return (IStageInstance)new StageInstanceWrapper(_client, model);
+		});
+	}
 }

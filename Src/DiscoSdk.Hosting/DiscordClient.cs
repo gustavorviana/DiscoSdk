@@ -83,6 +83,7 @@ namespace DiscoSdk.Hosting
         internal GuildTemplateClient GuildTemplateClient { get; }
         internal UserClient UserClient { get; }
         internal WebhookClient WebhookClient { get; }
+        internal StageInstanceClient StageInstanceClient { get; }
         internal UserRepository Users { get; }
         internal DmChannelRepository DmRepository { get; }
 
@@ -134,6 +135,7 @@ namespace DiscoSdk.Hosting
             GuildTemplateClient = new GuildTemplateClient(HttpClient);
             UserClient = new UserClient(HttpClient);
             WebhookClient = new WebhookClient(HttpClient);
+            StageInstanceClient = new StageInstanceClient(HttpClient);
             Users = new UserRepository(this);
             Guilds = new GuildManager(this, Logger);
             Channels = new ChannelManager(this);

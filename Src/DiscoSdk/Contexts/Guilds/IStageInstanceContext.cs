@@ -8,8 +8,8 @@ namespace DiscoSdk.Contexts.Guilds;
 /// </summary>
 public interface IStageInstanceContext : IContext
 {
-	/// <summary>The stage instance payload.</summary>
-	StageInstance Instance { get; }
+	/// <summary>The stage instance, wrapped with REST actions (Modify/Delete).</summary>
+	IStageInstance Instance { get; }
 
 	/// <summary>The guild containing the stage instance.</summary>
 	IGuild Guild { get; }

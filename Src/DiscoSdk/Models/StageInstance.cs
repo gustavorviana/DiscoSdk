@@ -1,3 +1,4 @@
+using DiscoSdk.Models.Enums;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;
@@ -35,7 +36,7 @@ public class StageInstance
     /// Gets or sets the privacy level.
     /// </summary>
     [JsonPropertyName("privacy_level")]
-    public int PrivacyLevel { get; set; }
+    public StagePrivacyLevel PrivacyLevel { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether discovery is disabled.

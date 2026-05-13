@@ -841,7 +841,8 @@ internal class DiscordEventDispatcher
         var guild = _discordClient.Guilds.GetWrapped(instance.GuildId);
         if (guild is null) return;
 
-        var eventData = new StageInstanceContextWrapper(_discordClient, instance, guild);
+        var wrapped = new StageInstanceWrapper(_discordClient, instance);
+        var eventData = new StageInstanceContextWrapper(_discordClient, wrapped, guild);
         await HandleAllAsync<THandler, IStageInstanceContext>(eventData);
     }
 
