@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Models.Channels;
+﻿using DiscoSdk.Models.AutoModeration;
+using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
 
@@ -490,4 +491,35 @@ public interface IGuild
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
     IRestAction<Stream> GetWidgetImage(string? style = null);
+
+    /// <summary>
+    /// Gets a REST action that lists this guild's auto-moderation rules.
+    /// </summary>
+    IRestAction<IReadOnlyList<IAutoModerationRule>> GetAutoModerationRules();
+
+    /// <summary>
+    /// Gets a REST action that retrieves a single auto-moderation rule by ID.
+    /// </summary>
+    IRestAction<IAutoModerationRule> GetAutoModerationRule(Snowflake ruleId);
+
+    /// <summary>
+    /// Creates a REST action that adds a new auto-moderation rule to this guild. Configure the trigger
+    /// metadata, actions, etc. on the returned action before executing it.
+    /// </summary>
+    ICreateAutoModerationRuleAction CreateAutoModerationRule(string name, AutoModerationEventType eventType, AutoModerationTriggerType triggerType);
+
+    /// <summary>
+    /// Gets a REST action that retrieves this guild's onboarding configuration.
+    /// </summary>
+    IRestAction<IGuildOnboarding> GetOnboarding();
+
+    /// <summary>
+    /// Gets a REST action that lists the templates owned by this guild.
+    /// </summary>
+    IRestAction<IReadOnlyList<IGuildTemplate>> GetTemplates();
+
+    /// <summary>
+    /// Gets a REST action that creates a template from this guild's current configuration.
+    /// </summary>
+    IRestAction<IGuildTemplate> CreateTemplate(string name, string? description = null);
 }

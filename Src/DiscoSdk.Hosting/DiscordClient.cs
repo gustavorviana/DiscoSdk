@@ -9,8 +9,11 @@ using DiscoSdk.Hosting.Managers;
 using DiscoSdk.Hosting.Repositories;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Rest.Clients;
+using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
+using DiscoSdk.Models.Applications;
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Models.Monetization;
 using DiscoSdk.Modules;
 using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
@@ -75,6 +78,9 @@ namespace DiscoSdk.Hosting
         internal InviteClient InviteClient { get; }
         internal RoleClient RoleClient { get; }
         internal GuildClient GuildClient { get; }
+        internal AutoModerationClient AutoModerationClient { get; }
+        internal ApplicationClient ApplicationClient { get; }
+        internal GuildTemplateClient GuildTemplateClient { get; }
         internal UserRepository Users { get; }
         internal DmChannelRepository DmRepository { get; }
 
@@ -123,6 +129,9 @@ namespace DiscoSdk.Hosting
             InviteClient = new InviteClient(HttpClient);
             RoleClient = new RoleClient(HttpClient);
             GuildClient = new GuildClient(HttpClient);
+            AutoModerationClient = new AutoModerationClient(HttpClient);
+            ApplicationClient = new ApplicationClient(HttpClient);
+            GuildTemplateClient = new GuildTemplateClient(HttpClient);
             Users = new UserRepository(this);
             Guilds = new GuildManager(this, Logger);
             Channels = new ChannelManager(this);
@@ -345,6 +354,56 @@ namespace DiscoSdk.Hosting
         public IUpdatePresenceAction UpdatePresence()
         {
             return new UpdatePresenceAction(this);
+        }
+
+        private Snowflake RequireApplicationId()
+            => ApplicationId ?? throw new InvalidOperationException("The application ID is not available yet — wait until the client is ready.");
+
+        /// <inheritdoc />
+        public IRestAction<IApplication> GetApplication()
+            => RestAction<IApplication>.Create(async ct => new ApplicationWrapper(this, await ApplicationClient.GetCurrentApplicationAsync(ct)));
+
+        /// <inheritdoc />
+        public IRestAction<IReadOnlyList<ISku>> GetSkus()
+            => RestAction<IReadOnlyList<ISku>>.Create(async ct =>
+            {
+                var skus = await ApplicationClient.ListSkusAsync(RequireApplicationId(), ct);
+                return skus.Select(s => (ISku)new SkuWrapper(this, s)).ToList().AsReadOnly();
+            });
+
+        /// <inheritdoc />
+        public IRestAction<IReadOnlyList<IEntitlement>> GetEntitlements(Snowflake? userId = null, Snowflake? guildId = null, bool? excludeEnded = null, bool? excludeDeleted = null)
+            => RestAction<IReadOnlyList<IEntitlement>>.Create(async ct =>
+            {
+                var entitlements = await ApplicationClient.ListEntitlementsAsync(RequireApplicationId(), userId, guildId, excludeEnded, excludeDeleted, ct);
+                return entitlements.Select(e => (IEntitlement)new EntitlementWrapper(this, e)).ToList().AsReadOnly();
+            });
+
+        /// <inheritdoc />
+        public IRestAction<IEntitlement> GetEntitlement(Snowflake entitlementId)
+            => RestAction<IEntitlement>.Create(async ct => new EntitlementWrapper(this, await ApplicationClient.GetEntitlementAsync(RequireApplicationId(), entitlementId, ct)));
+
+        /// <inheritdoc />
+        public IRestAction ConsumeEntitlement(Snowflake entitlementId)
+            => RestAction.Create(ct => ApplicationClient.ConsumeEntitlementAsync(RequireApplicationId(), entitlementId, ct));
+
+        /// <inheritdoc />
+        public IRestAction<IReadOnlyList<ISubscription>> GetSkuSubscriptions(Snowflake skuId, Snowflake? userId = null)
+            => RestAction<IReadOnlyList<ISubscription>>.Create(async ct => await ApplicationClient.ListSkuSubscriptionsAsync(skuId, userId, ct));
+
+        /// <inheritdoc />
+        public IRestAction<ISubscription> GetSkuSubscription(Snowflake skuId, Snowflake subscriptionId)
+            => RestAction<ISubscription>.Create(async ct => await ApplicationClient.GetSkuSubscriptionAsync(skuId, subscriptionId, ct));
+
+        /// <inheritdoc />
+        public IRestAction<IReadOnlyList<IApplicationRoleConnectionMetadata>> GetRoleConnectionMetadata()
+            => RestAction<IReadOnlyList<IApplicationRoleConnectionMetadata>>.Create(async ct => await ApplicationClient.GetRoleConnectionMetadataAsync(RequireApplicationId(), ct));
+
+        /// <inheritdoc />
+        public IRestAction<IReadOnlyList<IApplicationRoleConnectionMetadata>> UpdateRoleConnectionMetadata(IEnumerable<ApplicationRoleConnectionMetadata> records)
+        {
+            ArgumentNullException.ThrowIfNull(records);
+            return RestAction<IReadOnlyList<IApplicationRoleConnectionMetadata>>.Create(async ct => await ApplicationClient.UpdateRoleConnectionMetadataAsync(RequireApplicationId(), records, ct));
         }
 
         async Task IShardEventListener.OnReceiveMessageAsync(Shard shard, ReceivedGatewayMessage message)

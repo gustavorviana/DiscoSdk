@@ -1,6 +1,8 @@
 ﻿using DiscoSdk.Commands;
 using DiscoSdk.Models;
+using DiscoSdk.Models.Applications;
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Models.Monetization;
 using DiscoSdk.Rest;
 using Microsoft.Extensions.Logging;
 using DiscoSdk.Rest.Actions;
@@ -85,4 +87,55 @@ public interface IDiscordClient
     /// This updates the presence through the Gateway connection.
     /// </remarks>
     IUpdatePresenceAction UpdatePresence();
+
+    /// <summary>
+    /// Gets a REST action that retrieves the application associated with this bot.
+    /// </summary>
+    IRestAction<IApplication> GetApplication();
+
+    /// <summary>
+    /// Gets a REST action that retrieves the SKUs (premium offerings) for this application.
+    /// </summary>
+    IRestAction<IReadOnlyList<ISku>> GetSkus();
+
+    /// <summary>
+    /// Gets a REST action that retrieves entitlements for this application, optionally filtered by user and/or guild.
+    /// </summary>
+    /// <param name="userId">If set, only entitlements granted to this user.</param>
+    /// <param name="guildId">If set, only entitlements granted to this guild.</param>
+    /// <param name="excludeEnded">If <c>true</c>, exclude entitlements whose period has ended.</param>
+    /// <param name="excludeDeleted">If <c>false</c>, include deleted entitlements (default is to exclude them).</param>
+    IRestAction<IReadOnlyList<IEntitlement>> GetEntitlements(Snowflake? userId = null, Snowflake? guildId = null, bool? excludeEnded = null, bool? excludeDeleted = null);
+
+    /// <summary>
+    /// Gets a REST action that retrieves a single entitlement by ID.
+    /// </summary>
+    IRestAction<IEntitlement> GetEntitlement(Snowflake entitlementId);
+
+    /// <summary>
+    /// Gets a REST action that marks a one-time-purchase consumable entitlement as consumed, by ID.
+    /// </summary>
+    IRestAction ConsumeEntitlement(Snowflake entitlementId);
+
+    /// <summary>
+    /// Gets a REST action that retrieves the subscriptions for an SKU.
+    /// </summary>
+    /// <param name="skuId">The SKU to list subscriptions for.</param>
+    /// <param name="userId">If set, only the subscription owned by this user.</param>
+    IRestAction<IReadOnlyList<ISubscription>> GetSkuSubscriptions(Snowflake skuId, Snowflake? userId = null);
+
+    /// <summary>
+    /// Gets a REST action that retrieves a single SKU subscription by ID.
+    /// </summary>
+    IRestAction<ISubscription> GetSkuSubscription(Snowflake skuId, Snowflake subscriptionId);
+
+    /// <summary>
+    /// Gets a REST action that retrieves the application role-connection metadata records.
+    /// </summary>
+    IRestAction<IReadOnlyList<IApplicationRoleConnectionMetadata>> GetRoleConnectionMetadata();
+
+    /// <summary>
+    /// Gets a REST action that replaces the application role-connection metadata records (max 5).
+    /// </summary>
+    IRestAction<IReadOnlyList<IApplicationRoleConnectionMetadata>> UpdateRoleConnectionMetadata(IEnumerable<ApplicationRoleConnectionMetadata> records);
 }

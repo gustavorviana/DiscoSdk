@@ -2,6 +2,7 @@ using DiscoSdk.Hosting.EqualityComparers;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Wrappers.Channels;
 using DiscoSdk.Models;
+using DiscoSdk.Models.AutoModeration;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
@@ -384,6 +385,32 @@ internal class GuildWrapper : IGuild
     }
 
     public IRestAction<Stream> GetWidgetImage(string? style = null) => throw new NotSupportedException();
+
+    public IRestAction<IReadOnlyList<IAutoModerationRule>> GetAutoModerationRules()
+        => RestAction<IReadOnlyList<IAutoModerationRule>>.Create(async ct =>
+        {
+            var rules = await _client.AutoModerationClient.ListRulesAsync(_guild.Id, ct);
+            return rules.Select(r => (IAutoModerationRule)new AutoModerationRuleWrapper(_client, r)).ToList().AsReadOnly();
+        });
+
+    public IRestAction<IAutoModerationRule> GetAutoModerationRule(Snowflake ruleId)
+        => RestAction<IAutoModerationRule>.Create(async ct => new AutoModerationRuleWrapper(_client, await _client.AutoModerationClient.GetRuleAsync(_guild.Id, ruleId, ct)));
+
+    public ICreateAutoModerationRuleAction CreateAutoModerationRule(string name, AutoModerationEventType eventType, AutoModerationTriggerType triggerType)
+        => new CreateAutoModerationRuleAction(_client, _guild.Id, name, eventType, triggerType);
+
+    public IRestAction<IGuildOnboarding> GetOnboarding()
+        => RestAction<IGuildOnboarding>.Create(async ct => new GuildOnboardingWrapper(_client, await _client.GuildTemplateClient.GetOnboardingAsync(_guild.Id, ct)));
+
+    public IRestAction<IReadOnlyList<IGuildTemplate>> GetTemplates()
+        => RestAction<IReadOnlyList<IGuildTemplate>>.Create(async ct =>
+        {
+            var templates = await _client.GuildTemplateClient.GetGuildTemplatesAsync(_guild.Id, ct);
+            return templates.Select(t => (IGuildTemplate)new GuildTemplateWrapper(_client, t)).ToList().AsReadOnly();
+        });
+
+    public IRestAction<IGuildTemplate> CreateTemplate(string name, string? description = null)
+        => RestAction<IGuildTemplate>.Create(async ct => new GuildTemplateWrapper(_client, await _client.GuildTemplateClient.CreateGuildTemplateAsync(_guild.Id, name, description, ct)));
 
     internal void OnUpdate(Guild guild)
     {
