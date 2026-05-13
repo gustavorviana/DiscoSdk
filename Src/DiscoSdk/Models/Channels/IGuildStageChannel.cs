@@ -1,4 +1,3 @@
-using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Models.Channels;
@@ -21,19 +20,11 @@ public interface IGuildStageChannel : IGuildMessageChannel, IVideoChannel
 	/// <summary>
 	/// Requests to speak in this stage channel.
 	/// </summary>
-	/// <returns>A REST action that can be executed to request to speak.</returns>
-	/// <remarks>
-	/// The action is not executed immediately. Call <see cref="IRestAction.ExecuteAsync"/> to execute it.
-	/// </remarks>
 	IRestAction RequestToSpeak();
 
 	/// <summary>
 	/// Cancels the request to speak in this stage channel.
 	/// </summary>
-	/// <returns>A REST action that can be executed to cancel the request to speak.</returns>
-	/// <remarks>
-	/// The action is not executed immediately. Call <see cref="IRestAction.ExecuteAsync"/> to execute it.
-	/// </remarks>
 	IRestAction CancelRequestToSpeak();
 
 	/// <summary>
@@ -42,15 +33,10 @@ public interface IGuildStageChannel : IGuildMessageChannel, IVideoChannel
 	IRestAction<IStageInstance> GetStageInstance();
 
 	/// <summary>
-	/// Opens a new stage instance on this channel.
+	/// Opens a new stage instance on this channel. Returns a fluent builder — chain
+	/// <c>SetPrivacyLevel</c> / <c>SetSendStartNotification</c> / <c>SetGuildScheduledEvent</c> and
+	/// finish with <c>ExecuteAsync</c>.
 	/// </summary>
 	/// <param name="topic">Topic shown to listeners (1-120 chars).</param>
-	/// <param name="privacyLevel">Defaults to <see cref="StagePrivacyLevel.GuildOnly"/> when null.</param>
-	/// <param name="sendStartNotification">Whether to ping <c>@everyone</c> on start (requires permission).</param>
-	/// <param name="guildScheduledEventId">If non-null, links the stage instance to an existing scheduled event.</param>
-	IRestAction<IStageInstance> CreateStageInstance(
-		string topic,
-		StagePrivacyLevel? privacyLevel = null,
-		bool? sendStartNotification = null,
-		Snowflake? guildScheduledEventId = null);
+	ICreateStageInstanceAction CreateStageInstance(string topic);
 }

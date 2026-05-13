@@ -1,107 +1,78 @@
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Users;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;
 
 /// <summary>
-/// Represents a scheduled event in a Discord guild.
+/// Raw model returned by Discord for a guild scheduled event.
 /// </summary>
 public class GuildScheduledEvent
 {
-    /// <summary>
-    /// Gets or sets the ID of the scheduled event.
-    /// </summary>
+    /// <summary>The scheduled event id.</summary>
     [JsonPropertyName("id")]
     public Snowflake Id { get; set; } = default!;
 
-    /// <summary>
-    /// Gets or sets the ID of the guild.
-    /// </summary>
+    /// <summary>The guild this event belongs to.</summary>
     [JsonPropertyName("guild_id")]
     public Snowflake GuildId { get; set; } = default!;
 
     /// <summary>
-    /// Gets or sets the ID of the channel.
+    /// The channel the event runs in (stage or voice). Null when the event's entity type is
+    /// <see cref="ScheduledEventEntityType.External"/>.
     /// </summary>
     [JsonPropertyName("channel_id")]
     public Snowflake? ChannelId { get; set; }
 
-    /// <summary>
-    /// Gets or sets the ID of the user who created the event.
-    /// </summary>
+    /// <summary>The user that created the event. Null on events created before this field shipped.</summary>
     [JsonPropertyName("creator_id")]
     public Snowflake? CreatorId { get; set; }
 
-    /// <summary>
-    /// Gets or sets the name of the scheduled event.
-    /// </summary>
+    /// <summary>Event name (1-100 chars).</summary>
     [JsonPropertyName("name")]
     public string Name { get; set; } = default!;
 
-    /// <summary>
-    /// Gets or sets the description of the scheduled event.
-    /// </summary>
+    /// <summary>Event description (0-1000 chars).</summary>
     [JsonPropertyName("description")]
     public string? Description { get; set; }
 
-    /// <summary>
-    /// Gets or sets the scheduled start time.
-    /// </summary>
+    /// <summary>When the event starts (ISO 8601).</summary>
     [JsonPropertyName("scheduled_start_time")]
-    public string ScheduledStartTime { get; set; } = default!;
+    public DateTimeOffset ScheduledStartTime { get; set; }
 
-    /// <summary>
-    /// Gets or sets the scheduled end time.
-    /// </summary>
+    /// <summary>When the event ends. Required for External events; optional for Stage/Voice.</summary>
     [JsonPropertyName("scheduled_end_time")]
-    public string? ScheduledEndTime { get; set; }
+    public DateTimeOffset? ScheduledEndTime { get; set; }
 
-    /// <summary>
-    /// Gets or sets the privacy level.
-    /// </summary>
+    /// <summary>Privacy level.</summary>
     [JsonPropertyName("privacy_level")]
-    public int PrivacyLevel { get; set; }
+    public ScheduledEventPrivacyLevel PrivacyLevel { get; set; }
 
-    /// <summary>
-    /// Gets or sets the status.
-    /// </summary>
+    /// <summary>Lifecycle status.</summary>
     [JsonPropertyName("status")]
-    public int Status { get; set; }
+    public ScheduledEventStatus Status { get; set; }
 
-    /// <summary>
-    /// Gets or sets the entity type.
-    /// </summary>
+    /// <summary>Venue type (stage / voice / external).</summary>
     [JsonPropertyName("entity_type")]
-    public int EntityType { get; set; }
+    public ScheduledEventEntityType EntityType { get; set; }
 
-    /// <summary>
-    /// Gets or sets the entity ID.
-    /// </summary>
+    /// <summary>If the event is bound to a stage instance, its id.</summary>
     [JsonPropertyName("entity_id")]
     public Snowflake? EntityId { get; set; }
 
-    /// <summary>
-    /// Gets or sets the entity metadata.
-    /// </summary>
+    /// <summary>Extra venue info (currently just location for External events).</summary>
     [JsonPropertyName("entity_metadata")]
-    public object? EntityMetadata { get; set; }
+    public ScheduledEventEntityMetadata? EntityMetadata { get; set; }
 
-    /// <summary>
-    /// Gets or sets the creator.
-    /// </summary>
+    /// <summary>The creator user. Null on events created before this field shipped.</summary>
     [JsonPropertyName("creator")]
     public User? Creator { get; set; }
 
-    /// <summary>
-    /// Gets or sets the user count.
-    /// </summary>
+    /// <summary>Number of users interested in the event (only present when requested).</summary>
     [JsonPropertyName("user_count")]
     public int? UserCount { get; set; }
 
-    /// <summary>
-    /// Gets or sets the image.
-    /// </summary>
+    /// <summary>Cover image hash.</summary>
     [JsonPropertyName("image")]
     public string? Image { get; set; }
 }
-

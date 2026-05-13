@@ -1,6 +1,7 @@
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.Requests.StageInstances;
 using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
@@ -37,11 +38,13 @@ internal sealed class StageInstanceWrapper(DiscordClient client, StageInstance m
 	{
 		return RestAction<IStageInstance>.Create(async ct =>
 		{
-			var body = new Dictionary<string, object?>();
-			if (topic is not null) body["topic"] = topic;
-			if (privacyLevel is { } p) body["privacy_level"] = (int)p;
+			var request = new ModifyStageInstanceRequest
+			{
+				Topic = topic,
+				PrivacyLevel = privacyLevel,
+			};
 
-			var updated = await client.StageInstanceClient.ModifyAsync(_model.ChannelId, body, ct);
+			var updated = await client.StageInstanceClient.ModifyAsync(_model.ChannelId, request, ct);
 			_model = updated;
 			return (IStageInstance)this;
 		});

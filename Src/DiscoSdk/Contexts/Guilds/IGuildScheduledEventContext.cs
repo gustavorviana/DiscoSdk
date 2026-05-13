@@ -7,8 +7,8 @@ namespace DiscoSdk.Contexts.Guilds;
 /// </summary>
 public interface IGuildScheduledEventContext : IContext
 {
-	/// <summary>The scheduled event payload.</summary>
-	GuildScheduledEvent ScheduledEvent { get; }
+	/// <summary>The scheduled event, wrapped with REST actions (Modify/Delete/GetUsers).</summary>
+	IGuildScheduledEvent ScheduledEvent { get; }
 
 	/// <summary>The guild hosting the event.</summary>
 	IGuild Guild { get; }

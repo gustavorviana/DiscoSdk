@@ -38,7 +38,7 @@ public class StageInstanceWrapperTests : WrapperTestBase
 		await Http.Received(1).SendAsync<StageInstance>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == $"stage-instances/{_channelId}"),
 			HttpMethod.Patch,
-			Arg.Is<object?>(b => BodyContains(b, "topic", "New")),
+			Arg.Is<object?>(b => BodyPropertyEquals(b, "Topic", "New")),
 			Arg.Any<CancellationToken>());
 	}
 

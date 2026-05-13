@@ -896,7 +896,8 @@ internal class DiscordEventDispatcher
         var guild = _discordClient.Guilds.GetWrapped(scheduledEvent.GuildId);
         if (guild is null) return;
 
-        var eventData = new GuildScheduledEventContextWrapper(_discordClient, scheduledEvent, guild);
+        var wrapped = new GuildScheduledEventWrapper(_discordClient, scheduledEvent);
+        var eventData = new GuildScheduledEventContextWrapper(_discordClient, wrapped, guild);
         await HandleAllAsync<THandler, IGuildScheduledEventContext>(eventData);
     }
 

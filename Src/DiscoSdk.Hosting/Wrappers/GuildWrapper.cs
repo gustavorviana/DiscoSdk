@@ -399,6 +399,23 @@ internal class GuildWrapper : IGuild
     public ICreateAutoModerationRuleAction CreateAutoModerationRule(string name, AutoModerationEventType eventType, AutoModerationTriggerType triggerType)
         => new CreateAutoModerationRuleAction(_client, _guild.Id, name, eventType, triggerType);
 
+    public IRestAction<IReadOnlyList<IGuildScheduledEvent>> GetScheduledEvents(bool? withUserCount = null)
+        => RestAction<IReadOnlyList<IGuildScheduledEvent>>.Create(async ct =>
+        {
+            var events = await _client.GuildScheduledEventClient.ListAsync(_guild.Id, withUserCount, ct);
+            return events.Select(e => (IGuildScheduledEvent)new GuildScheduledEventWrapper(_client, e)).ToList().AsReadOnly();
+        });
+
+    public IRestAction<IGuildScheduledEvent> GetScheduledEvent(Snowflake eventId, bool? withUserCount = null)
+        => RestAction<IGuildScheduledEvent>.Create(async ct =>
+            new GuildScheduledEventWrapper(_client, await _client.GuildScheduledEventClient.GetAsync(_guild.Id, eventId, withUserCount, ct)));
+
+    public ICreateScheduledEventAction CreateScheduledEvent(
+        string name,
+        DateTimeOffset scheduledStartTime,
+        ScheduledEventEntityType entityType)
+        => new CreateScheduledEventAction(_client, _guild.Id, name, scheduledStartTime, entityType);
+
     public IRestAction<IGuildOnboarding> GetOnboarding()
         => RestAction<IGuildOnboarding>.Create(async ct => new GuildOnboardingWrapper(_client, await _client.GuildTemplateClient.GetOnboardingAsync(_guild.Id, ct)));
 

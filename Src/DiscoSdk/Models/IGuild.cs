@@ -508,6 +508,26 @@ public interface IGuild
     /// </summary>
     ICreateAutoModerationRuleAction CreateAutoModerationRule(string name, AutoModerationEventType eventType, AutoModerationTriggerType triggerType);
 
+    /// <summary>Lists this guild's scheduled events.</summary>
+    /// <param name="withUserCount">If true, each event includes its <c>UserCount</c>.</param>
+    IRestAction<IReadOnlyList<IGuildScheduledEvent>> GetScheduledEvents(bool? withUserCount = null);
+
+    /// <summary>Gets a single scheduled event by id.</summary>
+    IRestAction<IGuildScheduledEvent> GetScheduledEvent(Snowflake eventId, bool? withUserCount = null);
+
+    /// <summary>
+    /// Creates a scheduled event. Returns a fluent builder — for Stage/Voice events chain
+    /// <c>SetChannel(...)</c>; for External events chain <c>SetLocation(...).SetScheduledEndTime(...)</c>.
+    /// Finish with <c>ExecuteAsync</c>.
+    /// </summary>
+    /// <param name="name">Event name (1-100 chars).</param>
+    /// <param name="scheduledStartTime">When the event starts.</param>
+    /// <param name="entityType">Venue type (Stage / Voice / External).</param>
+    Rest.Actions.ICreateScheduledEventAction CreateScheduledEvent(
+        string name,
+        DateTimeOffset scheduledStartTime,
+        Enums.ScheduledEventEntityType entityType);
+
     /// <summary>
     /// Gets a REST action that retrieves this guild's onboarding configuration.
     /// </summary>
