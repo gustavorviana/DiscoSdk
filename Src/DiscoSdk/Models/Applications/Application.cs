@@ -9,7 +9,7 @@ namespace DiscoSdk.Models.Applications;
 /// Represents a Discord application (the entity a bot belongs to). A partial form arrives in the
 /// gateway <c>READY</c> payload; the full object is returned by the Get Current Application endpoint.
 /// </summary>
-public class Application
+internal class Application
 {
 	/// <summary>The ID of the application.</summary>
 	[JsonPropertyName("id")]

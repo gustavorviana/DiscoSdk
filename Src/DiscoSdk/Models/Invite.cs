@@ -7,7 +7,7 @@ namespace DiscoSdk.Models;
 /// <summary>
 /// Represents a Discord invite.
 /// </summary>
-public class Invite
+internal class Invite
 {
 	/// <summary>
 	/// Gets or sets the invite code.

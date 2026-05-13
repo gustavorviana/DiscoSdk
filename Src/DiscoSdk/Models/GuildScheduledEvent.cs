@@ -7,7 +7,7 @@ namespace DiscoSdk.Models;
 /// <summary>
 /// Raw model returned by Discord for a guild scheduled event.
 /// </summary>
-public class GuildScheduledEvent
+internal class GuildScheduledEvent
 {
     /// <summary>The scheduled event id.</summary>
     [JsonPropertyName("id")]

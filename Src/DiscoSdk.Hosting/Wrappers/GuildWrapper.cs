@@ -416,6 +416,20 @@ internal class GuildWrapper : IGuild
         ScheduledEventEntityType entityType)
         => new CreateScheduledEventAction(_client, _guild.Id, name, scheduledStartTime, entityType);
 
+    public IRestAction<IReadOnlyList<ISticker>> GetStickers()
+        => RestAction<IReadOnlyList<ISticker>>.Create(async ct =>
+        {
+            var stickers = await _client.StickerClient.ListGuildStickersAsync(_guild.Id, ct);
+            return stickers.Select(s => (ISticker)new StickerWrapper(_client, s)).ToList().AsReadOnly();
+        });
+
+    public IRestAction<ISticker> GetSticker(Snowflake stickerId)
+        => RestAction<ISticker>.Create(async ct =>
+            new StickerWrapper(_client, await _client.StickerClient.GetGuildStickerAsync(_guild.Id, stickerId, ct)));
+
+    public ICreateGuildStickerAction CreateSticker(string name, string tags, DiscoSdk.Models.Messages.MessageFile file)
+        => new CreateGuildStickerAction(_client, _guild.Id, name, tags, file);
+
     public IRestAction<IGuildOnboarding> GetOnboarding()
         => RestAction<IGuildOnboarding>.Create(async ct => new GuildOnboardingWrapper(_client, await _client.GuildTemplateClient.GetOnboardingAsync(_guild.Id, ct)));
 

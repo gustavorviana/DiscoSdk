@@ -528,6 +528,21 @@ public interface IGuild
         DateTimeOffset scheduledStartTime,
         Enums.ScheduledEventEntityType entityType);
 
+    /// <summary>Lists every sticker owned by this guild.</summary>
+    IRestAction<IReadOnlyList<ISticker>> GetStickers();
+
+    /// <summary>Gets a single guild-owned sticker by id.</summary>
+    IRestAction<ISticker> GetSticker(Snowflake stickerId);
+
+    /// <summary>
+    /// Uploads a new sticker to this guild. Returns a fluent builder — chain
+    /// <c>SetDescription(...)</c> if you want a description, then <c>ExecuteAsync</c>.
+    /// </summary>
+    /// <param name="name">Sticker name (2-30 chars).</param>
+    /// <param name="tags">Suggestion / autocomplete tag string (max 200 chars).</param>
+    /// <param name="file">Sticker image file (PNG/APNG/GIF/Lottie, max 512 KiB).</param>
+    Rest.Actions.ICreateGuildStickerAction CreateSticker(string name, string tags, DiscoSdk.Models.Messages.MessageFile file);
+
     /// <summary>
     /// Gets a REST action that retrieves this guild's onboarding configuration.
     /// </summary>

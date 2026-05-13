@@ -22,11 +22,11 @@ internal sealed class GuildTemplateWrapper(DiscordClient client, GuildTemplate m
 	public string CreatedAt => _model.CreatedAt;
 	public string UpdatedAt => _model.UpdatedAt;
 	public Snowflake SourceGuildId => _model.SourceGuildId;
-	public Guild SerializedSourceGuild => _model.SerializedSourceGuild;
+	public IGuild SerializedSourceGuild => new GuildWrapper(_model.SerializedSourceGuild, _client);
 	public bool? IsDirty => _model.IsDirty;
 
-	public IRestAction<Guild> CreateGuild(string name, string? icon = null)
-		=> RestAction<Guild>.Create(ct => _client.GuildTemplateClient.CreateGuildFromTemplateAsync(_model.Code, name, icon, ct));
+	public IRestAction<IGuild> CreateGuild(string name, string? icon = null)
+		=> RestAction<IGuild>.Create(async ct => new GuildWrapper(await _client.GuildTemplateClient.CreateGuildFromTemplateAsync(_model.Code, name, icon, ct), _client));
 
 	public IRestAction<IGuildTemplate> Sync()
 		=> RestAction<IGuildTemplate>.Create(async ct => new GuildTemplateWrapper(_client, await _client.GuildTemplateClient.SyncGuildTemplateAsync(_model.SourceGuildId, _model.Code, ct)));

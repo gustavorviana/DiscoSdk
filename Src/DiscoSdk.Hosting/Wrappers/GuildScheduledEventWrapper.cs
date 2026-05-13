@@ -39,7 +39,7 @@ internal sealed class GuildScheduledEventWrapper(DiscordClient client, GuildSche
 	/// <inheritdoc />
 	public Snowflake? EntityId => model.EntityId;
 	/// <inheritdoc />
-	public ScheduledEventEntityMetadata? EntityMetadata => model.EntityMetadata;
+	public string? Location => model.EntityMetadata?.Location;
 	/// <inheritdoc />
 	public int? UserCount => model.UserCount;
 	/// <inheritdoc />

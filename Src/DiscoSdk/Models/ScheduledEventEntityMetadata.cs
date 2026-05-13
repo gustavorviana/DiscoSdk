@@ -4,9 +4,11 @@ namespace DiscoSdk.Models;
 
 /// <summary>
 /// Extra venue information for a guild scheduled event. Currently only carries
-/// <see cref="Location"/>, which is required for events with entity type "External".
+/// <see cref="Location"/>, required for events with entity type "External".
+/// Internal — consumers read the location directly from <see cref="IGuildScheduledEvent.Location"/>,
+/// and write it via <c>SetLocation(...)</c> on the create/modify action builders.
 /// </summary>
-public class ScheduledEventEntityMetadata
+internal class ScheduledEventEntityMetadata
 {
 	/// <summary>
 	/// Free-form location string shown in the event details (max 100 chars). Required when the

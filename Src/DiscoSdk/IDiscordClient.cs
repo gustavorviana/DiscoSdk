@@ -129,6 +129,12 @@ public interface IDiscordClient
     /// </summary>
     IRestAction<ISubscription> GetSkuSubscription(Snowflake skuId, Snowflake subscriptionId);
 
+    /// <summary>Gets any sticker by id (built-in or guild).</summary>
+    IRestAction<ISticker> GetSticker(Snowflake stickerId);
+
+    /// <summary>Lists the built-in Nitro sticker packs.</summary>
+    IRestAction<IReadOnlyList<IStickerPack>> GetStickerPacks();
+
     /// <summary>
     /// Gets a REST action that retrieves the application role-connection metadata records.
     /// </summary>

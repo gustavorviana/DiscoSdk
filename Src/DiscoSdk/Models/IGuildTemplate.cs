@@ -36,7 +36,7 @@ public interface IGuildTemplate
 	Snowflake SourceGuildId { get; }
 
 	/// <summary>A partial guild snapshot of what this template produces.</summary>
-	Guild SerializedSourceGuild { get; }
+	IGuild SerializedSourceGuild { get; }
 
 	/// <summary>Whether the template has unsynced changes.</summary>
 	bool? IsDirty { get; }
@@ -44,7 +44,7 @@ public interface IGuildTemplate
 	/// <summary>Creates a REST action that creates a new guild from this template.</summary>
 	/// <param name="name">The name of the new guild.</param>
 	/// <param name="icon">Optional base64 128x128 image data URI for the guild icon.</param>
-	IRestAction<Guild> CreateGuild(string name, string? icon = null);
+	IRestAction<IGuild> CreateGuild(string name, string? icon = null);
 
 	/// <summary>Creates a REST action that syncs this template to its source guild's current state.</summary>
 	IRestAction<IGuildTemplate> Sync();

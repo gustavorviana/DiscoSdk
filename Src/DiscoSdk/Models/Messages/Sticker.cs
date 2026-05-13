@@ -36,6 +36,12 @@ public class Sticker : IWithSnowflake
     public string? Description { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the sticker is a Discord-built-in pack sticker or guild-uploaded.
+    /// </summary>
+    [JsonPropertyName("type")]
+    public StickerType Type { get; set; }
+
+    /// <summary>
     /// Gets or sets the type of sticker format.
     /// </summary>
     [JsonPropertyName("format_type")]

@@ -85,6 +85,7 @@ namespace DiscoSdk.Hosting
         internal WebhookClient WebhookClient { get; }
         internal StageInstanceClient StageInstanceClient { get; }
         internal GuildScheduledEventClient GuildScheduledEventClient { get; }
+        internal StickerClient StickerClient { get; }
         internal UserRepository Users { get; }
         internal DmChannelRepository DmRepository { get; }
 
@@ -138,6 +139,7 @@ namespace DiscoSdk.Hosting
             WebhookClient = new WebhookClient(HttpClient);
             StageInstanceClient = new StageInstanceClient(HttpClient);
             GuildScheduledEventClient = new GuildScheduledEventClient(HttpClient);
+            StickerClient = new StickerClient(HttpClient);
             Users = new UserRepository(this);
             Guilds = new GuildManager(this, Logger);
             Channels = new ChannelManager(this);
@@ -400,6 +402,19 @@ namespace DiscoSdk.Hosting
         /// <inheritdoc />
         public IRestAction<ISubscription> GetSkuSubscription(Snowflake skuId, Snowflake subscriptionId)
             => RestAction<ISubscription>.Create(async ct => await ApplicationClient.GetSkuSubscriptionAsync(skuId, subscriptionId, ct));
+
+        /// <inheritdoc />
+        public IRestAction<ISticker> GetSticker(Snowflake stickerId)
+            => RestAction<ISticker>.Create(async ct =>
+                new StickerWrapper(this, await StickerClient.GetStickerAsync(stickerId, ct)));
+
+        /// <inheritdoc />
+        public IRestAction<IReadOnlyList<IStickerPack>> GetStickerPacks()
+            => RestAction<IReadOnlyList<IStickerPack>>.Create(async ct =>
+            {
+                var envelope = await StickerClient.ListStickerPacksAsync(ct);
+                return envelope.StickerPacks.Select(p => (IStickerPack)new StickerPackWrapper(this, p)).ToList().AsReadOnly();
+            });
 
         /// <inheritdoc />
         public IRestAction<IReadOnlyList<IApplicationRoleConnectionMetadata>> GetRoleConnectionMetadata()

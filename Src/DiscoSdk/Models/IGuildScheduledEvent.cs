@@ -47,8 +47,8 @@ public interface IGuildScheduledEvent
 	/// <summary>If the event is bound to a stage instance, its id.</summary>
 	Snowflake? EntityId { get; }
 
-	/// <summary>Extra venue info (location for External events).</summary>
-	ScheduledEventEntityMetadata? EntityMetadata { get; }
+	/// <summary>External venue location (only set for External events).</summary>
+	string? Location { get; }
 
 	/// <summary>Number of users interested in the event (only present when requested).</summary>
 	int? UserCount { get; }

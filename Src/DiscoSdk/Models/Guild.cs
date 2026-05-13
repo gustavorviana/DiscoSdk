@@ -9,7 +9,7 @@ namespace DiscoSdk.Models;
 /// <summary>
 /// Represents a Discord guild (server).
 /// </summary>
-public class Guild
+internal class Guild
 {
     /// <summary>
     /// Gets or sets the guild's unique identifier.

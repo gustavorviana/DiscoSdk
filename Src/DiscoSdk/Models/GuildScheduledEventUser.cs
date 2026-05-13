@@ -5,8 +5,9 @@ namespace DiscoSdk.Models;
 
 /// <summary>
 /// Raw model returned by <c>GET /guilds/{guild.id}/scheduled-events/{event.id}/users</c>.
+/// Internal — consumers use <see cref="IGuildScheduledEventUser"/>.
 /// </summary>
-public class GuildScheduledEventUser
+internal class GuildScheduledEventUser
 {
 	/// <summary>The scheduled event this subscription is for.</summary>
 	[JsonPropertyName("guild_scheduled_event_id")]

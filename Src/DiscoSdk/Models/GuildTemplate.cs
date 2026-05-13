@@ -6,7 +6,7 @@ namespace DiscoSdk.Models;
 /// <summary>
 /// Represents a guild template — a snapshot of a guild's settings that can be used to create new guilds.
 /// </summary>
-public class GuildTemplate
+internal class GuildTemplate
 {
 	/// <summary>The template code (unique ID).</summary>
 	[JsonPropertyName("code")]

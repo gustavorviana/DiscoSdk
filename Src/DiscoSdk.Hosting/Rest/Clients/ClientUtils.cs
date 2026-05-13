@@ -48,4 +48,49 @@ internal static class ClientUtils
 
         return form;
     }
+
+    /// <summary>
+    /// Sends a request whose body is a multipart/form-data envelope made of named string fields
+    /// plus a single named file. Differs from <see cref="SendMultipartAsync"/> (which always uses
+    /// the <c>payload_json</c> + <c>files[i]</c> shape that <c>messages</c> endpoints expect);
+    /// Discord's sticker-create endpoint instead splits every field into its own form part.
+    /// </summary>
+    public static Task<TResponse> SendFormDataAsync<TResponse>(this IDiscordRestClient client,
+        DiscordRoute route,
+        HttpMethod method,
+        IReadOnlyDictionary<string, string> fields,
+        string fileFieldName,
+        MessageFile file,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentNullException.ThrowIfNull(method);
+        ArgumentNullException.ThrowIfNull(fields);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileFieldName);
+        ArgumentNullException.ThrowIfNull(file);
+
+        Func<HttpContent> factory = () => BuildFormDataContent(fields, fileFieldName, file);
+        return client.SendAsync<TResponse>(route, method, factory, cancellationToken);
+    }
+
+    private static MultipartFormDataContent BuildFormDataContent(
+        IReadOnlyDictionary<string, string> fields,
+        string fileFieldName,
+        MessageFile file)
+    {
+        var form = new MultipartFormDataContent();
+
+        foreach (var (key, value) in fields)
+        {
+            var content = new StringContent(value, Encoding.UTF8, "text/plain");
+            form.Add(content, key);
+        }
+
+        var fileContent = new ByteArrayContent(file.Buffer);
+        if (!string.IsNullOrWhiteSpace(file.ContentType))
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+        form.Add(fileContent, fileFieldName, file.FileName);
+
+        return form;
+    }
 }
