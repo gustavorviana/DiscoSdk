@@ -1,7 +1,7 @@
 ﻿using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Rest.RateLimit;
-using Microsoft.Extensions.Logging;
 using DiscoSdk.Rest;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Headers;
@@ -14,7 +14,15 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 /// </summary>
 public class DiscordRestClient : IDisposable, IDiscordRestClient
 {
-    private const int BucketQueueLimit = 100;
+    /// <summary>
+    /// Hard ceiling on the number of requests that may be "in the system" at once (waiting on a
+    /// bucket gate or in HTTP flight). It is a memory guard, not a rate limit: Discord's own
+    /// per-bucket and global windows control throughput; this just stops a runaway worker that
+    /// fires hundreds of thousands of requests at once from allocating that many request states
+    /// before any per-bucket serialisation applies backpressure. Generous on purpose — at
+    /// Discord's 50 req/s global cap a healthy bot never approaches it.
+    /// </summary>
+    private const int MaxConcurrentRequests = 2048;
 
     /// <summary>
     /// How often the background sweeper walks the bucket dictionary looking for idle queues
@@ -33,6 +41,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     private readonly ConcurrentDictionary<string, BucketRequestQueue> _buckets = [];
     private readonly ConcurrentDictionary<string, string> _routeToHash = [];
     private readonly GlobalRateLimitManager _globalRateLimiter;
+    private readonly SemaphoreSlim _inflightGate = new(MaxConcurrentRequests, MaxConcurrentRequests);
     private readonly CancellationTokenSource _shutdownCts = new();
 
     /// <summary>
@@ -128,7 +137,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     {
         ArgumentNullException.ThrowIfNull(method);
 
-        using var res = await GetOrCreateBucket(path, method).ExecuteAsync(() => CreateRequestWithBody(path, method, body), ct);
+        using var res = await DispatchAsync(path, method, () => CreateRequestWithBody(path, method, body), ct);
         if (res.IsSuccessStatusCode)
         {
             if (res.StatusCode == HttpStatusCode.NoContent)
@@ -148,7 +157,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     {
         ArgumentNullException.ThrowIfNull(method);
 
-        using var res = await GetOrCreateBucket(path, method).ExecuteAsync(() => CreateRequestWithBody(path, method, body), ct);
+        using var res = await DispatchAsync(path, method, () => CreateRequestWithBody(path, method, body), ct);
         if (res.IsSuccessStatusCode || res.StatusCode == HttpStatusCode.NoContent)
             return;
 
@@ -167,12 +176,31 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     {
         ArgumentNullException.ThrowIfNull(method);
 
-        using var res = await GetOrCreateBucket(path, method).ExecuteAsync(() => new HttpRequestMessage(method, path.ToString()), ct);
+        using var res = await DispatchAsync(path, method, () => new HttpRequestMessage(method, path.ToString()), ct);
 
         if (res.IsSuccessStatusCode)
             return;
 
         throw await GetDiscordExceptionAsync(res, ct);
+    }
+
+    /// <summary>
+    /// Acquires a slot from the process-wide concurrency gate, then runs the request through its
+    /// per-bucket queue. Holding the gate slot for the whole request (gate wait + bucket wait +
+    /// HTTP round trip) is what bounds the number of in-flight request states.
+    /// </summary>
+    private async Task<HttpResponseMessage> DispatchAsync(DiscordRoute path, HttpMethod method, Func<HttpRequestMessage> requestFactory, CancellationToken ct)
+    {
+        await _inflightGate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            return await GetOrCreateBucket(path, method).ExecuteAsync(requestFactory, ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            try { _inflightGate.Release(); }
+            catch (ObjectDisposedException) { }
+        }
     }
 
     internal HttpRequestMessage CreateRequestWithBody(DiscordRoute path, HttpMethod method, object? body)
@@ -233,7 +261,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
             _logger,
             _http,
             key,
-            BucketQueueLimit,
+            _shutdownCts.Token,
             observedHash => OnBucketHashLearned(routeKey, bucketPath, observedHash)));
     }
 
@@ -368,6 +396,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
             }
 
             _buckets.Clear();
+            _inflightGate.Dispose();
             _shutdownCts.Dispose();
             _http.Dispose();
         }

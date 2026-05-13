@@ -31,9 +31,9 @@ public class BucketRequestQueueTests
 
     private BucketRequestQueue NewQueue(
         HttpClient http,
-        int capacity = 100,
+        CancellationToken shutdownToken = default,
         Action<string>? onHashLearned = null) =>
-        new(NewGlobalLimiter(), _logger, http, "test-bucket", capacity, onHashLearned);
+        new(NewGlobalLimiter(), _logger, http, "test-bucket", shutdownToken, onHashLearned);
 
     private static HttpRequestMessage NewRequest() =>
         new(HttpMethod.Get, "https://discord.local/test");
@@ -55,14 +55,13 @@ public class BucketRequestQueueTests
     }
 
     /// <summary>
-    /// Regression test for the silent-drop deadlock: TryWrite previously returned false
-    /// when the bounded channel was full and the caller's Task never completed. With
-    /// WriteAsync, surplus callers backpressure and complete once a slot opens.
+    /// The bucket serialises with a one-permit semaphore: while one request is in flight, the
+    /// others wait their turn — none is dropped, and all complete once the first finishes.
     /// </summary>
     [Fact]
-    public async Task ExecuteAsync_WhenQueueFull_BackpressuresInsteadOfSilentlyDroppingAsync()
+    public async Task ExecuteAsync_WhileBusy_SerializesAndCompletesAllAsync()
     {
-        // Arrange — bound the channel to 1 slot so the third call exercises backpressure.
+        // Arrange — the first request blocks until released; the others queue on the gate.
         var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var requestCount = 0;
         var handler = new StubHttpMessageHandler(async (_, _) =>
@@ -73,12 +72,12 @@ public class BucketRequestQueueTests
             return Ok();
         });
         using var http = new HttpClient(handler);
-        using var queue = NewQueue(http, capacity: 1);
+        using var queue = NewQueue(http);
 
-        // Act — three concurrent submissions
+        // Act — three concurrent submissions.
         var first = queue.ExecuteAsync(NewRequest, CancellationToken.None);
 
-        // Wait until the worker has picked up the first item.
+        // Wait until the first request has actually started executing.
         var spinUntil = DateTime.UtcNow.AddSeconds(5);
         while (Volatile.Read(ref requestCount) < 1 && DateTime.UtcNow < spinUntil)
             await Task.Delay(5);
@@ -86,12 +85,10 @@ public class BucketRequestQueueTests
         var second = queue.ExecuteAsync(NewRequest, CancellationToken.None);
         var third = queue.ExecuteAsync(NewRequest, CancellationToken.None);
 
-        // Allow time for any silent-drop bug to manifest before releasing.
         await Task.Delay(100);
-
         Assert.False(first.IsCompleted, "First request should still be in flight");
-        Assert.False(second.IsCompleted, "Second request should be in queue");
-        Assert.False(third.IsCompleted, "Third request should be backpressured behind the bound");
+        Assert.False(second.IsCompleted, "Second request should be waiting on the bucket gate");
+        Assert.False(third.IsCompleted, "Third request should be waiting on the bucket gate");
 
         releaseFirst.SetResult();
 
@@ -101,17 +98,14 @@ public class BucketRequestQueueTests
     }
 
     /// <summary>
-    /// Regression test for the cancellation deadlock: a request that landed in the channel
-    /// (WriteAsync already returned) and was waiting for the worker to pick it up could not
-    /// be cancelled — the awaiter on <c>item.Task</c> hung forever because nothing wired the
-    /// caller's token to the WorkItem's <see cref="TaskCompletionSource{T}"/>. With the fix,
-    /// cancelling the token immediately faults the WorkItem's Task even before the worker
-    /// reaches the item.
+    /// Cancelling the caller's token while a request is waiting on the bucket gate (because a
+    /// prior request is in flight) propagates as <see cref="OperationCanceledException"/> instead
+    /// of hanging.
     /// </summary>
     [Fact]
-    public async Task ExecuteAsync_WhenCancelledWhileQueuedBehindBlockedWorker_PropagatesCancellationAsync()
+    public async Task ExecuteAsync_WhenCancelledWhileWaitingForGate_PropagatesCancellationAsync()
     {
-        // Arrange — generous capacity so the second submission is buffered without backpressure.
+        // Arrange — first request occupies the gate; handler won't return until released.
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var handler = new StubHttpMessageHandler(async (_, _) =>
         {
@@ -119,47 +113,41 @@ public class BucketRequestQueueTests
             return Ok();
         });
         using var http = new HttpClient(handler);
-        using var queue = NewQueue(http, capacity: 100);
+        using var queue = NewQueue(http);
 
-        // First request occupies the worker (handler will not return until release).
         var first = queue.ExecuteAsync(NewRequest, CancellationToken.None);
 
-        // Wait for the worker to actually pick up the first request.
         var spinUntil = DateTime.UtcNow.AddSeconds(5);
         while (handler.RequestCount < 1 && DateTime.UtcNow < spinUntil)
             await Task.Delay(5);
 
-        // Second request lands in the channel buffer behind the busy worker.
         using var cts = new CancellationTokenSource();
         var second = queue.ExecuteAsync(NewRequest, cts.Token);
 
-        // Allow time to settle into the channel.
         await Task.Delay(50);
-        Assert.False(second.IsCompleted, "Second submission should be queued behind the busy worker");
+        Assert.False(second.IsCompleted, "Second submission should be waiting on the gate");
 
-        // Act — cancel the token. Without the WorkItem cancellation registration, this would hang
-        // because WriteAsync had already succeeded and there was no path to wake the awaiter.
+        // Act
         cts.Cancel();
 
-        // Assert — second's task is observable as cancelled within a short window.
+        // Assert
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => second)
             .WaitAsync(TimeSpan.FromSeconds(5));
 
-        // Cleanup — release the worker so the test does not leak a held request.
+        // Cleanup
         release.SetResult();
         await first.WaitAsync(TimeSpan.FromSeconds(5));
     }
 
     /// <summary>
-    /// Verifies the bot-shutdown scenario: when the queue is disposed while requests are
-    /// pending (one in-flight on the worker, others buffered), every awaiter observes
-    /// <see cref="OperationCanceledException"/>. Without the queue-token wiring on the
-    /// WorkItem, the buffered items would hang forever because nothing else cancels them.
+    /// Disposing the bucket while requests are pending (one in flight, others waiting on the gate)
+    /// cancels every awaiter — the in-flight one via the cancelled HTTP token, the queued ones via
+    /// the cancelled <c>WaitAsync</c>. This is the bot-shutdown path.
     /// </summary>
     [Fact]
-    public async Task Dispose_WhilePendingRequests_CancelsEveryQueuedAwaiterAsync()
+    public async Task Dispose_WhilePendingRequests_CancelsEveryAwaiterAsync()
     {
-        // Arrange — handler that never returns, so the worker stays busy and items pile up.
+        // Arrange — handler that only returns once released, but honours the request's token.
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var handler = new StubHttpMessageHandler(async (_, ct) =>
         {
@@ -167,29 +155,26 @@ public class BucketRequestQueueTests
             return Ok();
         });
         using var http = new HttpClient(handler);
-        var queue = NewQueue(http, capacity: 100);
+        var queue = NewQueue(http);
 
-        // First occupies the worker.
         var first = queue.ExecuteAsync(NewRequest, CancellationToken.None);
 
-        // Wait for the worker to actually start the first request.
         var spinUntil = DateTime.UtcNow.AddSeconds(5);
         while (handler.RequestCount < 1 && DateTime.UtcNow < spinUntil)
             await Task.Delay(5);
 
-        // Two more land in the channel buffer behind the busy worker.
         var second = queue.ExecuteAsync(NewRequest, CancellationToken.None);
         var third = queue.ExecuteAsync(NewRequest, CancellationToken.None);
 
         await Task.Delay(50);
-        Assert.False(first.IsCompleted, "First should still be in-flight");
-        Assert.False(second.IsCompleted, "Second should be queued");
-        Assert.False(third.IsCompleted, "Third should be queued");
+        Assert.False(first.IsCompleted, "First should still be in flight");
+        Assert.False(second.IsCompleted, "Second should be waiting on the gate");
+        Assert.False(third.IsCompleted, "Third should be waiting on the gate");
 
-        // Act — simulate bot shutdown by disposing the queue.
+        // Act — simulate shutdown.
         queue.Dispose();
 
-        // Assert — every pending awaiter observes cancellation, including the in-flight one.
+        // Assert — every pending awaiter observes cancellation.
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => first)
             .WaitAsync(TimeSpan.FromSeconds(5));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => second)
@@ -197,65 +182,12 @@ public class BucketRequestQueueTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => third)
             .WaitAsync(TimeSpan.FromSeconds(5));
 
-        // Allow the held handler to unwind without hanging the test runner.
         release.TrySetResult();
     }
 
     /// <summary>
-    /// Verifies that cancelling the token while a request is backpressured on
-    /// <c>WriteAsync</c> (because the channel is full) propagates as
-    /// <see cref="OperationCanceledException"/> instead of hanging forever — the failure
-    /// mode the previous TryWrite implementation produced.
-    /// </summary>
-    [Fact]
-    public async Task ExecuteAsync_WhenCancelledWhileBackpressured_PropagatesCancellationAsync()
-    {
-        // Arrange — capacity 1, worker held on the first request, buffer filled by the second.
-        // The third submission will block on WriteAsync until a slot opens.
-        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var handler = new StubHttpMessageHandler(async (_, _) =>
-        {
-            await release.Task;
-            return Ok();
-        });
-        using var http = new HttpClient(handler);
-        using var queue = NewQueue(http, capacity: 1);
-
-        var first = queue.ExecuteAsync(NewRequest, CancellationToken.None);
-
-        // Wait for the worker to actually start the first request.
-        var spinUntil = DateTime.UtcNow.AddSeconds(5);
-        while (handler.RequestCount < 1 && DateTime.UtcNow < spinUntil)
-            await Task.Delay(5);
-
-        var second = queue.ExecuteAsync(NewRequest, CancellationToken.None);
-
-        // Give the second submission a moment to settle into the buffer.
-        await Task.Delay(50);
-
-        using var cts = new CancellationTokenSource();
-        var third = queue.ExecuteAsync(NewRequest, cts.Token);
-
-        // Confirm the third is waiting on backpressure rather than already completed.
-        await Task.Delay(50);
-        Assert.False(third.IsCompleted, "Third submission should be blocked on WriteAsync backpressure");
-
-        // Act
-        cts.Cancel();
-
-        // Assert
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => third)
-            .WaitAsync(TimeSpan.FromSeconds(5));
-
-        // Clean up the held requests so the test does not leak the worker thread.
-        release.SetResult();
-        await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(5));
-    }
-
-    /// <summary>
-    /// Verifies the new bucket-hash discovery callback fires exactly once when the
-    /// X-RateLimit-Bucket header is observed for the first time, regardless of how
-    /// many subsequent responses carry the same hash.
+    /// The bucket-hash discovery callback fires exactly once when the X-RateLimit-Bucket header is
+    /// first observed, no matter how many subsequent responses carry the same hash.
     /// </summary>
     [Fact]
     public async Task ExecuteAsync_WhenBucketHashHeaderObserved_InvokesCallbackOnceAsync()
@@ -323,7 +255,7 @@ public class BucketRequestQueueTests
     [Fact]
     public async Task ExecuteAsync_WhenAllRetriesAreRateLimited_ThrowsHttpRequestExceptionAsync()
     {
-        // Arrange — every attempt is bucket-429 with no wait
+        // Arrange — every attempt is bucket-429 with a near-zero wait.
         var handler = new StubHttpMessageHandler(_ => CreateBucket429(resetAfterSeconds: 0.01));
         using var http = new HttpClient(handler);
         using var queue = NewQueue(http);
@@ -351,8 +283,8 @@ public class BucketRequestQueueTests
     }
 
     /// <summary>
-    /// Verifies the transient-failure retry policy promotes a flaky 5xx to a successful
-    /// outcome without the bucket-queue retry loop being involved.
+    /// The transient-failure retry policy promotes a flaky 5xx to a successful outcome without the
+    /// bucket-queue retry loop being involved.
     /// </summary>
     [Fact]
     public async Task ExecuteAsync_OnTransient5xxFollowedBySuccess_RetriesAndCompletesAsync()
@@ -376,9 +308,8 @@ public class BucketRequestQueueTests
     }
 
     /// <summary>
-    /// Verifies the transient policy does <b>not</b> retry on 429 — that path is owned by the
-    /// bucket-queue retry loop. Otherwise the two layers would double-retry and burn the
-    /// rate-limit budget unnecessarily.
+    /// The transient policy does <b>not</b> retry on 429 — that path is owned by the bucket-queue
+    /// retry loop. Otherwise the two layers would double-retry and burn the rate-limit budget.
     /// </summary>
     [Fact]
     public async Task ExecuteAsync_On429_TransientPolicyDoesNotRetryAsync()
@@ -396,8 +327,7 @@ public class BucketRequestQueueTests
         // Act
         var response = await queue.ExecuteAsync(NewRequest, CancellationToken.None);
 
-        // Assert — exactly two requests: one 429, one OK. If the transient policy were also
-        // retrying on 429, we would see >2 attempts before the bucket loop saw a clean response.
+        // Assert — exactly two requests: one 429, one OK. A transient retry on 429 would show >2.
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(2, handler.RequestCount);
     }
