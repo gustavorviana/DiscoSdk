@@ -29,18 +29,18 @@ public interface IForumChannelManager : IMessageChannelManager<IForumChannelMana
 	IForumChannelManager SetDefaultAutoArchiveDuration(ThreadAutoArchiveDuration duration);
 
 	/// <summary>
-	/// Sets the default sort order type used to order posts in this forum channel.
+	/// Sets the default sort order used to order posts in this forum channel.
 	/// </summary>
-	/// <param name="sortOrder">The sort order, or null to use default.</param>
+	/// <param name="sortOrder">The sort order, or null to clear it (Discord falls back to latest activity).</param>
 	/// <returns>The current <see cref="IForumChannelManager"/> instance.</returns>
-	IForumChannelManager SetDefaultSortOrder(int? sortOrder);
+	IForumChannelManager SetDefaultSortOrder(SortOrderType? sortOrder);
 
 	/// <summary>
-	/// Sets the default forum layout view used to display posts in this channel.
+	/// Sets the default layout used to display posts in this forum channel.
 	/// </summary>
-	/// <param name="layout">The forum layout, or null to use default.</param>
+	/// <param name="layout">The forum layout, or null to clear it.</param>
 	/// <returns>The current <see cref="IForumChannelManager"/> instance.</returns>
-	IForumChannelManager SetDefaultLayout(int? layout);
+	IForumChannelManager SetDefaultLayout(ForumLayoutType? layout);
 
 	/// <summary>
 	/// Sets the available tags that can be used in this forum channel.

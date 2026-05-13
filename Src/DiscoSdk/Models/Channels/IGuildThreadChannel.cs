@@ -4,9 +4,11 @@ using DiscoSdk.Rest.Actions;
 namespace DiscoSdk.Models.Channels;
 
 /// <summary>
-/// Represents a thread channel in a Discord guild.
+/// Represents a thread channel in a Discord guild. Threads are guild message channels but, unlike
+/// standard channels, they have no position in the channel list — hence <see cref="IGuildMessageChannel"/>
+/// rather than <see cref="IStandardGuildMessageChannel"/>.
 /// </summary>
-public interface IGuildThreadChannel : IGuildChannel, IGuildMessageChannel
+public interface IGuildThreadChannel : IGuildMessageChannel
 {
     /// <summary>
     /// Gets the parent channel for this thread.

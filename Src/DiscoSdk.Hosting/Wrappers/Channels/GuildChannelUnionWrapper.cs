@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Models;
+using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 
@@ -7,46 +7,51 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 internal class GuildChannelUnionWrapper(DiscordClient client, Channel channel, IGuild guild)
     : GuildChannelWrapperBase(client, channel, guild), IGuildChannelUnion
 {
-    public virtual IGuildTextChannel? AsTextChannel()
+    public IGuildTextChannel? AsTextChannel()
     {
         return _channel.Type == ChannelType.GuildText ? new GuildTextChannelWrapper(_client, _channel, Guild) : null;
     }
 
-    public virtual IGuildNewsChannel? AsNewsChannel()
+    public IGuildNewsChannel? AsNewsChannel()
     {
         return _channel.Type == ChannelType.GuildAnnouncement ? new GuildNewsChannelWrapper(_client, _channel, Guild) : null;
     }
 
-    public virtual IGuildThreadChannel? AsThreadChannel()
+    public IGuildThreadChannel? AsThreadChannel()
     {
         return _channel.Type is ChannelType.AnnouncementThread or ChannelType.PublicThread or ChannelType.PrivateThread
             ? new GuildThreadChannelWrapper(_client, _channel, Guild)
             : null;
     }
 
-    public virtual IGuildVoiceChannel? AsVoiceChannel()
+    public IGuildVoiceChannel? AsVoiceChannel()
     {
         return _channel.Type == ChannelType.GuildVoice ? new GuildVoiceChannelWrapper(_client, _channel, Guild) : null;
     }
 
-    public virtual IGuildStageChannel? AsStageChannel()
+    public IGuildStageChannel? AsStageChannel()
     {
         return _channel.Type == ChannelType.GuildStageVoice ? new GuildStageChannelWrapper(_client, _channel, Guild) : null;
     }
 
-    public virtual IGuildForumChannel? AsForumChannel()
+    public IGuildForumChannel? AsForumChannel()
     {
         return _channel.Type == ChannelType.GuildForum ? new GuildForumChannelWrapper(_client, _channel, Guild) : null;
     }
 
-    public virtual IGuildMediaChannel? AsMediaChannel()
+    public IGuildMediaChannel? AsMediaChannel()
     {
         return _channel.Type == ChannelType.GuildMedia ? new GuildMediaChannelWrapper(_channel, Guild, _client) : null;
     }
 
+    public IGuildCategoryChannel? AsCategoryChannel()
+    {
+        return _channel.Type == ChannelType.GuildCategory ? new GuildCategoryChannelWrapper(_client, _channel, Guild) : null;
+    }
+
     public IChannel? ToExpectedChannel()
     {
-        return channel.Type switch
+        return _channel.Type switch
         {
             ChannelType.GuildText => AsTextChannel(),
             ChannelType.GuildAnnouncement => AsNewsChannel(),
@@ -55,6 +60,7 @@ internal class GuildChannelUnionWrapper(DiscordClient client, Channel channel, I
             ChannelType.GuildStageVoice => AsStageChannel(),
             ChannelType.GuildForum => AsForumChannel(),
             ChannelType.GuildMedia => AsMediaChannel(),
+            ChannelType.GuildCategory => AsCategoryChannel(),
             _ => null
         };
     }

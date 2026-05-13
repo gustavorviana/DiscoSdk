@@ -3,9 +3,10 @@ using DiscoSdk.Rest.Actions;
 namespace DiscoSdk.Models.Channels;
 
 /// <summary>
-/// Represents a voice channel in a Discord guild.
+/// Represents a voice channel in a Discord guild. Voice channels also carry an embedded text chat
+/// ("Text-in-Voice"), hence the <see cref="IGuildMessageChannel"/> surface in addition to the audio one.
 /// </summary>
-public interface IGuildVoiceChannel : IGuildChannel, IVideoChannel
+public interface IGuildVoiceChannel : IGuildMessageChannel, IVideoChannel
 {
 	/// <summary>
 	/// Gets a manager to edit this voice channel.

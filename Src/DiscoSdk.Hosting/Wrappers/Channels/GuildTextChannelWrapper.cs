@@ -1,16 +1,14 @@
-using DiscoSdk.Hosting.Rest.Actions;
-using DiscoSdk.Hosting.Rest.Actions.Messages;
 using DiscoSdk.Hosting.Wrappers.Managers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
-using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
-using DiscoSdk.Rest.Actions.Messages;
 
 namespace DiscoSdk.Hosting.Wrappers.Channels;
 
 /// <summary>
 /// Wrapper that implements <see cref="IGuildTextChannel"/> for a <see cref="Channel"/> instance.
+/// All text-channel behaviour lives in <see cref="GuildTextBasedChannelWrapper"/>; this type only
+/// adds the text-channel manager.
 /// </summary>
 internal class GuildTextChannelWrapper : GuildTextBasedChannelWrapper, IGuildTextChannel
 {
@@ -25,34 +23,8 @@ internal class GuildTextChannelWrapper : GuildTextBasedChannelWrapper, IGuildTex
     {
     }
 
-    /// <inheritdoc />
-    public bool CanTalk(IMember member)
-    {
-        var permission = GetPermission(member);
-        var isThread = Type is ChannelType.PrivateThread or ChannelType.PublicThread or ChannelType.AnnouncementThread;
-        return permission.HasFlag(isThread ? DiscordPermission.SendMessagesInThreads : DiscordPermission.SendMessages);
-    }
-
-    /// <inheritdoc />
-    public Task DeleteAllReactionsAsync(Snowflake messageId, CancellationToken cancellationToken = default)
-    {
-        return _client.MessageClient.DeleteAllReactionsAsync(_channel.Id, messageId, cancellationToken);
-    }
-
     public ITextChannelManager GetManager()
     {
         return new TextChannelManagerWrapper(Id, _client.ChannelClient);
-    }
-
-    /// <inheritdoc />
-    public Task RemoveReactionAsync(Snowflake messageId, Emoji emoji, CancellationToken cancellationToken = default)
-    {
-        return _client.MessageClient.RemoveReactionAsync(_channel.Id, messageId, emoji.ToString(), cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public ISendMessageRestAction SendStickers(IEnumerable<Snowflake> stickers)
-    {
-        return new SendMessageRestAction(_client, null, this, null).SetStickers(stickers);
     }
 }

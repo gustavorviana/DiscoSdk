@@ -1,10 +1,10 @@
 namespace DiscoSdk.Models.Channels;
 
 /// <summary>
-/// Represents a standard guild message channel (excludes threads).
-/// This interface groups regular message channels like text and announcement channels.
+/// A positionable guild message channel — text and announcement channels. Excludes threads
+/// (which have no position) and voice/stage channels (whose primary purpose is audio).
 /// </summary>
-public interface IStandardGuildMessageChannel : IGuildMessageChannel
+public interface IStandardGuildMessageChannel : IStandardGuildChannel, IGuildMessageChannel
 {
 }
 

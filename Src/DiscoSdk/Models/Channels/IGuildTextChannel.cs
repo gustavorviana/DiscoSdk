@@ -5,7 +5,7 @@ namespace DiscoSdk.Models.Channels;
 /// <summary>
 /// Represents a text channel in a Discord guild.
 /// </summary>
-public interface IGuildTextChannel : IGuildChannel, IGuildMessageChannel
+public interface IGuildTextChannel : IStandardGuildMessageChannel
 {
 	/// <summary>
 	/// Gets a manager to edit this text channel.

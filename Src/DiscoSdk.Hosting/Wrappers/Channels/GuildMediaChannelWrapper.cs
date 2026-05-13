@@ -17,9 +17,7 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 internal class GuildMediaChannelWrapper(Channel channel, IGuild guild, DiscordClient client) : GuildChannelWrapperBase(client, channel, guild), IGuildMediaChannel
 {
     public DefaultReaction? DefaultReactionEmoji => _channel.DefaultReactionEmoji;
-    public int? DefaultSortOrder => _channel.DefaultSortOrder;
-    public int? DefaultForumLayout => _channel.DefaultForumLayout;
-    public int? DefaultThreadRateLimitPerUser => _channel.DefaultThreadRateLimitPerUser;
+    public SortOrderType? DefaultSortOrder => _channel.DefaultSortOrder is { } sortOrder ? (SortOrderType)sortOrder : null;
     public ForumTag[]? AvailableTags => _channel.AvailableTags;
     public ChannelFlags? Flags => _channel.Flags;
     public int DefaultThreadSlowmode => _channel.DefaultThreadRateLimitPerUser ?? 0;
@@ -27,6 +25,11 @@ internal class GuildMediaChannelWrapper(Channel channel, IGuild guild, DiscordCl
     public ICreateIThreadChannelAction CreateThreadChannel(string name, Snowflake messageId, bool isPrivate)
     {
         return new CreateThreadChannelAction(_client, this, name, messageId, isPrivate);
+    }
+
+    public ICreateIThreadChannelAction StartPost(string name)
+    {
+        return new CreateThreadChannelAction(_client, this, name);
     }
 
     public IThreadChannelPaginationAction GetThreadChannels()

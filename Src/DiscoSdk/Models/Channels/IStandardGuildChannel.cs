@@ -1,10 +1,9 @@
 namespace DiscoSdk.Models.Channels;
 
 /// <summary>
-/// Represents a standard guild channel (excludes categories).
-/// This interface distinguishes regular channels from category channels.
+/// A guild channel that occupies a position in the channel list — i.e. every guild channel
+/// except threads (text, announcement, voice, stage, forum, media and categories).
 /// </summary>
-public interface IStandardGuildChannel : IGuildChannel
+public interface IStandardGuildChannel : IGuildChannel, IPositionableChannel
 {
 }
-

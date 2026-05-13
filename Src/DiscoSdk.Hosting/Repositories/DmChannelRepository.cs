@@ -34,6 +34,21 @@ namespace DiscoSdk.Hosting.Repositories
             return _channels.Remove(userId);
         }
 
+        /// <summary>
+        /// Evicts the cached DM channel whose id matches <paramref name="channelId"/>, regardless of which
+        /// recipient it was opened for. Returns <c>false</c> if no such channel is cached.
+        /// </summary>
+        public bool CloseByChannelId(Snowflake channelId)
+        {
+            foreach (var (recipientId, channel) in _channels)
+            {
+                if (channel.Id == channelId)
+                    return _channels.Remove(recipientId);
+            }
+
+            return false;
+        }
+
         public IDmChannel[] GetAll()
         {
             return [.. _channels.Values];

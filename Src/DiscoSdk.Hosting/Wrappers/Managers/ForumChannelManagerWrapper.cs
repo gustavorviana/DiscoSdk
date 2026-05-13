@@ -40,17 +40,17 @@ internal class ForumChannelManagerWrapper : MessageChannelManagerWrapper<ForumCh
     }
 
     /// <inheritdoc />
-    public IForumChannelManager SetDefaultSortOrder(int? sortOrder)
+    public IForumChannelManager SetDefaultSortOrder(SortOrderType? sortOrder)
     {
-        _changes["default_sort_order"] = sortOrder;
+        _changes["default_sort_order"] = (int?)sortOrder;
         MarkAsModified("default_sort_order");
         return this;
     }
 
     /// <inheritdoc />
-    public IForumChannelManager SetDefaultLayout(int? layout)
+    public IForumChannelManager SetDefaultLayout(ForumLayoutType? layout)
     {
-        _changes["default_forum_layout"] = layout;
+        _changes["default_forum_layout"] = (int?)layout;
         MarkAsModified("default_forum_layout");
         return this;
     }
@@ -73,10 +73,10 @@ internal class ForumChannelManagerWrapper : MessageChannelManagerWrapper<ForumCh
     IForumChannelManager IForumChannelManager.SetDefaultAutoArchiveDuration(ThreadAutoArchiveDuration duration)
         => SetDefaultAutoArchiveDuration(duration);
 
-    IForumChannelManager IForumChannelManager.SetDefaultSortOrder(int? sortOrder)
+    IForumChannelManager IForumChannelManager.SetDefaultSortOrder(SortOrderType? sortOrder)
         => SetDefaultSortOrder(sortOrder);
 
-    IForumChannelManager IForumChannelManager.SetDefaultLayout(int? layout)
+    IForumChannelManager IForumChannelManager.SetDefaultLayout(ForumLayoutType? layout)
         => SetDefaultLayout(layout);
 
     IForumChannelManager IForumChannelManager.SetAvailableTags(IReadOnlyList<string> tags)

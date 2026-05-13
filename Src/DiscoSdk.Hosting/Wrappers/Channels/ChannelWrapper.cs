@@ -18,7 +18,7 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 /// <param name="client">The Discord client for performing operations.</param>
 internal class ChannelWrapper(DiscordClient client, Channel channel) : IChannel
 {
-    protected readonly Channel _channel = channel ?? throw new ArgumentNullException(nameof(channel));
+    protected Channel _channel = channel ?? throw new ArgumentNullException(nameof(channel));
     protected readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
 
     /// <inheritdoc />
@@ -74,7 +74,10 @@ internal class ChannelWrapper(DiscordClient client, Channel channel) : IChannel
         ArgumentNullException.ThrowIfNull(channel);
         ArgumentNullException.ThrowIfNull(client);
 
-        if (channel.Type is ChannelType.Dm or ChannelType.GroupDm)
+        if (channel.Type == ChannelType.GroupDm)
+            return new GroupDmChannelWrapper(client, channel);
+
+        if (channel.Type == ChannelType.Dm)
             return new DmChannelWrapper(client, channel);
 
         var unionWrapper = new GuildChannelUnionWrapper(client, channel, guild!);
@@ -82,7 +85,12 @@ internal class ChannelWrapper(DiscordClient client, Channel channel) : IChannel
         return unionWrapper.ToExpectedChannel() ?? unionWrapper;
     }
 
+    /// <summary>
+    /// Replaces the backing channel model after a CHANNEL_UPDATE gateway event, so consumers holding
+    /// this wrapper observe the new state.
+    /// </summary>
     internal void OnUpdate(Channel channel)
     {
+        _channel = channel ?? throw new ArgumentNullException(nameof(channel));
     }
 }

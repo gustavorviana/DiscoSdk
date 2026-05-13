@@ -94,11 +94,11 @@ public interface ICreateChannelAction : IRestAction<IGuildChannel>
     ICreateChannelAction SetVideoQualityMode(VideoQualityMode? mode);
 
     /// <summary>
-    /// Sets the default auto archive duration for threads created in this channel.
+    /// Sets the default auto-archive duration for threads created in this channel.
     /// </summary>
-    /// <param name="duration">The auto archive duration in minutes, or null to not set it.</param>
+    /// <param name="duration">The auto-archive duration, or null to not set it.</param>
     /// <returns>The current <see cref="ICreateChannelAction"/> instance.</returns>
-    ICreateChannelAction SetDefaultAutoArchiveDuration(int? duration);
+    ICreateChannelAction SetDefaultAutoArchiveDuration(ThreadAutoArchiveDuration? duration);
 
     /// <summary>
     /// Sets the default reaction emoji for forum posts.

@@ -8,8 +8,10 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 
 /// <summary>
 /// Wrapper that implements <see cref="IGuildVoiceChannel"/> for a <see cref="Channel"/> instance.
+/// Extends <see cref="GuildTextBasedChannelWrapper"/> because Discord voice channels carry an
+/// embedded text chat ("Text-in-Voice"), so they must expose the <see cref="ITextBasedChannel"/> surface.
 /// </summary>
-internal class GuildVoiceChannelWrapper : GuildChannelWrapperBase, IGuildVoiceChannel
+internal class GuildVoiceChannelWrapper : GuildTextBasedChannelWrapper, IGuildVoiceChannel
 {
 	/// <summary>
 	/// Initializes a new instance of the <see cref="GuildVoiceChannelWrapper"/> class.

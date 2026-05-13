@@ -26,7 +26,7 @@ internal class CreateChannelAction : RestAction<IGuildChannel>, ICreateChannelAc
 	private PermissionOverwrite[]? _permissionOverwrites;
 	private string? _rtcRegion;
 	private VideoQualityMode? _videoQualityMode;
-	private int? _defaultAutoArchiveDuration;
+	private ThreadAutoArchiveDuration? _defaultAutoArchiveDuration;
 	private string? _defaultReactionEmoji;
 	private int? _defaultThreadRateLimitPerUser;
 	private SortOrderType? _defaultSortOrder;
@@ -114,7 +114,7 @@ internal class CreateChannelAction : RestAction<IGuildChannel>, ICreateChannelAc
 		return this;
 	}
 
-	public ICreateChannelAction SetDefaultAutoArchiveDuration(int? duration)
+	public ICreateChannelAction SetDefaultAutoArchiveDuration(ThreadAutoArchiveDuration? duration)
 	{
 		_defaultAutoArchiveDuration = duration;
 		return this;
@@ -201,7 +201,7 @@ internal class CreateChannelAction : RestAction<IGuildChannel>, ICreateChannelAc
 			request["video_quality_mode"] = (int)_videoQualityMode.Value;
 
 		if (_defaultAutoArchiveDuration.HasValue)
-			request["default_auto_archive_duration"] = _defaultAutoArchiveDuration.Value;
+			request["default_auto_archive_duration"] = (int)_defaultAutoArchiveDuration.Value;
 
 		if (_defaultReactionEmoji != null)
 			request["default_reaction_emoji"] = _defaultReactionEmoji;

@@ -6,12 +6,13 @@ namespace DiscoSdk.Models.Channels;
 /// <summary>
 /// Represents a forum channel in a Discord guild.
 /// </summary>
-public interface IGuildForumChannel : IGuildChannel, IThreadBasedChannel
+public interface IGuildForumChannel : IThreadBasedChannel
 {
 	/// <summary>
-	/// Gets the default layout view used to display posts in this forum channel.
+	/// Gets the default layout used to display posts in this forum channel
+	/// (<see cref="ForumLayoutType.NotSet"/> when Discord has not configured one).
 	/// </summary>
-	ForumLayout DefaultLayout { get; }
+	ForumLayoutType DefaultLayout { get; }
 
 	/// <summary>
 	/// Gets a manager to edit this forum channel.

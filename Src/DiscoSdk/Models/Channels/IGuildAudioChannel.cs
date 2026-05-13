@@ -1,10 +1,10 @@
 namespace DiscoSdk.Models.Channels;
 
 /// <summary>
-/// Represents an audio channel in a Discord guild.
+/// Represents an audio channel in a Discord guild (voice or stage).
 /// This interface groups channels that support voice/audio communication.
 /// </summary>
-public interface IGuildAudioChannel : IGuildChannel
+public interface IGuildAudioChannel : IStandardGuildChannel
 {
 	/// <summary>
 	/// Gets the bitrate (in bits) for this audio channel.

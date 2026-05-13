@@ -43,5 +43,11 @@
         /// </summary>
         /// <returns>The channel as a guild media channel, or null if this channel is not a guild media channel.</returns>
         IGuildMediaChannel? AsMediaChannel();
+
+        /// <summary>
+        /// Attempts to cast this channel to a guild category channel.
+        /// </summary>
+        /// <returns>The channel as a guild category channel, or null if this channel is not a category.</returns>
+        IGuildCategoryChannel? AsCategoryChannel();
     }
 }

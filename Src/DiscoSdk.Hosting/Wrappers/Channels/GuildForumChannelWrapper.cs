@@ -26,18 +26,14 @@ internal class GuildForumChannelWrapper : GuildChannelWrapperBase, IGuildForumCh
     public DefaultReaction? DefaultReactionEmoji => _channel.DefaultReactionEmoji;
 
     /// <inheritdoc />
-    public int? DefaultSortOrder => _channel.DefaultSortOrder;
+    public SortOrderType? DefaultSortOrder => _channel.DefaultSortOrder is { } sortOrder
+        ? (SortOrderType)sortOrder
+        : null;
 
     /// <inheritdoc />
-    public int? DefaultForumLayout => _channel.DefaultForumLayout;
-
-    /// <inheritdoc />
-    public ForumLayout DefaultLayout => _channel.DefaultForumLayout.HasValue
-        ? (ForumLayout)_channel.DefaultForumLayout.Value
-        : ForumLayout.DefaultView;
-
-    /// <inheritdoc />
-    public int? DefaultThreadRateLimitPerUser => _channel.DefaultThreadRateLimitPerUser;
+    public ForumLayoutType DefaultLayout => _channel.DefaultForumLayout is { } layout
+        ? (ForumLayoutType)layout
+        : ForumLayoutType.NotSet;
 
     /// <inheritdoc />
     public ForumTag[]? AvailableTags => _channel.AvailableTags;
@@ -53,6 +49,12 @@ internal class GuildForumChannelWrapper : GuildChannelWrapperBase, IGuildForumCh
     public ICreateIThreadChannelAction CreateThreadChannel(string name, Snowflake messageId, bool isPrivate)
     {
         return new CreateThreadChannelAction(_client, this, name, messageId, isPrivate);
+    }
+
+    /// <inheritdoc />
+    public ICreateIThreadChannelAction StartPost(string name)
+    {
+        return new CreateThreadChannelAction(_client, this, name);
     }
 
     public IForumChannelManager GetManager()

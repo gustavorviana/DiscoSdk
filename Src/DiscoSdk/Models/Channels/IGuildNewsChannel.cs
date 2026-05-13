@@ -6,7 +6,7 @@ namespace DiscoSdk.Models.Channels;
 /// <summary>
 /// Represents an announcement channel (formerly news channel) in a Discord guild.
 /// </summary>
-public interface IGuildNewsChannel : IGuildChannel, IGuildMessageChannel
+public interface IGuildNewsChannel : IStandardGuildMessageChannel
 {
 	/// <summary>
 	/// Gets a manager to edit this news channel.

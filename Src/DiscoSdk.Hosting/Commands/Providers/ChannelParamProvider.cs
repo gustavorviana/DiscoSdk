@@ -9,12 +9,19 @@ namespace DiscoSdk.Hosting.Commands.Providers;
 internal class ChannelParamProvider(ISdkContextProvider context) :
     IParamProvider<IChannel>,
     IParamProvider<IDmChannel>,
+    IParamProvider<IGroupDmChannel>,
     IParamProvider<IGuildChannel>,
     IParamProvider<IGuildChannelBase>,
     IParamProvider<IGuildChannelUnion>,
     IParamProvider<IGuildMessageChannel>,
-    IParamProvider<IGuildStageChannel>,
     IParamProvider<IGuildTextChannel>,
+    IParamProvider<IGuildNewsChannel>,
+    IParamProvider<IGuildThreadChannel>,
+    IParamProvider<IGuildVoiceChannel>,
+    IParamProvider<IGuildStageChannel>,
+    IParamProvider<IGuildForumChannel>,
+    IParamProvider<IGuildMediaChannel>,
+    IParamProvider<IGuildCategoryChannel>,
     IParamProvider<IGuildTextChannelBase>,
     IParamProvider<IStandardGuildChannel>,
     IParamProvider<IStandardGuildMessageChannel>,
@@ -35,6 +42,8 @@ internal class ChannelParamProvider(ISdkContextProvider context) :
 
     async Task<IDmChannel?> IParamProvider<IDmChannel>.GetValueAsync() => GetChannel() as IDmChannel;
 
+    async Task<IGroupDmChannel?> IParamProvider<IGroupDmChannel>.GetValueAsync() => GetChannel() as IGroupDmChannel;
+
     async Task<IGuildChannel?> IParamProvider<IGuildChannel>.GetValueAsync() => GetChannel() as IGuildChannel;
 
     async Task<IGuildChannelUnion?> IParamProvider<IGuildChannelUnion>.GetValueAsync() => GetChannel() as IGuildChannelUnion;
@@ -52,9 +61,21 @@ internal class ChannelParamProvider(ISdkContextProvider context) :
 
     async Task<IGuildMessageChannel?> IParamProvider<IGuildMessageChannel>.GetValueAsync() => GetExpectedChannel() as IGuildMessageChannel;
 
+    async Task<IGuildTextChannel?> IParamProvider<IGuildTextChannel>.GetValueAsync() => GetExpectedChannel() as IGuildTextChannel;
+
+    async Task<IGuildNewsChannel?> IParamProvider<IGuildNewsChannel>.GetValueAsync() => GetExpectedChannel() as IGuildNewsChannel;
+
+    async Task<IGuildThreadChannel?> IParamProvider<IGuildThreadChannel>.GetValueAsync() => GetExpectedChannel() as IGuildThreadChannel;
+
+    async Task<IGuildVoiceChannel?> IParamProvider<IGuildVoiceChannel>.GetValueAsync() => GetExpectedChannel() as IGuildVoiceChannel;
+
     async Task<IGuildStageChannel?> IParamProvider<IGuildStageChannel>.GetValueAsync() => GetExpectedChannel() as IGuildStageChannel;
 
-    async Task<IGuildTextChannel?> IParamProvider<IGuildTextChannel>.GetValueAsync() => GetExpectedChannel() as IGuildTextChannel;
+    async Task<IGuildForumChannel?> IParamProvider<IGuildForumChannel>.GetValueAsync() => GetExpectedChannel() as IGuildForumChannel;
+
+    async Task<IGuildMediaChannel?> IParamProvider<IGuildMediaChannel>.GetValueAsync() => GetExpectedChannel() as IGuildMediaChannel;
+
+    async Task<IGuildCategoryChannel?> IParamProvider<IGuildCategoryChannel>.GetValueAsync() => GetExpectedChannel() as IGuildCategoryChannel;
 
     async Task<IGuildTextChannelBase?> IParamProvider<IGuildTextChannelBase>.GetValueAsync() => GetExpectedChannel() as IGuildTextChannelBase;
 
