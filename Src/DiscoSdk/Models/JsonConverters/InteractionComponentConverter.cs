@@ -6,8 +6,9 @@ using System.Text.Json.Serialization;
 namespace DiscoSdk.Models.JsonConverters;
 
 /// <summary>
-/// JSON converter for <see cref="IInteractionComponent"/> arrays.
-/// Handles serialization and deserialization of both <see cref="MessageComponent"/> and <see cref="ActionRowComponent"/>.
+/// JSON converter for arrays of <see cref="IInteractionComponent"/>. Deserializes each entry
+/// based on its <c>type</c> discriminator (see <see cref="ComponentTypeMapping"/>); serializes
+/// by runtime type so subclass-specific fields (Components V2) are preserved.
 /// </summary>
 public class InteractionComponentConverter : JsonConverter<IInteractionComponent[]>
 {
@@ -24,7 +25,6 @@ public class InteractionComponentConverter : JsonConverter<IInteractionComponent
 
 		while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
 		{
-			// Read the entire object into a JsonDocument to inspect the "type" field
 			using var doc = JsonDocument.ParseValue(ref reader);
 			var root = doc.RootElement;
 
@@ -32,19 +32,7 @@ public class InteractionComponentConverter : JsonConverter<IInteractionComponent
 				throw new JsonException("Component missing 'type' field.");
 
 			var componentType = (ComponentType)typeElement.GetInt32();
-
-			// Deserialize based on component type
-			IInteractionComponent component = componentType switch
-			{
-				ComponentType.ActionRow => JsonSerializer.Deserialize<ActionRowComponent>(root.GetRawText(), options)
-					?? throw new JsonException("Failed to deserialize ActionRowComponent."),
-				ComponentType.Label => JsonSerializer.Deserialize<LabelComponent>(root.GetRawText(), options)
-					?? throw new JsonException("Failed to deserialize LabelComponent."),
-				_ => JsonSerializer.Deserialize<MessageComponent>(root.GetRawText(), options)
-					?? throw new JsonException("Failed to deserialize MessageComponent.")
-			};
-
-			components.Add(component);
+			components.Add(ComponentTypeMapping.Deserialize(componentType, root.GetRawText(), options));
 		}
 
 		return components.ToArray();

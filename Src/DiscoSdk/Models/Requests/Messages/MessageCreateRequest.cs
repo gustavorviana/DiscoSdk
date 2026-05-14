@@ -1,4 +1,5 @@
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.JsonConverters;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
@@ -53,10 +54,12 @@ internal class MessageCreateRequest
 	public MessageReference? MessageReference { get; set; }
 
 	/// <summary>
-	/// Gets or sets the message components (buttons, select menus, etc.) (max 5 rows).
+	/// Gets or sets the message components — V1 action rows of buttons/selects or V2 components
+	/// (Section, TextDisplay, Thumbnail, MediaGallery, File, Separator, Container).
 	/// </summary>
 	[JsonPropertyName("components")]
-	public MessageComponent[]? Components { get; set; }
+	[JsonConverter(typeof(InteractionComponentConverter))]
+	public IInteractionComponent[]? Components { get; set; }
 
 	/// <summary>
 	/// Gets or sets the IDs of stickers to send with the message (max 3).

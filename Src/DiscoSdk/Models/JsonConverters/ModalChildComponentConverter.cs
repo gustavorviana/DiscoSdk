@@ -25,12 +25,11 @@ public class ModalChildComponentConverter : JsonConverter<IModalComponent?>
 
 		var componentType = (ComponentType)typeElement.GetInt32();
 
-		return componentType switch
-		{
-			ComponentType.CheckboxGroup => JsonSerializer.Deserialize<CheckboxGroupComponent>(root.GetRawText(), options)
-				?? throw new JsonException("Failed to deserialize CheckboxGroupComponent."),
-			_ => throw new JsonException($"Label component child type {componentType} is not supported for modal.")
-		};
+		// Discord's Label container (type 18) accepts a single modal-only input as its child.
+		// Route via the shared mapping so the matrix stays in one place.
+		var component = ComponentTypeMapping.Deserialize(componentType, root.GetRawText(), options);
+		return component as IModalComponent
+			?? throw new JsonException($"Label component child type {componentType} is not supported for modal.");
 	}
 
 	/// <inheritdoc />

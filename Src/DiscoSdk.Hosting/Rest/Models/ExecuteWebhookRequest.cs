@@ -1,4 +1,5 @@
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.JsonConverters;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
 using DiscoSdk.Models.Messages.Pools;
@@ -57,10 +58,11 @@ internal class ExecuteWebhookRequest
     public AllowedMentions? AllowedMentions { get; set; }
 
     /// <summary>
-    /// Gets or sets the message components (buttons, select menus, etc.).
+    /// Gets or sets the message components — V1 rows or Components V2.
     /// </summary>
     [JsonPropertyName("components")]
-    public MessageComponent[]? Components { get; set; }
+    [JsonConverter(typeof(InteractionComponentConverter))]
+    public IInteractionComponent[]? Components { get; set; }
 
     /// <summary>
     /// Gets or sets the embeds to include in the message (max 10).

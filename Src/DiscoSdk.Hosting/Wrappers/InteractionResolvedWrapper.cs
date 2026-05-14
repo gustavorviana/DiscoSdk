@@ -9,5 +9,6 @@ internal record InteractionResolvedWrapper(IReadOnlyCollection<IUser> Users,
     IReadOnlyCollection<IMember> Members,
     IReadOnlyCollection<IRole> Roles,
     IReadOnlyCollection<IChannel> Channels,
-    IReadOnlyCollection<IMessage> Messages
+    IReadOnlyCollection<IMessage> Messages,
+    IReadOnlyDictionary<string, Attachment> Attachments
 ) : IInteractionResolved;

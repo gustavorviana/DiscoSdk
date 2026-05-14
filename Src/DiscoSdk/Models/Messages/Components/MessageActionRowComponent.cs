@@ -1,10 +1,13 @@
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.JsonConverters;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Messages.Components;
 
 /// <summary>
-/// Action row for messages and threads; contains buttons or a single select.
+/// Action row for messages and threads; contains buttons or a single select. The inner
+/// <see cref="Components"/> array uses <see cref="InteractionComponentConverter"/> for the
+/// same polymorphic discrimination as the outer components array on a message.
 /// </summary>
 public class MessageActionRowComponent : IMessageComponent
 {
@@ -21,5 +24,6 @@ public class MessageActionRowComponent : IMessageComponent
 	public bool? Disabled { get; set; }
 
 	[JsonPropertyName("components")]
-	public IMessageComponent[] Components { get; set; } = [];
+	[JsonConverter(typeof(InteractionComponentConverter))]
+	public IInteractionComponent[] Components { get; set; } = [];
 }

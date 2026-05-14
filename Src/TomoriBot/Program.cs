@@ -79,6 +79,71 @@ dsc.CommandsUpdateWindowOpened += (_, container) =>
             .WithDescription("Test modal CheckboxGroup component.")
             .WithType(ApplicationCommandType.ChatInput)
         )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-radio")
+            .WithDescription("Open a modal with a RadioGroup component.")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-file-upload")
+            .WithDescription("Open a modal with a FileUpload component.")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-mixed-modal")
+            .WithDescription("Open a modal with every supported input type at once.")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-buttons-all")
+            .WithDescription("Demo all 5 button styles in one action row.")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-select-user")
+            .WithDescription("Demo UserSelect (type 5).")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-select-role")
+            .WithDescription("Demo RoleSelect (type 6).")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-select-channel")
+            .WithDescription("Demo ChannelSelect (type 8).")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-select-mentionable")
+            .WithDescription("Demo MentionableSelect (type 7).")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-components-v2")
+            .WithDescription("Demonstrate every Components V2 component type.")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-section-thumb")
+            .WithDescription("V2: Section with Thumbnail accessory.")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-section-button")
+            .WithDescription("V2: Section with Button accessory.")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-media-gallery")
+            .WithDescription("V2: MediaGallery grid of images.")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
+        .AddGuild(betaGuild, x => x
+            .WithName("sdk-test-container")
+            .WithDescription("V2: Container with accent colour + text + separators.")
+            .WithType(ApplicationCommandType.ChatInput)
+        )
         .AddGuild(betaGuild, x => x.WithName("shutdown").WithDescription("Shutdown bot"));
 };
 

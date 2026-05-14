@@ -54,6 +54,29 @@ public class RadioGroupBuilder : IModalComponentBuilder
 	}
 
 	/// <summary>
+	/// Sets the label for the Label container (type 18) when this component is used in a modal
+	/// (max 45 characters). Required when adding the radio group to a modal.
+	/// </summary>
+	public RadioGroupBuilder WithLabel(string label)
+	{
+		if (string.IsNullOrWhiteSpace(label))
+			throw new ArgumentException("Label cannot be null or empty.", nameof(label));
+		if (label.Length > 45)
+			throw new ArgumentException("Label cannot exceed 45 characters.", nameof(label));
+		_component.Label = label;
+		return this;
+	}
+
+	/// <summary>Optional description shown by the Label container (max 100 characters).</summary>
+	public RadioGroupBuilder WithDescription(string description)
+	{
+		if (description?.Length > 100)
+			throw new ArgumentException("Description cannot exceed 100 characters.", nameof(description));
+		_component.Description = description;
+		return this;
+	}
+
+	/// <summary>
 	/// Builds the radio group component. Must have between 2 and 10 options.
 	/// </summary>
 	/// <returns>The built <see cref="RadioGroupComponent"/> instance.</returns>

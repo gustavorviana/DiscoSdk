@@ -32,4 +32,17 @@ public class CheckboxComponent : IModalComponent
 	/// </summary>
 	[JsonPropertyName("default")]
 	public bool? Default { get; set; }
+
+	/// <summary>
+	/// Text shown by the wrapping <see cref="LabelComponent"/> (type 18) when this checkbox is
+	/// used in a modal (max 45 chars). Required when added via
+	/// <see cref="Rest.Actions.IReplyModalRestAction.AddActionRow"/> — the SDK auto-wraps the
+	/// checkbox in a Label using this value.
+	/// </summary>
+	[JsonIgnore]
+	public string? Label { get; set; }
+
+	/// <summary>Optional secondary text shown below the label (max 100 chars).</summary>
+	[JsonIgnore]
+	public string? Description { get; set; }
 }

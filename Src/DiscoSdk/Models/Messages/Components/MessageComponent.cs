@@ -6,7 +6,7 @@ namespace DiscoSdk.Models.Messages.Components;
 /// <summary>
 /// Represents a message component.
 /// </summary>
-public class MessageComponent : IInteractionComponent
+public class MessageComponent : IMessageComponent
 {
 	/// <summary>
 	/// Gets or sets the type of component.

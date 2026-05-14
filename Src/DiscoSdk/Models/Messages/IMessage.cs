@@ -38,12 +38,14 @@ public interface IMessage : IMessageBase, IMentionable, IDeletable
     IUser Author { get; }
 
     /// <summary>
-    /// Gets the components of the message.
+    /// Gets the components of the message. Concrete entries are either V1 components
+    /// (<see cref="MessageComponent"/> action rows) or V2 components
+    /// (<see cref="SectionComponent"/>, <see cref="ContainerComponent"/>, etc.).
     /// </summary>
     /// <remarks>
     /// In Webhook messages, components are visual-only and do not generate interactions.
     /// </remarks>
-    MessageComponent[]? Components { get; }
+    IInteractionComponent[]? Components { get; }
 
     /// <summary>
     /// Gets the reactions to the message.

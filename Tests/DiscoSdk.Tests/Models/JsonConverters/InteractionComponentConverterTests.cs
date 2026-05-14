@@ -24,9 +24,11 @@ public class InteractionComponentConverterTests
 	}
 
 	[Fact]
-	public void Read_WithActionRow_DeserializesActionRowComponent()
+	public void Read_WithActionRow_DeserializesMessageActionRowComponent()
 	{
-        // Arrange
+        // Arrange — InteractionComponentConverter is the *message* path, so ActionRow routes
+        // to MessageActionRowComponent (button/select-flavored), not the modal-flavored
+        // ActionRowComponent.
         var json = """[{"type":1,"components":[]}]""";
         // Act
         var result = _converter.Read(json, typeof(IInteractionComponent[]), _options);
@@ -34,14 +36,31 @@ public class InteractionComponentConverterTests
 		// Assert
 		Assert.NotNull(result);
 		Assert.Single(result);
-		var component = Assert.IsType<ActionRowComponent>(result[0]);
+		var component = Assert.IsType<MessageActionRowComponent>(result[0]);
 		Assert.Equal(ComponentType.ActionRow, component.Type);
 	}
 
 	[Fact]
-	public void Read_WithButton_DeserializesMessageComponent()
+	public void Read_WithActionRowContainingButton_RoundTripsTypedButtonAsync()
 	{
-		// Arrange
+		// V1 leaves round-trip into their concrete classes — Button inside ActionRow becomes
+		// ButtonComponent (not the MessageComponent god-class).
+		var json = """[{"type":1,"components":[{"type":2,"label":"Click","custom_id":"x"}]}]""";
+
+		var result = _converter.Read(json, typeof(IInteractionComponent[]), _options);
+
+		Assert.NotNull(result);
+		var row = Assert.IsType<MessageActionRowComponent>(result[0]);
+		Assert.Single(row.Components);
+		var btn = Assert.IsType<ButtonComponent>(row.Components[0]);
+		Assert.Equal(ComponentType.Button, btn.Type);
+		Assert.Equal("x", btn.CustomId);
+	}
+
+	[Fact]
+	public void Read_WithButton_DeserializesButtonComponent()
+	{
+		// Arrange — symmetric with what ButtonBuilder produces on the send side.
 		var json = """[{"type":2,"custom_id":"test","label":"Click Me"}]""";
 
 		// Act
@@ -50,8 +69,7 @@ public class InteractionComponentConverterTests
 		// Assert
 		Assert.NotNull(result);
 		Assert.Single(result);
-		Assert.IsType<MessageComponent>(result[0]);
-		var component = (MessageComponent)result[0];
+		var component = Assert.IsType<ButtonComponent>(result[0]);
 		Assert.Equal(ComponentType.Button, component.Type);
 		Assert.Equal("test", component.CustomId);
 		Assert.Equal("Click Me", component.Label);
@@ -69,8 +87,8 @@ public class InteractionComponentConverterTests
 		// Assert
 		Assert.NotNull(result);
 		Assert.Equal(2, result.Length);
-		Assert.IsType<ActionRowComponent>(result[0]);
-		Assert.IsType<MessageComponent>(result[1]);
+		Assert.IsType<MessageActionRowComponent>(result[0]);
+		Assert.IsType<ButtonComponent>(result[1]);
 	}
 
 	[Fact]
@@ -118,9 +136,9 @@ public class InteractionComponentConverterTests
 	}
 
 	[Fact]
-	public void Read_WithSelectMenu_DeserializesMessageComponent()
+	public void Read_WithSelectMenu_DeserializesStringSelectComponent()
 	{
-		// Arrange
+		// Arrange — V1 leaves round-trip into their concrete classes.
 		var json = """[{"type":3,"custom_id":"select1","placeholder":"Choose..."}]""";
 
 		// Act
@@ -129,8 +147,7 @@ public class InteractionComponentConverterTests
 		// Assert
 		Assert.NotNull(result);
 		Assert.Single(result);
-		Assert.IsType<MessageComponent>(result[0]);
-		var component = (MessageComponent)result[0];
+		var component = Assert.IsType<StringSelectComponent>(result[0]);
 		Assert.Equal(ComponentType.StringSelect, component.Type);
 		Assert.Equal("select1", component.CustomId);
 		Assert.Equal("Choose...", component.Placeholder);

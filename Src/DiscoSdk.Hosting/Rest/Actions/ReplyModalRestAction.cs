@@ -58,24 +58,74 @@ internal class ReplyModalRestAction : RestAction, IReplyModalRestAction
 	{
 		ArgumentNullException.ThrowIfNull(modalComponent);
 
-		if (modalComponent is not TextInputComponent and not CheckboxGroupComponent)
-			throw new ArgumentException("Action row in modal only supports TextInputComponent or CheckboxGroupComponent.", nameof(modalComponent));
+		if (modalComponent is not TextInputComponent
+		    and not CheckboxGroupComponent
+		    and not CheckboxComponent
+		    and not RadioGroupComponent
+		    and not FileUploadComponent)
+			throw new ArgumentException(
+				"Modal components only support TextInputComponent (wrapped in ActionRow), or " +
+				"CheckboxGroupComponent / CheckboxComponent / RadioGroupComponent / FileUploadComponent " +
+				"(all auto-wrapped in a Label).",
+				nameof(modalComponent));
 
 		if (_components.Count >= 5)
 			throw new InvalidOperationException("Modal cannot have more than 5 components.");
 
+		// CheckboxGroup (type 22) → wrap in Label (type 18), per Discord's modal layout.
 		if (modalComponent is CheckboxGroupComponent checkboxGroup)
 		{
 			ValidateCheckboxGroupForModal(checkboxGroup, nameof(modalComponent));
-
-			var labelContainer = new LabelComponent
+			_components.Add(new LabelComponent
 			{
-				Label = checkboxGroup.Label,
-				Component = checkboxGroup
-			};
-			_components.Add(labelContainer);
+				Label = checkboxGroup.Label!,
+				Component = checkboxGroup,
+			});
 			return this;
 		}
+
+		// Single Checkbox (type 23) → wrap in Label.
+		if (modalComponent is CheckboxComponent checkbox)
+		{
+			ValidateCheckboxForModal(checkbox, nameof(modalComponent));
+			_components.Add(new LabelComponent
+			{
+				Label = checkbox.Label!,
+				Description = checkbox.Description,
+				Component = checkbox,
+			});
+			return this;
+		}
+
+		// RadioGroup (type 21) → wrap in Label.
+		if (modalComponent is RadioGroupComponent radioGroup)
+		{
+			ValidateRadioGroupForModal(radioGroup, nameof(modalComponent));
+			_components.Add(new LabelComponent
+			{
+				Label = radioGroup.Label!,
+				Description = radioGroup.Description,
+				Component = radioGroup,
+			});
+			return this;
+		}
+
+		// FileUpload (type 19) → wrap in Label.
+		if (modalComponent is FileUploadComponent fileUpload)
+		{
+			ValidateFileUploadForModal(fileUpload, nameof(modalComponent));
+			_components.Add(new LabelComponent
+			{
+				Label = fileUpload.Label!,
+				Description = fileUpload.Description,
+				Component = fileUpload,
+			});
+			return this;
+		}
+
+		// TextInput is the V1 path — validate then wrap in a (modal) ActionRow.
+		if (modalComponent is TextInputComponent textInput)
+			ValidateTextInputForModal(textInput, nameof(modalComponent));
 
 		var actionRow = new ActionRowComponent
 		{
@@ -137,9 +187,88 @@ internal class ReplyModalRestAction : RestAction, IReplyModalRestAction
 	{
 		foreach (var c in components)
 		{
-			if (c is LabelComponent label && label.Component is CheckboxGroupComponent checkboxGroup)
-				ValidateCheckboxGroupForModal(checkboxGroup, "components");
+			if (c is LabelComponent label)
+			{
+				if (label.Component is CheckboxGroupComponent checkboxGroup)
+					ValidateCheckboxGroupForModal(checkboxGroup, "components");
+				else if (label.Component is CheckboxComponent checkbox)
+					ValidateCheckboxForModal(checkbox, "components");
+				else if (label.Component is RadioGroupComponent radioGroup)
+					ValidateRadioGroupForModal(radioGroup, "components");
+				else if (label.Component is FileUploadComponent fileUpload)
+					ValidateFileUploadForModal(fileUpload, "components");
+			}
+			else if (c is ActionRowComponent row)
+			{
+				foreach (var inner in row.Components)
+					if (inner is TextInputComponent textInput)
+						ValidateTextInputForModal(textInput, "components");
+			}
 		}
+	}
+
+	private static void ValidateRadioGroupForModal(RadioGroupComponent radioGroup, string paramName)
+	{
+		if (string.IsNullOrWhiteSpace(radioGroup.Label))
+			throw new ArgumentException("RadioGroupComponent must have Label set when used in a modal (required for the Label container type 18).", paramName);
+		if (radioGroup.Label.Length > 45)
+			throw new ArgumentException("RadioGroupComponent.Label cannot exceed 45 characters.", paramName);
+		if (radioGroup.Description is { Length: > 100 })
+			throw new ArgumentException("RadioGroupComponent.Description cannot exceed 100 characters.", paramName);
+		if (string.IsNullOrWhiteSpace(radioGroup.CustomId))
+			throw new ArgumentException("RadioGroupComponent (type 21) requires custom_id.", paramName);
+		if (radioGroup.Options == null || radioGroup.Options.Length < 2)
+			throw new ArgumentException("RadioGroupComponent (type 21) requires at least two options.", paramName);
+		if (radioGroup.Options.Length > 10)
+			throw new ArgumentException("RadioGroupComponent (type 21) cannot have more than 10 options.", paramName);
+	}
+
+	private static void ValidateFileUploadForModal(FileUploadComponent fileUpload, string paramName)
+	{
+		if (string.IsNullOrWhiteSpace(fileUpload.Label))
+			throw new ArgumentException("FileUploadComponent must have Label set when used in a modal (required for the Label container type 18).", paramName);
+		if (fileUpload.Label.Length > 45)
+			throw new ArgumentException("FileUploadComponent.Label cannot exceed 45 characters.", paramName);
+		if (fileUpload.Description is { Length: > 100 })
+			throw new ArgumentException("FileUploadComponent.Description cannot exceed 100 characters.", paramName);
+		if (string.IsNullOrWhiteSpace(fileUpload.CustomId))
+			throw new ArgumentException("FileUploadComponent (type 19) requires custom_id.", paramName);
+		if (fileUpload.MinValues is < 0 or > 10)
+			throw new ArgumentException("FileUploadComponent.MinValues must be between 0 and 10.", paramName);
+		if (fileUpload.MaxValues is < 1 or > 10)
+			throw new ArgumentException("FileUploadComponent.MaxValues must be between 1 and 10.", paramName);
+	}
+
+	private static void ValidateTextInputForModal(TextInputComponent textInput, string paramName)
+	{
+		if (string.IsNullOrWhiteSpace(textInput.CustomId))
+			throw new ArgumentException("TextInputComponent (type 4) requires custom_id.", paramName);
+		if (string.IsNullOrWhiteSpace(textInput.Label))
+			throw new ArgumentException("TextInputComponent (type 4) requires label.", paramName);
+		if (textInput.Label.Length > 45)
+			throw new ArgumentException("TextInputComponent.Label cannot exceed 45 characters.", paramName);
+		if (textInput.Placeholder is { Length: > 100 })
+			throw new ArgumentException("TextInputComponent.Placeholder cannot exceed 100 characters.", paramName);
+		if (textInput.Value is { Length: > 4000 })
+			throw new ArgumentException("TextInputComponent.Value cannot exceed 4000 characters.", paramName);
+		if (textInput.MinLength is < 0 or > 4000)
+			throw new ArgumentException("TextInputComponent.MinLength must be between 0 and 4000.", paramName);
+		if (textInput.MaxLength is < 1 or > 4000)
+			throw new ArgumentException("TextInputComponent.MaxLength must be between 1 and 4000.", paramName);
+		if (textInput.MinLength is { } min && textInput.MaxLength is { } max && min > max)
+			throw new ArgumentException("TextInputComponent.MinLength cannot exceed MaxLength.", paramName);
+	}
+
+	private static void ValidateCheckboxForModal(CheckboxComponent checkbox, string paramName)
+	{
+		if (string.IsNullOrWhiteSpace(checkbox.Label))
+			throw new ArgumentException("CheckboxComponent must have Label set when used in a modal (required for the Label container type 18).", paramName);
+		if (checkbox.Label.Length > 45)
+			throw new ArgumentException("CheckboxComponent.Label cannot exceed 45 characters.", paramName);
+		if (checkbox.Description is { Length: > 100 })
+			throw new ArgumentException("CheckboxComponent.Description cannot exceed 100 characters.", paramName);
+		if (string.IsNullOrWhiteSpace(checkbox.CustomId))
+			throw new ArgumentException("CheckboxComponent (type 23) requires custom_id.", paramName);
 	}
 
 	private static void ValidateCheckboxGroupForModal(CheckboxGroupComponent checkboxGroup, string paramName)

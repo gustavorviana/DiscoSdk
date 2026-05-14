@@ -1,5 +1,6 @@
 ﻿using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.JsonConverters;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
 using DiscoSdk.Models.Messages.Mentions;
@@ -187,7 +188,8 @@ public class Message
     /// Gets or sets the components of the message.
     /// </summary>
     [JsonPropertyName("components")]
-    public MessageComponent[]? Components { get; set; }
+    [JsonConverter(typeof(InteractionComponentConverter))]
+    public IInteractionComponent[]? Components { get; set; }
 
     /// <summary>
     /// Gets or sets the stickers sent with the message.

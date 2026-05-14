@@ -18,7 +18,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\DiscoSdk.Hosting.Tests\DiscoSdk.Hosting.Tests.csproj" />
 		<ProjectReference Include="..\..\Src\DiscoSdk.Hosting\DiscoSdk.Hosting.csproj" />
 	</ItemGroup>
 

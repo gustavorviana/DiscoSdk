@@ -1,4 +1,5 @@
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.JsonConverters;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
 using DiscoSdk.Rest.Actions.Messages;
@@ -36,11 +37,12 @@ internal class MessageEditRequest
     public AllowedMentions? AllowedMentions { get; set; }
 
     /// <summary>
-    /// Gets or sets the message components (max 5 rows).
-    /// To remove all components, send an empty array.
+    /// Gets or sets the message components — V1 rows or Components V2. To remove all components,
+    /// send an empty array.
     /// </summary>
     [JsonPropertyName("components")]
-    public MessageComponent[]? Components { get; set; }
+    [JsonConverter(typeof(InteractionComponentConverter))]
+    public IInteractionComponent[]? Components { get; set; }
 
     /// <summary>
     /// Gets or sets the attachment objects to keep and/or add.

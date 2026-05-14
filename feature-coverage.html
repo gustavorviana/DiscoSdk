@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DiscoSdk — Discord Feature Coverage</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel-2: #1e222b; --text: #d6dae0;
+    --muted: #8b93a1; --line: #2a2f3a; --accent: #5865F2;
+    --yes: #4cd964; --no: #ff5c6c; --partial: #ffb454; --na: #6b7280;
+    --voice: #c084fc;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 32px 40px 22px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, #1a1d28 0%, var(--panel) 100%); }
+  h1 { margin: 0 0 6px; font-size: 24px; }
+  .sub { color: var(--muted); font-size: 13.5px; max-width: 920px; }
+  .version-bar { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin: 14px 0 4px; font-size: 12.5px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); color: var(--text); }
+  .badge strong { color: var(--accent); }
+  .badge a { color: inherit; text-decoration: none; }
+  .badge a:hover { color: var(--accent); }
+  main { max-width: 1200px; margin: 0 auto; padding: 28px 24px 80px; }
+  h2 { margin: 44px 0 4px; font-size: 19px; border-left: 3px solid var(--accent); padding-left: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  h2.voice-h { border-left-color: var(--voice); }
+  h2 .meta { font-size: 12px; color: var(--muted); font-weight: normal; letter-spacing: .04em; text-transform: uppercase; }
+  h2 a.doc { font-size: 12px; color: var(--accent); text-decoration: none; padding: 2px 8px; border: 1px solid rgba(88,101,242,.3); border-radius: 6px; font-weight: normal; }
+  h2 a.doc:hover { background: rgba(88,101,242,.12); }
+  h2.voice-h a.doc { color: var(--voice); border-color: rgba(192,132,252,.3); }
+  h2.voice-h a.doc:hover { background: rgba(192,132,252,.12); }
+  h3 { margin: 22px 0 8px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  h4 { margin: 18px 0 6px; font-size: 13.5px; color: var(--text); }
+  .group-desc { color: var(--muted); font-size: 13px; margin: 6px 0 12px; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 14px 0 8px; font-size: 12px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; letter-spacing: .02em; }
+  .p-yes { background: rgba(76,217,100,.13); color: var(--yes); border: 1px solid rgba(76,217,100,.3); }
+  .p-no { background: rgba(255,92,108,.13); color: var(--no); border: 1px solid rgba(255,92,108,.3); }
+  .p-partial { background: rgba(255,180,84,.13); color: var(--partial); border: 1px solid rgba(255,180,84,.3); }
+  .p-na { background: rgba(107,114,128,.16); color: var(--na); border: 1px solid rgba(107,114,128,.3); }
+  .p-voice { background: rgba(192,132,252,.13); color: var(--voice); border: 1px solid rgba(192,132,252,.3); }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 4px; background: var(--panel); border-radius: 8px; overflow: hidden; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 13.5px; }
+  th { background: var(--panel-2); color: var(--muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+  tr:last-child td { border-bottom: none; }
+  td.status { white-space: nowrap; width: 1%; }
+  td.feature { font-weight: 500; width: 30%; }
+  td.evidence { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+  td.feature a.doc { color: var(--accent); text-decoration: none; font-size: 11px; margin-left: 6px; padding: 1px 5px; border-radius: 4px; opacity: .75; }
+  td.feature a.doc:hover { opacity: 1; background: rgba(88,101,242,.12); }
+  .voice-section td.feature a.doc { color: var(--voice); }
+  .voice-section td.feature a.doc:hover { background: rgba(192,132,252,.12); }
+  code { font-family: var(--mono); font-size: 12px; background: var(--panel-2); padding: 1px 5px; border-radius: 4px; color: #e6c07b; }
+  .bar { height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; display: flex; }
+  .bar i { display: block; height: 100%; }
+  .bar i.b-yes { background: var(--yes); }
+  .bar i.b-partial { background: var(--partial); }
+  .bar i.b-no { background: var(--no); }
+  .bar i.b-voice { background: var(--voice); }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 16px; margin: 18px 0 8px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .stat .num { font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+  .stat .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .num.yes { color: var(--yes); } .num.no { color: var(--no); } .num.partial { color: var(--partial); } .num.na { color: var(--na); } .num.voice { color: var(--voice); }
+  .note { background: var(--panel); border-left: 3px solid var(--partial); border-radius: 4px; padding: 12px 16px; margin: 16px 0; font-size: 13px; color: var(--text); }
+  .note strong { color: var(--partial); }
+  .note.voice-note { border-left-color: var(--voice); }
+  .note.voice-note strong { color: var(--voice); }
+  .toc { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; margin: 18px 0 28px; }
+  .toc h3 { margin: 0 0 10px; }
+  .toc ol { margin: 0; padding-left: 22px; column-count: 2; column-gap: 26px; }
+  @media (max-width: 720px){ .toc ol { column-count: 1; } }
+  .toc li { font-size: 13px; margin: 3px 0; break-inside: avoid; }
+  .toc a { color: var(--text); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc .count { color: var(--muted); font-size: 11.5px; margin-left: 6px; }
+  .toc li.voice-toc a { color: var(--voice); }
+  footer { color: var(--muted); font-size: 12px; padding: 24px 40px; border-top: 1px solid var(--line); margin-top: 40px; text-align: center; }
+  .group-bar-wrap { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; font-size: 12px; color: var(--muted); }
+  .group-bar-wrap .bar { flex: 1; min-width: 120px; max-width: 320px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>DiscoSdk — Discord Feature Coverage</h1>
+  <div class="sub">Final audit of what is implemented vs. missing, scanning <code>Src/DiscoSdk</code> and <code>Src/DiscoSdk.Hosting</code>. Each item links directly to Discord's official documentation.</div>
+  <div class="version-bar">
+    <span class="badge">Target API: <strong>v10</strong></span>
+    <span class="badge">Doc baseline: <a href="https://discord.com/developers/docs/change-log" target="_blank" rel="noopener">Discord Change Log — May/2026</a></span>
+    <span class="badge">Last audit: <strong>2026-05-14</strong></span>
+    <span class="badge">Branch: <code>main</code></span>
+  </div>
+  <div class="summary-grid">
+    <div class="stat"><div class="num yes">~210</div><div class="label">Implemented</div></div>
+    <div class="stat"><div class="num partial">~3</div><div class="label">Partial</div></div>
+    <div class="stat"><div class="num no">~13</div><div class="label">Missing (non-voice)</div></div>
+    <div class="stat"><div class="num voice">~45</div><div class="label">Voice (ignored for now)</div></div>
+    <div class="stat"><div class="num yes">~93%</div><div class="label">Non-voice coverage</div></div>
+  </div>
+</header>
+<main>
+
+  <div class="legend">
+    <span><i class="pill p-yes">IMPLEMENTED</i> available in the SDK</span>
+    <span><i class="pill p-partial">PARTIAL</i> only some operations</span>
+    <span><i class="pill p-no">MISSING</i> no support</span>
+    <span><i class="pill p-na">EXCLUDED</i> out of scope</span>
+    <span><i class="pill p-voice">VOICE — IGNORED</i> future roadmap</span>
+  </div>
+
+  <div class="toc">
+    <h3>Table of Contents</h3>
+    <ol>
+      <li><a href="#g1">Application Commands (Slash)</a><span class="count">9/11</span></li>
+      <li><a href="#g2">Application</a><span class="count">4/5</span></li>
+      <li><a href="#g3">Audit Log</a><span class="count">1/1</span></li>
+      <li><a href="#g4">Auto Moderation</a><span class="count">5/7</span></li>
+      <li><a href="#g5">Channels</a><span class="count">15/15</span></li>
+      <li><a href="#g6">Emojis</a><span class="count">10/10</span></li>
+      <li><a href="#g7">Entitlements</a><span class="count">5/5</span></li>
+      <li><a href="#g8">Guilds</a><span class="count">25/25</span></li>
+      <li><a href="#g9">Guild Scheduled Events</a><span class="count">6/6</span></li>
+      <li><a href="#g10">Guild Templates</a><span class="count">7/7</span></li>
+      <li><a href="#g11">Invites</a><span class="count">2/2</span></li>
+      <li><a href="#g12">Messages</a><span class="count">13/13</span></li>
+      <li><a href="#g13">Components V1</a><span class="count">7/7</span></li>
+      <li><a href="#g14">Components V2</a><span class="count">8/8</span></li>
+      <li><a href="#g15">Modal / Text Input</a><span class="count">2/2</span></li>
+      <li><a href="#g16">Interactions</a><span class="count">10/12</span></li>
+      <li><a href="#g17">OAuth2</a><span class="count">5/5</span></li>
+      <li><a href="#g18">Polls</a><span class="count">3/3</span></li>
+      <li><a href="#g19">Stage Instance</a><span class="count">4/4</span></li>
+      <li><a href="#g20">Stickers</a><span class="count">6/6</span></li>
+      <li><a href="#g21">Subscriptions</a><span class="count">2/2</span></li>
+      <li><a href="#g22">Users</a><span class="count">10/11</span></li>
+      <li><a href="#g23">Webhooks</a><span class="count">8/8</span></li>
+      <li><a href="#g24">Gateway Events / Intents</a><span class="count">~50/~50</span></li>
+      <li><a href="#g25">Gateway Connection</a><span class="count">7/9</span></li>
+      <li><a href="#g26">Rate Limiting</a><span class="count">1/1</span></li>
+      <li><a href="#g27">File Uploads</a><span class="count">2/2</span></li>
+      <li><a href="#g28">Permissions</a><span class="count">2/2</span></li>
+      <li><a href="#g29">Embeds</a><span class="count">1/1</span></li>
+      <li><a href="#g30">Allowed Mentions</a><span class="count">1/1</span></li>
+      <li><a href="#g31">Reply / Forward</a><span class="count">1/2</span></li>
+      <li><a href="#g32">SKUs / Monetization</a><span class="count">1/1</span></li>
+      <li class="voice-toc"><a href="#g33">🎤 Voice (Roadmap)</a><span class="count">0/~45</span></li>
+      <li><a href="#missing">Summary of what's missing</a></li>
+    </ol>
+  </div>
+
+  <div class="note">
+    <strong>Scope &amp; version notes:</strong> This coverage targets Discord <strong>API v10</strong> as described in
+    <a href="https://discord.com/developers/docs/reference" target="_blank" rel="noopener" style="color: var(--accent);">Reference</a>
+    and the <a href="https://discord.com/developers/docs/change-log" target="_blank" rel="noopener" style="color: var(--accent);">Change Log</a>
+    up to the audit date (2026-05-14). Components V2, Polls, Forward Messages, and Subscriptions — more recent features — are considered.
+    Voice features (voice gateway, RTP/UDP, DAVE/E2EE, Soundboard) are organized in Section 33 with a link to each doc, but marked as <em>roadmap</em>.
+  </div>
+
+  <!-- ============================ GROUP 1 ============================ -->
+  <h2 id="g1">1. Application Commands (Slash Commands) <span class="meta">9 of 11 — 82%</span> <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:82%"></i><i class="b-no" style="width:18%"></i></div></div>
+  <p class="group-desc">Registration, editing, and management of application commands (slash, user, message), permissions, and localization.</p>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Create global command <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#create-global-application-command" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationCommandClient.CreateGlobalCommandAsync</td></tr>
+    <tr><td class="feature">List global commands <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#get-global-application-commands" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationCommandClient.GetGlobalCommandsAsync</td></tr>
+    <tr><td class="feature">Edit global command <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationCommandClient.EditGlobalCommandAsync</td></tr>
+    <tr><td class="feature">Delete global command <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#delete-global-application-command" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationCommandClient.DeleteGlobalCommandAsync</td></tr>
+    <tr><td class="feature">Bulk overwrite global <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-global-application-commands" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationCommandClient.RegisterGlobalCommandsAsync</td></tr>
+    <tr><td class="feature">Guild commands CRUD <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#get-guild-application-commands" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationCommandClient.* (GuildCommands)</td></tr>
+    <tr><td class="feature">Command permissions <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#permissions" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GetCommandPermissionsAsync, EditCommandPermissionsAsync</td></tr>
+    <tr><td class="feature">Subcommands &amp; subcommand groups <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#subcommands-and-subcommand-groups" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">SlashCommandOptionType.SubCommand / SubCommandGroup</td></tr>
+    <tr><td class="feature">Option types <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">SlashCommandOptionType.cs (11 types)</td></tr>
+    <tr><td class="feature">Autocomplete <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#autocomplete" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionClient.RespondWithAutocompleteAsync</td></tr>
+    <tr><td class="feature">Localization <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#localization" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">SlashCommand.NameLocalizations / DescriptionLocalizations</td></tr>
+    <tr><td class="feature"><code>default_member_permissions</code> <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#permissions" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">SlashCommand.DefaultMemberPermissions</td></tr>
+    <tr><td class="feature"><code>dm_permission</code> <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">SlashCommand.DmPermission</td></tr>
+    <tr><td class="feature">NSFW <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#agerestricted-commands" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">SlashCommand.Nsfw</td></tr>
+    <tr><td class="feature"><code>integration_types</code> (user-install) <a class="doc" href="https://discord.com/developers/docs/resources/application#application-object-application-integration-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">field absent in SlashCommand.cs</td></tr>
+    <tr><td class="feature"><code>contexts</code> (Guild/BotDM/Private) <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#application-command-object-interaction-context-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">field absent in SlashCommand.cs</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 2 ============================ -->
+  <h2 id="g2">2. Application <span class="meta">4 of 5 — 80%</span> <a class="doc" href="https://discord.com/developers/docs/resources/application" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:80%"></i><i class="b-no" style="width:20%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Get current application <a class="doc" href="https://discord.com/developers/docs/resources/application#get-current-application" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.GetCurrentApplicationAsync</td></tr>
+    <tr><td class="feature">Edit current application <a class="doc" href="https://discord.com/developers/docs/resources/application#edit-current-application" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.EditCurrentApplicationAsync</td></tr>
+    <tr><td class="feature">Application emojis (CRUD) <a class="doc" href="https://discord.com/developers/docs/resources/emoji#list-application-emojis" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">List/Get/Create/Modify/DeleteApplicationEmojiAsync</td></tr>
+    <tr><td class="feature">Role connection metadata <a class="doc" href="https://discord.com/developers/docs/resources/application-role-connection-metadata" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GetRoleConnectionMetadataAsync, UpdateRoleConnectionMetadataAsync</td></tr>
+    <tr><td class="feature">Application activity instances <a class="doc" href="https://discord.com/developers/docs/resources/application#get-application-activity-instance" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">no dedicated endpoint (used in embedded apps)</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 3 ============================ -->
+  <h2 id="g3">3. Audit Log <span class="meta">1 of 1 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/audit-log" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Get guild audit log <a class="doc" href="https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.GetAuditLogsAsync (limit, before, userId, actionType)</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 4 ============================ -->
+  <h2 id="g4">4. Auto Moderation <span class="meta">5 of 7 — 71%</span> <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:71%"></i><i class="b-partial" style="width:29%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">List rules <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#list-auto-moderation-rules-for-guild" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AutoModerationClient.ListRulesAsync</td></tr>
+    <tr><td class="feature">Get rule <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#get-auto-moderation-rule" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AutoModerationClient.GetRuleAsync</td></tr>
+    <tr><td class="feature">Create rule <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AutoModerationClient.CreateRuleAsync</td></tr>
+    <tr><td class="feature">Modify rule <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AutoModerationClient.ModifyRuleAsync</td></tr>
+    <tr><td class="feature">Delete rule <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#delete-auto-moderation-rule" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AutoModerationClient.DeleteRuleAsync</td></tr>
+    <tr><td class="feature">Complete trigger types <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-partial">PARTIAL</span></td><td class="evidence">AutoModerationTriggerMetadata.cs present — verify Keyword/Spam/KeywordPreset/MentionSpam/MemberProfile</td></tr>
+    <tr><td class="feature">Complete action types <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-partial">PARTIAL</span></td><td class="evidence">AutoModerationAction.cs — verify BlockMessage/SendAlert/Timeout/BlockMemberInteraction</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 5 ============================ -->
+  <h2 id="g5">5. Channels <span class="meta">15 of 15 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/channel" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <p class="group-desc">All non-voice channel types, threads, forum, DMs, permission overwrites.</p>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Get channel <a class="doc" href="https://discord.com/developers/docs/resources/channel#get-channel" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.GetAsync</td></tr>
+    <tr><td class="feature">Modify channel <a class="doc" href="https://discord.com/developers/docs/resources/channel#modify-channel" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.EditAsync</td></tr>
+    <tr><td class="feature">Delete channel <a class="doc" href="https://discord.com/developers/docs/resources/channel#deleteclose-channel" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.DeleteAsync</td></tr>
+    <tr><td class="feature">Create guild channel <a class="doc" href="https://discord.com/developers/docs/resources/guild#create-guild-channel" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.CreateChannelAsync</td></tr>
+    <tr><td class="feature">Channel types (Text/Announcement/Category/Forum/Media/Threads/DM/GroupDM) <a class="doc" href="https://discord.com/developers/docs/resources/channel#channel-object-channel-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">Enums/ChannelType.cs (13+ types)</td></tr>
+    <tr><td class="feature">Edit/Delete permission overwrites <a class="doc" href="https://discord.com/developers/docs/resources/channel#edit-channel-permissions" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.EditChannelPermissionsAsync / DeleteChannelPermissionsAsync</td></tr>
+    <tr><td class="feature">Follow announcement channel <a class="doc" href="https://discord.com/developers/docs/resources/channel#follow-announcement-channel" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.FollowAsync</td></tr>
+    <tr><td class="feature">Trigger typing <a class="doc" href="https://discord.com/developers/docs/resources/channel#trigger-typing-indicator" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.TriggerTypingAsync</td></tr>
+    <tr><td class="feature">Get pinned messages <a class="doc" href="https://discord.com/developers/docs/resources/message#get-channel-pins" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.GetPinnedMessagesAsync</td></tr>
+    <tr><td class="feature">Pin / Unpin message <a class="doc" href="https://discord.com/developers/docs/resources/message#pin-message" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.PinAsync / UnpinAsync</td></tr>
+    <tr><td class="feature">Group DM add/remove recipient <a class="doc" href="https://discord.com/developers/docs/resources/channel#group-dm-add-recipient" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.AddGroupDmRecipientAsync / RemoveGroupDmRecipientAsync</td></tr>
+    <tr><td class="feature">Start thread (with/without message) <a class="doc" href="https://discord.com/developers/docs/resources/channel#start-thread-from-message" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.CreateThreadFromMessageAsync, CreateForumPostAsync</td></tr>
+    <tr><td class="feature">Join / Leave thread <a class="doc" href="https://discord.com/developers/docs/resources/channel#join-thread" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.JoinThreadAsync / LeaveThreadAsync</td></tr>
+    <tr><td class="feature">Add / Remove thread member <a class="doc" href="https://discord.com/developers/docs/resources/channel#add-thread-member" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.AddThreadMemberAsync / RemoveThreadMemberAsync</td></tr>
+    <tr><td class="feature">List thread members <a class="doc" href="https://discord.com/developers/docs/resources/channel#list-thread-members" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.GetThreadMembersAsync</td></tr>
+    <tr><td class="feature">Active / Public / Private archived threads <a class="doc" href="https://discord.com/developers/docs/resources/channel#list-public-archived-threads" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.GetActiveThreadsAsync / GetPublicArchivedThreadsAsync / GetPrivateArchivedThreadsAsync</td></tr>
+    <tr><td class="feature">Channel invites (list / create) <a class="doc" href="https://discord.com/developers/docs/resources/channel#get-channel-invites" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InviteClient.CreateAsync / GetChannelInvitesAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 6 ============================ -->
+  <h2 id="g6">6. Emojis <span class="meta">10 of 10 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/emoji" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">List guild emojis <a class="doc" href="https://discord.com/developers/docs/resources/emoji#list-guild-emojis" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.ListEmojisAsync</td></tr>
+    <tr><td class="feature">Get guild emoji <a class="doc" href="https://discord.com/developers/docs/resources/emoji#get-guild-emoji" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.GetEmojiAsync</td></tr>
+    <tr><td class="feature">Create guild emoji <a class="doc" href="https://discord.com/developers/docs/resources/emoji#create-guild-emoji" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.CreateEmojiAsync</td></tr>
+    <tr><td class="feature">Modify guild emoji <a class="doc" href="https://discord.com/developers/docs/resources/emoji#modify-guild-emoji" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.EditEmojiAsync</td></tr>
+    <tr><td class="feature">Delete guild emoji <a class="doc" href="https://discord.com/developers/docs/resources/emoji#delete-guild-emoji" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.DeleteEmojiAsync</td></tr>
+    <tr><td class="feature">List application emojis <a class="doc" href="https://discord.com/developers/docs/resources/emoji#list-application-emojis" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.ListApplicationEmojisAsync</td></tr>
+    <tr><td class="feature">Get application emoji <a class="doc" href="https://discord.com/developers/docs/resources/emoji#get-application-emoji" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.GetApplicationEmojiAsync</td></tr>
+    <tr><td class="feature">Create application emoji <a class="doc" href="https://discord.com/developers/docs/resources/emoji#create-application-emoji" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.CreateApplicationEmojiAsync</td></tr>
+    <tr><td class="feature">Modify application emoji <a class="doc" href="https://discord.com/developers/docs/resources/emoji#modify-application-emoji" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.ModifyApplicationEmojiAsync</td></tr>
+    <tr><td class="feature">Delete application emoji <a class="doc" href="https://discord.com/developers/docs/resources/emoji#delete-application-emoji" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.DeleteApplicationEmojiAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 7 ============================ -->
+  <h2 id="g7">7. Entitlements <span class="meta">5 of 5 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/monetization/entitlements" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">List entitlements <a class="doc" href="https://discord.com/developers/docs/monetization/entitlements#list-entitlements" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.ListEntitlementsAsync</td></tr>
+    <tr><td class="feature">Get entitlement <a class="doc" href="https://discord.com/developers/docs/monetization/entitlements#get-entitlement" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.GetEntitlementAsync</td></tr>
+    <tr><td class="feature">Consume entitlement <a class="doc" href="https://discord.com/developers/docs/monetization/entitlements#consume-an-entitlement" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.ConsumeEntitlementAsync</td></tr>
+    <tr><td class="feature">Create test entitlement <a class="doc" href="https://discord.com/developers/docs/monetization/entitlements#create-test-entitlement" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.CreateTestEntitlementAsync</td></tr>
+    <tr><td class="feature">Delete test entitlement <a class="doc" href="https://discord.com/developers/docs/monetization/entitlements#delete-test-entitlement" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.DeleteTestEntitlementAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 8 ============================ -->
+  <h2 id="g8">8. Guilds <span class="meta">25 of 25 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/guild" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <p class="group-desc">Full coverage of server management: members, roles, bans, prune, widget, welcome screen, onboarding, MFA.</p>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Get guild <a class="doc" href="https://discord.com/developers/docs/resources/guild#get-guild" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.GetAsync</td></tr>
+    <tr><td class="feature">Modify guild <a class="doc" href="https://discord.com/developers/docs/resources/guild#modify-guild" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.EditAsync</td></tr>
+    <tr><td class="feature">Delete guild <a class="doc" href="https://discord.com/developers/docs/resources/guild#delete-guild" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.DeleteAsync</td></tr>
+    <tr><td class="feature">List guild members <a class="doc" href="https://discord.com/developers/docs/resources/guild#list-guild-members" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.GetMembersAsync</td></tr>
+    <tr><td class="feature">Search guild members <a class="doc" href="https://discord.com/developers/docs/resources/guild#search-guild-members" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.SearchMembersAsync</td></tr>
+    <tr><td class="feature">Add / Kick member <a class="doc" href="https://discord.com/developers/docs/resources/guild#add-guild-member" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.AddMemberAsync / KickMemberAsync</td></tr>
+    <tr><td class="feature">Modify guild member (timeout/roles/nick) <a class="doc" href="https://discord.com/developers/docs/resources/guild#modify-guild-member" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.ModifyMemberAsync</td></tr>
+    <tr><td class="feature">Modify current member <a class="doc" href="https://discord.com/developers/docs/resources/guild#modify-current-member" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.ModifyCurrentMemberAsync</td></tr>
+    <tr><td class="feature">Add / Remove member role <a class="doc" href="https://discord.com/developers/docs/resources/guild#add-guild-member-role" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.AddMemberRoleAsync / RemoveMemberRoleAsync</td></tr>
+    <tr><td class="feature">Get guild bans <a class="doc" href="https://discord.com/developers/docs/resources/guild#get-guild-bans" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.GetBansAsync</td></tr>
+    <tr><td class="feature">Create / Remove guild ban <a class="doc" href="https://discord.com/developers/docs/resources/guild#create-guild-ban" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.BanMemberAsync / UnbanMemberAsync</td></tr>
+    <tr><td class="feature">Bulk guild ban <a class="doc" href="https://discord.com/developers/docs/resources/guild#bulk-guild-ban" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.BulkBanAsync</td></tr>
+    <tr><td class="feature">Roles CRUD <a class="doc" href="https://discord.com/developers/docs/resources/guild#create-guild-role" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">RoleClient.cs</td></tr>
+    <tr><td class="feature">Modify guild role positions <a class="doc" href="https://discord.com/developers/docs/resources/guild#modify-guild-role-positions" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">RoleClient (positions)</td></tr>
+    <tr><td class="feature">Get prune count / Begin prune <a class="doc" href="https://discord.com/developers/docs/resources/guild#get-guild-prune-count" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.GetPruneCountAsync / BeginPruneAsync</td></tr>
+    <tr><td class="feature">Get voice regions <a class="doc" href="https://discord.com/developers/docs/resources/guild#get-guild-voice-regions" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.GetVoiceRegionsAsync (REST listing only)</td></tr>
+    <tr><td class="feature">Get guild invites <a class="doc" href="https://discord.com/developers/docs/resources/guild#get-guild-invites" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.GetInvitesAsync</td></tr>
+    <tr><td class="feature">Integrations (list / delete) <a class="doc" href="https://discord.com/developers/docs/resources/guild#get-guild-integrations" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.ListIntegrationsAsync / DeleteIntegrationAsync</td></tr>
+    <tr><td class="feature">Widget (get / edit / settings) <a class="doc" href="https://discord.com/developers/docs/resources/guild#get-guild-widget" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.GetWidgetAsync / EditWidgetAsync</td></tr>
+    <tr><td class="feature">Vanity URL <a class="doc" href="https://discord.com/developers/docs/resources/guild#get-guild-vanity-url" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.GetVanityUrlAsync</td></tr>
+    <tr><td class="feature">Welcome screen (get / edit) <a class="doc" href="https://discord.com/developers/docs/resources/guild#get-guild-welcome-screen" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.GetWelcomeScreenAsync / EditWelcomeScreenAsync</td></tr>
+    <tr><td class="feature">Onboarding (get / edit) <a class="doc" href="https://discord.com/developers/docs/resources/guild#get-guild-onboarding" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildTemplateClient.GetOnboardingAsync / ModifyOnboardingAsync</td></tr>
+    <tr><td class="feature">Modify guild MFA level <a class="doc" href="https://discord.com/developers/docs/resources/guild#modify-guild-mfa-level" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.ModifyMfaLevelAsync</td></tr>
+    <tr><td class="feature">Modify guild channel positions <a class="doc" href="https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient (Modify Guild Channel Positions)</td></tr>
+    <tr><td class="feature">Leave guild <a class="doc" href="https://discord.com/developers/docs/resources/user#leave-guild" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.LeaveAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 9 ============================ -->
+  <h2 id="g9">9. Guild Scheduled Events <span class="meta">6 of 6 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/guild-scheduled-event" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">List scheduled events <a class="doc" href="https://discord.com/developers/docs/resources/guild-scheduled-event#list-scheduled-events-for-guild" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildScheduledEventClient.ListAsync</td></tr>
+    <tr><td class="feature">Create event <a class="doc" href="https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildScheduledEventClient.CreateAsync</td></tr>
+    <tr><td class="feature">Get event <a class="doc" href="https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildScheduledEventClient.GetAsync</td></tr>
+    <tr><td class="feature">Modify event <a class="doc" href="https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildScheduledEventClient.ModifyAsync</td></tr>
+    <tr><td class="feature">Delete event <a class="doc" href="https://discord.com/developers/docs/resources/guild-scheduled-event#delete-guild-scheduled-event" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildScheduledEventClient.DeleteAsync</td></tr>
+    <tr><td class="feature">Get event users <a class="doc" href="https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-users" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildScheduledEventClient.GetUsersAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 10 ============================ -->
+  <h2 id="g10">10. Guild Templates <span class="meta">7 of 7 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/guild-template" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Get template <a class="doc" href="https://discord.com/developers/docs/resources/guild-template#get-guild-template" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildTemplateClient.GetTemplateAsync</td></tr>
+    <tr><td class="feature">Create guild from template <a class="doc" href="https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildTemplateClient.CreateGuildFromTemplateAsync</td></tr>
+    <tr><td class="feature">List guild templates <a class="doc" href="https://discord.com/developers/docs/resources/guild-template#get-guild-templates" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildTemplateClient.GetGuildTemplatesAsync</td></tr>
+    <tr><td class="feature">Create template <a class="doc" href="https://discord.com/developers/docs/resources/guild-template#create-guild-template" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildTemplateClient.CreateGuildTemplateAsync</td></tr>
+    <tr><td class="feature">Sync template <a class="doc" href="https://discord.com/developers/docs/resources/guild-template#sync-guild-template" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildTemplateClient.SyncGuildTemplateAsync</td></tr>
+    <tr><td class="feature">Modify template <a class="doc" href="https://discord.com/developers/docs/resources/guild-template#modify-guild-template" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildTemplateClient.ModifyGuildTemplateAsync</td></tr>
+    <tr><td class="feature">Delete template <a class="doc" href="https://discord.com/developers/docs/resources/guild-template#delete-guild-template" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildTemplateClient.DeleteGuildTemplateAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 11 ============================ -->
+  <h2 id="g11">11. Invites <span class="meta">2 of 2 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/invite" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Get invite <a class="doc" href="https://discord.com/developers/docs/resources/invite#get-invite" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InviteClient.GetAsync</td></tr>
+    <tr><td class="feature">Delete invite <a class="doc" href="https://discord.com/developers/docs/resources/invite#delete-invite" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InviteClient.DeleteAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 12 ============================ -->
+  <h2 id="g12">12. Messages <span class="meta">13 of 13 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/message" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Get channel messages <a class="doc" href="https://discord.com/developers/docs/resources/message#get-channel-messages" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.GetMessagesAsync</td></tr>
+    <tr><td class="feature">Get channel message <a class="doc" href="https://discord.com/developers/docs/resources/message#get-channel-message" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.GetAsync</td></tr>
+    <tr><td class="feature">Create message <a class="doc" href="https://discord.com/developers/docs/resources/message#create-message" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.CreateAsync, MessageCreateRequest.cs</td></tr>
+    <tr><td class="feature">Crosspost message <a class="doc" href="https://discord.com/developers/docs/resources/message#crosspost-message" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.CrosspostAsync</td></tr>
+    <tr><td class="feature">Create reaction <a class="doc" href="https://discord.com/developers/docs/resources/message#create-reaction" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.AddReactionAsync</td></tr>
+    <tr><td class="feature">Delete own reaction <a class="doc" href="https://discord.com/developers/docs/resources/message#delete-own-reaction" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.RemoveReactionAsync</td></tr>
+    <tr><td class="feature">Delete user reaction <a class="doc" href="https://discord.com/developers/docs/resources/message#delete-user-reaction" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.RemoveUserReactionAsync</td></tr>
+    <tr><td class="feature">Get reactions <a class="doc" href="https://discord.com/developers/docs/resources/message#get-reactions" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.GetReactionsAsync</td></tr>
+    <tr><td class="feature">Delete all reactions <a class="doc" href="https://discord.com/developers/docs/resources/message#delete-all-reactions" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.DeleteAllReactionsAsync</td></tr>
+    <tr><td class="feature">Delete all reactions for emoji <a class="doc" href="https://discord.com/developers/docs/resources/message#delete-all-reactions-for-emoji" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.DeleteAllReactionsForEmojiAsync</td></tr>
+    <tr><td class="feature">Edit message <a class="doc" href="https://discord.com/developers/docs/resources/message#edit-message" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.EditAsync</td></tr>
+    <tr><td class="feature">Delete message <a class="doc" href="https://discord.com/developers/docs/resources/message#delete-message" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.DeleteAsync</td></tr>
+    <tr><td class="feature">Bulk delete messages <a class="doc" href="https://discord.com/developers/docs/resources/message#bulk-delete-messages" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.BulkDeleteMessagesAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 13 ============================ -->
+  <h2 id="g13">13. Components V1 <span class="meta">7 of 7 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/components/reference" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Action Row <a class="doc" href="https://discord.com/developers/docs/components/reference#action-row" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageActionRowComponent.cs</td></tr>
+    <tr><td class="feature">Button <a class="doc" href="https://discord.com/developers/docs/components/reference#button" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ButtonComponent.cs + ButtonStyle</td></tr>
+    <tr><td class="feature">String Select <a class="doc" href="https://discord.com/developers/docs/components/reference#string-select" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StringSelectComponent.cs</td></tr>
+    <tr><td class="feature">User Select <a class="doc" href="https://discord.com/developers/docs/components/reference#user-select" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserSelectComponent.cs</td></tr>
+    <tr><td class="feature">Role Select <a class="doc" href="https://discord.com/developers/docs/components/reference#role-select" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">RoleSelectComponent.cs</td></tr>
+    <tr><td class="feature">Mentionable Select <a class="doc" href="https://discord.com/developers/docs/components/reference#mentionable-select" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MentionableSelectComponent.cs</td></tr>
+    <tr><td class="feature">Channel Select <a class="doc" href="https://discord.com/developers/docs/components/reference#channel-select" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelSelectComponent.cs</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 14 ============================ -->
+  <h2 id="g14">14. Components V2 <span class="meta">8 of 8 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/components/reference" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <p class="group-desc">Recently added in this branch — full coverage of Discord's new component model.</p>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Section <a class="doc" href="https://discord.com/developers/docs/components/reference#section" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">SectionComponent.cs (new)</td></tr>
+    <tr><td class="feature">Text Display <a class="doc" href="https://discord.com/developers/docs/components/reference#text-display" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">TextDisplayComponent.cs (new)</td></tr>
+    <tr><td class="feature">Thumbnail <a class="doc" href="https://discord.com/developers/docs/components/reference#thumbnail" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ThumbnailComponent.cs (new)</td></tr>
+    <tr><td class="feature">Media Gallery <a class="doc" href="https://discord.com/developers/docs/components/reference#media-gallery" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MediaGalleryComponent.cs + MediaGalleryItem.cs</td></tr>
+    <tr><td class="feature">File component <a class="doc" href="https://discord.com/developers/docs/components/reference#file" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">FileComponent.cs (new)</td></tr>
+    <tr><td class="feature">Separator <a class="doc" href="https://discord.com/developers/docs/components/reference#separator" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">SeparatorComponent.cs + Enums/SeparatorSpacing.cs</td></tr>
+    <tr><td class="feature">Container <a class="doc" href="https://discord.com/developers/docs/components/reference#container" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ContainerComponent.cs (new)</td></tr>
+    <tr><td class="feature">Polymorphic converter (V1+V2) <a class="doc" href="https://discord.com/developers/docs/components/reference#component-object" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageComponentPolymorphicConverter.cs + ComponentTypeMapping.cs</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 15 ============================ -->
+  <h2 id="g15">15. Modal / Text Input <span class="meta">2 of 2 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-modal" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Modal interaction response <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-modal" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionClient + ReplyModalRestAction.cs</td></tr>
+    <tr><td class="feature">Text Input components <a class="doc" href="https://discord.com/developers/docs/components/reference#text-input" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">TextInputComponent.cs + TextInputStyle</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 16 ============================ -->
+  <h2 id="g16">16. Interactions <span class="meta">10 of 12 — 83%</span> <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:83%"></i><i class="b-no" style="width:17%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Receive interaction (gateway) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionContextWrapper + DiscordEventDispatcher</td></tr>
+    <tr><td class="feature">PONG (1) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.Pong</td></tr>
+    <tr><td class="feature">CHANNEL_MESSAGE_WITH_SOURCE (4) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.ChannelMessageWithSource</td></tr>
+    <tr><td class="feature">DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE (5) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.DeferredChannelMessageWithSource</td></tr>
+    <tr><td class="feature">DEFERRED_UPDATE_MESSAGE (6) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.DeferredUpdateMessage</td></tr>
+    <tr><td class="feature">UPDATE_MESSAGE (7) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.UpdateMessage</td></tr>
+    <tr><td class="feature">APPLICATION_COMMAND_AUTOCOMPLETE_RESULT (8) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.ApplicationCommandAutocompleteResult</td></tr>
+    <tr><td class="feature">MODAL (9) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.Modal</td></tr>
+    <tr><td class="feature">PREMIUM_REQUIRED (10) <em>deprecated</em> <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">not in InteractionCallbackType.cs</td></tr>
+    <tr><td class="feature">LAUNCH_ACTIVITY (12) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">not in InteractionCallbackType.cs</td></tr>
+    <tr><td class="feature">Follow-up messages (CRUD) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#create-followup-message" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">WebhookMessageClient (Execute/Get/Edit/Delete)</td></tr>
+    <tr><td class="feature">Original interaction response <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#get-original-interaction-response" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">via WebhookMessageClient with original_message id</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 17 ============================ -->
+  <h2 id="g17">17. OAuth2 <span class="meta">5 of 5 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/topics/oauth2" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Get current authorization info <a class="doc" href="https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">OAuth2Client.GetCurrentAuthorizationInfoAsync</td></tr>
+    <tr><td class="feature">Get current bot application <a class="doc" href="https://discord.com/developers/docs/topics/oauth2#get-current-bot-application-information" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.GetCurrentApplicationAsync</td></tr>
+    <tr><td class="feature">Authorization code grant <a class="doc" href="https://discord.com/developers/docs/topics/oauth2#authorization-code-grant" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">OAuth2Client.ExchangeAuthorizationCodeAsync</td></tr>
+    <tr><td class="feature">Refresh token <a class="doc" href="https://discord.com/developers/docs/topics/oauth2#authorization-code-grant-refresh-token-exchange-example" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">OAuth2Client.RefreshAccessTokenAsync</td></tr>
+    <tr><td class="feature">Client credentials grant <a class="doc" href="https://discord.com/developers/docs/topics/oauth2#client-credentials-grant" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">OAuth2Client.GetClientCredentialsTokenAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 18 ============================ -->
+  <h2 id="g18">18. Polls <span class="meta">3 of 3 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/poll" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Create poll (in message) <a class="doc" href="https://discord.com/developers/docs/resources/poll#poll-create-request-object" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageCreateRequest.Poll + PollBuilder.cs</td></tr>
+    <tr><td class="feature">Get answer voters <a class="doc" href="https://discord.com/developers/docs/resources/poll#get-answer-voters" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.GetPollVotersAsync + PollVotersPaginationAction</td></tr>
+    <tr><td class="feature">End poll <a class="doc" href="https://discord.com/developers/docs/resources/poll#end-poll" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.EndPollAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 19 ============================ -->
+  <h2 id="g19">19. Stage Instance <span class="meta">4 of 4 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/stage-instance" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <p class="group-desc">Stage metadata (does not include audio transport, which is part of voice).</p>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Create stage instance <a class="doc" href="https://discord.com/developers/docs/resources/stage-instance#create-stage-instance" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StageInstanceClient.CreateAsync</td></tr>
+    <tr><td class="feature">Get stage instance <a class="doc" href="https://discord.com/developers/docs/resources/stage-instance#get-stage-instance" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StageInstanceClient.GetAsync</td></tr>
+    <tr><td class="feature">Modify stage instance <a class="doc" href="https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StageInstanceClient.ModifyAsync</td></tr>
+    <tr><td class="feature">Delete stage instance <a class="doc" href="https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StageInstanceClient.DeleteAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 20 ============================ -->
+  <h2 id="g20">20. Stickers <span class="meta">6 of 6 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/sticker" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">List sticker packs <a class="doc" href="https://discord.com/developers/docs/resources/sticker#list-sticker-packs" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StickerClient.ListStickerPacksAsync</td></tr>
+    <tr><td class="feature">List guild stickers <a class="doc" href="https://discord.com/developers/docs/resources/sticker#list-guild-stickers" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StickerClient.ListGuildStickersAsync</td></tr>
+    <tr><td class="feature">Get guild sticker <a class="doc" href="https://discord.com/developers/docs/resources/sticker#get-guild-sticker" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StickerClient.GetGuildStickerAsync</td></tr>
+    <tr><td class="feature">Create guild sticker <a class="doc" href="https://discord.com/developers/docs/resources/sticker#create-guild-sticker" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StickerClient.CreateGuildStickerAsync</td></tr>
+    <tr><td class="feature">Modify guild sticker <a class="doc" href="https://discord.com/developers/docs/resources/sticker#modify-guild-sticker" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StickerClient.ModifyGuildStickerAsync</td></tr>
+    <tr><td class="feature">Delete guild sticker <a class="doc" href="https://discord.com/developers/docs/resources/sticker#delete-guild-sticker" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StickerClient.DeleteGuildStickerAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 21 ============================ -->
+  <h2 id="g21">21. Subscriptions <span class="meta">2 of 2 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/subscription" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">List SKU subscriptions <a class="doc" href="https://discord.com/developers/docs/resources/subscription#list-sku-subscriptions" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.ListSkuSubscriptionsAsync</td></tr>
+    <tr><td class="feature">Get SKU subscription <a class="doc" href="https://discord.com/developers/docs/resources/subscription#get-sku-subscription" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.GetSkuSubscriptionAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 22 ============================ -->
+  <h2 id="g22">22. Users <span class="meta">10 of 11 — 91%</span> <a class="doc" href="https://discord.com/developers/docs/resources/user" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:91%"></i><i class="b-no" style="width:9%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Get current user <a class="doc" href="https://discord.com/developers/docs/resources/user#get-current-user" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.GetCurrentAsync</td></tr>
+    <tr><td class="feature">Get user <a class="doc" href="https://discord.com/developers/docs/resources/user#get-user" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.GetAsync</td></tr>
+    <tr><td class="feature">Modify current user <a class="doc" href="https://discord.com/developers/docs/resources/user#modify-current-user" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.ModifyCurrentAsync</td></tr>
+    <tr><td class="feature">Get current user guilds <a class="doc" href="https://discord.com/developers/docs/resources/user#get-current-user-guilds" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.GetCurrentGuildsAsync</td></tr>
+    <tr><td class="feature">Get current user guild member <a class="doc" href="https://discord.com/developers/docs/resources/user#get-current-user-guild-member" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.GetCurrentGuildMemberAsync</td></tr>
+    <tr><td class="feature">Leave guild <a class="doc" href="https://discord.com/developers/docs/resources/user#leave-guild" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.LeaveAsync</td></tr>
+    <tr><td class="feature">Create DM <a class="doc" href="https://discord.com/developers/docs/resources/user#create-dm" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.CreateDMAsync</td></tr>
+    <tr><td class="feature">Create Group DM <a class="doc" href="https://discord.com/developers/docs/resources/user#create-group-dm" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">only Add/Remove recipient exists; missing POST /users/@me/channels endpoint with access_tokens</td></tr>
+    <tr><td class="feature">Get user connections <a class="doc" href="https://discord.com/developers/docs/resources/user#get-current-user-connections" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.GetConnectionsAsync</td></tr>
+    <tr><td class="feature">Get application role connection <a class="doc" href="https://discord.com/developers/docs/resources/user#get-current-user-application-role-connection" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.GetApplicationRoleConnectionAsync</td></tr>
+    <tr><td class="feature">Update application role connection <a class="doc" href="https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.UpdateApplicationRoleConnectionAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 23 ============================ -->
+  <h2 id="g23">23. Webhooks <span class="meta">8 of 8 — 100% (Slack/GitHub excluded)</span> <a class="doc" href="https://discord.com/developers/docs/resources/webhook" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Create webhook <a class="doc" href="https://discord.com/developers/docs/resources/webhook#create-webhook" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">WebhookClient.CreateAsync</td></tr>
+    <tr><td class="feature">Get channel webhooks <a class="doc" href="https://discord.com/developers/docs/resources/webhook#get-channel-webhooks" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">WebhookClient.GetChannelWebhooksAsync</td></tr>
+    <tr><td class="feature">Get guild webhooks <a class="doc" href="https://discord.com/developers/docs/resources/webhook#get-guild-webhooks" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">WebhookClient.GetGuildWebhooksAsync</td></tr>
+    <tr><td class="feature">Get / Modify / Delete webhook (with/without token) <a class="doc" href="https://discord.com/developers/docs/resources/webhook#get-webhook" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">WebhookClient.* WithToken / without token</td></tr>
+    <tr><td class="feature">Execute webhook <a class="doc" href="https://discord.com/developers/docs/resources/webhook#execute-webhook" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">WebhookMessageClient.ExecuteAsync</td></tr>
+    <tr><td class="feature">Get / Edit / Delete webhook message <a class="doc" href="https://discord.com/developers/docs/resources/webhook#get-webhook-message" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">WebhookMessageClient.GetMessageAsync / EditMessageAsync / DeleteMessageAsync</td></tr>
+    <tr><td class="feature">Slack / GitHub webhook execute <a class="doc" href="https://discord.com/developers/docs/resources/webhook#execute-slackcompatible-webhook" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-na">EXCLUDED</span></td><td class="evidence">narrow use case; out of scope</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 24 ============================ -->
+  <h2 id="g24">24. Gateway Events / Intents <span class="meta">~50 events + 18 intents — 100%</span> <a class="doc" href="https://discord.com/developers/docs/events/gateway-events" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Event category</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">READY / RESUMED <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#ready" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">DiscordGatewayClient + ReadyPayload</td></tr>
+    <tr><td class="feature">GUILD_CREATE / UPDATE / DELETE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#guild-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">Contexts/Guilds/Guild*ContextWrapper</td></tr>
+    <tr><td class="feature">GUILD_MEMBER_ADD / UPDATE / REMOVE / CHUNK <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#guild-member-add" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildMember*ContextWrapper + GuildMembersChunk</td></tr>
+    <tr><td class="feature">GUILD_ROLE_CREATE / UPDATE / DELETE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#guild-role-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildRole*ContextWrapper</td></tr>
+    <tr><td class="feature">GUILD_BAN_ADD / REMOVE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#guild-ban-add" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildBanContextWrapper</td></tr>
+    <tr><td class="feature">GUILD_EMOJIS_UPDATE / GUILD_STICKERS_UPDATE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#guild-emojis-update" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildEmojisUpdate/GuildStickersUpdate ContextWrapper</td></tr>
+    <tr><td class="feature">GUILD_INTEGRATIONS_UPDATE / INTEGRATION_* <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#integration-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">Integration*ContextWrapper</td></tr>
+    <tr><td class="feature">GUILD_AUDIT_LOG_ENTRY_CREATE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#guild-audit-log-entry-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AuditLogEntryCreateContextWrapper</td></tr>
+    <tr><td class="feature">GUILD_SCHEDULED_EVENT_* (5 events) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#guild-scheduled-event-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildScheduledEvent / GuildScheduledEventUser ContextWrapper</td></tr>
+    <tr><td class="feature">CHANNEL_CREATE / UPDATE / DELETE / PINS_UPDATE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#channel-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">Channel*ContextWrapper + ChannelPinsUpdate</td></tr>
+    <tr><td class="feature">THREAD_* (6 events) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#thread-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">Thread*ContextWrapper (6 wrappers)</td></tr>
+    <tr><td class="feature">MESSAGE_CREATE / UPDATE / DELETE / DELETE_BULK <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#message-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">Message*ContextWrapper</td></tr>
+    <tr><td class="feature">MESSAGE_REACTION_* (4 events) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#message-reaction-add" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageReaction*ContextWrapper</td></tr>
+    <tr><td class="feature">MESSAGE_POLL_VOTE_ADD / REMOVE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#message-poll-vote-add" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessagePollVoteContextWrapper</td></tr>
+    <tr><td class="feature">TYPING_START <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#typing-start" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">TypingContextWrapper</td></tr>
+    <tr><td class="feature">PRESENCE_UPDATE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#presence-update" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">PresenceUpdateContextWrapper</td></tr>
+    <tr><td class="feature">USER_UPDATE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#user-update" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserUpdateContextWrapper</td></tr>
+    <tr><td class="feature">INTERACTION_CREATE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#interaction-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionContextWrapper</td></tr>
+    <tr><td class="feature">INVITE_CREATE / DELETE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#invite-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">Invite*ContextWrapper</td></tr>
+    <tr><td class="feature">WEBHOOKS_UPDATE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#webhooks-update" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">WebhooksUpdateContextWrapper</td></tr>
+    <tr><td class="feature">STAGE_INSTANCE_* (3 events) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#stage-instance-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StageInstanceContextWrapper</td></tr>
+    <tr><td class="feature">AUTO_MODERATION_RULE_* / ACTION_EXECUTION <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#auto-moderation-rule-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AutoModeration*ContextWrapper</td></tr>
+    <tr><td class="feature">ENTITLEMENT_CREATE / UPDATE / DELETE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#entitlement-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">EntitlementContextWrapper</td></tr>
+    <tr><td class="feature">SUBSCRIPTION_CREATE / UPDATE / DELETE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#subscription-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">SubscriptionContextWrapper</td></tr>
+    <tr><td class="feature">All 18 intents <a class="doc" href="https://discord.com/developers/docs/events/gateway#list-of-intents" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">DiscordIntent.cs (incl. privileged GuildMembers / GuildPresences / MessageContent)</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 25 ============================ -->
+  <h2 id="g25">25. Gateway Connection <span class="meta">7 of 9 — 78%</span> <a class="doc" href="https://discord.com/developers/docs/events/gateway" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:78%"></i><i class="b-voice" style="width:11%"></i><i class="b-no" style="width:11%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Identify (op 2) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#identify" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">DiscordGatewayClient + SendGatewayMessage</td></tr>
+    <tr><td class="feature">Resume (op 6) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#resume" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">DiscordGatewayClient session management</td></tr>
+    <tr><td class="feature">Heartbeat (op 1) with ACK <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#heartbeat" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">DiscordGatewayClient</td></tr>
+    <tr><td class="feature">Sharding <a class="doc" href="https://discord.com/developers/docs/events/gateway#sharding" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">Shard.cs + ShardPool.cs + ShardStatus</td></tr>
+    <tr><td class="feature">Request Guild Members (op 8) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#request-guild-members" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.RequestMembersAsync (commit 346136b)</td></tr>
+    <tr><td class="feature">Update Presence (op 3) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#update-presence" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">PresenceUpdatePayload</td></tr>
+    <tr><td class="feature">Update Voice State (op 4) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#update-voice-state" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">VOICE — IGNORED</span></td><td class="evidence">part of voice scope (see §33)</td></tr>
+    <tr><td class="feature">zlib stream compression <a class="doc" href="https://discord.com/developers/docs/events/gateway#transport-compression" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GatewayZlibDecompress.cs</td></tr>
+    <tr><td class="feature">zstd compression <a class="doc" href="https://discord.com/developers/docs/events/gateway#transport-compression" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">GatewayCompressMode has only None/Zlib</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 26 ============================ -->
+  <h2 id="g26">26. Rate Limiting <span class="meta">1 of 1 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/topics/rate-limits" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Bucket-aware rate limiting <a class="doc" href="https://discord.com/developers/docs/topics/rate-limits#header-format-rate-limit-header-examples" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">DiscordRestClient.cs (BucketRequestQueue)</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 27 ============================ -->
+  <h2 id="g27">27. File Uploads / Multipart <span class="meta">2 of 2 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/reference#uploading-files" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Message attachments (multipart + payload_json) <a class="doc" href="https://discord.com/developers/docs/reference#uploading-files" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageClient.CreateAsync / EditAsync (SendMultipartAsync)</td></tr>
+    <tr><td class="feature">Sticker upload (multipart) <a class="doc" href="https://discord.com/developers/docs/resources/sticker#create-guild-sticker" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">StickerClient.CreateGuildStickerAsync (SendFormDataAsync)</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 28 ============================ -->
+  <h2 id="g28">28. Permissions <span class="meta">2 of 2 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/topics/permissions" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Permission flags <a class="doc" href="https://discord.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">DiscordPermission.cs (50+ flags)</td></tr>
+    <tr><td class="feature">Channel permission calculator <a class="doc" href="https://discord.com/developers/docs/topics/permissions#permission-overwrites" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelPermissionCalculator.cs</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 29 ============================ -->
+  <h2 id="g29">29. Embeds <span class="meta">1 of 1 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/message#embed-object" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Full embed (title, description, url, timestamp, color, footer, image, thumbnail, video, provider, author, fields) <a class="doc" href="https://discord.com/developers/docs/resources/message#embed-object" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">Embed.cs + EmbedAuthor/Field/Footer/Image/Thumbnail/Video/Provider</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 30 ============================ -->
+  <h2 id="g30">30. Allowed Mentions <span class="meta">1 of 1 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/message#allowed-mentions-object" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">allowed_mentions (parse, roles, users, replied_user) <a class="doc" href="https://discord.com/developers/docs/resources/message#allowed-mentions-object" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AllowedMentions.cs</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 31 ============================ -->
+  <h2 id="g31">31. Reply / Forward <span class="meta">1 of 2 — 50%</span> <a class="doc" href="https://discord.com/developers/docs/resources/message#message-reference-structure" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:50%"></i><i class="b-no" style="width:50%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">Reply (message_reference + fail_if_not_exists) <a class="doc" href="https://discord.com/developers/docs/resources/message#message-reference-structure" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageReference.cs</td></tr>
+    <tr><td class="feature">Forward (type=FORWARD + message_snapshots) <a class="doc" href="https://discord.com/developers/docs/resources/message#message-reference-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">MessageReference.cs without `type` field; no message_snapshots support</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 32 ============================ -->
+  <h2 id="g32">32. SKUs / Monetization <span class="meta">1 of 1 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/monetization/skus" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td class="feature">List SKUs <a class="doc" href="https://discord.com/developers/docs/monetization/skus#list-skus" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.ListSkusAsync</td></tr>
+  </table>
+
+  <!-- ============================ GROUP 33 — VOICE ============================ -->
+  <h2 id="g33" class="voice-h">🎤 33. Voice, Video, Soundboard &amp; DAVE/E2EE <span class="meta">0 of ~45 — IGNORED (roadmap)</span> <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-voice" style="width:100%"></i></div></div>
+  <p class="group-desc">Discord's voice/video subsystem. Currently <strong>out of scope</strong> (see <code>VOICE_PENDING.md</code>). This section lists all features with direct links to the official doc — just follow the order to implement.</p>
+
+  <div class="note voice-note">
+    <strong>Note:</strong> Voice on Discord is composed of four independent subsystems: (1) <strong>Voice Resource REST</strong> — states and regions; (2) <strong>Voice Gateway</strong> — second WebSocket per voice session, with 30+ opcodes including the DAVE/E2EE protocol; (3) <strong>RTP/UDP transport</strong> — Opus + encryption (AEAD AES-256-GCM or XChaCha20-Poly1305); (4) <strong>Soundboard</strong> — REST endpoints + events. Implement in this order: REST → Gateway → UDP → Soundboard → DAVE.
+  </div>
+
+  <div class="voice-section">
+
+  <h4>33.1 — Voice Resource (REST) <a class="doc" href="https://discord.com/developers/docs/resources/voice" target="_blank" rel="noopener" style="color: var(--voice); font-size: 12px;">↗ section</a></h4>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+    <tr><td class="feature">List voice regions <a class="doc" href="https://discord.com/developers/docs/resources/voice#list-voice-regions" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">per-guild variant already exists in GuildClient.GetVoiceRegionsAsync</td></tr>
+    <tr><td class="feature">Get current user voice state <a class="doc" href="https://discord.com/developers/docs/resources/voice#get-current-user-voice-state" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">GET /guilds/{guild.id}/voice-states/@me</td></tr>
+    <tr><td class="feature">Get user voice state <a class="doc" href="https://discord.com/developers/docs/resources/voice#get-user-voice-state" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">GET /guilds/{guild.id}/voice-states/{user.id}</td></tr>
+    <tr><td class="feature">Modify current user voice state <a class="doc" href="https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-partial">PARTIAL (stub)</span></td><td class="evidence">RequestToSpeak/CancelRequestToSpeak exist but depend on an active voice session</td></tr>
+    <tr><td class="feature">Modify user voice state <a class="doc" href="https://discord.com/developers/docs/resources/voice#modify-user-voice-state" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">PATCH /guilds/{id}/voice-states/{user.id} (suppress, channel_id)</td></tr>
+    <tr><td class="feature">Voice State object (model) <a class="doc" href="https://discord.com/developers/docs/resources/voice#voice-state-object" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">Model not defined in DiscoSdk</td></tr>
+    <tr><td class="feature">Voice channel status (PUT /channels/{id}/voice-status) <a class="doc" href="https://discord.com/developers/docs/resources/voice" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">endpoint not officially documented; present in the Discord client</td></tr>
+  </table>
+
+  <h4>33.2 — Voice Channel features (REST/Model) <a class="doc" href="https://discord.com/developers/docs/resources/channel#channel-object-channel-types" target="_blank" rel="noopener" style="color: var(--voice); font-size: 12px;">↗ section</a></h4>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+    <tr><td class="feature">Create voice channel (GUILD_VOICE) <a class="doc" href="https://discord.com/developers/docs/resources/guild#create-guild-channel" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">channel type already exists; only a voice-specific builder is missing</td></tr>
+    <tr><td class="feature">Modify voice channel (bitrate, user_limit, rtc_region, video_quality_mode) <a class="doc" href="https://discord.com/developers/docs/resources/channel#modify-channel" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">voice-specific properties</td></tr>
+    <tr><td class="feature">Stage channel features (privacy_level) <a class="doc" href="https://discord.com/developers/docs/resources/channel#channel-object-channel-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">stage instance metadata already implemented (§19); audio missing</td></tr>
+  </table>
+
+  <h4>33.3 — Voice Gateway Events (on main gateway) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events" target="_blank" rel="noopener" style="color: var(--voice); font-size: 12px;">↗ section</a></h4>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+    <tr><td class="feature">VOICE_STATE_UPDATE (received) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#voice-state-update" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">critical to detect who joined/left/was muted</td></tr>
+    <tr><td class="feature">VOICE_SERVER_UPDATE (received) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#voice-server-update" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">contains endpoint+token to connect to the Voice Gateway</td></tr>
+    <tr><td class="feature">VOICE_CHANNEL_EFFECT_SEND <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#voice-channel-effect-send" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">emoji/soundboard reactions in voice channel</td></tr>
+    <tr><td class="feature">Update Voice State (op 4 — outbound) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#update-voice-state" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">command for the bot to join/leave voice channel</td></tr>
+  </table>
+
+  <h4>33.4 — Voice Gateway (second WebSocket) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections" target="_blank" rel="noopener" style="color: var(--voice); font-size: 12px;">↗ section</a></h4>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+    <tr><td class="feature">Identify (op 0) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#establishing-a-voice-websocket-connection" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">initial handshake</td></tr>
+    <tr><td class="feature">Select Protocol (op 1) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#establishing-a-voice-udp-connection-example-select-protocol-payload" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">after IP discovery</td></tr>
+    <tr><td class="feature">Ready (op 2) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#establishing-a-voice-websocket-connection-example-voice-ready-payload" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">receives ssrc/ip/port/modes</td></tr>
+    <tr><td class="feature">Heartbeat (op 3) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#heartbeating" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">with seq_ack</td></tr>
+    <tr><td class="feature">Session Description (op 4) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#establishing-a-voice-udp-connection-example-session-description-payload" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">contains secret_key (32 bytes)</td></tr>
+    <tr><td class="feature">Speaking (op 5) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#speaking" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">Microphone/Soundshare/Priority flags</td></tr>
+    <tr><td class="feature">Heartbeat ACK (op 6) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#heartbeating" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">server response</td></tr>
+    <tr><td class="feature">Resume (op 7) + Resumed (op 9) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#resuming-voice-connection" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">session recovery</td></tr>
+    <tr><td class="feature">Hello (op 8) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#heartbeating" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">heartbeat_interval</td></tr>
+    <tr><td class="feature">Clients Connect (op 11) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">new clients in the session</td></tr>
+    <tr><td class="feature">Client Disconnect (op 13) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">client left</td></tr>
+    <tr><td class="feature">DAVE Protocol opcodes (21–31) <a class="doc" href="https://daveprotocol.com" target="_blank" rel="noopener">↗ DAVE spec</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">11 opcodes for E2EE: Prepare/Execute Transition, MLS Key Package/Proposals/Commit/Welcome, etc.</td></tr>
+  </table>
+
+  <h4>33.5 — Voice Connection (UDP / RTP / Opus) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#establishing-a-voice-udp-connection" target="_blank" rel="noopener" style="color: var(--voice); font-size: 12px;">↗ section</a></h4>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+    <tr><td class="feature">IP Discovery <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#ip-discovery" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">discovers external IP/port via NAT</td></tr>
+    <tr><td class="feature">UDP socket + RTP packetization <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#establishing-a-voice-udp-connection" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">RTP header (12 bytes) + Opus payload</td></tr>
+    <tr><td class="feature">Opus encoding/decoding (48 kHz, 2ch) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#voice-data-interpolation" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">Discord's mandatory codec; use libopus / Concentus</td></tr>
+    <tr><td class="feature">Encryption: AEAD AES-256-GCM (RTP-size) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#transport-encryption-and-sending-voice" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">preferred mode (hardware-accelerated)</td></tr>
+    <tr><td class="feature">Encryption: AEAD XChaCha20-Poly1305 (RTP-size) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#transport-encryption-and-sending-voice" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">preferred mode (libsodium)</td></tr>
+    <tr><td class="feature">Encryption: legacy modes (xsalsa20_poly1305_*) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#transport-encryption-and-sending-voice" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">deprecated but still supported</td></tr>
+    <tr><td class="feature">Silence frames (5x 0xF8 0xFF 0xFE) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#voice-data-interpolation" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">send before/after pauses</td></tr>
+    <tr><td class="feature">Receiving voice (RTP demux) <a class="doc" href="https://discord.com/developers/docs/topics/voice-connections#voice-receive" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">not officially supported but feasible</td></tr>
+  </table>
+
+  <h4>33.6 — DAVE Protocol (E2EE) <a class="doc" href="https://daveprotocol.com" target="_blank" rel="noopener" style="color: var(--voice); font-size: 12px;">↗ DAVE spec</a></h4>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+    <tr><td class="feature">MLS (Messaging Layer Security) group state</td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">RFC 9420 — encrypted group management</td></tr>
+    <tr><td class="feature">E2EE encryption layer (above transport AEAD)</td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">optional end-to-end encryption for private calls</td></tr>
+    <tr><td class="feature">Key rotation / commit / welcome flow</td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">voice gateway opcodes 21–31</td></tr>
+  </table>
+
+  <h4>33.7 — Soundboard <a class="doc" href="https://discord.com/developers/docs/resources/soundboard" target="_blank" rel="noopener" style="color: var(--voice); font-size: 12px;">↗ section</a></h4>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+    <tr><td class="feature">Send Soundboard Sound <a class="doc" href="https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">POST /channels/{id}/send-soundboard-sound</td></tr>
+    <tr><td class="feature">List Default Soundboard Sounds <a class="doc" href="https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">GET /soundboard-default-sounds</td></tr>
+    <tr><td class="feature">List Guild Soundboard Sounds <a class="doc" href="https://discord.com/developers/docs/resources/soundboard#list-guild-soundboard-sounds" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">GET /guilds/{id}/soundboard-sounds</td></tr>
+    <tr><td class="feature">Get Guild Soundboard Sound <a class="doc" href="https://discord.com/developers/docs/resources/soundboard#get-guild-soundboard-sound" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">GET /guilds/{id}/soundboard-sounds/{sound.id}</td></tr>
+    <tr><td class="feature">Create Guild Soundboard Sound <a class="doc" href="https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">multipart with mp3/ogg</td></tr>
+    <tr><td class="feature">Modify Guild Soundboard Sound <a class="doc" href="https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">PATCH</td></tr>
+    <tr><td class="feature">Delete Guild Soundboard Sound <a class="doc" href="https://discord.com/developers/docs/resources/soundboard#delete-guild-soundboard-sound" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">DELETE</td></tr>
+  </table>
+
+  <h4>33.8 — Soundboard Gateway Events <a class="doc" href="https://discord.com/developers/docs/events/gateway-events" target="_blank" rel="noopener" style="color: var(--voice); font-size: 12px;">↗ section</a></h4>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+    <tr><td class="feature">GUILD_SOUNDBOARD_SOUND_CREATE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#guild-soundboard-sound-create" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">new sound added</td></tr>
+    <tr><td class="feature">GUILD_SOUNDBOARD_SOUND_UPDATE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#guild-soundboard-sound-update" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">sound modified</td></tr>
+    <tr><td class="feature">GUILD_SOUNDBOARD_SOUND_DELETE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#guild-soundboard-sound-delete" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">sound removed</td></tr>
+    <tr><td class="feature">GUILD_SOUNDBOARD_SOUNDS_UPDATE <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#guild-soundboard-sounds-update" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">full list updated</td></tr>
+    <tr><td class="feature">SOUNDBOARD_SOUNDS (response to Request Soundboard Sounds, op 31) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#soundboard-sounds" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">IGNORED</span></td><td class="evidence">requires outbound op 31</td></tr>
+  </table>
+
+  </div><!-- /voice-section -->
+
+  <!-- ============================ FINAL SUMMARY ============================ -->
+  <h2 id="missing">Summary of what's still missing (excluding voice) <span class="meta">~13 items</span></h2>
+  <table>
+    <tr><th>Domain</th><th>Missing item</th><th>Doc</th><th>Impact</th></tr>
+    <tr><td class="feature">Application Commands</td><td><code>integration_types</code> on SlashCommand</td><td><a class="doc" href="https://discord.com/developers/docs/resources/application#application-object-application-integration-types" target="_blank" rel="noopener">↗</a></td><td>Without this, commands cannot be installable in user scope (user-install).</td></tr>
+    <tr><td class="feature">Application Commands</td><td><code>contexts</code> on SlashCommand</td><td><a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#application-command-object-interaction-context-types" target="_blank" rel="noopener">↗</a></td><td>Does not restrict command to Guild/BotDM/PrivateChannel.</td></tr>
+    <tr><td class="feature">Application</td><td>Activity instances endpoint</td><td><a class="doc" href="https://discord.com/developers/docs/resources/application#get-application-activity-instance" target="_blank" rel="noopener">↗</a></td><td>Use restricted to embedded apps.</td></tr>
+    <tr><td class="feature">Auto Moderation</td><td>Enum coverage (trigger/action types)</td><td><a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types" target="_blank" rel="noopener">↗</a></td><td>Verify that all 5 triggers and 4 actions are present.</td></tr>
+    <tr><td class="feature">Interactions</td><td><code>PREMIUM_REQUIRED</code> (10)</td><td><a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td>Deprecated by Discord — probably not worth implementing.</td></tr>
+    <tr><td class="feature">Interactions</td><td><code>LAUNCH_ACTIVITY</code> (12)</td><td><a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td>Required to launch embedded Activities from commands.</td></tr>
+    <tr><td class="feature">Users</td><td>Create Group DM</td><td><a class="doc" href="https://discord.com/developers/docs/resources/user#create-group-dm" target="_blank" rel="noopener">↗</a></td><td>Rare case (requires access_token from each user).</td></tr>
+    <tr><td class="feature">Messages</td><td>Forward message (<code>message_snapshots</code>)</td><td><a class="doc" href="https://discord.com/developers/docs/resources/message#message-reference-types" target="_blank" rel="noopener">↗</a></td><td>Recent feature; normal reply works.</td></tr>
+    <tr><td class="feature">Gateway</td><td>zstd compression</td><td><a class="doc" href="https://discord.com/developers/docs/events/gateway#transport-compression" target="_blank" rel="noopener">↗</a></td><td>zlib works; zstd is an optimization (less bandwidth).</td></tr>
+    <tr><td class="feature">Webhooks</td><td>Slack / GitHub formatted execute</td><td><a class="doc" href="https://discord.com/developers/docs/resources/webhook#execute-slackcompatible-webhook" target="_blank" rel="noopener">↗</a></td><td>Very specific use case.</td></tr>
+  </table>
+
+  <div class="note" style="border-left-color: var(--yes);">
+    <strong style="color: var(--yes);">Conclusion:</strong> For use as a bot SDK <em>without voice</em>, coverage is practically complete (~93%). All critical areas are present: messages, V1+V2 components, interactions, commands, guild/channel/member management, gateway events, sharding, rate limiting, polls, stickers, entitlements, OAuth2, modals. Non-voice gaps are minor. Section 33 lists the voice roadmap organized for progressive implementation (REST → Gateway → UDP → Soundboard → DAVE).
+  </div>
+
+</main>
+<footer>
+  Audit generated on 2026-05-14 · Target Discord API <strong>v10</strong> · branch <code>main</code> · scanning <code>Src/DiscoSdk</code> and <code>Src/DiscoSdk.Hosting</code>
+</footer>
+</body>
+</html>

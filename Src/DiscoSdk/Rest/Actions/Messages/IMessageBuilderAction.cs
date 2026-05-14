@@ -51,6 +51,19 @@ public interface IMessageBuilderAction<TSelf, TMessage> : IRestAction<TMessage>
 	/// <returns>The current <see cref="TSelf"/> instance.</returns>
 	TSelf AddActionRow(IInteractionComponentBuilder builder);
 
+	/// <summary>
+	/// Adds a top-level Components V2 component (<see cref="TextDisplayComponent"/>,
+	/// <see cref="SectionComponent"/>,
+	/// <see cref="MediaGalleryComponent"/>,
+	/// <see cref="FileComponent"/>,
+	/// <see cref="SeparatorComponent"/>,
+	/// <see cref="ContainerComponent"/>). Adding any V2 component flips
+	/// the message to the Components V2 layout — the <c>IS_COMPONENTS_V2</c> flag is set
+	/// automatically on send. Discord rejects messages that mix V2 components with plain
+	/// <c>content</c> or <c>embeds</c>; clear those first via <see cref="SetContent"/>(<c>null</c>).
+	/// </summary>
+	TSelf AddComponent(IMessageComponent component);
+
     /// <summary>
     /// Removes all components from the message.
     /// </summary>

@@ -23,7 +23,7 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
     protected Poll? _poll;
 
     protected readonly List<Embed> _embeds = [];
-    protected readonly List<MessageComponent> _components = [];
+    protected readonly List<IInteractionComponent> _components = [];
     protected readonly List<MessageFile> _attachments = [];
 
     private const long MaxRequestSizeBytes = 25 * 1024 * 1024; // 25 MiB
@@ -38,20 +38,19 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
 		if (items.Length == 0)
 			throw new ArgumentException("At least one component must be provided.", nameof(items));
 
+		if (items.Length > 5)
+			throw new ArgumentException("Action row cannot contain more than 5 components.", nameof(items));
+
 		if (_components.Count >= MaxComponentRows)
 			throw new InvalidOperationException("Message cannot have more than 5 component rows.");
 
-		var messageComponents = items.Select(c =>
+		// Wrap in MessageActionRowComponent (whose Components is IInteractionComponent[]) so
+		// builder output — ButtonComponent / StringSelectComponent / etc. — can be passed
+		// straight through. The old cast to the MessageComponent god-class only worked when
+		// callers built components by hand; typed-builder output now lives alongside it.
+		var actionRow = new MessageActionRowComponent
 		{
-			if (c is MessageComponent mc)
-				return mc;
-			throw new ArgumentException("Message action rows only support MessageComponent (buttons, selects).", nameof(items));
-		}).ToArray();
-
-		var actionRow = new MessageComponent
-		{
-			Type = ComponentType.ActionRow,
-			Components = messageComponents
+			Components = items,
 		};
 
 		_components.Add(actionRow);
@@ -62,6 +61,19 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
 	{
 		ArgumentNullException.ThrowIfNull(builder);
 		return AddActionRow(builder.Build());
+	}
+
+	/// <summary>
+	/// Adds a top-level Components V2 component (TextDisplay, Section, MediaGallery, File,
+	/// Separator, Container, etc.). Switches the message to the Components V2 layout by setting
+	/// <see cref="MessageFlags.IsComponentV2"/> automatically on send. Mixing V2 components with
+	/// plain <c>content</c> or <c>embeds</c> is rejected by Discord — clear those first.
+	/// </summary>
+	public TSelf AddComponent(IMessageComponent component)
+	{
+		ArgumentNullException.ThrowIfNull(component);
+		_components.Add(component);
+		return Self();
 	}
 
     public TSelf AttachFiles(params MessageFile[] files)
@@ -192,7 +204,25 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
         if (_suppressEmbeds)
             flags |= MessageFlags.SuppressEmbeds;
 
+        if (HasComponentsV2())
+            flags |= MessageFlags.IsComponentV2;
+
         return flags;
+    }
+
+    /// <summary>
+    /// Returns true if any accumulated component is a Components V2 type (anything except
+    /// <see cref="ComponentType.ActionRow"/>). When true, the <c>IS_COMPONENTS_V2</c> message
+    /// flag must be set or Discord rejects the request.
+    /// </summary>
+    private bool HasComponentsV2()
+    {
+        foreach (var c in _components)
+        {
+            if (c.Type != ComponentType.ActionRow)
+                return true;
+        }
+        return false;
     }
 
     protected MessageAttachmentMetadata[]? BuildAttachmentMetadataToEdit(Message original)
@@ -238,13 +268,29 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
         var content = _content ?? originalMessage?.Content;
         List<Embed> embeds = _embeds.Count > 0 ? _embeds : originalMessage?.Embeds?.ToList() ?? [];
         var hasAttachment = _attachments.Count > 0 || (originalMessage != null && originalMessage.Attachments.Length > 0);
+        // Components V2 messages replace the content+embeds slot entirely; their components carry
+        // the visible payload (TextDisplay / Section / etc), so the message is valid without
+        // any of the V1 fields.
+        var hasComponentsV2 = HasComponentsV2();
 
-        if (string.IsNullOrWhiteSpace(content) && embeds.Count == 0 && _poll == null && !hasAttachment)
-            throw new InvalidOperationException("Message must have either content, at least one embed, or a poll.");
+        if (string.IsNullOrWhiteSpace(content) && embeds.Count == 0 && _poll == null && !hasAttachment && !hasComponentsV2)
+            throw new InvalidOperationException("Message must have either content, at least one embed, a poll, or Components V2.");
 
         // Validate content length if present
         if (!string.IsNullOrEmpty(content) && content.Length > MaxContentLength)
             throw new ArgumentException($"Message content cannot exceed {MaxContentLength} characters.", nameof(content));
+
+        // Discord rejects messages that mix Components V2 with content/embeds/poll/stickers — V2
+        // is meant to *replace* those, not coexist. Surface a clear local error instead of a 400.
+        if (hasComponentsV2)
+        {
+            if (!string.IsNullOrWhiteSpace(_content))
+                throw new InvalidOperationException("Components V2 messages cannot also set Content. Move the text into a TextDisplayComponent.");
+            if (_embeds.Count > 0)
+                throw new InvalidOperationException("Components V2 messages cannot also include Embeds. Use Container/Section/TextDisplay instead.");
+            if (_poll is not null)
+                throw new InvalidOperationException("Components V2 messages cannot also include a Poll.");
+        }
     }
 
     /// <summary>
@@ -297,6 +343,108 @@ internal abstract class MessageBuilderAction<TSelf, TMessage> : RestAction<TMess
     {
         if (_components.Count > MaxComponentRows)
             throw new InvalidOperationException($"Message cannot have more than {MaxComponentRows} component rows.");
+
+        foreach (var c in _components)
+            ValidateComponentTree(c);
+    }
+
+    /// <summary>
+    /// Recursive validation of a single component subtree. Enforces Discord's per-component limits
+    /// (button label ≤ 80, select option label/value/description ≤ 100, select ≤ 25 options, etc.)
+    /// so the caller gets a clear local exception instead of a cryptic 400 from the API.
+    /// </summary>
+    private static void ValidateComponentTree(IInteractionComponent c)
+    {
+        switch (c)
+        {
+            case ButtonComponent btn:
+                if (btn.Label is { Length: > 80 })
+                    throw new ArgumentException("Button label cannot exceed 80 characters.");
+                if (btn.Style != ButtonStyle.Link && btn.Style != ButtonStyle.Premium && string.IsNullOrWhiteSpace(btn.CustomId))
+                    throw new ArgumentException("Non-link, non-premium buttons require a custom_id.");
+                if (btn.Style == ButtonStyle.Link && string.IsNullOrWhiteSpace(btn.Url))
+                    throw new ArgumentException("Link buttons require a url.");
+                break;
+
+            case StringSelectComponent ss:
+                if (ss.Options.Length > 25)
+                    throw new ArgumentException("StringSelect cannot have more than 25 options.");
+                if (ss.Options.Length < 1)
+                    throw new ArgumentException("StringSelect must have at least one option.");
+                foreach (var opt in ss.Options)
+                    ValidateSelectOption(opt);
+                if (ss.Placeholder is { Length: > 150 })
+                    throw new ArgumentException("Select placeholder cannot exceed 150 characters.");
+                break;
+
+            case UserSelectComponent or RoleSelectComponent or ChannelSelectComponent or MentionableSelectComponent:
+                // Entity selects share the same placeholder/min/max validation surface.
+                var placeholder = c switch
+                {
+                    UserSelectComponent u => u.Placeholder,
+                    RoleSelectComponent r => r.Placeholder,
+                    ChannelSelectComponent ch => ch.Placeholder,
+                    MentionableSelectComponent m => m.Placeholder,
+                    _ => null,
+                };
+                if (placeholder is { Length: > 150 })
+                    throw new ArgumentException("Select placeholder cannot exceed 150 characters.");
+                break;
+
+            case MessageActionRowComponent row:
+                if (row.Components.Length > 5)
+                    throw new ArgumentException("Action row cannot contain more than 5 components.");
+                foreach (var inner in row.Components)
+                    ValidateComponentTree(inner);
+                break;
+
+            case ContainerComponent container:
+                foreach (var inner in container.Components)
+                    ValidateComponentTree(inner);
+                break;
+
+            case SectionComponent section:
+                if (section.Components.Length is < 1 or > 3)
+                    throw new ArgumentException("Section requires 1–3 TextDisplay components.");
+                if (section.Accessory is null)
+                    throw new ArgumentException("Section requires an accessory (Button or Thumbnail).");
+                ValidateComponentTree(section.Accessory);
+                break;
+
+            case MediaGalleryComponent gallery:
+                if (gallery.Items.Length is < 1 or > 10)
+                    throw new ArgumentException("MediaGallery requires 1–10 items.");
+                break;
+
+            case TextDisplayComponent td:
+                if (string.IsNullOrEmpty(td.Content))
+                    throw new ArgumentException("TextDisplay content is required.");
+                if (td.Content.Length > 4000)
+                    throw new ArgumentException("TextDisplay content cannot exceed 4000 characters.");
+                break;
+
+            // MessageComponent god-class — best-effort: validate label cap when type is Button.
+            case MessageComponent mc when mc.Type == ComponentType.Button && mc.Label is { Length: > 80 }:
+                throw new ArgumentException("Button label cannot exceed 80 characters.");
+
+            // MessageComponent ActionRow god-class wrap — recurse into children.
+            case MessageComponent mc when mc.Type == ComponentType.ActionRow && mc.Components is { } children:
+                if (children.Length > 5)
+                    throw new ArgumentException("Action row cannot contain more than 5 components.");
+                foreach (var inner in children)
+                    ValidateComponentTree(inner);
+                break;
+        }
+    }
+
+    private static void ValidateSelectOption(SelectOption opt)
+    {
+        if (string.IsNullOrWhiteSpace(opt.Label) || opt.Label.Length > 100)
+            throw new ArgumentException("Select option label is required and must be ≤ 100 characters.");
+        if (string.IsNullOrWhiteSpace(opt.Value) || opt.Value.Length > 100)
+            throw new ArgumentException("Select option value is required and must be ≤ 100 characters.");
+        if (opt.Description is { Length: > 100 })
+            throw new ArgumentException("Select option description cannot exceed 100 characters.");
     }
 
     /// <summary>

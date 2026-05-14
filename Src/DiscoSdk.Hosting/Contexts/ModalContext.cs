@@ -15,8 +15,23 @@ internal class ModalContext : InteractionContextWrapper, IModalContext
 
     public ModalContext(DiscordClient client, InteractionWrapper interaction) : base(client, interaction)
     {
-        var components = interaction.Data?.Components;
-        Options = components == null ? [] : [.. components.SelectMany(x => x.Components ?? []).Select(x => new ModalOption(x.CustomId, x.GetValueString()))];
+        // Discord wraps modal inputs in two layouts depending on the input type:
+        //   ActionRow (type 1) → `components` array (used for TextInput)
+        //   Label     (type 18) → `component` single (used for Checkbox / CheckboxGroup /
+        //                        RadioGroup / FileUpload)
+        // We flatten both shapes into a single ModalOption list so callers don't care.
+        var rows = interaction.Data?.Components;
+        Options = rows == null
+            ? []
+            : [.. rows.SelectMany(row =>
+                {
+                    if (row.Components is { Length: > 0 } actionRowChildren)
+                        return actionRowChildren;
+                    if (row.Component is { } labelChild)
+                        return [labelChild];
+                    return Array.Empty<DiscoSdk.Models.Interactions.ModalSubmitField>();
+                })
+                .Select(field => new ModalOption(field.CustomId, field.GetValueString()))];
     }
 
     public string? GetOption(string customName) => Options.FirstOrDefault(x => x.CustomId.Equals(customName, StringComparison.OrdinalIgnoreCase))?.Value;

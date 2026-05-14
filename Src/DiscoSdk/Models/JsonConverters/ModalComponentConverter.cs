@@ -6,8 +6,13 @@ using System.Text.Json.Serialization;
 namespace DiscoSdk.Models.JsonConverters;
 
 /// <summary>
-/// JSON converter for <see cref="IModalComponent"/> arrays (modal payload).
-/// Supports ActionRow (type 1) for TextInput and Label (type 18) for Checkbox Group and similar components per Discord API.
+/// JSON converter for <see cref="IModalComponent"/> arrays — the top-level
+/// <c>components</c> field on a modal payload. Discord only accepts two top-level types here:
+/// <see cref="ComponentType.ActionRow"/> (type 1, wrapping a <see cref="TextInputComponent"/>)
+/// and <see cref="ComponentType.Label"/> (type 18, wrapping a <see cref="CheckboxGroupComponent"/>,
+/// <see cref="CheckboxComponent"/>, <see cref="RadioGroupComponent"/> or <see cref="FileUploadComponent"/>).
+/// Children of those are routed via <see cref="ActionRowModalComponentConverter"/> and
+/// <see cref="ModalChildComponentConverter"/> respectively.
 /// </summary>
 public class ModalComponentConverter : JsonConverter<IModalComponent[]>
 {

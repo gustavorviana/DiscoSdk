@@ -38,4 +38,15 @@ public class RadioGroupComponent : IModalComponent
 	/// </summary>
 	[JsonPropertyName("required")]
 	public bool? Required { get; set; }
+
+	/// <summary>
+	/// Label text shown by the wrapping <see cref="LabelComponent"/> when added via
+	/// <see cref="Rest.Actions.IReplyModalRestAction.AddActionRow"/> (max 45 chars). Required.
+	/// </summary>
+	[JsonIgnore]
+	public string? Label { get; set; }
+
+	/// <summary>Optional secondary text shown below the label (max 100 chars).</summary>
+	[JsonIgnore]
+	public string? Description { get; set; }
 }

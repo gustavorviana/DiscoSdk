@@ -53,7 +53,7 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
             return Message.Content;
         }
     }
-    public MessageComponent[]? Components => Message.Components;
+    public IInteractionComponent[]? Components => Message.Components;
     public IReaction[] Reactions { get; }
     public string Timestamp => Message.Timestamp;
     public string? EditedTimestamp => Message.EditedTimestamp;

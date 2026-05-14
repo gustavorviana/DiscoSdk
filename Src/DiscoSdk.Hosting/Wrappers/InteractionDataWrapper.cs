@@ -50,7 +50,8 @@ internal class InteractionDataWrapper(DiscordClient client, InteractionData data
                     roles = [.. (await guild.GetRoles().ExecuteAsync(cancellationToken)).Where(x => rolesId.Contains(x.Id.ToString()))];
             }
 
-            return _resolved = new InteractionResolvedWrapper(users, members, roles, channels, messages);
+            var attachments = data.Resolved.Attachments is { } att ? att : new Dictionary<string, DiscoSdk.Models.Messages.Attachment>();
+            return _resolved = new InteractionResolvedWrapper(users, members, roles, channels, messages, attachments);
         });
     }
 

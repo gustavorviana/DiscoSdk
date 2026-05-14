@@ -210,7 +210,9 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
 
     private async Task<IMessage> SendChannelMessageAsync(CancellationToken cancellationToken)
     {
-        var flags = MessageFlags.None;
+        // Start from BuildFlags() so IsComponentV2 / SuppressEmbeds are included alongside the
+        // channel-only flags below — same fix already applied to the interaction-response paths.
+        var flags = BuildFlags();
         if (_ephemeral)
             flags |= MessageFlags.Ephemeral;
 
@@ -229,7 +231,9 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
 
     private async Task<IMessage> SendInteractionResponseAsync(CancellationToken cancellationToken)
     {
-        var flags = MessageFlags.None;
+        // Start from BuildFlags() so IsComponentV2 / SuppressEmbeds are included alongside the
+        // interaction-only flags below — Discord 400s otherwise on any V2-component response.
+        var flags = BuildFlags();
         if (_ephemeral)
             flags |= MessageFlags.Ephemeral;
 
@@ -255,7 +259,8 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
 
     private async Task<IMessage> SendFollowUpAsync(CancellationToken cancellationToken)
     {
-        var flags = MessageFlags.None;
+        // Start from BuildFlags() (covers IsComponentV2 + SuppressEmbeds) and OR the interaction-only flags.
+        var flags = BuildFlags();
         if (_ephemeral)
             flags |= MessageFlags.Ephemeral;
 
@@ -266,7 +271,9 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
         var webhookClient = new WebhookMessageClient(_client.HttpClient);
 
         var request = BuildWebhookCreateRequest();
-        request.Components = [.. actionRows.OfType<MessageComponent>()];
+        // Keep all components — V2 entries (Container/Section/etc) are NOT MessageComponent and
+        // were previously being dropped by the .OfType<MessageComponent>() filter.
+        request.Components = actionRows;
         request.Flags = flags != MessageFlags.None ? flags : null;
 
         var message = await _client.InteractionClient.FollowUpAsync(_interactionHandle!, request, _attachments, cancellationToken);
@@ -284,16 +291,21 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
         if (_components == null || _components.Count == 0)
             return [];
 
-        return [.._components.Select(c =>
+        return [.._components.Select(c => c.Type switch
         {
-            if (c.Type == ComponentType.ActionRow)
-                return c;
-
-            return new MessageComponent
-            {
-                Type = ComponentType.ActionRow,
-                Components = [c]
-            };
+            // V1 interactive primitives bare in the list — auto-wrap into a single-column row.
+            ComponentType.Button
+                or ComponentType.StringSelect
+                or ComponentType.UserSelect
+                or ComponentType.RoleSelect
+                or ComponentType.MentionableSelect
+                or ComponentType.ChannelSelect
+                => (IInteractionComponent)new MessageActionRowComponent
+                {
+                    Components = [c],
+                },
+            // ActionRow and every Components V2 type are already top-level — pass through.
+            _ => c,
         })];
     }
 }

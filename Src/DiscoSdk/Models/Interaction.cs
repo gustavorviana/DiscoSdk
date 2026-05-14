@@ -39,4 +39,12 @@ public class InteractionResolved
 	/// </summary>
 	[JsonPropertyName("messages")]
 	public Dictionary<string, Message>? Messages { get; set; }
+
+	/// <summary>
+	/// Resolved attachments — populated by Discord when a modal submission includes a
+	/// <c>FileUpload</c> component. Keyed by attachment ID (the same IDs that appear in the
+	/// submitted field's <c>Values</c> array).
+	/// </summary>
+	[JsonPropertyName("attachments")]
+	public Dictionary<string, Attachment>? Attachments { get; set; }
 }

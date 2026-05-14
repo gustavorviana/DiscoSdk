@@ -5,7 +5,11 @@ using System.Text.Json.Serialization;
 namespace DiscoSdk.Models.Messages.Components;
 
 /// <summary>
-/// Represents an action row component that can contain text inputs in a modal. Checkbox Group must use <see cref="LabelComponent"/> (type 18), not ActionRow.
+/// Action row (type 1) for <strong>modal</strong> contexts — holds a single
+/// <see cref="TextInputComponent"/>. For message-context action rows that hold buttons or
+/// selects, use <see cref="MessageActionRowComponent"/> instead. Both serialize as
+/// <c>type:1</c> on the wire but have different child rules; the SDK keeps them as separate
+/// classes so polymorphic deserialization can pick the correct shape per context.
 /// </summary>
 public class ActionRowComponent : IModalComponent
 {
