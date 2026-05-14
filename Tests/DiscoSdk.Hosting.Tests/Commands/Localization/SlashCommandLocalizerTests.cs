@@ -1,14 +1,15 @@
 using DiscoSdk.Commands;
 using DiscoSdk.Commands.Localization;
+using DiscoSdk.Hosting.Commands.Localization;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Commands;
 using DiscoSdk.Models.Enums;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 
-namespace DiscoSdk.Tests.Commands.Localization;
+namespace DiscoSdk.Hosting.Tests.Commands.Localization;
 
-public class CommandLocalizerTests
+public class SlashCommandLocalizerTests
 {
     private static ICommandLocalizationProvider ProviderFor(
         string commandName,
@@ -31,15 +32,15 @@ public class CommandLocalizerTests
 
         var provider = ProviderFor("ping", new Dictionary<string, CommandLocalization>
         {
-            ["pt-BR"] = new CommandLocalization { Name = "ping", Description = "Responde com pong." },
+            ["en-GB"] = new CommandLocalization { Name = "ping", Description = "Replies with pong (UK)." },
             ["es-ES"] = new CommandLocalization { Name = "ping", Description = "Responde con pong." },
         });
 
-        CommandLocalizer.Apply(command, provider);
+        new SlashCommandLocalizer(provider).Apply(command);
 
-        Assert.Equal("ping", command.NameLocalizations!["pt-BR"]);
+        Assert.Equal("ping", command.NameLocalizations!["en-GB"]);
         Assert.Equal("ping", command.NameLocalizations!["es-ES"]);
-        Assert.Equal("Responde com pong.", command.DescriptionLocalizations!["pt-BR"]);
+        Assert.Equal("Replies with pong (UK).", command.DescriptionLocalizations!["en-GB"]);
         Assert.Equal("Responde con pong.", command.DescriptionLocalizations!["es-ES"]);
     }
 
@@ -62,37 +63,37 @@ public class CommandLocalizerTests
 
         var provider = ProviderFor("ban", new Dictionary<string, CommandLocalization>
         {
-            ["pt-BR"] = new CommandLocalization
+            ["en-GB"] = new CommandLocalization
             {
-                Name = "banir",
-                Description = "Bane um usuário",
+                Name = "ban-user",
+                Description = "Ban a user",
                 Options =
                 [
-                    new() { OptionName = "user", Name = "usuario", Description = "Usuário a banir" },
-                    new() { OptionName = "reason", Name = "motivo", Description = "Motivo",
+                    new() { OptionName = "user", Name = "target", Description = "User to ban" },
+                    new() { OptionName = "reason", Name = "cause", Description = "Cause",
                             Choices =
                             [
-                                new() { ChoiceName = "spam", Name = "spam" },
-                                new() { ChoiceName = "raid", Name = "ataque" },
+                                new() { ChoiceName = "spam", Name = "Spam" },
+                                new() { ChoiceName = "raid", Name = "Raid attack" },
                             ] },
                 ],
             },
         });
 
-        CommandLocalizer.Apply(command, provider);
+        new SlashCommandLocalizer(provider).Apply(command);
 
-        Assert.Equal("banir", command.NameLocalizations!["pt-BR"]);
+        Assert.Equal("ban-user", command.NameLocalizations!["en-GB"]);
 
         var userOpt = command.Options!.Single(o => o.Name == "user");
-        Assert.Equal("usuario", userOpt.NameLocalizations!["pt-BR"]);
-        Assert.Equal("Usuário a banir", userOpt.DescriptionLocalizations!["pt-BR"]);
+        Assert.Equal("target", userOpt.NameLocalizations!["en-GB"]);
+        Assert.Equal("User to ban", userOpt.DescriptionLocalizations!["en-GB"]);
 
         var reasonOpt = command.Options!.Single(o => o.Name == "reason");
-        Assert.Equal("motivo", reasonOpt.NameLocalizations!["pt-BR"]);
+        Assert.Equal("cause", reasonOpt.NameLocalizations!["en-GB"]);
         var spam = reasonOpt.Choices!.Single(c => c.Name == "spam");
         var raid = reasonOpt.Choices!.Single(c => c.Name == "raid");
-        Assert.Equal("spam", spam.NameLocalizations!["pt-BR"]);
-        Assert.Equal("ataque", raid.NameLocalizations!["pt-BR"]);
+        Assert.Equal("Spam", spam.NameLocalizations!["en-GB"]);
+        Assert.Equal("Raid attack", raid.NameLocalizations!["en-GB"]);
     }
 
     [Fact]
@@ -120,7 +121,7 @@ public class CommandLocalizerTests
 
         var provider = ProviderFor("config", new Dictionary<string, CommandLocalization>
         {
-            ["pt-BR"] = new CommandLocalization
+            ["en-GB"] = new CommandLocalization
             {
                 Options =
                 [
@@ -133,10 +134,10 @@ public class CommandLocalizerTests
                             new()
                             {
                                 OptionName = "set",
-                                Name = "definir",
+                                Name = "apply",
                                 Options =
                                 [
-                                    new() { OptionName = "theme", Name = "tema", Description = "Tema da interface" },
+                                    new() { OptionName = "theme", Name = "skin", Description = "Interface theme" },
                                 ],
                             },
                         ],
@@ -145,17 +146,17 @@ public class CommandLocalizerTests
             },
         });
 
-        CommandLocalizer.Apply(command, provider);
+        new SlashCommandLocalizer(provider).Apply(command);
 
         var ui = command.Options!.Single(o => o.Name == "ui");
-        Assert.Equal("interface", ui.NameLocalizations!["pt-BR"]);
+        Assert.Equal("interface", ui.NameLocalizations!["en-GB"]);
 
         var set = ui.Options!.Single(o => o.Name == "set");
-        Assert.Equal("definir", set.NameLocalizations!["pt-BR"]);
+        Assert.Equal("apply", set.NameLocalizations!["en-GB"]);
 
         var theme = set.Options!.Single(o => o.Name == "theme");
-        Assert.Equal("tema", theme.NameLocalizations!["pt-BR"]);
-        Assert.Equal("Tema da interface", theme.DescriptionLocalizations!["pt-BR"]);
+        Assert.Equal("skin", theme.NameLocalizations!["en-GB"]);
+        Assert.Equal("Interface theme", theme.DescriptionLocalizations!["en-GB"]);
     }
 
     [Fact]
@@ -165,18 +166,18 @@ public class CommandLocalizerTests
             .WithName("ping")
             .WithDescription("desc")
             .WithType(ApplicationCommandType.ChatInput)
-            .AddNameLocalization("pt-BR", "manual-pt")
+            .AddNameLocalization("en-GB", "manual-uk")
             .Build();
 
         var provider = ProviderFor("ping", new Dictionary<string, CommandLocalization>
         {
-            ["pt-BR"] = new CommandLocalization { Name = "provider-pt" },
+            ["en-GB"] = new CommandLocalization { Name = "provider-uk" },
             ["es-ES"] = new CommandLocalization { Name = "provider-es" },
         });
 
-        CommandLocalizer.Apply(command, provider);
+        new SlashCommandLocalizer(provider).Apply(command);
 
-        Assert.Equal("manual-pt", command.NameLocalizations!["pt-BR"]);
+        Assert.Equal("manual-uk", command.NameLocalizations!["en-GB"]);
         Assert.Equal("provider-es", command.NameLocalizations!["es-ES"]);
     }
 
@@ -191,14 +192,14 @@ public class CommandLocalizerTests
 
         var provider = ProviderFor("ping", new Dictionary<string, CommandLocalization>
         {
-            ["pt-BR"] = new CommandLocalization { Name = null, Description = "   " },
+            ["en-GB"] = new CommandLocalization { Name = null, Description = "   " },
             ["es-ES"] = new CommandLocalization { Name = "ping", Description = null },
         });
 
-        CommandLocalizer.Apply(command, provider);
+        new SlashCommandLocalizer(provider).Apply(command);
 
-        Assert.False(command.NameLocalizations?.ContainsKey("pt-BR") ?? false);
-        Assert.False(command.DescriptionLocalizations?.ContainsKey("pt-BR") ?? false);
+        Assert.False(command.NameLocalizations?.ContainsKey("en-GB") ?? false);
+        Assert.False(command.DescriptionLocalizations?.ContainsKey("en-GB") ?? false);
         Assert.Equal("ping", command.NameLocalizations!["es-ES"]);
         Assert.False(command.DescriptionLocalizations?.ContainsKey("es-ES") ?? false);
     }
@@ -215,7 +216,7 @@ public class CommandLocalizerTests
             ["xx-YY"] = new CommandLocalization { Name = "noop" },
         });
 
-        var ex = Assert.Throws<InvalidOperationException>(() => CommandLocalizer.Apply(command, provider));
+        var ex = Assert.Throws<InvalidOperationException>(() => new SlashCommandLocalizer(provider).Apply(command));
         Assert.Contains("xx-YY", ex.Message);
         Assert.Contains("ping", ex.Message);
     }
@@ -231,11 +232,11 @@ public class CommandLocalizerTests
 
         var provider = ProviderFor("ping", new Dictionary<string, CommandLocalization>
         {
-            ["pt-BR"] = new CommandLocalization
+            ["en-GB"] = new CommandLocalization
             {
                 Options =
                 [
-                    new() { OptionName = "ephemeral", Name = "efemero" },
+                    new() { OptionName = "ephemeral", Name = "transient" },
                     new() { OptionName = "doesnotexist", Name = "nope" },
                 ],
             },
@@ -243,9 +244,9 @@ public class CommandLocalizerTests
 
         var logger = Substitute.For<ILogger>();
 
-        CommandLocalizer.Apply(command, provider, logger: logger);
+        new SlashCommandLocalizer(provider, logger).Apply(command);
 
-        Assert.Equal("efemero", command.Options!.Single(o => o.Name == "ephemeral").NameLocalizations!["pt-BR"]);
+        Assert.Equal("transient", command.Options!.Single(o => o.Name == "ephemeral").NameLocalizations!["en-GB"]);
 
         logger.Received().Log(
             LogLevel.Warning,
@@ -269,7 +270,7 @@ public class CommandLocalizerTests
 
         var provider = ProviderFor("ban", new Dictionary<string, CommandLocalization>
         {
-            ["pt-BR"] = new CommandLocalization
+            ["en-GB"] = new CommandLocalization
             {
                 Options =
                 [
@@ -278,8 +279,8 @@ public class CommandLocalizerTests
                         OptionName = "reason",
                         Choices =
                         [
-                            new() { ChoiceName = "spam", Name = "spam" },
-                            new() { ChoiceName = "ghost", Name = "fantasma" },
+                            new() { ChoiceName = "spam", Name = "Spam" },
+                            new() { ChoiceName = "ghost", Name = "Ghost" },
                         ],
                     },
                 ],
@@ -287,10 +288,10 @@ public class CommandLocalizerTests
         });
 
         var logger = Substitute.For<ILogger>();
-        CommandLocalizer.Apply(command, provider, logger: logger);
+        new SlashCommandLocalizer(provider, logger).Apply(command);
 
         var reason = command.Options!.Single(o => o.Name == "reason");
-        Assert.Equal("spam", reason.Choices!.Single(c => c.Name == "spam").NameLocalizations!["pt-BR"]);
+        Assert.Equal("Spam", reason.Choices!.Single(c => c.Name == "spam").NameLocalizations!["en-GB"]);
 
         logger.Received().Log(
             LogLevel.Warning,
@@ -309,7 +310,7 @@ public class CommandLocalizerTests
 
         var provider = ProviderFor("ping", null);
 
-        CommandLocalizer.Apply(command, provider);
+        new SlashCommandLocalizer(provider).Apply(command);
 
         Assert.Null(command.NameLocalizations);
         Assert.Null(command.DescriptionLocalizations);
@@ -324,27 +325,24 @@ public class CommandLocalizerTests
 
         var provider = ProviderFor("ping", new Dictionary<string, CommandLocalization>());
 
-        CommandLocalizer.Apply(command, provider);
+        new SlashCommandLocalizer(provider).Apply(command);
 
         Assert.Null(command.NameLocalizations);
         Assert.Null(command.DescriptionLocalizations);
     }
 
     [Fact]
-    public void Apply_NullProvider_Throws()
+    public void Constructor_NullProvider_Throws()
     {
-        var command = new SlashCommandBuilder()
-            .WithName("ping").WithDescription("desc")
-            .WithType(ApplicationCommandType.ChatInput).Build();
-
-        Assert.Throws<ArgumentNullException>(() => CommandLocalizer.Apply(command, null!));
+        Assert.Throws<ArgumentNullException>(() => new SlashCommandLocalizer(null!));
     }
 
     [Fact]
     public void Apply_NullCommand_Throws()
     {
         var provider = Substitute.For<ICommandLocalizationProvider>();
-        Assert.Throws<ArgumentNullException>(() => CommandLocalizer.Apply(null!, provider));
+        var localizer = new SlashCommandLocalizer(provider);
+        Assert.Throws<ArgumentNullException>(() => localizer.Apply(null!));
     }
 
     [Fact]
@@ -359,7 +357,7 @@ public class CommandLocalizerTests
             .GetLocalizations(Arg.Any<string>(), Arg.Any<Snowflake?>())
             .Returns((IReadOnlyDictionary<string, CommandLocalization>?)null);
 
-        CommandLocalizer.Apply(command, provider);
+        new SlashCommandLocalizer(provider).Apply(command);
 
         provider.Received(1).GetLocalizations("ping", null);
     }
@@ -377,7 +375,7 @@ public class CommandLocalizerTests
             .GetLocalizations(Arg.Any<string>(), Arg.Any<Snowflake?>())
             .Returns((IReadOnlyDictionary<string, CommandLocalization>?)null);
 
-        CommandLocalizer.Apply(command, provider, guildId);
+        new SlashCommandLocalizer(provider).Apply(command, guildId);
 
         provider.Received(1).GetLocalizations("ban", guildId);
     }
@@ -391,11 +389,11 @@ public class CommandLocalizerTests
         var provider = Substitute.For<ICommandLocalizationProvider>();
         provider.GetLocalizations("ban", guildA).Returns(new Dictionary<string, CommandLocalization>
         {
-            ["pt-BR"] = new CommandLocalization { Name = "banir-A" },
+            ["en-GB"] = new CommandLocalization { Name = "ban-A" },
         });
         provider.GetLocalizations("ban", guildB).Returns(new Dictionary<string, CommandLocalization>
         {
-            ["pt-BR"] = new CommandLocalization { Name = "banir-B" },
+            ["en-GB"] = new CommandLocalization { Name = "ban-B" },
         });
 
         SlashCommand MakeBan() => new SlashCommandBuilder()
@@ -405,10 +403,11 @@ public class CommandLocalizerTests
         var cmdA = MakeBan();
         var cmdB = MakeBan();
 
-        CommandLocalizer.Apply(cmdA, provider, guildA);
-        CommandLocalizer.Apply(cmdB, provider, guildB);
+        var localizer = new SlashCommandLocalizer(provider);
+        localizer.Apply(cmdA, guildA);
+        localizer.Apply(cmdB, guildB);
 
-        Assert.Equal("banir-A", cmdA.NameLocalizations!["pt-BR"]);
-        Assert.Equal("banir-B", cmdB.NameLocalizations!["pt-BR"]);
+        Assert.Equal("ban-A", cmdA.NameLocalizations!["en-GB"]);
+        Assert.Equal("ban-B", cmdB.NameLocalizations!["en-GB"]);
     }
 }

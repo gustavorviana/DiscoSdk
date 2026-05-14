@@ -1,44 +1,45 @@
+using DiscoSdk.Commands.Localization;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Commands;
 using Microsoft.Extensions.Logging;
 
-namespace DiscoSdk.Commands.Localization;
+namespace DiscoSdk.Hosting.Commands.Localization;
 
 /// <summary>
-/// Applies an <see cref="ICommandLocalizationProvider"/> to a <see cref="SlashCommand"/>:
-/// asks the provider for the command's translation tree, then merges each locale's tree
-/// into the command's <c>NameLocalizations</c> / <c>DescriptionLocalizations</c>
-/// dictionaries (including recursive options and choices).
+/// Applies an <see cref="ICommandLocalizationProvider"/> to a slash command before it is sent
+/// to Discord. Reads the command's translation tree and merges each locale's tree into the
+/// command's <c>NameLocalizations</c> / <c>DescriptionLocalizations</c> dictionaries
+/// (including recursive options and choices).
 /// </summary>
-public static class CommandLocalizer
+/// <remarks>
+/// Internal pipeline detail. Invoked by <c>CommandUpdateAction</c> just before commands are
+/// pushed to Discord — manual localizations already set via builder methods (e.g.
+/// <c>SlashCommandBuilder.AddNameLocalization(...)</c>) are preserved.
+/// </remarks>
+internal sealed class SlashCommandLocalizer
 {
+    private readonly ICommandLocalizationProvider _provider;
+    private readonly ILogger? _logger;
+
+    public SlashCommandLocalizer(ICommandLocalizationProvider provider, ILogger? logger = null)
+    {
+        ArgumentNullException.ThrowIfNull(provider);
+        _provider = provider;
+        _logger = logger;
+    }
+
     /// <summary>
-    /// Applies translations from <paramref name="provider"/> to <paramref name="command"/>.
+    /// Applies translations from the configured provider to <paramref name="command"/>.
     /// Manual localizations already present on the command are preserved.
     /// </summary>
-    /// <param name="command">The command to localize. Mutated in place.</param>
-    /// <param name="provider">The translation source.</param>
-    /// <param name="guildId">The guild the command is being registered for, or <c>null</c>
-    /// for a global command. Forwarded as-is to the provider.</param>
-    /// <param name="logger">Optional logger used to warn about translations for options
-    /// or choices that don't exist on the command.</param>
-    /// <exception cref="ArgumentNullException">When <paramref name="command"/> or
-    /// <paramref name="provider"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">When the provider returns a locale code
-    /// that is not in <see cref="DiscordLocales"/>.</exception>
-    public static void Apply(
-        SlashCommand command,
-        ICommandLocalizationProvider provider,
-        Snowflake? guildId = null,
-        ILogger? logger = null)
+    public void Apply(SlashCommand command, Snowflake? guildId = null)
     {
         ArgumentNullException.ThrowIfNull(command);
-        ArgumentNullException.ThrowIfNull(provider);
 
         if (string.IsNullOrEmpty(command.Name))
             return;
 
-        var byLocale = provider.GetLocalizations(command.Name, guildId);
+        var byLocale = _provider.GetLocalizations(command.Name, guildId);
         if (byLocale is null || byLocale.Count == 0)
             return;
 
@@ -51,11 +52,11 @@ public static class CommandLocalizer
                 throw new InvalidOperationException(
                     $"Locale '{locale}' returned by {nameof(ICommandLocalizationProvider)} for command '{command.Name}' is not a supported Discord locale.");
 
-            ApplyCommand(command, locale, tree, logger);
+            ApplyCommand(command, locale, tree);
         }
     }
 
-    private static void ApplyCommand(SlashCommand command, string locale, CommandLocalization tree, ILogger? logger)
+    private void ApplyCommand(SlashCommand command, string locale, CommandLocalization tree)
     {
         command.NameLocalizations = SetIfMissing(command.NameLocalizations, locale, tree.Name);
         command.DescriptionLocalizations = SetIfMissing(command.DescriptionLocalizations, locale, tree.Description);
@@ -72,23 +73,22 @@ public static class CommandLocalizer
 
             if (!commandOptionsByName.TryGetValue(optionLoc.OptionName, out var commandOption))
             {
-                logger?.LogWarning(
+                _logger?.LogWarning(
                     "Localization provider returned translation for option '{Option}' on command '{Command}' but no such option exists.",
                     optionLoc.OptionName, command.Name);
                 continue;
             }
 
-            ApplyOption(commandOption, locale, optionLoc, command.Name, optionLoc.OptionName, logger);
+            ApplyOption(commandOption, locale, optionLoc, command.Name, optionLoc.OptionName);
         }
     }
 
-    private static void ApplyOption(
+    private void ApplyOption(
         SlashCommandOption commandOption,
         string locale,
         OptionLocalization tree,
         string commandName,
-        string optionPath,
-        ILogger? logger)
+        string optionPath)
     {
         commandOption.NameLocalizations = SetIfMissing(commandOption.NameLocalizations, locale, tree.Name);
         commandOption.DescriptionLocalizations = SetIfMissing(commandOption.DescriptionLocalizations, locale, tree.Description);
@@ -103,13 +103,13 @@ public static class CommandLocalizer
 
                 if (!nestedByName.TryGetValue(nested.OptionName, out var nestedCommandOption))
                 {
-                    logger?.LogWarning(
+                    _logger?.LogWarning(
                         "Localization provider returned translation for option '{Path}' on command '{Command}' but no such option exists.",
                         $"{optionPath}.{nested.OptionName}", commandName);
                     continue;
                 }
 
-                ApplyOption(nestedCommandOption, locale, nested, commandName, $"{optionPath}.{nested.OptionName}", logger);
+                ApplyOption(nestedCommandOption, locale, nested, commandName, $"{optionPath}.{nested.OptionName}");
             }
         }
 
@@ -123,7 +123,7 @@ public static class CommandLocalizer
 
                 if (!choicesByName.TryGetValue(choiceLoc.ChoiceName, out var commandChoice))
                 {
-                    logger?.LogWarning(
+                    _logger?.LogWarning(
                         "Localization provider returned translation for choice '{Choice}' on option '{Path}' of command '{Command}' but no such choice exists.",
                         choiceLoc.ChoiceName, optionPath, commandName);
                     continue;

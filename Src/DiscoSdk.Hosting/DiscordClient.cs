@@ -515,7 +515,8 @@ namespace DiscoSdk.Hosting
             CommandsUpdateWindowOpened?.Invoke(this, commands);
 
             var localizationProvider = Services.GetService<ICommandLocalizationProvider>();
-            await new CommandUpdateAction(this, commands, localizationProvider).ExecuteAsync();
+            var contextLocalizationProvider = Services.GetService<IContextCommandLocalizationProvider>();
+            await new CommandUpdateAction(this, commands, localizationProvider, contextLocalizationProvider).ExecuteAsync();
         }
 
         Task IShardEventListener.OnResumeAsync(Shard shard)

@@ -1,8 +1,10 @@
 using DiscoSdk.Commands;
 using DiscoSdk.Commands.Localization;
+using DiscoSdk.Hosting.Commands.Localization;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Commands;
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
 using Microsoft.Extensions.Logging;
 
@@ -14,7 +16,8 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 internal class CommandUpdateAction(
     DiscordClient client,
     CommandContainer commandContainer,
-    ICommandLocalizationProvider? localizationProvider = null) : RestAction, ICommandUpdateAction
+    ICommandLocalizationProvider? localizationProvider = null,
+    IContextCommandLocalizationProvider? contextLocalizationProvider = null) : RestAction, ICommandUpdateAction
 {
     private readonly ApplicationCommandClient _applicationCommandClient = new(client.HttpClient);
 
@@ -92,15 +95,31 @@ internal class CommandUpdateAction(
 
     private void ApplyLocalizations()
     {
-        if (localizationProvider is null)
+        if (localizationProvider is null && contextLocalizationProvider is null)
             return;
 
+        var slashLocalizer = localizationProvider is null
+            ? null
+            : new SlashCommandLocalizer(localizationProvider, client.Logger);
+
+        var contextLocalizer = contextLocalizationProvider is null
+            ? null
+            : new ContextCommandLocalizer(contextLocalizationProvider, client.Logger);
+
         foreach (var cmd in commandContainer.GlobalCommands)
-            CommandLocalizer.Apply(cmd, localizationProvider, guildId: null, logger: client.Logger);
+            Apply(cmd, guildId: null);
 
         foreach (var (guildId, commands) in commandContainer.GuildCommands)
             foreach (var cmd in commands)
-                CommandLocalizer.Apply(cmd, localizationProvider, guildId, logger: client.Logger);
+                Apply(cmd, guildId);
+
+        void Apply(SlashCommand command, Snowflake? guildId)
+        {
+            if (command.Type is ApplicationCommandType.User or ApplicationCommandType.Message)
+                contextLocalizer?.Apply(command, guildId);
+            else
+                slashLocalizer?.Apply(command, guildId);
+        }
     }
 
     /// <summary>
