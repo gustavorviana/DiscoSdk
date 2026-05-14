@@ -287,6 +287,29 @@ namespace DiscoSdk.Hosting
             return _shardPool.Shards[shardId];
         }
 
+        /// <summary>
+        /// Picks the shard responsible for a guild using Discord's sharding formula
+        /// <c>(guild_id &gt;&gt; 22) % num_shards</c>. Used by the gateway commands that target a
+        /// specific guild (Request Guild Members, Update Voice State, etc.).
+        /// </summary>
+        internal Shard GetShardForGuild(Snowflake guildId)
+        {
+            var shardId = (int)((guildId.Value >> 22) % (ulong)Math.Max(TotalShards, 1));
+            return _shardPool.Shards[shardId];
+        }
+
+        /// <summary>
+        /// Coordinator that correlates inbound <c>GUILD_MEMBERS_CHUNK</c> events with in-flight
+        /// <c>Request Guild Members</c> (op 8) calls by nonce.
+        /// </summary>
+        internal MemberChunkCoordinator MemberChunkCoordinator { get; } = new();
+
+        /// <summary>
+        /// Test-only seam — seeds the shard list so <see cref="GetShardForGuild"/> works without
+        /// running the full <c>InitShardsAsync</c> flow.
+        /// </summary>
+        internal void SeedShardsForTests(int totalShards = 1) => _shardPool.SeedShardsForTests(totalShards);
+
         public IRestAction<TChannel?> GetChannel<TChannel>(Snowflake channelId) where TChannel : IChannel
         {
             return RestAction<TChannel?>.Create(async cancellationToken =>

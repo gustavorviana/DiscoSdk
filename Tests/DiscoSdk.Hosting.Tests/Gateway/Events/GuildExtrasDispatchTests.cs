@@ -99,4 +99,21 @@ public class GuildExtrasDispatchTests : DispatcherTestBase
 				ctx.Nonce == "req-1"),
 			Arg.Any<IServiceProvider>());
 	}
+
+	[Fact]
+	public async Task GuildMembersChunk_ForwardsToCoordinatorAndCompletesPendingRequestAsync()
+	{
+		await DispatchAsync(DispatchFrames.GuildCreate(id: 100));
+
+		// Simulate the action's "register before send" step with a buffering sink.
+		var sink = new DiscoSdk.Hosting.Gateway.BufferingMemberChunkSink();
+		Client.MemberChunkCoordinator.Register("req-42", sink);
+
+		// Single chunk completes the request.
+		await DispatchAsync(DispatchFrames.GuildMembersChunk(
+			guildId: 100, chunkIndex: 0, chunkCount: 1, nonce: "req-42", userIds: [42UL, 43UL]));
+
+		var members = await sink.Completion.WaitAsync(TimeSpan.FromSeconds(2));
+		Assert.Equal(2, members.Count);
+	}
 }

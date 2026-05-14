@@ -43,6 +43,19 @@ internal class ShardPool(IShardEventListener listener,
         }
     }
 
+    /// <summary>
+    /// Test-only seam — seeds the shard list without going through the gateway-info fetch or
+    /// connecting the sockets. Lets action tests that need <see cref="GetShardForGuild"/> get
+    /// back a shard whose <c>SendAsync</c> writes to the fake socket.
+    /// </summary>
+    internal void SeedShardsForTests(int totalShards)
+    {
+        _totalShards = Math.Max(totalShards, 1);
+        _shards.Clear();
+        for (int i = 0; i < _totalShards; i++)
+            _shards.Add(new Shard(i, config, this));
+    }
+
     public void SetGateway(DiscordGatewayInfo gatewayInfo)
     {
         _totalShards = Math.Max(config.TotalShards ?? gatewayInfo.Shards, 1);

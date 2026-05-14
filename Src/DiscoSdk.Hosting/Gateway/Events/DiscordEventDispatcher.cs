@@ -1042,8 +1042,14 @@ internal class DiscordEventDispatcher
         var chunkCount = payload.Get("chunk_count")?.GetInt32() ?? 1;
         var nonce = payload.Get("nonce")?.GetString();
 
+        var snapshot = members.ToImmutable();
+
+        // Forward to any awaiting RequestGuildMembers caller first; the user-registered handlers
+        // (if any) still run via HandleAllAsync below.
+        _discordClient.MemberChunkCoordinator.TryDeliver(nonce, snapshot, chunkIndex, chunkCount);
+
         var eventData = new GuildMembersChunkContextWrapper(
-            _discordClient, guild, members.ToImmutable(), chunkIndex, chunkCount, nonce);
+            _discordClient, guild, snapshot, chunkIndex, chunkCount, nonce);
         await HandleAllAsync<IGuildMembersChunkHandler, IGuildMembersChunkContext>(eventData);
     }
 

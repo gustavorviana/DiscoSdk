@@ -543,6 +543,9 @@ public interface IGuild
     /// <param name="file">Sticker image file (PNG/APNG/GIF/Lottie, max 512 KiB).</param>
     Rest.Actions.ICreateGuildStickerAction CreateSticker(string name, string tags, DiscoSdk.Models.Messages.MessageFile file);
 
+    /// <summary>Builds a Request Guild Members.</summary>
+    Rest.Actions.IRequestGuildMembersAction RequestMembers();
+
     /// <summary>
     /// Gets a REST action that retrieves this guild's onboarding configuration.
     /// </summary>

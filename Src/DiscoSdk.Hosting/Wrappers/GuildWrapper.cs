@@ -430,6 +430,9 @@ internal class GuildWrapper : IGuild
     public ICreateGuildStickerAction CreateSticker(string name, string tags, DiscoSdk.Models.Messages.MessageFile file)
         => new CreateGuildStickerAction(_client, _guild.Id, name, tags, file);
 
+    public IRequestGuildMembersAction RequestMembers()
+        => new RequestGuildMembersAction(_client, _guild.Id);
+
     public IRestAction<IGuildOnboarding> GetOnboarding()
         => RestAction<IGuildOnboarding>.Create(async ct => new GuildOnboardingWrapper(_client, await _client.GuildTemplateClient.GetOnboardingAsync(_guild.Id, ct)));
 
