@@ -213,4 +213,57 @@ public class ChannelClientTests
 			Arg.Is<object?>(b => b!.GetType().GetProperty("recipient_id")!.GetValue(b)!.Equals(_userId.ToString())),
 			Arg.Any<CancellationToken>());
 	}
+
+	[Fact]
+	public async Task EditChannelPermissionsAsync_PutsToPermissionsRouteWithBodyAsync()
+	{
+		var overwriteId = new Snowflake(555);
+		var req = new { allow = "0", deny = "0", type = 0 };
+
+		await _client.EditChannelPermissionsAsync(_channelId, overwriteId, req);
+
+		await _http.Received(1).SendAsync(
+			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/permissions/{overwriteId}"),
+			HttpMethod.Put,
+			req,
+			Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task DeleteChannelPermissionsAsync_DeletesPermissionsRouteAsync()
+	{
+		var overwriteId = new Snowflake(555);
+
+		await _client.DeleteChannelPermissionsAsync(_channelId, overwriteId);
+
+		await _http.Received(1).SendAsync(
+			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/permissions/{overwriteId}"),
+			HttpMethod.Delete,
+			Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task AddGroupDmRecipientAsync_PutsRecipientsRouteAsync()
+	{
+		var req = new { access_token = "tok", nick = "buddy" };
+
+		await _client.AddGroupDmRecipientAsync(_channelId, _userId, req);
+
+		await _http.Received(1).SendAsync(
+			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/recipients/{_userId}"),
+			HttpMethod.Put,
+			req,
+			Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task RemoveGroupDmRecipientAsync_DeletesRecipientsRouteAsync()
+	{
+		await _client.RemoveGroupDmRecipientAsync(_channelId, _userId);
+
+		await _http.Received(1).SendAsync(
+			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/recipients/{_userId}"),
+			HttpMethod.Delete,
+			Arg.Any<CancellationToken>());
+	}
 }

@@ -51,4 +51,11 @@ public interface IPermissionContainer
 	/// <param name="holder">The permission holder (user or role) to create or update the override for.</param>
 	/// <returns>A REST action that can be executed to upsert the permission override.</returns>
 	IOverrideIPermissionAction UpsertPermissionOverride(IPermissionHolder holder);
+
+	/// <summary>
+	/// Deletes the permission override for the specified permission holder.
+	/// </summary>
+	/// <param name="holder">The permission holder (user or role) whose override should be removed.</param>
+	/// <returns>A REST action that can be executed to delete the permission override.</returns>
+	IRestAction DeletePermissionOverride(IPermissionHolder holder);
 }

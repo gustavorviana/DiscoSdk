@@ -1,27 +1,29 @@
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.Requests.Channels;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
 
 /// <summary>
-/// Implementation of <see cref="IOverrideIPermissionAction"/> for upserting permission overrides.
+/// Implementation of <see cref="IOverrideIPermissionAction"/> for upserting permission overwrites
+/// via <c>PUT /channels/{channel.id}/permissions/{overwrite.id}</c>. Discord returns
+/// <c>204 No Content</c>; the action constructs the resulting <see cref="PermissionOverride"/>
+/// locally from the values it sent.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="OverridePermissionAction"/> class.
-/// </remarks>
-/// <param name="client">The Discord client.</param>
-/// <param name="channelId">The ID of the channel.</param>
-/// <param name="holderId">The ID of the permission holder (user or role).</param>
-internal class OverridePermissionAction(DiscordClient client, Snowflake channelId, Snowflake holderId) : RestAction<PermissionOverride>, IOverrideIPermissionAction
+internal class OverridePermissionAction(
+	DiscordClient client,
+	Snowflake channelId,
+	Snowflake holderId,
+	PermissionOverwriteType holderType) : RestAction<PermissionOverride>, IOverrideIPermissionAction
 {
 	private readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
-    private DiscordPermission? _allow;
-	private DiscordPermission? _deny;
+	private DiscordPermission _allow;
+	private DiscordPermission _deny;
 
-    /// <inheritdoc />
-    public IOverrideIPermissionAction SetAllow(DiscordPermission permissions)
+	/// <inheritdoc />
+	public IOverrideIPermissionAction SetAllow(DiscordPermission permissions)
 	{
 		_allow = permissions;
 		return this;
@@ -37,20 +39,21 @@ internal class OverridePermissionAction(DiscordClient client, Snowflake channelI
 	/// <inheritdoc />
 	public override async Task<PermissionOverride> ExecuteAsync(CancellationToken cancellationToken = default)
 	{
-		var request = new
+		var request = new EditChannelPermissionsRequest
 		{
-			id = holderId.ToString(),
-			type = 0, // Will need to determine if this is a role (0) or member (1)
-			allow = _allow?.ToString() ?? "0",
-			deny = _deny?.ToString() ?? "0"
+			Allow = _allow,
+			Deny = _deny,
+			Type = holderType,
 		};
 
-		var channel = await _client.ChannelClient.EditAsync(channelId, request, cancellationToken);
-		
-		// Find the permission override in the updated channel
-		var overwrite = channel.PermissionOverwrites?.FirstOrDefault(po => po.Id == holderId);
-        return overwrite == null
-            ? throw new InvalidOperationException("Permission override was not found after update.")
-            : new PermissionOverride(overwrite);
-    }
+		await _client.ChannelClient.EditChannelPermissionsAsync(channelId, holderId, request, cancellationToken);
+
+		return new PermissionOverride(new PermissionOverwrite
+		{
+			Id = holderId,
+			Type = holderType,
+			Allow = _allow,
+			Deny = _deny,
+		});
+	}
 }

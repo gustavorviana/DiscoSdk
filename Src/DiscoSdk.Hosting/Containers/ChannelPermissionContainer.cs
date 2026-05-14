@@ -1,5 +1,7 @@
 using DiscoSdk.Hosting.Rest.Actions;
+using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
 using System.Collections.Immutable;
 
@@ -44,6 +46,21 @@ internal class ChannelPermissionContainer(Channel channel, DiscordClient client)
 	/// <inheritdoc />
 	public IOverrideIPermissionAction UpsertPermissionOverride(IPermissionHolder holder)
 	{
-		return new OverridePermissionAction(_client, _channel.Id, holder.Id);
+		return new OverridePermissionAction(_client, _channel.Id, holder.Id, ResolveType(holder));
 	}
+
+	/// <inheritdoc />
+	public IRestAction DeletePermissionOverride(IPermissionHolder holder)
+	{
+		var channelId = _channel.Id;
+		var holderId = holder.Id;
+		return RestAction.Create(ct => _client.ChannelClient.DeleteChannelPermissionsAsync(channelId, holderId, ct));
+	}
+
+	private static PermissionOverwriteType ResolveType(IPermissionHolder holder) => holder switch
+	{
+		IRole => PermissionOverwriteType.Role,
+		IMember => PermissionOverwriteType.Member,
+		_ => throw new ArgumentException($"Unsupported permission holder type: {holder.GetType().Name}", nameof(holder)),
+	};
 }

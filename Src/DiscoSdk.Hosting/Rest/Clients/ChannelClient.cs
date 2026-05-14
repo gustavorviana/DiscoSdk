@@ -459,6 +459,85 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 	}
 
 	/// <summary>
+	/// Edits (creates or updates) the permission overwrite for the given holder on a channel.
+	/// </summary>
+	/// <param name="channelId">The ID of the channel to edit the overwrite on.</param>
+	/// <param name="overwriteId">The ID of the role or member the overwrite applies to.</param>
+	/// <param name="request">The overwrite payload (<c>allow</c>, <c>deny</c>, <c>type</c>).</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	public Task EditChannelPermissionsAsync(Snowflake channelId, Snowflake overwriteId, object request, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		if (overwriteId == default)
+			throw new ArgumentException("Overwrite ID cannot be null or empty.", nameof(overwriteId));
+
+		ArgumentNullException.ThrowIfNull(request);
+
+		var route = new DiscordRoute("channels/{channel_id}/permissions/{overwrite_id}", channelId, overwriteId);
+		return client.SendAsync(route, HttpMethod.Put, request, cancellationToken);
+	}
+
+	/// <summary>
+	/// Deletes the permission overwrite for the given holder on a channel.
+	/// </summary>
+	/// <param name="channelId">The ID of the channel to remove the overwrite from.</param>
+	/// <param name="overwriteId">The ID of the role or member whose overwrite is being removed.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	public Task DeleteChannelPermissionsAsync(Snowflake channelId, Snowflake overwriteId, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		if (overwriteId == default)
+			throw new ArgumentException("Overwrite ID cannot be null or empty.", nameof(overwriteId));
+
+		var route = new DiscordRoute("channels/{channel_id}/permissions/{overwrite_id}", channelId, overwriteId);
+		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+	}
+
+	/// <summary>
+	/// Adds a recipient to a group DM. Requires an OAuth2 access token with the <c>gdm.join</c>
+	/// scope — bot tokens are rejected with <c>401</c>.
+	/// </summary>
+	/// <param name="channelId">The ID of the group DM channel.</param>
+	/// <param name="userId">The ID of the user to add.</param>
+	/// <param name="request">The add-recipient payload (<c>access_token</c>, optional <c>nick</c>).</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	public Task AddGroupDmRecipientAsync(Snowflake channelId, Snowflake userId, object request, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		if (userId == default)
+			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
+
+		ArgumentNullException.ThrowIfNull(request);
+
+		var route = new DiscordRoute("channels/{channel_id}/recipients/{user_id}", channelId, userId);
+		return client.SendAsync(route, HttpMethod.Put, request, cancellationToken);
+	}
+
+	/// <summary>
+	/// Removes a recipient from a group DM. The caller must own the group DM.
+	/// </summary>
+	/// <param name="channelId">The ID of the group DM channel.</param>
+	/// <param name="userId">The ID of the user to remove.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	public Task RemoveGroupDmRecipientAsync(Snowflake channelId, Snowflake userId, CancellationToken cancellationToken = default)
+	{
+		if (channelId == default)
+			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
+
+		if (userId == default)
+			throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
+
+		var route = new DiscordRoute("channels/{channel_id}/recipients/{user_id}", channelId, userId);
+		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+	}
+
+	/// <summary>
 	/// Response model for thread list endpoints.
 	/// </summary>
 	private class ThreadsResponse
