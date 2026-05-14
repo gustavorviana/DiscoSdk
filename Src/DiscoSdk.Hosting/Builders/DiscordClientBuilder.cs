@@ -1,4 +1,5 @@
 using DiscoSdk.Commands;
+using DiscoSdk.Commands.Localization;
 using DiscoSdk.Contexts;
 using DiscoSdk.Events;
 using DiscoSdk.Hosting.Commands;
@@ -272,6 +273,29 @@ public class DiscordClientBuilder
     public DiscordClientBuilder WithGatewayCompressMode(GatewayCompressMode compressMode)
     {
         _gatewayCompressMode = compressMode;
+        return this;
+    }
+
+    /// <summary>
+    /// Registers an <see cref="ICommandLocalizationProvider"/> that supplies translated names
+    /// and descriptions for every command, option, and choice at registration time. Manual
+    /// localizations set on the builder are preserved.
+    /// </summary>
+    /// <typeparam name="TProvider">Concrete provider type; resolved from DI as a singleton.</typeparam>
+    public DiscordClientBuilder WithCommandLocalization<TProvider>()
+        where TProvider : class, ICommandLocalizationProvider
+    {
+        _services.AddSingleton<ICommandLocalizationProvider, TProvider>();
+        return this;
+    }
+
+    /// <summary>
+    /// Registers an explicit <see cref="ICommandLocalizationProvider"/> instance.
+    /// </summary>
+    public DiscordClientBuilder WithCommandLocalization(ICommandLocalizationProvider provider)
+    {
+        ArgumentNullException.ThrowIfNull(provider);
+        _services.AddSingleton(provider);
         return this;
     }
 

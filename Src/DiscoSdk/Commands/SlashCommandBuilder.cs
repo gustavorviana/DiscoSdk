@@ -7,7 +7,7 @@ namespace DiscoSdk.Commands;
 /// <summary>
 /// Fluent builder for <see cref="SlashCommand"/>.
 /// </summary>
-public class SlashCommandBuilder()
+public class SlashCommandBuilder() : ISlashCommandOptionContainer
 {
     private ApplicationCommandType? _type;
     private string? _name;
@@ -107,7 +107,7 @@ public class SlashCommandBuilder()
         return this;
     }
 
-    private static void EnsureLocale(string locale)
+    internal static void EnsureLocale(string locale)
     {
         if (string.IsNullOrWhiteSpace(locale))
             throw new ArgumentException("Locale cannot be null or empty.", nameof(locale));
@@ -175,6 +175,8 @@ public class SlashCommandBuilder()
     /// </summary>
     /// <param name="option">The option instance to add.</param>
     /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    internal List<SlashCommandOption> OptionsList => _options;
+
     internal SlashCommandBuilder AddOption(SlashCommandOption option)
     {
         if (_options.Count >= 25)
@@ -184,6 +186,8 @@ public class SlashCommandBuilder()
         _options.Add(option);
         return this;
     }
+
+    void ISlashCommandOptionContainer.AddOption(SlashCommandOption option) => AddOption(option);
 
     /// <summary>
     /// Adds a <see cref="SlashCommandOptionType.SubCommand"/> option.
@@ -493,6 +497,184 @@ public class SlashCommandBuilder()
         });
     }
 
+    // ─── Fluent (EF-style) entry points ─────────────────────────────────────
+    // These return focused builders so the caller can chain ThenChoice / ThenOption etc.
+    // The AddXxxOption methods above stay for retro-compat with the flat-array style.
+
+    /// <summary>Adds a top-level string option and returns a focused builder.</summary>
+    public SlashCommandStringOptionBuilder StringOption(string name, string description, bool required = false)
+    {
+        var option = CreateLeafOption(name, description, SlashCommandOptionType.String, required);
+        AddOption(option);
+        return new SlashCommandStringOptionBuilder(this, option, this);
+    }
+
+    /// <summary>Adds a top-level string option configured via callback. Keeps focus on the command root.</summary>
+    public SlashCommandBuilder StringOption(string name, string description, Action<SlashCommandStringOptionBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(StringOption(name, description));
+        return this;
+    }
+
+    /// <summary>Adds a top-level integer option and returns a focused builder.</summary>
+    public SlashCommandIntegerOptionBuilder IntegerOption(string name, string description, bool required = false)
+    {
+        var option = CreateLeafOption(name, description, SlashCommandOptionType.Integer, required);
+        AddOption(option);
+        return new SlashCommandIntegerOptionBuilder(this, option, this);
+    }
+
+    /// <summary>Adds a top-level integer option configured via callback.</summary>
+    public SlashCommandBuilder IntegerOption(string name, string description, Action<SlashCommandIntegerOptionBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(IntegerOption(name, description));
+        return this;
+    }
+
+    /// <summary>Adds a top-level number option and returns a focused builder.</summary>
+    public SlashCommandNumberOptionBuilder NumberOption(string name, string description, bool required = false)
+    {
+        var option = CreateLeafOption(name, description, SlashCommandOptionType.Number, required);
+        AddOption(option);
+        return new SlashCommandNumberOptionBuilder(this, option, this);
+    }
+
+    /// <summary>Adds a top-level number option configured via callback.</summary>
+    public SlashCommandBuilder NumberOption(string name, string description, Action<SlashCommandNumberOptionBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(NumberOption(name, description));
+        return this;
+    }
+
+    /// <summary>Adds a top-level boolean option and returns a focused builder.</summary>
+    public SlashCommandLeafOptionBuilder BooleanOption(string name, string description, bool required = false)
+        => AddLeaf(name, description, SlashCommandOptionType.Boolean, required);
+
+    /// <summary>Adds a top-level boolean option configured via callback.</summary>
+    public SlashCommandBuilder BooleanOption(string name, string description, Action<SlashCommandLeafOptionBuilder> configure)
+        => RunLeafCallback(BooleanOption(name, description), configure);
+
+    /// <summary>Adds a top-level user option and returns a focused builder.</summary>
+    public SlashCommandLeafOptionBuilder UserOption(string name, string description, bool required = false)
+        => AddLeaf(name, description, SlashCommandOptionType.User, required);
+
+    /// <summary>Adds a top-level user option configured via callback.</summary>
+    public SlashCommandBuilder UserOption(string name, string description, Action<SlashCommandLeafOptionBuilder> configure)
+        => RunLeafCallback(UserOption(name, description), configure);
+
+    /// <summary>Adds a top-level role option and returns a focused builder.</summary>
+    public SlashCommandLeafOptionBuilder RoleOption(string name, string description, bool required = false)
+        => AddLeaf(name, description, SlashCommandOptionType.Role, required);
+
+    /// <summary>Adds a top-level role option configured via callback.</summary>
+    public SlashCommandBuilder RoleOption(string name, string description, Action<SlashCommandLeafOptionBuilder> configure)
+        => RunLeafCallback(RoleOption(name, description), configure);
+
+    /// <summary>Adds a top-level channel option and returns a focused builder.</summary>
+    public SlashCommandChannelOptionBuilder ChannelOption(string name, string description, bool required = false)
+    {
+        var option = CreateLeafOption(name, description, SlashCommandOptionType.Channel, required);
+        AddOption(option);
+        return new SlashCommandChannelOptionBuilder(this, option, this);
+    }
+
+    /// <summary>Adds a top-level channel option configured via callback.</summary>
+    public SlashCommandBuilder ChannelOption(string name, string description, Action<SlashCommandChannelOptionBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(ChannelOption(name, description));
+        return this;
+    }
+
+    /// <summary>Adds a top-level mentionable option and returns a focused builder.</summary>
+    public SlashCommandLeafOptionBuilder MentionableOption(string name, string description, bool required = false)
+        => AddLeaf(name, description, SlashCommandOptionType.Mentionable, required);
+
+    /// <summary>Adds a top-level mentionable option configured via callback.</summary>
+    public SlashCommandBuilder MentionableOption(string name, string description, Action<SlashCommandLeafOptionBuilder> configure)
+        => RunLeafCallback(MentionableOption(name, description), configure);
+
+    /// <summary>Adds a top-level attachment option and returns a focused builder.</summary>
+    public SlashCommandLeafOptionBuilder AttachmentOption(string name, string description, bool required = false)
+        => AddLeaf(name, description, SlashCommandOptionType.Attachment, required);
+
+    /// <summary>Adds a top-level attachment option configured via callback.</summary>
+    public SlashCommandBuilder AttachmentOption(string name, string description, Action<SlashCommandLeafOptionBuilder> configure)
+        => RunLeafCallback(AttachmentOption(name, description), configure);
+
+    /// <summary>
+    /// Adds a top-level sub-command. EF-style: <c>ThenXxxOption(name)</c> on the returned builder
+    /// descends into a child option, while <c>ThenXxxOption(name, configure)</c> keeps focus on
+    /// the sub-command for multiple sibling options.
+    /// </summary>
+    public SlashCommandSubCommandBuilder SubCommand(string name, string description)
+    {
+        var option = CreateLeafOption(name, description, SlashCommandOptionType.SubCommand, required: false);
+        option.Required = null;
+        AddOption(option);
+        return new SlashCommandSubCommandBuilder(this, option);
+    }
+
+    /// <summary>Adds a top-level sub-command configured via callback.</summary>
+    public SlashCommandBuilder SubCommand(string name, string description, Action<SlashCommandSubCommandBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(SubCommand(name, description));
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a top-level sub-command group. Discord only allows sub-commands as direct children
+    /// of a group — use <see cref="SlashCommandSubCommandGroupBuilder.ThenSubCommand(string, string)"/>
+    /// or the callback overload to populate it.
+    /// </summary>
+    public SlashCommandSubCommandGroupBuilder SubCommandGroup(string name, string description)
+    {
+        var option = CreateLeafOption(name, description, SlashCommandOptionType.SubCommandGroup, required: false);
+        option.Required = null;
+        AddOption(option);
+        return new SlashCommandSubCommandGroupBuilder(this, option);
+    }
+
+    /// <summary>Adds a top-level sub-command group configured via callback.</summary>
+    public SlashCommandBuilder SubCommandGroup(string name, string description, Action<SlashCommandSubCommandGroupBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(SubCommandGroup(name, description));
+        return this;
+    }
+
+    private SlashCommandLeafOptionBuilder AddLeaf(string name, string description, SlashCommandOptionType type, bool required)
+    {
+        var option = CreateLeafOption(name, description, type, required);
+        AddOption(option);
+        return new SlashCommandLeafOptionBuilder(this, option, this);
+    }
+
+    private SlashCommandBuilder RunLeafCallback(SlashCommandLeafOptionBuilder leaf, Action<SlashCommandLeafOptionBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(leaf);
+        return this;
+    }
+
+    private static SlashCommandOption CreateLeafOption(string name, string description, SlashCommandOptionType type, bool required)
+    {
+        ValidateOptionName(name);
+        ValidateOptionDescription(description);
+
+        return new SlashCommandOption
+        {
+            Name = name.ToLowerInvariant(),
+            Description = description,
+            Type = type,
+            Required = required,
+        };
+    }
+
     /// <summary>
     /// Builds the configured <see cref="SlashCommand"/> instance.
     /// </summary>
@@ -523,8 +705,8 @@ public class SlashCommandBuilder()
         if (trimmedName.Length is < 1 or > 32)
             throw new ArgumentOutOfRangeException(nameof(name), $"Command name must be between 1 and 32 characters. Current length: {trimmedName.Length}.");
 
-        if (!Regex.IsMatch(trimmedName, @"^[a-z0-9-_]+$"))
-            throw new ArgumentException("Command name can only contain lowercase letters (a-z), numbers (0-9), hyphens (-), or underscores (_). Spaces and special characters are not allowed.", nameof(name));
+        if (!Regex.IsMatch(trimmedName, @"^[-_\p{Ll}\p{N}]+$"))
+            throw new ArgumentException("Command name can only contain lowercase letters (any script), numbers, hyphens (-), or underscores (_). Spaces, uppercase, and special characters are not allowed.", nameof(name));
     }
 
     internal static void ValidateCommandDescription(string description)
@@ -537,7 +719,7 @@ public class SlashCommandBuilder()
             throw new ArgumentOutOfRangeException(nameof(description), $"Command description must be between 1 and 100 characters. Current length: {trimmedDescription.Length}.");
     }
 
-    private static void ValidateOptionName(string name)
+    internal static void ValidateOptionName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Option name cannot be null, empty, or contain only whitespace.", nameof(name));
@@ -546,11 +728,11 @@ public class SlashCommandBuilder()
         if (trimmedName.Length is < 1 or > 32)
             throw new ArgumentOutOfRangeException(nameof(name), $"Option name must be between 1 and 32 characters. Current length: {trimmedName.Length}.");
 
-        if (!Regex.IsMatch(trimmedName, @"^[a-z0-9-_]+$"))
-            throw new ArgumentException("Option name can only contain lowercase letters (a-z), numbers (0-9), hyphens (-), or underscores (_). Spaces and special characters are not allowed.", nameof(name));
+        if (!Regex.IsMatch(trimmedName, @"^[-_\p{Ll}\p{N}]+$"))
+            throw new ArgumentException("Option name can only contain lowercase letters (any script), numbers, hyphens (-), or underscores (_). Spaces, uppercase, and special characters are not allowed.", nameof(name));
     }
 
-    private static void ValidateOptionDescription(string description)
+    internal static void ValidateOptionDescription(string description)
     {
         if (string.IsNullOrWhiteSpace(description))
             throw new ArgumentException("Option description cannot be null, empty, or contain only whitespace.", nameof(description));
@@ -560,7 +742,7 @@ public class SlashCommandBuilder()
             throw new ArgumentOutOfRangeException(nameof(description), $"Option description must be between 1 and 100 characters. Current length: {trimmedDescription.Length}.");
     }
 
-    private static void ValidateStringLengthBounds(int? minLength, int? maxLength)
+    internal static void ValidateStringLengthBounds(int? minLength, int? maxLength)
     {
         if (minLength.HasValue && minLength.Value < 0)
             throw new ArgumentOutOfRangeException(nameof(minLength), "String minimum length cannot be negative.");
@@ -578,7 +760,7 @@ public class SlashCommandBuilder()
             throw new ArgumentException($"Minimum length ({minLength.Value}) cannot be greater than maximum length ({maxLength.Value}).");
     }
 
-    private static void ValidateNumericBounds(object? minValue, object? maxValue, SlashCommandOptionType optionType)
+    internal static void ValidateNumericBounds(object? minValue, object? maxValue, SlashCommandOptionType optionType)
     {
         if (minValue is IComparable min && maxValue is IComparable max)
         {
@@ -587,7 +769,7 @@ public class SlashCommandBuilder()
         }
     }
 
-    private static void ValidateChoices(SlashCommandOptionChoice[] choices, SlashCommandOptionType optionType)
+    internal static void ValidateChoices(SlashCommandOptionChoice[] choices, SlashCommandOptionType optionType)
     {
         if (choices.Length == 0)
             return;
@@ -630,7 +812,7 @@ public class SlashCommandBuilder()
         }
     }
 
-    private static void ValidateAutocompleteAndChoices(bool? autocomplete, SlashCommandOptionChoice[] choices)
+    internal static void ValidateAutocompleteAndChoices(bool? autocomplete, SlashCommandOptionChoice[] choices)
     {
         if (autocomplete == true && choices.Length > 0)
             throw new ArgumentException("Cannot use autocomplete and choices at the same time. Choose one option.", nameof(autocomplete));
@@ -685,7 +867,7 @@ public class SlashCommandBuilder()
         }
     }
 
-    private void ValidateLocalizations(Dictionary<string, string>? localizations, string fieldName)
+    internal static void ValidateLocalizations(Dictionary<string, string>? localizations, string fieldName)
     {
         if (localizations == null)
             return;
@@ -710,8 +892,8 @@ public class SlashCommandBuilder()
             if (trimmedValue.Length is < 1 or > 32)
                 throw new ArgumentOutOfRangeException(nameof(locale), $"Localized name value for locale '{locale}' must be between 1 and 32 characters. Current length: {trimmedValue.Length}.");
 
-            if (!Regex.IsMatch(trimmedValue, @"^[a-z0-9-_]+$"))
-                throw new ArgumentException($"Localized name value for locale '{locale}' can only contain lowercase letters (a-z), numbers (0-9), hyphens (-), or underscores (_).", nameof(locale));
+            if (!Regex.IsMatch(trimmedValue, @"^[-_\p{Ll}\p{N}]+$"))
+                throw new ArgumentException($"Localized name value for locale '{locale}' can only contain lowercase letters (any script), numbers, hyphens (-), or underscores (_).", nameof(locale));
         }
         else if (fieldName == "description")
         {

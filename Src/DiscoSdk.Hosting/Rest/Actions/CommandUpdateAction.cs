@@ -1,4 +1,5 @@
 using DiscoSdk.Commands;
+using DiscoSdk.Commands.Localization;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Commands;
@@ -10,7 +11,10 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <summary>
 /// Represents a fluent builder for queuing and registering Discord application commands.
 /// </summary>
-internal class CommandUpdateAction(DiscordClient client, CommandContainer commandContainer) : RestAction, ICommandUpdateAction
+internal class CommandUpdateAction(
+    DiscordClient client,
+    CommandContainer commandContainer,
+    ICommandLocalizationProvider? localizationProvider = null) : RestAction, ICommandUpdateAction
 {
     private readonly ApplicationCommandClient _applicationCommandClient = new(client.HttpClient);
 
@@ -75,6 +79,7 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer comman
     {
         try
         {
+            ApplyLocalizations();
             await RegisterGlobalCommandsAsync(cancellationToken);
             await RegisterGuildCommandsAsync(cancellationToken);
         }
@@ -83,6 +88,19 @@ internal class CommandUpdateAction(DiscordClient client, CommandContainer comman
             client.Logger.Log(LogLevel.Error, ex, "Failed to register commands");
             throw;
         }
+    }
+
+    private void ApplyLocalizations()
+    {
+        if (localizationProvider is null)
+            return;
+
+        foreach (var cmd in commandContainer.GlobalCommands)
+            CommandLocalizer.Apply(cmd, localizationProvider, guildId: null, logger: client.Logger);
+
+        foreach (var (guildId, commands) in commandContainer.GuildCommands)
+            foreach (var cmd in commands)
+                CommandLocalizer.Apply(cmd, localizationProvider, guildId, logger: client.Logger);
     }
 
     /// <summary>
