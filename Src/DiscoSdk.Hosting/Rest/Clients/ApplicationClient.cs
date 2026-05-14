@@ -132,4 +132,45 @@ internal class ApplicationClient(IDiscordRestClient client)
 		var route = new DiscordRoute("skus/{sku_id}/subscriptions/{subscription_id}", skuId, subscriptionId);
 		return client.SendAsync<Subscription>(route, HttpMethod.Get, null, cancellationToken);
 	}
+
+	// ---- Application emojis ----
+
+	/// <summary>Lists application-owned emojis. Response is wrapped in <see cref="ApplicationEmojiList.Items"/>.</summary>
+	public Task<ApplicationEmojiList> ListApplicationEmojisAsync(Snowflake applicationId, CancellationToken cancellationToken = default)
+	{
+		var route = new DiscordRoute("applications/{application_id}/emojis", applicationId);
+		return client.SendAsync<ApplicationEmojiList>(route, HttpMethod.Get, null, cancellationToken);
+	}
+
+	/// <summary>Gets a single application-owned emoji.</summary>
+	public Task<Emoji> GetApplicationEmojiAsync(Snowflake applicationId, Snowflake emojiId, CancellationToken cancellationToken = default)
+	{
+		var route = new DiscordRoute("applications/{application_id}/emojis/{emoji_id}", applicationId, emojiId);
+		return client.SendAsync<Emoji>(route, HttpMethod.Get, null, cancellationToken);
+	}
+
+	/// <summary>Creates an application-owned emoji.</summary>
+	public Task<Emoji> CreateApplicationEmojiAsync(Snowflake applicationId, object request, CancellationToken cancellationToken = default)
+	{
+		ArgumentNullException.ThrowIfNull(request);
+
+		var route = new DiscordRoute("applications/{application_id}/emojis", applicationId);
+		return client.SendAsync<Emoji>(route, HttpMethod.Post, request, cancellationToken);
+	}
+
+	/// <summary>Modifies an application-owned emoji (only the name can change).</summary>
+	public Task<Emoji> ModifyApplicationEmojiAsync(Snowflake applicationId, Snowflake emojiId, object request, CancellationToken cancellationToken = default)
+	{
+		ArgumentNullException.ThrowIfNull(request);
+
+		var route = new DiscordRoute("applications/{application_id}/emojis/{emoji_id}", applicationId, emojiId);
+		return client.SendAsync<Emoji>(route, HttpMethod.Patch, request, cancellationToken);
+	}
+
+	/// <summary>Deletes an application-owned emoji.</summary>
+	public Task DeleteApplicationEmojiAsync(Snowflake applicationId, Snowflake emojiId, CancellationToken cancellationToken = default)
+	{
+		var route = new DiscordRoute("applications/{application_id}/emojis/{emoji_id}", applicationId, emojiId);
+		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+	}
 }

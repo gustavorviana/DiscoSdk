@@ -92,7 +92,7 @@ namespace DiscoSdk.Hosting
         /// <summary>
         /// Gets or sets the application ID of the bot.
         /// </summary>
-        public Snowflake? ApplicationId { get; private set; }
+        public Snowflake? ApplicationId { get; internal set; }
 
         /// <summary>
         /// Gets a value indicating whether all shards are ready.
@@ -387,7 +387,7 @@ namespace DiscoSdk.Hosting
             return new UpdatePresenceAction(this);
         }
 
-        private Snowflake RequireApplicationId()
+        internal Snowflake RequireApplicationId()
             => ApplicationId ?? throw new InvalidOperationException("The application ID is not available yet — wait until the client is ready.");
 
         /// <inheritdoc />
@@ -438,6 +438,38 @@ namespace DiscoSdk.Hosting
                 var envelope = await StickerClient.ListStickerPacksAsync(ct);
                 return envelope.StickerPacks.Select(p => (IStickerPack)new StickerPackWrapper(this, p)).ToList().AsReadOnly();
             });
+
+        /// <inheritdoc />
+        public IRestAction<IReadOnlyList<IEmoji>> GetApplicationEmojis()
+            => RestAction<IReadOnlyList<IEmoji>>.Create(async ct =>
+            {
+                var envelope = await ApplicationClient.ListApplicationEmojisAsync(RequireApplicationId(), ct);
+                return envelope.Items.Select(e => (IEmoji)new ApplicationEmojiWrapper(this, e)).ToList().AsReadOnly();
+            });
+
+        /// <inheritdoc />
+        public IRestAction<IEmoji> GetApplicationEmoji(Snowflake emojiId)
+            => RestAction<IEmoji>.Create(async ct =>
+                new ApplicationEmojiWrapper(this, await ApplicationClient.GetApplicationEmojiAsync(RequireApplicationId(), emojiId, ct)));
+
+        /// <inheritdoc />
+        public IRestAction<IEmoji> CreateApplicationEmoji(string name, DiscordImageBuffer image)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            ArgumentNullException.ThrowIfNull(image);
+
+            return RestAction<IEmoji>.Create(async ct =>
+            {
+                var imageDataUri = $"data:{image.ImageType};base64,{image.ToBase64()}";
+                var request = new DiscoSdk.Models.Requests.Applications.CreateApplicationEmojiRequest
+                {
+                    Name = name,
+                    Image = imageDataUri,
+                };
+                var emoji = await ApplicationClient.CreateApplicationEmojiAsync(RequireApplicationId(), request, ct);
+                return new ApplicationEmojiWrapper(this, emoji);
+            });
+        }
 
         /// <inheritdoc />
         public IRestAction<IReadOnlyList<IApplicationRoleConnectionMetadata>> GetRoleConnectionMetadata()

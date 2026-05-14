@@ -135,6 +135,17 @@ public interface IDiscordClient
     /// <summary>Lists the built-in Nitro sticker packs.</summary>
     IRestAction<IReadOnlyList<IStickerPack>> GetStickerPacks();
 
+    /// <summary>Lists the application-owned emojis.</summary>
+    IRestAction<IReadOnlyList<IEmoji>> GetApplicationEmojis();
+
+    /// <summary>Gets a single application-owned emoji by id.</summary>
+    IRestAction<IEmoji> GetApplicationEmoji(Snowflake emojiId);
+
+    /// <summary>Creates a new application-owned emoji from <paramref name="image"/>.</summary>
+    /// <param name="name">Emoji name (2-32 chars).</param>
+    /// <param name="image">Image buffer (PNG/JPEG/GIF, 128x128).</param>
+    IRestAction<IEmoji> CreateApplicationEmoji(string name, DiscordImageBuffer image);
+
     /// <summary>
     /// Gets a REST action that retrieves the application role-connection metadata records.
     /// </summary>
