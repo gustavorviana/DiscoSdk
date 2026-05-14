@@ -9,11 +9,14 @@ using DiscoSdk.Hosting.Managers;
 using DiscoSdk.Hosting.Repositories;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Rest.Clients;
+using DiscoSdk.Hosting.Surfaces;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Applications;
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Monetization;
+using DiscoSdk.Models.OAuth2;
 using DiscoSdk.Modules;
 using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
@@ -86,7 +89,19 @@ namespace DiscoSdk.Hosting
         internal StageInstanceClient StageInstanceClient { get; }
         internal GuildScheduledEventClient GuildScheduledEventClient { get; }
         internal StickerClient StickerClient { get; }
+        internal OAuth2Client OAuth2Client { get; }
         internal UserRepository Users { get; }
+
+        /// <inheritdoc />
+        public IOAuth2 OAuth2 { get; }
+        /// <inheritdoc />
+        public IMonetization Monetization { get; }
+        /// <inheritdoc />
+        public IMe Me { get; }
+        /// <inheritdoc />
+        public IWebhooks Webhooks { get; }
+        /// <inheritdoc />
+        public IApplicationEmojis ApplicationEmojis { get; }
         internal DmChannelRepository DmRepository { get; }
 
         /// <summary>
@@ -140,6 +155,12 @@ namespace DiscoSdk.Hosting
             StageInstanceClient = new StageInstanceClient(HttpClient);
             GuildScheduledEventClient = new GuildScheduledEventClient(HttpClient);
             StickerClient = new StickerClient(HttpClient);
+            OAuth2Client = new OAuth2Client(HttpClient);
+            OAuth2 = new OAuth2Surface(this);
+            Monetization = new MonetizationSurface(this);
+            Me = new MeSurface(this);
+            Webhooks = new WebhooksSurface(this);
+            ApplicationEmojis = new ApplicationEmojisSurface(this);
             Users = new UserRepository(this);
             Guilds = new GuildManager(this, Logger);
             Channels = new ChannelManager(this);
@@ -395,38 +416,6 @@ namespace DiscoSdk.Hosting
             => RestAction<IApplication>.Create(async ct => new ApplicationWrapper(this, await ApplicationClient.GetCurrentApplicationAsync(ct)));
 
         /// <inheritdoc />
-        public IRestAction<IReadOnlyList<ISku>> GetSkus()
-            => RestAction<IReadOnlyList<ISku>>.Create(async ct =>
-            {
-                var skus = await ApplicationClient.ListSkusAsync(RequireApplicationId(), ct);
-                return skus.Select(s => (ISku)new SkuWrapper(this, s)).ToList().AsReadOnly();
-            });
-
-        /// <inheritdoc />
-        public IRestAction<IReadOnlyList<IEntitlement>> GetEntitlements(Snowflake? userId = null, Snowflake? guildId = null, bool? excludeEnded = null, bool? excludeDeleted = null)
-            => RestAction<IReadOnlyList<IEntitlement>>.Create(async ct =>
-            {
-                var entitlements = await ApplicationClient.ListEntitlementsAsync(RequireApplicationId(), userId, guildId, excludeEnded, excludeDeleted, ct);
-                return entitlements.Select(e => (IEntitlement)new EntitlementWrapper(this, e)).ToList().AsReadOnly();
-            });
-
-        /// <inheritdoc />
-        public IRestAction<IEntitlement> GetEntitlement(Snowflake entitlementId)
-            => RestAction<IEntitlement>.Create(async ct => new EntitlementWrapper(this, await ApplicationClient.GetEntitlementAsync(RequireApplicationId(), entitlementId, ct)));
-
-        /// <inheritdoc />
-        public IRestAction ConsumeEntitlement(Snowflake entitlementId)
-            => RestAction.Create(ct => ApplicationClient.ConsumeEntitlementAsync(RequireApplicationId(), entitlementId, ct));
-
-        /// <inheritdoc />
-        public IRestAction<IReadOnlyList<ISubscription>> GetSkuSubscriptions(Snowflake skuId, Snowflake? userId = null)
-            => RestAction<IReadOnlyList<ISubscription>>.Create(async ct => await ApplicationClient.ListSkuSubscriptionsAsync(skuId, userId, ct));
-
-        /// <inheritdoc />
-        public IRestAction<ISubscription> GetSkuSubscription(Snowflake skuId, Snowflake subscriptionId)
-            => RestAction<ISubscription>.Create(async ct => await ApplicationClient.GetSkuSubscriptionAsync(skuId, subscriptionId, ct));
-
-        /// <inheritdoc />
         public IRestAction<ISticker> GetSticker(Snowflake stickerId)
             => RestAction<ISticker>.Create(async ct =>
                 new StickerWrapper(this, await StickerClient.GetStickerAsync(stickerId, ct)));
@@ -438,38 +427,6 @@ namespace DiscoSdk.Hosting
                 var envelope = await StickerClient.ListStickerPacksAsync(ct);
                 return envelope.StickerPacks.Select(p => (IStickerPack)new StickerPackWrapper(this, p)).ToList().AsReadOnly();
             });
-
-        /// <inheritdoc />
-        public IRestAction<IReadOnlyList<IEmoji>> GetApplicationEmojis()
-            => RestAction<IReadOnlyList<IEmoji>>.Create(async ct =>
-            {
-                var envelope = await ApplicationClient.ListApplicationEmojisAsync(RequireApplicationId(), ct);
-                return envelope.Items.Select(e => (IEmoji)new ApplicationEmojiWrapper(this, e)).ToList().AsReadOnly();
-            });
-
-        /// <inheritdoc />
-        public IRestAction<IEmoji> GetApplicationEmoji(Snowflake emojiId)
-            => RestAction<IEmoji>.Create(async ct =>
-                new ApplicationEmojiWrapper(this, await ApplicationClient.GetApplicationEmojiAsync(RequireApplicationId(), emojiId, ct)));
-
-        /// <inheritdoc />
-        public IRestAction<IEmoji> CreateApplicationEmoji(string name, DiscordImageBuffer image)
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(name);
-            ArgumentNullException.ThrowIfNull(image);
-
-            return RestAction<IEmoji>.Create(async ct =>
-            {
-                var imageDataUri = $"data:{image.ImageType};base64,{image.ToBase64()}";
-                var request = new DiscoSdk.Models.Requests.Applications.CreateApplicationEmojiRequest
-                {
-                    Name = name,
-                    Image = imageDataUri,
-                };
-                var emoji = await ApplicationClient.CreateApplicationEmojiAsync(RequireApplicationId(), request, ct);
-                return new ApplicationEmojiWrapper(this, emoji);
-            });
-        }
 
         /// <inheritdoc />
         public IRestAction<IReadOnlyList<IApplicationRoleConnectionMetadata>> GetRoleConnectionMetadata()
@@ -497,87 +454,6 @@ namespace DiscoSdk.Hosting
                 }
 
                 return null;
-            });
-
-        /// <inheritdoc />
-        public IRestAction<IUser> GetCurrentUser()
-            => RestAction<IUser>.Create(async ct => new UserWrapper(this, await UserClient.GetCurrentAsync(ct)));
-
-        /// <inheritdoc />
-        public IRestAction<IUser> ModifyCurrentUser(string? username = null, string? avatar = null, string? banner = null)
-            => RestAction<IUser>.Create(async ct =>
-            {
-                var body = new Dictionary<string, object?>();
-                if (username is not null) body["username"] = username;
-                if (avatar is not null) body["avatar"] = avatar.Length == 0 ? null : avatar;
-                if (banner is not null) body["banner"] = banner.Length == 0 ? null : banner;
-                var user = await UserClient.ModifyCurrentAsync(body, ct);
-                return new UserWrapper(this, user);
-            });
-
-        /// <inheritdoc />
-        public IRestAction<IReadOnlyList<IGuild>> GetCurrentUserGuilds(int? limit = null, Snowflake? before = null, Snowflake? after = null, bool? withCounts = null)
-            => RestAction<IReadOnlyList<IGuild>>.Create(async ct =>
-            {
-                var guilds = await UserClient.GetCurrentGuildsAsync(limit, before, after, withCounts, ct);
-                return guilds.Select(g => (IGuild)new GuildWrapper(g, this)).ToList().AsReadOnly();
-            });
-
-        /// <inheritdoc />
-        public IRestAction<IMember> GetCurrentUserGuildMember(Snowflake guildId)
-            => RestAction<IMember>.Create(async ct =>
-            {
-                var member = await UserClient.GetCurrentGuildMemberAsync(guildId, ct);
-                var guild = await Guilds.GetAsync(guildId, ct)
-                    ?? throw new InvalidOperationException($"Guild {guildId} not found.");
-                return new GuildMemberWrapper(this, member, guild);
-            });
-
-        /// <inheritdoc />
-        public IRestAction<IReadOnlyList<IConnection>> GetCurrentUserConnections()
-            => RestAction<IReadOnlyList<IConnection>>.Create(async ct =>
-            {
-                var connections = await UserClient.GetConnectionsAsync(ct);
-                return connections.Cast<IConnection>().ToList().AsReadOnly();
-            });
-
-        /// <inheritdoc />
-        public IRestAction<IApplicationRoleConnection> GetCurrentUserApplicationRoleConnection(Snowflake applicationId)
-            => RestAction<IApplicationRoleConnection>.Create(async ct => await UserClient.GetApplicationRoleConnectionAsync(applicationId, ct));
-
-        /// <inheritdoc />
-        public IRestAction<IApplicationRoleConnection> UpdateCurrentUserApplicationRoleConnection(Snowflake applicationId, ApplicationRoleConnection record)
-        {
-            ArgumentNullException.ThrowIfNull(record);
-            return RestAction<IApplicationRoleConnection>.Create(async ct => await UserClient.UpdateApplicationRoleConnectionAsync(applicationId, record, ct));
-        }
-
-        /// <inheritdoc />
-        public IRestAction<IWebhook?> GetWebhook(Snowflake webhookId)
-            => RestAction<IWebhook?>.Create(async ct =>
-            {
-                var webhook = await WebhookClient.GetAsync(webhookId, ct);
-                return webhook is null ? null : new WebhookWrapper(this, webhook);
-            });
-
-        /// <inheritdoc />
-        public IRestAction<IWebhook?> GetWebhook(Snowflake webhookId, string token)
-            => RestAction<IWebhook?>.Create(async ct =>
-            {
-                var webhook = await WebhookClient.GetWithTokenAsync(webhookId, token, ct);
-                return webhook is null ? null : new WebhookWrapper(this, webhook);
-            });
-
-        /// <inheritdoc />
-        public IRestAction<IWebhook> CreateChannelWebhook(Snowflake channelId, string name, string? avatar = null)
-            => RestAction<IWebhook>.Create(async ct => new WebhookWrapper(this, await WebhookClient.CreateAsync(channelId, name, avatar, ct)));
-
-        /// <inheritdoc />
-        public IRestAction<IReadOnlyList<IWebhook>> GetChannelWebhooks(Snowflake channelId)
-            => RestAction<IReadOnlyList<IWebhook>>.Create(async ct =>
-            {
-                var webhooks = await WebhookClient.GetChannelWebhooksAsync(channelId, ct);
-                return webhooks.Select(w => (IWebhook)new WebhookWrapper(this, w)).ToList().AsReadOnly();
             });
 
         async Task IShardEventListener.OnReceiveMessageAsync(Shard shard, ReceivedGatewayMessage message)

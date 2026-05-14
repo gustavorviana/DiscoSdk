@@ -136,11 +136,18 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains the deserialized response.</returns>
     /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
-    public async Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
+    public Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
+        => SendAsync<T>(path, method, body, null, ct);
+
+    public Task SendAsync(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
+        => SendAsync(path, method, body, null, ct);
+
+    /// <inheritdoc />
+    public async Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, object? body, AuthenticationHeaderValue? authOverride, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(method);
 
-        using var res = await DispatchAsync(path, method, () => CreateRequestWithBody(path, method, body), ct);
+        using var res = await DispatchAsync(path, method, BuildFactory(path, method, body, authOverride), ct);
         if (res.IsSuccessStatusCode)
         {
             if (res.StatusCode == HttpStatusCode.NoContent)
@@ -156,15 +163,35 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         throw await GetDiscordExceptionAsync(res, ct);
     }
 
-    public async Task SendAsync(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
+    /// <inheritdoc />
+    public async Task SendAsync(DiscordRoute path, HttpMethod method, object? body, AuthenticationHeaderValue? authOverride, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(method);
 
-        using var res = await DispatchAsync(path, method, () => CreateRequestWithBody(path, method, body), ct);
+        using var res = await DispatchAsync(path, method, BuildFactory(path, method, body, authOverride), ct);
         if (res.IsSuccessStatusCode || res.StatusCode == HttpStatusCode.NoContent)
             return;
 
         throw await GetDiscordExceptionAsync(res, ct);
+    }
+
+    /// <summary>
+    /// Builds the request factory used by the bucket queue. When <paramref name="authOverride"/>
+    /// is non-null the override is applied to each freshly-built <see cref="HttpRequestMessage"/>,
+    /// never to <see cref="HttpClient.DefaultRequestHeaders"/> — so concurrent calls using
+    /// different auth schemes don't race on shared state.
+    /// </summary>
+    private Func<HttpRequestMessage> BuildFactory(DiscordRoute path, HttpMethod method, object? body, AuthenticationHeaderValue? authOverride)
+    {
+        if (authOverride is null)
+            return () => CreateRequestWithBody(path, method, body);
+
+        return () =>
+        {
+            var req = CreateRequestWithBody(path, method, body);
+            req.Headers.Authorization = authOverride;
+            return req;
+        };
     }
 
     /// <summary>

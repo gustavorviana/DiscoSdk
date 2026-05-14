@@ -93,4 +93,43 @@ internal static class ClientUtils
 
         return form;
     }
+
+    /// <summary>
+    /// Sends a request whose body is <c>application/x-www-form-urlencoded</c>. Used by OAuth2
+    /// token endpoints which reject JSON. <paramref name="authOverride"/> replaces the bot-token
+    /// default for this request only (HTTP Basic for token / revoke, Bearer for <c>/oauth2/@me</c>).
+    /// </summary>
+    public static Task<TResponse> SendFormUrlEncodedAsync<TResponse>(this IDiscordRestClient client,
+        DiscordRoute route,
+        HttpMethod method,
+        IReadOnlyDictionary<string, string> fields,
+        AuthenticationHeaderValue? authOverride,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentNullException.ThrowIfNull(method);
+        ArgumentNullException.ThrowIfNull(fields);
+
+        Func<HttpContent> factory = () => new FormUrlEncodedContent(fields);
+        return client.SendAsync<TResponse>(route, method, factory, authOverride, cancellationToken);
+    }
+
+    /// <summary>
+    /// Same as <see cref="SendFormUrlEncodedAsync{TResponse}"/> but for endpoints that return no body
+    /// (e.g. <c>POST /oauth2/token/revoke</c>).
+    /// </summary>
+    public static Task SendFormUrlEncodedAsync(this IDiscordRestClient client,
+        DiscordRoute route,
+        HttpMethod method,
+        IReadOnlyDictionary<string, string> fields,
+        AuthenticationHeaderValue? authOverride,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentNullException.ThrowIfNull(method);
+        ArgumentNullException.ThrowIfNull(fields);
+
+        Func<HttpContent> factory = () => new FormUrlEncodedContent(fields);
+        return client.SendAsync(route, method, factory, authOverride, cancellationToken);
+    }
 }

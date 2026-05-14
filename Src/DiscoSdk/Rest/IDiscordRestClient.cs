@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace DiscoSdk.Rest;
 
@@ -49,4 +50,18 @@ public interface IDiscordRestClient : IDisposable
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains the deserialized response.</returns>
     Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, CancellationToken ct);
+
+    /// <summary>
+    /// Sends a request to the Discord API with an optional per-request <c>Authorization</c> header.
+    /// When <paramref name="authOverride"/> is non-null it replaces the bot-token default for this
+    /// request only; the client's <c>DefaultRequestHeaders</c> are never mutated. Primarily intended
+    /// for OAuth2 endpoints that require HTTP Basic (<c>client_id:client_secret</c>) or bearer auth.
+    /// </summary>
+    Task SendAsync(DiscordRoute path, HttpMethod method, object? body, AuthenticationHeaderValue? authOverride, CancellationToken ct);
+
+    /// <summary>
+    /// Sends a request to the Discord API with an optional per-request <c>Authorization</c> header
+    /// and deserializes the response. Same per-request override semantics as the non-generic overload.
+    /// </summary>
+    Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, object? body, AuthenticationHeaderValue? authOverride, CancellationToken ct);
 }
