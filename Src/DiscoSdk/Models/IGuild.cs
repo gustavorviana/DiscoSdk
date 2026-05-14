@@ -643,4 +643,10 @@ public interface IGuild
     /// Gets a REST action that lists all webhooks attached to channels in this guild.
     /// </summary>
     IRestAction<IReadOnlyList<IWebhook>> GetWebhooks();
+
+    /// <summary>
+    /// Application-command operations scoped to this guild (currently the per-guild
+    /// command-permission endpoints).
+    /// </summary>
+    IGuildCommands Commands { get; }
 }

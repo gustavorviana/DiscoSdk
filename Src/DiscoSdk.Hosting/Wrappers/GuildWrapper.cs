@@ -1,5 +1,6 @@
 using DiscoSdk.Hosting.EqualityComparers;
 using DiscoSdk.Hosting.Rest.Actions;
+using DiscoSdk.Hosting.Surfaces;
 using DiscoSdk.Hosting.Wrappers.Channels;
 using DiscoSdk.Models;
 using DiscoSdk.Models.AutoModeration;
@@ -566,6 +567,9 @@ internal class GuildWrapper : IGuild
             var webhooks = await _client.WebhookClient.GetGuildWebhooksAsync(_guild.Id, ct);
             return webhooks.Select(w => (IWebhook)new WebhookWrapper(_client, w)).ToList().AsReadOnly();
         });
+
+    public IGuildCommands Commands => _commands ??= new GuildCommandsSurface(_client, _guild.Id);
+    private IGuildCommands? _commands;
 
     internal void OnUpdate(Guild guild)
     {

@@ -1,6 +1,8 @@
 using DiscoSdk.Models;
 using DiscoSdk.Models.Commands;
+using DiscoSdk.Models.Requests.Commands;
 using DiscoSdk.Rest;
+using System.Net.Http.Headers;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
 
@@ -136,6 +138,47 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
         ArgumentNullException.ThrowIfNull(request);
         var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands/{command_id}", applicationId, guildId, commandId);
         return client.SendAsync<SlashCommand>(route, HttpMethod.Patch, request, ct);
+    }
+
+    // ---- Command permissions ----
+
+    /// <summary>
+    /// Lists permission overrides for every command in <paramref name="guildId"/>. Bot-token
+    /// auth works for this <c>GET</c>.
+    /// </summary>
+    public Task<ApplicationCommandPermissions[]> GetGuildCommandsPermissionsAsync(Snowflake applicationId, Snowflake guildId, CancellationToken ct = default)
+    {
+        var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands/permissions", applicationId, guildId);
+        return client.SendAsync<ApplicationCommandPermissions[]>(route, HttpMethod.Get, null, ct);
+    }
+
+    /// <summary>Gets the permission overrides for a single command. Bot-token auth works.</summary>
+    public Task<ApplicationCommandPermissions> GetCommandPermissionsAsync(Snowflake applicationId, Snowflake guildId, Snowflake commandId, CancellationToken ct = default)
+    {
+        var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands/{command_id}/permissions", applicationId, guildId, commandId);
+        return client.SendAsync<ApplicationCommandPermissions>(route, HttpMethod.Get, null, ct);
+    }
+
+    /// <summary>
+    /// Replaces the permission overrides for a single command. Discord requires a user OAuth2
+    /// bearer token with the <c>applications.commands.permissions.update</c> scope — bot tokens
+    /// are rejected. Caller passes the token via <paramref name="bearerToken"/>, which becomes
+    /// the per-request <c>Authorization</c> header.
+    /// </summary>
+    public Task<ApplicationCommandPermissions> EditCommandPermissionsAsync(
+        Snowflake applicationId,
+        Snowflake guildId,
+        Snowflake commandId,
+        ApplicationCommandPermission[] permissions,
+        string bearerToken,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(permissions);
+        ArgumentException.ThrowIfNullOrWhiteSpace(bearerToken);
+
+        var body = new EditApplicationCommandPermissionsRequest { Permissions = permissions };
+        var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands/{command_id}/permissions", applicationId, guildId, commandId);
+        return client.SendAsync<ApplicationCommandPermissions>(route, HttpMethod.Put, body, new AuthenticationHeaderValue("Bearer", bearerToken), ct);
     }
 }
 

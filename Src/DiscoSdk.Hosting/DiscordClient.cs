@@ -90,6 +90,7 @@ namespace DiscoSdk.Hosting
         internal GuildScheduledEventClient GuildScheduledEventClient { get; }
         internal StickerClient StickerClient { get; }
         internal OAuth2Client OAuth2Client { get; }
+        internal ApplicationCommandClient ApplicationCommandClient { get; }
         internal UserRepository Users { get; }
 
         /// <inheritdoc />
@@ -156,6 +157,7 @@ namespace DiscoSdk.Hosting
             GuildScheduledEventClient = new GuildScheduledEventClient(HttpClient);
             StickerClient = new StickerClient(HttpClient);
             OAuth2Client = new OAuth2Client(HttpClient);
+            ApplicationCommandClient = new ApplicationCommandClient(HttpClient);
             OAuth2 = new OAuth2Surface(this);
             Monetization = new MonetizationSurface(this);
             Me = new MeSurface(this);
