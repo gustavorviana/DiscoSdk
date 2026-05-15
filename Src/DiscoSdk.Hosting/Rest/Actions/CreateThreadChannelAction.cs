@@ -158,21 +158,33 @@ internal class CreateThreadChannelAction : RestAction<IGuildThreadChannel>, ICre
 	}
 
 	/// <inheritdoc />
-	public ICreateIThreadChannelAction SetMessageAllowedMentions(string[]? parse = null, string[]? users = null, string[]? roles = null)
+	public ICreateIThreadChannelAction SetMessageAllowedMentionTypes(params string[] parse)
 	{
-		if (parse == null && users == null && roles == null)
-		{
-			_messageAllowedMentions = null;
-			return this;
-		}
+		_messageAllowedMentions ??= new AllowedMentions();
+		_messageAllowedMentions.Parse = parse;
+		return this;
+	}
 
-		_messageAllowedMentions = new AllowedMentions
-		{
-			Parse = parse,
-			Users = users,
-			Roles = roles
-		};
+	/// <inheritdoc />
+	public ICreateIThreadChannelAction SetMessageAllowedMentionUsers(params string[] users)
+	{
+		_messageAllowedMentions ??= new AllowedMentions();
+		_messageAllowedMentions.Users = users;
+		return this;
+	}
 
+	/// <inheritdoc />
+	public ICreateIThreadChannelAction SetMessageAllowedMentionRoles(params string[] roles)
+	{
+		_messageAllowedMentions ??= new AllowedMentions();
+		_messageAllowedMentions.Roles = roles;
+		return this;
+	}
+
+	/// <inheritdoc />
+	public ICreateIThreadChannelAction ClearMessageAllowedMentions()
+	{
+		_messageAllowedMentions = null;
 		return this;
 	}
 

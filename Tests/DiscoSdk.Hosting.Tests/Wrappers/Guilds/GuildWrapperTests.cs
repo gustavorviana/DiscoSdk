@@ -178,7 +178,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildMember>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new GuildMember { User = new User { UserId = new Snowflake(42), Username = "u" } });
 
-		await _wrapper.AddMember(new Snowflake(42), "tok", nick: "Bob").ExecuteAsync();
+		await _wrapper.AddMember(new Snowflake(42), "tok").SetNickname("Bob").ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildMember>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/members/42"),
@@ -206,7 +206,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildMember>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new GuildMember { User = new User { UserId = new Snowflake(42), Username = "u" } });
 
-		await _wrapper.ModifyMember(new Snowflake(42), nick: "new", mute: true).ExecuteAsync();
+		await _wrapper.ModifyMember(new Snowflake(42)).SetNickname("new").SetMuted(true).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildMember>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/members/42"),

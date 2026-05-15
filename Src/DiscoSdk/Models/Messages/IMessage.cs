@@ -144,7 +144,7 @@ public interface IMessage : IMessageBase, IMentionable, IDeletable
     /// <exception cref="DiscoSdk.Exceptions.MissingIntentException">
     /// Thrown when the appropriate reactions intent is not enabled on the client.
     /// </exception>
-    IRestAction<User[]> GetReactions(string emoji, string? after = null, int? limit = null);
+    IGetReactionsAction GetReactions(string emoji);
 
     /// <summary>
     /// Deletes all reactions of a specific emoji from this message.

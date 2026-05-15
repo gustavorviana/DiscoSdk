@@ -152,7 +152,7 @@ public class WebhookClientTests
 			.Returns(new Webhook());
 
 		// only name supplied
-		await _client.ModifyAsync(new Snowflake(7), name: "new-name");
+		await _client.ModifyAsync(new Snowflake(7), new Dictionary<string, object?> { ["name"] = "new-name" });
 
 		await _http.Received(1).SendAsync<Webhook>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "webhooks/7"),

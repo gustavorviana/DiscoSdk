@@ -146,15 +146,14 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
             _client.MessageClient.AddReactionAsync(Message.ChannelId, Message.Id, emoji, cancellationToken));
     }
 
-    public IRestAction<User[]> GetReactions(string emoji, string? after = null, int? limit = null)
+    public IGetReactionsAction GetReactions(string emoji)
     {
         ValidateReactionIntent("get reactions from");
 
         if (Message.Flags.HasFlag(MessageFlags.Ephemeral))
             throw EphemeralMessageException.Operation("get reactions from");
 
-        return RestAction<User[]>.Create(cancellationToken =>
-            _client.MessageClient.GetReactionsAsync(Message.ChannelId, Message.Id, emoji, after, limit, cancellationToken));
+        return new GetReactionsAction(_client, Message.ChannelId, Message.Id, emoji);
     }
 
     public IRestAction DeleteAllReactionsForEmoji(string emoji)

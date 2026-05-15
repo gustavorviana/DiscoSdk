@@ -19,10 +19,11 @@ public interface IOAuth2
     IBuildAuthorizeUrlAction BuildAuthorizeUrl();
 
     /// <summary>
-    /// Exchanges a temporary <paramref name="code"/> (received on the OAuth2 redirect) for an
-    /// access + refresh token pair. Sends HTTP Basic auth (<c>{ApplicationId}:{clientSecret}</c>).
+    /// Builds a REST action that exchanges a temporary <c>code</c> (received on the OAuth2 redirect)
+    /// for an access + refresh token pair. Configure secret / code / redirect URI on the builder.
+    /// Sends HTTP Basic auth (<c>{ApplicationId}:{clientSecret}</c>).
     /// </summary>
-    IRestAction<IAccessTokenResponse> ExchangeAuthorizationCode(string clientSecret, string code, string redirectUri);
+    IExchangeAuthorizationCodeAction ExchangeAuthorizationCode();
 
     /// <summary>Trades a refresh token for a fresh access + refresh token pair.</summary>
     IRestAction<IAccessTokenResponse> RefreshAccessToken(string clientSecret, string refreshToken);
@@ -33,8 +34,11 @@ public interface IOAuth2
     /// </summary>
     IRestAction<IAccessTokenResponse> GetClientCredentialsToken(string clientSecret, params string[] scopes);
 
-    /// <summary>Revokes an access or refresh token. Both halves of the token pair are revoked regardless of <paramref name="tokenTypeHint"/>.</summary>
-    IRestAction RevokeToken(string clientSecret, string token, OAuth2TokenTypeHint? tokenTypeHint = null);
+    /// <summary>
+    /// Builds a REST action that revokes an access or refresh token. Both halves of the token
+    /// pair are revoked regardless of the optional hint.
+    /// </summary>
+    IRevokeTokenAction RevokeToken();
 
     /// <summary>Reads metadata for a bearer access token: application, granted scopes, expiry, authorising user.</summary>
     IRestAction<ICurrentAuthorizationInfo> GetCurrentAuthorizationInfo(string accessToken);

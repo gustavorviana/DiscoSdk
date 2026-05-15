@@ -81,7 +81,7 @@ public class MessageWrapperTests : WrapperTestBase
 			.Returns([]);
 		var (wrapper, _) = NewWrapper();
 
-		await wrapper.GetReactions("👍", limit: 10).ExecuteAsync();
+		await wrapper.GetReactions("👍").SetLimit(10).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<User[]>(
 			Arg.Is<DiscordRoute>(r => r.ToString().Contains("/reactions/") && r.ToString().Contains("limit=10")),

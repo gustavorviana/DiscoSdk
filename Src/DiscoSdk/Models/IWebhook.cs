@@ -36,10 +36,10 @@ public interface IWebhook : IWithSnowflake
 	string? Url { get; }
 
 	/// <summary>
-	/// Gets a REST action that modifies this webhook. Pass <c>name</c>, <c>avatar</c> (base64 data URI) or
-	/// <c>channelId</c> to change the corresponding fields; <c>null</c> arguments are left untouched.
+	/// Builds a REST action that modifies this webhook. Configure name / avatar / target channel
+	/// on the returned builder before calling <see cref="IRestAction{T}.ExecuteAsync"/>.
 	/// </summary>
-	IRestAction<IWebhook> Modify(string? name = null, string? avatar = null, Snowflake? channelId = null);
+	IModifyWebhookAction Modify();
 
 	/// <summary>
 	/// Gets a REST action that deletes this webhook.

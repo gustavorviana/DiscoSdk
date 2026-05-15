@@ -29,8 +29,7 @@ internal sealed class WebhooksSurface(DiscordClient client) : IWebhooks
         });
 
     /// <inheritdoc />
-    public IRestAction<IWebhook> Create(Snowflake channelId, string name, string? avatar = null)
-        => RestAction<IWebhook>.Create(async ct => new WebhookWrapper(_client, await _client.WebhookClient.CreateAsync(channelId, name, avatar, ct)));
+    public ICreateWebhookAction Create(Snowflake channelId) => new CreateWebhookAction(_client, channelId);
 
     /// <inheritdoc />
     public IRestAction<IReadOnlyList<IWebhook>> ListForChannel(Snowflake channelId)

@@ -13,13 +13,11 @@ public interface IGroupDmChannel : IDmChannel
 	Snowflake OwnerId { get; }
 
 	/// <summary>
-	/// Adds a user to this group DM. Requires an OAuth2 access token with the <c>gdm.join</c>
-	/// scope from the user being added — bot tokens are rejected by Discord with <c>401</c>.
+	/// Builds a REST action that adds a user to this group DM. The OAuth2 access token (with the
+	/// <c>gdm.join</c> scope) is required and is configured via <see cref="IAddGroupDmRecipientAction.SetAccessToken"/>.
+	/// Bot tokens are rejected by Discord with <c>401</c>.
 	/// </summary>
-	/// <param name="userId">The ID of the user to add.</param>
-	/// <param name="accessToken">The user's OAuth2 access token with the <c>gdm.join</c> scope.</param>
-	/// <param name="nick">Optional nickname for the recipient inside the group DM.</param>
-	IRestAction AddRecipient(Snowflake userId, string accessToken, string? nick = null);
+	IAddGroupDmRecipientAction AddRecipient(Snowflake userId);
 
 	/// <summary>
 	/// Removes a user from this group DM. The caller must own the group DM.

@@ -601,10 +601,12 @@ public interface IGuild
     IRestAction<IReadOnlyList<IMember>> SearchMembers(string query, int? limit = null);
 
     /// <summary>
-    /// Gets a REST action that uses an OAuth2 access token (with the <c>guilds.join</c> scope) to add a
-    /// user to this guild. Returns the resulting member, or <c>null</c> if the user was already in the guild.
+    /// Builds a REST action that adds a user to this guild using an OAuth2 access token granted with
+    /// the <c>guilds.join</c> scope. Configure optional fields (nickname, roles, mute, deaf) on the
+    /// returned builder, then call <see cref="IRestAction{T}.ExecuteAsync"/>. Returns <c>null</c> if
+    /// the user was already in the guild.
     /// </summary>
-    IRestAction<IMember?> AddMember(Snowflake userId, string accessToken, string? nick = null, IEnumerable<Snowflake>? roles = null, bool? mute = null, bool? deaf = null);
+    IAddMemberAction AddMember(Snowflake userId, string accessToken);
 
     /// <summary>
     /// Gets a REST action that updates the bot's own nickname in this guild. Pass <c>null</c> to clear it.
@@ -612,18 +614,12 @@ public interface IGuild
     IRestAction<IMember> ModifyCurrentMember(string? nick);
 
     /// <summary>
-    /// Gets a REST action that modifies a member's nickname, roles, voice state and timeout. Pass <c>null</c>
-    /// for any field to leave it untouched.
+    /// Builds a REST action that modifies a guild member. Each setter on the builder corresponds to
+    /// one Discord field — only the fields you set are sent. Use <see cref="IModifyMemberAction.Timeout"/>
+    /// / <see cref="IModifyMemberAction.ClearTimeout"/> instead of passing a sentinel timestamp.
     /// </summary>
     /// <param name="userId">The member to modify.</param>
-    /// <param name="nick">New nickname, or <c>null</c> to leave unchanged.</param>
-    /// <param name="roles">New full role list, or <c>null</c> to leave unchanged.</param>
-    /// <param name="mute">New mute state (voice).</param>
-    /// <param name="deaf">New deafen state (voice).</param>
-    /// <param name="channelId">If set, moves the member to this voice channel.</param>
-    /// <param name="communicationDisabledUntil">If set, applies a timeout until this timestamp; pass <see cref="DateTimeOffset.MinValue"/> to clear.</param>
-    /// <param name="flags">If set, the new member flags raw value.</param>
-    IRestAction<IMember> ModifyMember(Snowflake userId, string? nick = null, IEnumerable<Snowflake>? roles = null, bool? mute = null, bool? deaf = null, Snowflake? channelId = null, DateTimeOffset? communicationDisabledUntil = null, int? flags = null);
+    IModifyMemberAction ModifyMember(Snowflake userId);
 
     /// <summary>
     /// Gets a REST action that adds a role to a guild member.

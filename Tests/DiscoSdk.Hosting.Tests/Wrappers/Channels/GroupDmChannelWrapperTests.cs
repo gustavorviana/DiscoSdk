@@ -19,7 +19,7 @@ public class GroupDmChannelWrapperTests : WrapperTestBase
 	[Fact]
 	public async Task AddRecipient_PutsRecipientsRouteWithTypedBodyAsync()
 	{
-		await NewWrapper().AddRecipient(_userId, "tok-abc", nick: "buddy").ExecuteAsync();
+		await NewWrapper().AddRecipient(_userId).SetAccessToken("tok-abc").SetNickname("buddy").ExecuteAsync();
 
 		await Http.Received(1).SendAsync(
 			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/recipients/{_userId}"),
@@ -33,7 +33,7 @@ public class GroupDmChannelWrapperTests : WrapperTestBase
 	[Fact]
 	public async Task AddRecipient_OmitsNickWhenNullAsync()
 	{
-		await NewWrapper().AddRecipient(_userId, "tok-abc").ExecuteAsync();
+		await NewWrapper().AddRecipient(_userId).SetAccessToken("tok-abc").ExecuteAsync();
 
 		await Http.Received(1).SendAsync(
 			Arg.Any<DiscordRoute>(),
@@ -45,7 +45,7 @@ public class GroupDmChannelWrapperTests : WrapperTestBase
 	[Fact]
 	public void AddRecipient_RejectsEmptyAccessToken()
 	{
-		Assert.ThrowsAny<ArgumentException>(() => NewWrapper().AddRecipient(_userId, ""));
+		Assert.ThrowsAny<ArgumentException>(() => NewWrapper().AddRecipient(_userId).SetAccessToken(""));
 	}
 
 	[Fact]

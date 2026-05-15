@@ -72,14 +72,10 @@ internal sealed class WebhookClient(IDiscordRestClient client)
 		}
 	}
 
-	/// <summary>Modifies a webhook. Any null arguments are left untouched.</summary>
-	public Task<Webhook> ModifyAsync(Snowflake webhookId, string? name = null, string? avatar = null, Snowflake? channelId = null, CancellationToken cancellationToken = default)
+	/// <summary>Modifies a webhook with a preconstructed body (used by the builder action).</summary>
+	public Task<Webhook> ModifyAsync(Snowflake webhookId, IDictionary<string, object?> body, CancellationToken cancellationToken = default)
 	{
-		var body = new Dictionary<string, object?>();
-		if (name is not null) body["name"] = name;
-		if (avatar is not null) body["avatar"] = avatar;
-		if (channelId.HasValue) body["channel_id"] = channelId.Value.ToString();
-
+		ArgumentNullException.ThrowIfNull(body);
 		var route = new DiscordRoute("webhooks/{webhook_id}", webhookId);
 		return client.SendAsync<Webhook>(route, HttpMethod.Patch, body, cancellationToken);
 	}

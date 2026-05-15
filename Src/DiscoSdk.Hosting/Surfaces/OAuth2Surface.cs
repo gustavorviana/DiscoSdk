@@ -19,9 +19,7 @@ internal sealed class OAuth2Surface(DiscordClient client) : IOAuth2
         => new BuildAuthorizeUrlAction(_client.RequireApplicationId().ToString());
 
     /// <inheritdoc />
-    public IRestAction<IAccessTokenResponse> ExchangeAuthorizationCode(string clientSecret, string code, string redirectUri)
-        => RestAction<IAccessTokenResponse>.Create(async ct =>
-            await _client.OAuth2Client.ExchangeAuthorizationCodeAsync(_client.RequireApplicationId().ToString(), clientSecret, code, redirectUri, ct));
+    public IExchangeAuthorizationCodeAction ExchangeAuthorizationCode() => new ExchangeAuthorizationCodeAction(_client);
 
     /// <inheritdoc />
     public IRestAction<IAccessTokenResponse> RefreshAccessToken(string clientSecret, string refreshToken)
@@ -34,8 +32,7 @@ internal sealed class OAuth2Surface(DiscordClient client) : IOAuth2
             await _client.OAuth2Client.GetClientCredentialsTokenAsync(_client.RequireApplicationId().ToString(), clientSecret, scopes, ct));
 
     /// <inheritdoc />
-    public IRestAction RevokeToken(string clientSecret, string token, OAuth2TokenTypeHint? tokenTypeHint = null)
-        => RestAction.Create(ct => _client.OAuth2Client.RevokeTokenAsync(_client.RequireApplicationId().ToString(), clientSecret, token, tokenTypeHint, ct));
+    public IRevokeTokenAction RevokeToken() => new RevokeTokenAction(_client);
 
     /// <inheritdoc />
     public IRestAction<ICurrentAuthorizationInfo> GetCurrentAuthorizationInfo(string accessToken)

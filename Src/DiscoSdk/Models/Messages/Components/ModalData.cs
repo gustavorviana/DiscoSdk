@@ -6,7 +6,11 @@ namespace DiscoSdk.Models.Messages.Components;
 /// <summary>
 /// Represents modal data for responding to an interaction with a modal.
 /// </summary>
-public class ModalData
+/// <remarks>
+/// Internal payload — construct modals through <c>IReplyModalRestAction</c>, never directly.
+/// Exposed across assemblies via <c>InternalsVisibleTo</c> for serialization tests only.
+/// </remarks>
+internal class ModalData
 {
 	/// <summary>
 	/// Gets or sets the custom ID for the modal (max 100 characters).

@@ -62,13 +62,19 @@ public interface ICreateIThreadChannelAction : IRestAction<IGuildThreadChannel>
 	ICreateIThreadChannelAction SetMessageComponents(params IMessageComponent[] components);
 
 	/// <summary>
-	/// Sets the allowed mentions configuration for the initial message in forum posts.
+	/// Sets the mention-types that should be parsed from the initial message content. Valid values:
+	/// <c>roles</c>, <c>users</c>, <c>everyone</c>. Pass an empty array to disable all parsing.
 	/// </summary>
-	/// <param name="parse">An array of allowed mention types to parse from the content. Valid values: "roles", "users", "everyone".</param>
-	/// <param name="users">An array of user IDs to mention (max 100).</param>
-	/// <param name="roles">An array of role IDs to mention (max 100).</param>
-	/// <returns>The current <see cref="ICreateIThreadChannelAction"/> instance.</returns>
-	ICreateIThreadChannelAction SetMessageAllowedMentions(string[]? parse = null, string[]? users = null, string[]? roles = null);
+	ICreateIThreadChannelAction SetMessageAllowedMentionTypes(params string[] parse);
+
+	/// <summary>Sets the explicit user IDs that may be mentioned by the initial message (max 100).</summary>
+	ICreateIThreadChannelAction SetMessageAllowedMentionUsers(params string[] users);
+
+	/// <summary>Sets the explicit role IDs that may be mentioned by the initial message (max 100).</summary>
+	ICreateIThreadChannelAction SetMessageAllowedMentionRoles(params string[] roles);
+
+	/// <summary>Clears any allowed-mentions configuration on the initial message.</summary>
+	ICreateIThreadChannelAction ClearMessageAllowedMentions();
 
 	/// <summary>
 	/// Sets the sticker IDs for the initial message in forum posts.

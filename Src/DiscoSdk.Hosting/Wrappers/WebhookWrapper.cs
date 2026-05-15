@@ -26,12 +26,7 @@ internal sealed class WebhookWrapper(DiscordClient client, Webhook model) : IWeb
 	public Snowflake? ApplicationId => _model.ApplicationId;
 	public string? Url => _model.Url;
 
-	public IRestAction<IWebhook> Modify(string? name = null, string? avatar = null, Snowflake? channelId = null)
-		=> RestAction<IWebhook>.Create(async ct =>
-		{
-			var updated = await _client.WebhookClient.ModifyAsync(_model.Id, name, avatar, channelId, ct);
-			return new WebhookWrapper(_client, updated);
-		});
+	public IModifyWebhookAction Modify() => new ModifyWebhookAction(_client, _model.Id);
 
 	public IRestAction Delete()
 		=> RestAction.Create(ct => _client.WebhookClient.DeleteAsync(_model.Id, ct));

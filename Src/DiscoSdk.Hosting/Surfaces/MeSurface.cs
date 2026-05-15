@@ -19,24 +19,10 @@ internal sealed class MeSurface(DiscordClient client) : IMe
         => RestAction<IUser>.Create(async ct => new UserWrapper(_client, await _client.UserClient.GetCurrentAsync(ct)));
 
     /// <inheritdoc />
-    public IRestAction<IUser> Modify(string? username = null, string? avatar = null, string? banner = null)
-        => RestAction<IUser>.Create(async ct =>
-        {
-            var body = new Dictionary<string, object?>();
-            if (username is not null) body["username"] = username;
-            if (avatar is not null) body["avatar"] = avatar.Length == 0 ? null : avatar;
-            if (banner is not null) body["banner"] = banner.Length == 0 ? null : banner;
-            var user = await _client.UserClient.ModifyCurrentAsync(body, ct);
-            return new UserWrapper(_client, user);
-        });
+    public IModifyMeAction Modify() => new ModifyMeAction(_client);
 
     /// <inheritdoc />
-    public IRestAction<IReadOnlyList<IGuild>> GetGuilds(int? limit = null, Snowflake? before = null, Snowflake? after = null, bool? withCounts = null)
-        => RestAction<IReadOnlyList<IGuild>>.Create(async ct =>
-        {
-            var guilds = await _client.UserClient.GetCurrentGuildsAsync(limit, before, after, withCounts, ct);
-            return guilds.Select(g => (IGuild)new GuildWrapper(g, _client)).ToList().AsReadOnly();
-        });
+    public IGetCurrentGuildsAction GetGuilds() => new GetCurrentGuildsAction(_client);
 
     /// <inheritdoc />
     public IRestAction<IMember> GetGuildMember(Snowflake guildId)

@@ -135,9 +135,11 @@ public interface IDiscordClient
     IRestAction<IReadOnlyList<IApplicationRoleConnectionMetadata>> UpdateRoleConnectionMetadata(IEnumerable<ApplicationRoleConnectionMetadata> records);
 
     /// <summary>
-    /// Gets a REST action that resolves an invite by its code. Returns <c>null</c> if the code does not exist.
+    /// Builds a REST action that resolves an invite by its code. Configure <see cref="IGetInviteAction.WithCounts"/>
+    /// / <see cref="IGetInviteAction.WithExpiration"/> / <see cref="IGetInviteAction.WithScheduledEvent"/> before
+    /// executing. Returns <c>null</c> if the code does not exist.
     /// </summary>
-    IRestAction<IInvite?> GetInvite(string code, bool? withCounts = null, bool? withExpiration = null, Snowflake? guildScheduledEventId = null);
+    IGetInviteAction GetInvite(string code);
 
     /// <summary>
     /// Gets a REST action that retrieves a running embedded-activity instance by its id, scoped

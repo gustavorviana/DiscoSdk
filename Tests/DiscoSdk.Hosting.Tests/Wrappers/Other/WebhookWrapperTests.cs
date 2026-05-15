@@ -17,7 +17,7 @@ public class WebhookWrapperTests : WrapperTestBase
 			.Returns(Model());
 		var wrapper = new WebhookWrapper(Client, Model());
 
-		await wrapper.Modify(name: "new", avatar: "data:img").ExecuteAsync();
+		await wrapper.Modify().SetName("new").SetAvatar("data:img").ExecuteAsync();
 
 		await Http.Received(1).SendAsync<Webhook>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "webhooks/42"),

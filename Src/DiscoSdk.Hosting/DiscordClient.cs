@@ -441,21 +441,7 @@ namespace DiscoSdk.Hosting
         }
 
         /// <inheritdoc />
-        public IRestAction<IInvite?> GetInvite(string code, bool? withCounts = null, bool? withExpiration = null, Snowflake? guildScheduledEventId = null)
-            => RestAction<IInvite?>.Create(async ct =>
-            {
-                var invite = await InviteClient.GetAsync(code, withCounts, withExpiration, guildScheduledEventId, ct);
-                if (invite is null) return null;
-
-                if (invite.Channel?.Id is { } chId)
-                {
-                    var channel = await GetChannel(chId).ExecuteAsync(ct);
-                    if (channel is IGuildChannelBase guildChannel)
-                        return new InviteWrapper(invite, guildChannel, this);
-                }
-
-                return null;
-            });
+        public IGetInviteAction GetInvite(string code) => new GetInviteAction(this, code);
 
         /// <inheritdoc />
         public IRestAction<ActivityInstance?> GetActivityInstance(string instanceId)

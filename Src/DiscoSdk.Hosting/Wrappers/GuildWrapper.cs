@@ -487,14 +487,8 @@ internal class GuildWrapper : IGuild
         });
     }
 
-    public IRestAction<IMember?> AddMember(Snowflake userId, string accessToken, string? nick = null, IEnumerable<Snowflake>? roles = null, bool? mute = null, bool? deaf = null)
-    {
-        return RestAction<IMember?>.Create(async ct =>
-        {
-            var member = await _client.GuildClient.AddMemberAsync(_guild.Id, userId, accessToken, nick, roles, mute, deaf, ct);
-            return member is null ? null : new GuildMemberWrapper(_client, member, this);
-        });
-    }
+    public IAddMemberAction AddMember(Snowflake userId, string accessToken)
+        => new AddMemberAction(_client, this, userId, accessToken);
 
     public IRestAction<IMember> ModifyCurrentMember(string? nick)
     {
@@ -505,26 +499,8 @@ internal class GuildWrapper : IGuild
         });
     }
 
-    public IRestAction<IMember> ModifyMember(Snowflake userId, string? nick = null, IEnumerable<Snowflake>? roles = null, bool? mute = null, bool? deaf = null, Snowflake? channelId = null, DateTimeOffset? communicationDisabledUntil = null, int? flags = null)
-    {
-        return RestAction<IMember>.Create(async ct =>
-        {
-            var body = new Dictionary<string, object?>();
-            if (nick is not null) body["nick"] = nick;
-            if (roles is not null) body["roles"] = roles.Select(r => r.ToString()).ToArray();
-            if (mute.HasValue) body["mute"] = mute.Value;
-            if (deaf.HasValue) body["deaf"] = deaf.Value;
-            if (channelId.HasValue) body["channel_id"] = channelId.Value == default ? null : channelId.Value.ToString();
-            if (communicationDisabledUntil.HasValue)
-                body["communication_disabled_until"] = communicationDisabledUntil.Value == DateTimeOffset.MinValue
-                    ? null
-                    : communicationDisabledUntil.Value.ToString("o");
-            if (flags.HasValue) body["flags"] = flags.Value;
-
-            var member = await _client.GuildClient.ModifyMemberAsync(_guild.Id, userId, body, ct);
-            return new GuildMemberWrapper(_client, member, this);
-        });
-    }
+    public IModifyMemberAction ModifyMember(Snowflake userId)
+        => new ModifyMemberAction(_client, this, userId);
 
     public IRestAction AddMemberRole(Snowflake userId, Snowflake roleId)
         => RestAction.Create(ct => _client.GuildClient.AddMemberRoleAsync(_guild.Id, userId, roleId, ct));

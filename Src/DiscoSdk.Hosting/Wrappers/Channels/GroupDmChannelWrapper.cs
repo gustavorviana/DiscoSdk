@@ -16,19 +16,8 @@ internal class GroupDmChannelWrapper(DiscordClient client, Channel channel)
 	public Snowflake OwnerId => _channel.OwnerId ?? default;
 
 	/// <inheritdoc />
-	public IRestAction AddRecipient(Snowflake userId, string accessToken, string? nick = null)
-	{
-		ArgumentException.ThrowIfNullOrWhiteSpace(accessToken);
-
-		var channelId = Id;
-		var request = new GroupDmAddRecipientRequest
-		{
-			AccessToken = accessToken,
-			Nick = nick,
-		};
-
-		return RestAction.Create(ct => _client.ChannelClient.AddGroupDmRecipientAsync(channelId, userId, request, ct));
-	}
+	public IAddGroupDmRecipientAction AddRecipient(Snowflake userId)
+		=> new AddGroupDmRecipientAction(_client, Id, userId);
 
 	/// <inheritdoc />
 	public IRestAction RemoveRecipient(Snowflake userId)
