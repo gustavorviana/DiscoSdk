@@ -91,12 +91,12 @@
   <div class="version-bar">
     <span class="badge">Target API: <strong>v10</strong></span>
     <span class="badge">Doc baseline: <a href="https://discord.com/developers/docs/change-log" target="_blank" rel="noopener">Discord Change Log — May/2026</a></span>
-    <span class="badge">Last audit: <strong>2026-05-14</strong></span>
+    <span class="badge">Last audit: <strong>2026-05-15</strong></span>
     <span class="badge">Branch: <code>main</code></span>
   </div>
   <div class="summary-grid">
-    <div class="stat"><div class="num yes">~212</div><div class="label">Implemented</div></div>
-    <div class="stat"><div class="num partial">~3</div><div class="label">Partial</div></div>
+    <div class="stat"><div class="num yes">~214</div><div class="label">Implemented</div></div>
+    <div class="stat"><div class="num partial">~1</div><div class="label">Partial</div></div>
     <div class="stat"><div class="num no">~10</div><div class="label">Missing (non-voice, excl. deprecated)</div></div>
     <div class="stat"><div class="num voice">~45</div><div class="label">Voice (ignored for now)</div></div>
     <div class="stat"><div class="num yes">~93%</div><div class="label">Non-voice coverage</div></div>
@@ -215,8 +215,8 @@
     <tr><td class="feature">Create rule <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AutoModerationClient.CreateRuleAsync</td></tr>
     <tr><td class="feature">Modify rule <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AutoModerationClient.ModifyRuleAsync</td></tr>
     <tr><td class="feature">Delete rule <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#delete-auto-moderation-rule" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AutoModerationClient.DeleteRuleAsync</td></tr>
-    <tr><td class="feature">Complete trigger types <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-partial">PARTIAL</span></td><td class="evidence">AutoModerationTriggerMetadata.cs present — verify Keyword/Spam/KeywordPreset/MentionSpam/MemberProfile</td></tr>
-    <tr><td class="feature">Complete action types <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-partial">PARTIAL</span></td><td class="evidence">AutoModerationAction.cs — verify BlockMessage/SendAlert/Timeout/BlockMemberInteraction</td></tr>
+    <tr><td class="feature">Complete trigger types <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AutoModerationTriggerMetadata.cs + AutoModerationTriggerMetadataTests (Keyword/Spam/KeywordPreset/MentionSpam/MemberProfile)</td></tr>
+    <tr><td class="feature">Complete action types <a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">AutoModerationAction.cs + AutoModerationActionMetadataTests (BlockMessage/SendAlert/Timeout/BlockMemberInteraction)</td></tr>
   </table>
 
   <!-- ============================ GROUP 5 ============================ -->
