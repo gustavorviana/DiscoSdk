@@ -9,7 +9,7 @@ public sealed class UserCommandAttribute : Attribute
 
     public UserCommandAttribute(string name)
     {
-        UserCommandBuilder.ValidateContextMenuName(name);
+        ContextMenuBuilder.ValidateContextMenuName(name);
         Name = name;
     }
 

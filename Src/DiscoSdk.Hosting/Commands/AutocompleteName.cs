@@ -32,7 +32,7 @@ internal readonly struct AutocompleteName(string commandName, string optionName,
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Name);
+        return StringComparer.OrdinalIgnoreCase.GetHashCode(Name);
     }
 
     public static bool operator ==(AutocompleteName left, AutocompleteName right)

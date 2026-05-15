@@ -21,11 +21,11 @@ public class ContextCommandLocalizerTests
         return provider;
     }
 
-    private static SlashCommand BuildUserCommand(string name) =>
-        new UserCommandBuilder().WithName(name).Build();
+    private static ApplicationCommand BuildUserCommand(string name) =>
+        new ContextMenuBuilder().WithName(name).Build(ContextMenuType.User);
 
-    private static SlashCommand BuildMessageCommand(string name) =>
-        new MessageCommandBuilder().WithName(name).Build();
+    private static ApplicationCommand BuildMessageCommand(string name) =>
+        new ContextMenuBuilder().WithName(name).Build(ContextMenuType.Message);
 
     [Fact]
     public void Apply_UserCommand_PopulatesNameLocalizationsAcrossLocales()
@@ -62,10 +62,10 @@ public class ContextCommandLocalizerTests
     [Fact]
     public void Apply_PreservesManualLocalizationsWhenProviderReturnsSameLocale()
     {
-        var command = new UserCommandBuilder()
+        var command = new ContextMenuBuilder()
             .WithName("BanUser")
             .WithNameLocalizations(new Dictionary<string, string> { ["en-GB"] = "ManualBlock" })
-            .Build();
+            .Build(ContextMenuType.User);
 
         var provider = ProviderFor("BanUser", new Dictionary<string, CommandLocalization>
         {

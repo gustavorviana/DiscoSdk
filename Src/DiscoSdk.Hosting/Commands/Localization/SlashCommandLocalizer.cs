@@ -32,7 +32,7 @@ internal sealed class SlashCommandLocalizer
     /// Applies translations from the configured provider to <paramref name="command"/>.
     /// Manual localizations already present on the command are preserved.
     /// </summary>
-    public void Apply(SlashCommand command, Snowflake? guildId = null)
+    public void Apply(ApplicationCommand command, Snowflake? guildId = null)
     {
         ArgumentNullException.ThrowIfNull(command);
 
@@ -56,7 +56,7 @@ internal sealed class SlashCommandLocalizer
         }
     }
 
-    private void ApplyCommand(SlashCommand command, string locale, CommandLocalization tree)
+    private void ApplyCommand(ApplicationCommand command, string locale, CommandLocalization tree)
     {
         command.NameLocalizations = SetIfMissing(command.NameLocalizations, locale, tree.Name);
         command.DescriptionLocalizations = SetIfMissing(command.DescriptionLocalizations, locale, tree.Description);

@@ -15,7 +15,7 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 /// <remarks>
 /// Initializes a new instance of the <see cref="InteractionClient"/> class.
 /// </remarks>
-internal class InteractionClient(DiscordClient discordClient)
+internal class InteractionClient(IDiscordClient discordClient)
 {
     private IDiscordRestClient Client => discordClient.HttpClient;
 
@@ -95,7 +95,14 @@ internal class InteractionClient(DiscordClient discordClient)
         {
             Choices = choices is SlashCommandOptionChoice[] arr ? arr : choices.ToArray()
         };
-        await SendCallbackAsync(interaction, data, InteractionCallbackType.ApplicationCommandAutocompleteResult, cancellationToken);
+        try
+        {
+            await SendCallbackAsync(interaction, data, InteractionCallbackType.ApplicationCommandAutocompleteResult, cancellationToken);
+        }
+        finally
+        {
+            interaction.Responded = true;
+        }
     }
 
     public enum AcknowledgeType

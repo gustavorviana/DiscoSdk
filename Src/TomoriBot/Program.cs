@@ -32,119 +32,111 @@ var dsc = DiscordClientBuilder.Create(token)
 
 var betaGuild = Snowflake.Parse("773618860875579422");
 
-dsc.CommandsUpdateWindowOpened += (_, container) =>
+dsc.CommandsUpdateWindowOpened += (_, session) =>
 {
-    container.AddGlobal(x => x
+    // Global commands — overwrite scope (declarative source of truth).
+    // Auto-registered globals from [SlashCommand] etc. also accumulate into this same scope,
+    // so the final PUT contains discovered + declared. Remove() lets you opt out of a specific
+    // auto-registered command if it's getting in the way:
+    //     session.OpenForGlobal(overwrite: true).Remove("some_cmd", ApplicationCommandType.ChatInput);
+    session.OpenForGlobal(overwrite: true)
+        .AddSlash(x => x
             .WithName("test")
             .WithDescription("A test command")
             .WithType(ApplicationCommandType.ChatInput)
             .AddBooleanOption(
                 name: "ephemeral",
                 description: "An input Boolean",
-                required: false
-            )
-        )
-        .AddGlobal(x => x
+                required: false))
+        .AddSlash(x => x
             .WithName("feedback")
             .WithDescription("Open feedback modal")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-       .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput));
+
+    // Guild commands — overwrite scope for the beta guild. The 4 auto-registered guild
+    // commands (status, search, show_user_info, dm_user_ping) are already in this scope
+    // from the auto-register module that ran first; we just add the sdk-test-* declarative
+    // commands. Single PUT at the end of the window flushes the union.
+    session.OpenForGuild(betaGuild, overwrite: true)
+        .AddSlash(x => x
             .WithName("sdk-test-modal")
             .WithDescription("Test modal send and receive (TextInput).")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-       .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-button")
             .WithDescription("Test button send and receive in message.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-       .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-select")
             .WithDescription("Test String Select send and receive.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-label")
             .WithDescription("Test modal Label component (label + child).")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-checkbox")
             .WithDescription("Test modal Checkbox component.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-checkbox-group")
             .WithDescription("Test modal CheckboxGroup component.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-radio")
             .WithDescription("Open a modal with a RadioGroup component.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-file-upload")
             .WithDescription("Open a modal with a FileUpload component.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-mixed-modal")
             .WithDescription("Open a modal with every supported input type at once.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-buttons-all")
             .WithDescription("Demo all 5 button styles in one action row.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-select-user")
             .WithDescription("Demo UserSelect (type 5).")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-select-role")
             .WithDescription("Demo RoleSelect (type 6).")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-select-channel")
             .WithDescription("Demo ChannelSelect (type 8).")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-select-mentionable")
             .WithDescription("Demo MentionableSelect (type 7).")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-components-v2")
             .WithDescription("Demonstrate every Components V2 component type.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-section-thumb")
             .WithDescription("V2: Section with Thumbnail accessory.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-section-button")
             .WithDescription("V2: Section with Button accessory.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-media-gallery")
             .WithDescription("V2: MediaGallery grid of images.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x
             .WithName("sdk-test-container")
             .WithDescription("V2: Container with accent colour + text + separators.")
-            .WithType(ApplicationCommandType.ChatInput)
-        )
-        .AddGuild(betaGuild, x => x.WithName("shutdown").WithDescription("Shutdown bot"));
+            .WithType(ApplicationCommandType.ChatInput))
+        .AddSlash(x => x.WithName("shutdown").WithDescription("Shutdown bot"));
+
+    return Task.CompletedTask;
 };
 
 await dsc.StartAsync();

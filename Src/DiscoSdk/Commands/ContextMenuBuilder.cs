@@ -4,9 +4,12 @@ using DiscoSdk.Models.Enums;
 namespace DiscoSdk.Commands;
 
 /// <summary>
-/// Fluent builder for message context menu commands (<see cref="ApplicationCommandType.Message"/>).
+/// Fluent builder for context menu commands (User and Message). The variant is chosen at
+/// <see cref="Build(ContextMenuType)"/> time — the builder shape is identical for both, so
+/// one type covers both Discord <c>ApplicationCommandType.User</c> and
+/// <c>ApplicationCommandType.Message</c>.
 /// </summary>
-public class MessageCommandBuilder()
+public class ContextMenuBuilder()
 {
     private string? _name;
     private Dictionary<string, string>? _nameLocalizations;
@@ -18,10 +21,10 @@ public class MessageCommandBuilder()
     /// Sets the command name (1-32 characters, mixed case, no spaces).
     /// </summary>
     /// <param name="name">The command name as shown in the Discord context menu.</param>
-    /// <returns>The current <see cref="MessageCommandBuilder"/> instance.</returns>
-    public MessageCommandBuilder WithName(string name)
+    /// <returns>The current <see cref="ContextMenuBuilder"/> instance.</returns>
+    public ContextMenuBuilder WithName(string name)
     {
-        UserCommandBuilder.ValidateContextMenuName(name);
+        ValidateContextMenuName(name);
         _name = name;
         return this;
     }
@@ -33,8 +36,8 @@ public class MessageCommandBuilder()
     /// A dictionary mapping locale codes (for example, <c>"pt-BR"</c>, <c>"en-US"</c>)
     /// to the localized command name.
     /// </param>
-    /// <returns>The current <see cref="MessageCommandBuilder"/> instance.</returns>
-    public MessageCommandBuilder WithNameLocalizations(Dictionary<string, string> localizations)
+    /// <returns>The current <see cref="ContextMenuBuilder"/> instance.</returns>
+    public ContextMenuBuilder WithNameLocalizations(Dictionary<string, string> localizations)
     {
         ValidateNameLocalizations(localizations);
         _nameLocalizations = localizations;
@@ -47,8 +50,8 @@ public class MessageCommandBuilder()
     /// <param name="permissions">
     /// A permissions bitfield represented as a string, matching Discord's API format.
     /// </param>
-    /// <returns>The current <see cref="MessageCommandBuilder"/> instance.</returns>
-    public MessageCommandBuilder WithDefaultMemberPermissions(string permissions)
+    /// <returns>The current <see cref="ContextMenuBuilder"/> instance.</returns>
+    public ContextMenuBuilder WithDefaultMemberPermissions(string permissions)
     {
         _defaultMemberPermissions = permissions;
         return this;
@@ -60,8 +63,8 @@ public class MessageCommandBuilder()
     /// <param name="dmPermission">
     /// <c>true</c> to allow the command in DMs; <c>false</c> to restrict it to guilds.
     /// </param>
-    /// <returns>The current <see cref="MessageCommandBuilder"/> instance.</returns>
-    public MessageCommandBuilder WithDmPermission(bool dmPermission)
+    /// <returns>The current <see cref="ContextMenuBuilder"/> instance.</returns>
+    public ContextMenuBuilder WithDmPermission(bool dmPermission)
     {
         _dmPermission = dmPermission;
         return this;
@@ -71,22 +74,28 @@ public class MessageCommandBuilder()
     /// Sets whether the command is age-restricted (NSFW).
     /// </summary>
     /// <param name="nsfw"><c>true</c> if the command is NSFW; otherwise, <c>false</c>.</param>
-    /// <returns>The current <see cref="MessageCommandBuilder"/> instance.</returns>
-    public MessageCommandBuilder WithNsfw(bool nsfw)
+    /// <returns>The current <see cref="ContextMenuBuilder"/> instance.</returns>
+    public ContextMenuBuilder WithNsfw(bool nsfw)
     {
         _nsfw = nsfw;
         return this;
     }
 
     /// <summary>
-    /// Builds the configured <see cref="SlashCommand"/> with <see cref="ApplicationCommandType.Message"/>.
+    /// Builds the configured <see cref="ApplicationCommand"/> with the chosen
+    /// <paramref name="type"/> (<see cref="ApplicationCommandType.User"/> or
+    /// <see cref="ApplicationCommandType.Message"/>).
     /// </summary>
-    /// <returns>The configured <see cref="SlashCommand"/>.</returns>
-    public SlashCommand Build()
+    public ApplicationCommand Build(ContextMenuType type)
     {
-        return new SlashCommand
+        return new ApplicationCommand
         {
-            Type = ApplicationCommandType.Message,
+            Type = type switch
+            {
+                ContextMenuType.User => ApplicationCommandType.User,
+                ContextMenuType.Message => ApplicationCommandType.Message,
+                _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown ContextMenuType."),
+            },
             Name = _name ?? throw new InvalidOperationException("Command name is required."),
             NameLocalizations = _nameLocalizations,
             Description = string.Empty,
@@ -94,6 +103,21 @@ public class MessageCommandBuilder()
             DmPermission = _dmPermission,
             Nsfw = _nsfw,
         };
+    }
+
+    internal static void ValidateContextMenuName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Command name cannot be null, empty, or contain only whitespace.", nameof(name));
+
+        if (name.Length is < 1 or > 32)
+            throw new ArgumentOutOfRangeException(nameof(name), $"Command name must be between 1 and 32 characters. Current length: {name.Length}.");
+
+        foreach (var ch in name)
+        {
+            if (char.IsWhiteSpace(ch))
+                throw new ArgumentException("Command name cannot contain whitespace characters.", nameof(name));
+        }
     }
 
     private static void ValidateNameLocalizations(Dictionary<string, string>? localizations)

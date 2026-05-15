@@ -396,7 +396,7 @@ public class SlashCommandLocalizerTests
             ["en-GB"] = new CommandLocalization { Name = "ban-B" },
         });
 
-        SlashCommand MakeBan() => new SlashCommandBuilder()
+        ApplicationCommand MakeBan() => new SlashCommandBuilder()
             .WithName("ban").WithDescription("desc")
             .WithType(ApplicationCommandType.ChatInput).Build();
 

@@ -7,7 +7,7 @@ namespace DiscoSdk.Models.Commands;
 /// <summary>
 /// Represents a Discord application command (slash command).
 /// </summary>
-public class SlashCommand : IEquatable<SlashCommand?>
+public class ApplicationCommand : IEquatable<ApplicationCommand?>
 {
     /// <summary>
     /// Gets or sets the unique ID of the command.
@@ -77,10 +77,10 @@ public class SlashCommand : IEquatable<SlashCommand?>
 
     public override bool Equals(object? obj)
     {
-        return Equals(obj as SlashCommand);
+        return Equals(obj as ApplicationCommand);
     }
 
-    public bool Equals(SlashCommand? other)
+    public bool Equals(ApplicationCommand? other)
     {
         return other is not null &&
                Type == other.Type &&
@@ -109,12 +109,12 @@ public class SlashCommand : IEquatable<SlashCommand?>
         return hash.ToHashCode();
     }
 
-    public static bool operator ==(SlashCommand? left, SlashCommand? right)
+    public static bool operator ==(ApplicationCommand? left, ApplicationCommand? right)
     {
-        return EqualityComparer<SlashCommand>.Default.Equals(left, right);
+        return EqualityComparer<ApplicationCommand>.Default.Equals(left, right);
     }
 
-    public static bool operator !=(SlashCommand? left, SlashCommand? right)
+    public static bool operator !=(ApplicationCommand? left, ApplicationCommand? right)
     {
         return !(left == right);
     }

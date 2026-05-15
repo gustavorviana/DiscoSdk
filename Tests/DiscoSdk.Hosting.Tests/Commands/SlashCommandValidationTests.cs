@@ -7,67 +7,60 @@ namespace DiscoSdk.Hosting.Tests.Commands;
 
 public class SlashCommandValidationTests
 {
-    [Fact]
-    public void Constructor_FlatAndGroupConflict_ThrowsInvalidOperationException()
+    private static void Scan(params Type[] handlerTypes)
     {
         var services = new ServiceCollection();
+        var builder = new CommandRegistryBuilder();
+        new SlashCommandScanner((IEnumerable<Type>)handlerTypes).ApplyTo(builder, services);
+    }
 
+    [Fact]
+    public void Scanner_FlatAndGroupConflict_ThrowsInvalidOperationException()
+    {
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            new SlashCommandRegistry(services, [typeof(ValFlatHandler), typeof(ValGroupHandler)]));
+            Scan(typeof(ValFlatHandler), typeof(ValGroupHandler)));
 
         Assert.Contains("val-conflict", ex.Message);
     }
 
     [Fact]
-    public void Constructor_GroupAndFlatConflict_ThrowsInvalidOperationException()
+    public void Scanner_GroupAndFlatConflict_ThrowsInvalidOperationException()
     {
         // Reverse order: group first, then flat
-        var services = new ServiceCollection();
-
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            new SlashCommandRegistry(services, [typeof(ValGroupHandler), typeof(ValFlatHandler)]));
+            Scan(typeof(ValGroupHandler), typeof(ValFlatHandler)));
 
         Assert.Contains("val-conflict", ex.Message);
     }
 
     [Fact]
-    public void Constructor_DuplicateSubcommandInGroup_ThrowsInvalidOperationException()
+    public void Scanner_DuplicateSubcommandInGroup_ThrowsInvalidOperationException()
     {
-        var services = new ServiceCollection();
-
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            new SlashCommandRegistry(services, [typeof(ValDupSubHandler1), typeof(ValDupSubHandler2)]));
+            Scan(typeof(ValDupSubHandler1), typeof(ValDupSubHandler2)));
 
         Assert.Contains("Duplicate subcommand", ex.Message);
         Assert.Contains("dup-sub", ex.Message);
     }
 
     [Fact]
-    public void Constructor_SubCommandGroupWithoutSubCommand_ThrowsInvalidOperationException()
+    public void Scanner_SubCommandGroupWithoutSubCommand_ThrowsInvalidOperationException()
     {
-        var services = new ServiceCollection();
-
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            new SlashCommandRegistry(services, [typeof(ValBadGroupHandler)]));
+            Scan(typeof(ValBadGroupHandler)));
 
         Assert.Contains("[SubCommandGroup]", ex.Message);
         Assert.Contains("[SubCommand]", ex.Message);
     }
 
     [Fact]
-    public void Constructor_ValidHandlers_DoesNotThrow()
+    public void Scanner_ValidHandlers_DoesNotThrow()
     {
-        var services = new ServiceCollection();
-
-        var registry = new SlashCommandRegistry(services,
-            [typeof(GroupTestHandlerSet), typeof(GroupTestHandlerGet), typeof(GroupTestHandlerNotifEnable)]);
-
-        Assert.NotNull(registry);
+        Scan(typeof(GroupTestHandlerSet), typeof(GroupTestHandlerGet), typeof(GroupTestHandlerNotifEnable));
     }
 }
 
 // --- Invalid handler types for validation tests ---
-// These are ONLY used via the internal type-based constructor, never via assembly scanning.
 
 public class ValFlatHandler : SlashCommandHandler
 {

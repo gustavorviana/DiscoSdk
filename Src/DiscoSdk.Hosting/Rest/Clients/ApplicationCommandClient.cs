@@ -22,10 +22,10 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
     /// <param name="commands">The commands to register.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains the registered commands.</returns>
-    public async Task<List<SlashCommand>> RegisterGlobalCommandsAsync(Snowflake applicationId, List<SlashCommand> commands, CancellationToken ct = default)
+    public async Task<List<ApplicationCommand>> RegisterGlobalCommandsAsync(Snowflake applicationId, List<ApplicationCommand> commands, CancellationToken ct = default)
     {
         var route = new DiscordRoute("applications/{application_id}/commands", applicationId);
-        return await client.SendAsync<List<SlashCommand>>(route, HttpMethod.Put, commands, ct);
+        return await client.SendAsync<List<ApplicationCommand>>(route, HttpMethod.Put, commands, ct);
     }
 
     /// <summary>
@@ -36,10 +36,10 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
     /// <param name="commands">The commands to register.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains the registered commands.</returns>
-    public async Task<List<SlashCommand>> RegisterGuildCommandsAsync(Snowflake applicationId, Snowflake guildId, List<SlashCommand> commands, CancellationToken ct = default)
+    public async Task<List<ApplicationCommand>> RegisterGuildCommandsAsync(Snowflake applicationId, Snowflake guildId, List<ApplicationCommand> commands, CancellationToken ct = default)
     {
         var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands", applicationId, guildId);
-        return await client.SendAsync<List<SlashCommand>>(route, HttpMethod.Put, commands, ct);
+        return await client.SendAsync<List<ApplicationCommand>>(route, HttpMethod.Put, commands, ct);
     }
 
     /// <summary>
@@ -48,10 +48,10 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
     /// <param name="applicationId">The application ID of the bot.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains all global commands.</returns>
-    public async Task<List<SlashCommand>> GetGlobalCommandsAsync(Snowflake applicationId, CancellationToken ct = default)
+    public async Task<List<ApplicationCommand>> GetGlobalCommandsAsync(Snowflake applicationId, CancellationToken ct = default)
     {
         var route = new DiscordRoute("applications/{application_id}/commands", applicationId);
-        return await client.SendAsync<List<SlashCommand>>(route, HttpMethod.Get, null, ct);
+        return await client.SendAsync<List<ApplicationCommand>>(route, HttpMethod.Get, null, ct);
     }
 
     /// <summary>
@@ -61,10 +61,10 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
     /// <param name="guildId">The guild ID.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The result contains all guild commands.</returns>
-    public async Task<List<SlashCommand>> GetGuildCommandsAsync(Snowflake applicationId, Snowflake guildId, CancellationToken ct = default)
+    public async Task<List<ApplicationCommand>> GetGuildCommandsAsync(Snowflake applicationId, Snowflake guildId, CancellationToken ct = default)
     {
         var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands", applicationId, guildId);
-        return await client.SendAsync<List<SlashCommand>>(route, HttpMethod.Get, null, ct);
+        return await client.SendAsync<List<ApplicationCommand>>(route, HttpMethod.Get, null, ct);
     }
 
     /// <summary>
@@ -95,49 +95,49 @@ internal sealed class ApplicationCommandClient(IDiscordRestClient client)
     }
 
     /// <summary>Gets a single global application command by ID.</summary>
-    public Task<SlashCommand> GetGlobalCommandAsync(Snowflake applicationId, Snowflake commandId, CancellationToken ct = default)
+    public Task<ApplicationCommand> GetGlobalCommandAsync(Snowflake applicationId, Snowflake commandId, CancellationToken ct = default)
     {
         var route = new DiscordRoute("applications/{application_id}/commands/{command_id}", applicationId, commandId);
-        return client.SendAsync<SlashCommand>(route, HttpMethod.Get, null, ct);
+        return client.SendAsync<ApplicationCommand>(route, HttpMethod.Get, null, ct);
     }
 
     /// <summary>Creates a single new global application command (does not bulk-overwrite).</summary>
-    public Task<SlashCommand> CreateGlobalCommandAsync(Snowflake applicationId, SlashCommand command, CancellationToken ct = default)
+    public Task<ApplicationCommand> CreateGlobalCommandAsync(Snowflake applicationId, ApplicationCommand command, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
         var route = new DiscordRoute("applications/{application_id}/commands", applicationId);
-        return client.SendAsync<SlashCommand>(route, HttpMethod.Post, command, ct);
+        return client.SendAsync<ApplicationCommand>(route, HttpMethod.Post, command, ct);
     }
 
     /// <summary>Edits an existing global application command. Only the supplied fields will be updated.</summary>
-    public Task<SlashCommand> EditGlobalCommandAsync(Snowflake applicationId, Snowflake commandId, object request, CancellationToken ct = default)
+    public Task<ApplicationCommand> EditGlobalCommandAsync(Snowflake applicationId, Snowflake commandId, object request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         var route = new DiscordRoute("applications/{application_id}/commands/{command_id}", applicationId, commandId);
-        return client.SendAsync<SlashCommand>(route, HttpMethod.Patch, request, ct);
+        return client.SendAsync<ApplicationCommand>(route, HttpMethod.Patch, request, ct);
     }
 
     /// <summary>Gets a single guild-scoped application command by ID.</summary>
-    public Task<SlashCommand> GetGuildCommandAsync(Snowflake applicationId, Snowflake guildId, Snowflake commandId, CancellationToken ct = default)
+    public Task<ApplicationCommand> GetGuildCommandAsync(Snowflake applicationId, Snowflake guildId, Snowflake commandId, CancellationToken ct = default)
     {
         var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands/{command_id}", applicationId, guildId, commandId);
-        return client.SendAsync<SlashCommand>(route, HttpMethod.Get, null, ct);
+        return client.SendAsync<ApplicationCommand>(route, HttpMethod.Get, null, ct);
     }
 
     /// <summary>Creates a single new guild-scoped application command (does not bulk-overwrite).</summary>
-    public Task<SlashCommand> CreateGuildCommandAsync(Snowflake applicationId, Snowflake guildId, SlashCommand command, CancellationToken ct = default)
+    public Task<ApplicationCommand> CreateGuildCommandAsync(Snowflake applicationId, Snowflake guildId, ApplicationCommand command, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
         var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands", applicationId, guildId);
-        return client.SendAsync<SlashCommand>(route, HttpMethod.Post, command, ct);
+        return client.SendAsync<ApplicationCommand>(route, HttpMethod.Post, command, ct);
     }
 
     /// <summary>Edits an existing guild-scoped application command. Only the supplied fields will be updated.</summary>
-    public Task<SlashCommand> EditGuildCommandAsync(Snowflake applicationId, Snowflake guildId, Snowflake commandId, object request, CancellationToken ct = default)
+    public Task<ApplicationCommand> EditGuildCommandAsync(Snowflake applicationId, Snowflake guildId, Snowflake commandId, object request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         var route = new DiscordRoute("applications/{application_id}/guilds/{guild_id}/commands/{command_id}", applicationId, guildId, commandId);
-        return client.SendAsync<SlashCommand>(route, HttpMethod.Patch, request, ct);
+        return client.SendAsync<ApplicationCommand>(route, HttpMethod.Patch, request, ct);
     }
 
     // ---- Command permissions ----

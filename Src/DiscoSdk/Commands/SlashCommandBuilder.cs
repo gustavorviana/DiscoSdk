@@ -5,7 +5,7 @@ using DiscoSdk.Models.Enums;
 namespace DiscoSdk.Commands;
 
 /// <summary>
-/// Fluent builder for <see cref="SlashCommand"/>.
+/// Fluent builder for <see cref="ApplicationCommand"/>.
 /// </summary>
 public class SlashCommandBuilder() : ISlashCommandOptionContainer
 {
@@ -676,12 +676,12 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
     }
 
     /// <summary>
-    /// Builds the configured <see cref="SlashCommand"/> instance.
+    /// Builds the configured <see cref="ApplicationCommand"/> instance.
     /// </summary>
-    /// <returns>The configured <see cref="SlashCommand"/>.</returns>
-    public SlashCommand Build()
+    /// <returns>The configured <see cref="ApplicationCommand"/>.</returns>
+    public ApplicationCommand Build()
     {
-        return new SlashCommand
+        return new ApplicationCommand
         {
             Type = _type,
             Name = _name ?? throw new InvalidOperationException("Command name is required."),

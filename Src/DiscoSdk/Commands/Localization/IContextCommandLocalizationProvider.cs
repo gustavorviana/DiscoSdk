@@ -29,7 +29,7 @@ public interface IContextCommandLocalizationProvider
     /// Returns translations for <paramref name="commandName"/>, keyed by Discord locale code.
     /// </summary>
     /// <param name="commandName">The default (non-localized) name of the context menu command,
-    /// as set via <c>WithName(...)</c> on <c>UserCommandBuilder</c> / <c>MessageCommandBuilder</c>.</param>
+    /// as set via <c>WithName(...)</c> on <c>ContextMenuBuilder</c>.</param>
     /// <param name="guildId">The guild the command is being registered for, or <c>null</c>
     /// for a global command.</param>
     /// <returns>

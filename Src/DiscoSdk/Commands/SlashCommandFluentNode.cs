@@ -109,6 +109,6 @@ public abstract class SlashCommandFluentNode
     public SlashCommandBuilder SubCommandGroup(string name, string description, Action<SlashCommandSubCommandGroupBuilder> configure)
         => Root.SubCommandGroup(name, description, configure);
 
-    /// <summary>Builds the configured <see cref="DiscoSdk.Models.Commands.SlashCommand"/>.</summary>
-    public DiscoSdk.Models.Commands.SlashCommand Build() => Root.Build();
+    /// <summary>Builds the configured <see cref="DiscoSdk.Models.Commands.ApplicationCommand"/>.</summary>
+    public DiscoSdk.Models.Commands.ApplicationCommand Build() => Root.Build();
 }

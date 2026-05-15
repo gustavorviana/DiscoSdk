@@ -16,6 +16,7 @@ internal class CommandInfo : SlashCommandHandlerCaller
     public SlashCommandAttribute Info { get; }
     public SubCommandAttribute? SubCommand { get; }
     public SubCommandGroupAttribute? SubCommandGroup { get; }
+    public bool IsOnDemand { get; }
     public override Type Type => _method.Method.DeclaringType!;
 
     private CommandInfo(
@@ -24,7 +25,8 @@ internal class CommandInfo : SlashCommandHandlerCaller
         ParameterCollection parameters,
         SlashOptionAttribute[]? methodOptions,
         SubCommandAttribute? subCommand,
-        SubCommandGroupAttribute? subCommandGroup)
+        SubCommandGroupAttribute? subCommandGroup,
+        bool isOnDemand)
     {
         Info = info;
         _method = method;
@@ -32,6 +34,7 @@ internal class CommandInfo : SlashCommandHandlerCaller
         _methodOptions = methodOptions;
         SubCommand = subCommand;
         SubCommandGroup = subCommandGroup;
+        IsOnDemand = isOnDemand;
     }
 
     public AutocompleteInfo[] GetAutocompletes()
@@ -159,13 +162,14 @@ internal class CommandInfo : SlashCommandHandlerCaller
 
         var subCommand = method.GetCustomAttribute<SubCommandAttribute>();
         var subCommandGroup = method.GetCustomAttribute<SubCommandGroupAttribute>();
+        var isOnDemand = method.GetCustomAttribute<OnDemandAttribute>() != null;
 
         if (subCommandGroup != null && subCommand == null)
             throw new InvalidOperationException(
                 $"Method '{method.Name}' on '{method.DeclaringType!.FullName}' has [SubCommandGroup] without [SubCommand]. A [SubCommand] attribute is required when [SubCommandGroup] is present.");
 
         return new CommandInfo(commandClass, MethodCaller.From(method), new ParameterCollection(resolvers),
-            hasMethodOptions ? methodOptions : null, subCommand, subCommandGroup);
+            hasMethodOptions ? methodOptions : null, subCommand, subCommandGroup, isOnDemand);
     }
 
     public async Task ExecuteAsync(ICommandContext context, IServiceProvider services, CancellationToken token)

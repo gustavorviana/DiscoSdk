@@ -3,7 +3,7 @@ using DiscoSdk.Contexts;
 using DiscoSdk.Contexts.Interactions;
 using DiscoSdk.Events;
 using DiscoSdk.Hosting.Commands;
-using System.Reflection;
+using DiscoSdk.Hosting.Tests.Commands.TestHelpers;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
@@ -11,118 +11,125 @@ namespace DiscoSdk.Hosting.Tests.Commands;
 
 public class ContextMenuCommandRegistryTests
 {
+    private static (ContextMenuCommandDispatcher dispatcher, CommandAutoRegisterModule module, IServiceProvider services)
+        BuildHarness(params Type[] handlerTypes)
+        => BuildHarness<IUserCommandContext>(handlerTypes);
+
+    private static (ContextMenuCommandDispatcher dispatcher, CommandAutoRegisterModule module, IServiceProvider services)
+        BuildHarness<TContext>(Type[] handlerTypes) where TContext : class, IContext
+    {
+        var services = new ServiceCollection();
+        var builder = new CommandRegistryBuilder();
+        new ContextMenuCommandScanner((IEnumerable<Type>)handlerTypes).ApplyTo(builder, services);
+        var registry = builder.Build();
+
+        var contextProvider = Substitute.For<ISdkContextProvider>();
+        contextProvider.GetContext().Returns((IContext)Substitute.For<TContext>());
+        services.AddScoped(_ => contextProvider);
+
+        var sp = services.BuildServiceProvider().CreateScope().ServiceProvider;
+        return (new ContextMenuCommandDispatcher(registry), new CommandAutoRegisterModule(registry), sp);
+    }
+
+    private static void Scan(params Type[] handlerTypes)
+    {
+        var services = new ServiceCollection();
+        var builder = new CommandRegistryBuilder();
+        new ContextMenuCommandScanner((IEnumerable<Type>)handlerTypes).ApplyTo(builder, services);
+        // builder.Build() not strictly required here — scanner errors fire at ApplyTo time.
+    }
+
     // --- Scanning Tests ---
 
     [Fact]
-    public void Constructor_ScansUserCommandHandlers_RegistersUserCommands()
+    public async Task Scanner_DiscoversUserCommandHandlers_RegistersUserCommands()
     {
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services,
-            [typeof(TestUserHandler)]);
-        var container = new CommandContainer();
+        var (_, module, _) = BuildHarness(typeof(TestUserHandler));
+        var factory = new CapturingCommandUpdateFactory();
         var client = Substitute.For<IDiscordClient>();
 
-        registry.OnCommandsUpdateWindowOpened(client, container);
+        await module.OnCommandsUpdateWindowOpenedAsync(client, factory);
 
-        var names = container.GlobalCommands.Select(c => c.Name).ToList();
+        var names = factory.GlobalCommands.Select(c => c.Name).ToList();
         Assert.Contains("report_user", names);
     }
 
     [Fact]
-    public void Constructor_ScansMessageCommandHandlers_RegistersMessageCommands()
+    public async Task Scanner_DiscoversMessageCommandHandlers_RegistersMessageCommands()
     {
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services,
-            [typeof(TestMessageHandler)]);
-        var container = new CommandContainer();
+        var (_, module, _) = BuildHarness(typeof(TestMessageHandler));
+        var factory = new CapturingCommandUpdateFactory();
         var client = Substitute.For<IDiscordClient>();
 
-        registry.OnCommandsUpdateWindowOpened(client, container);
+        await module.OnCommandsUpdateWindowOpenedAsync(client, factory);
 
-        var names = container.GlobalCommands.Select(c => c.Name).ToList();
+        var names = factory.GlobalCommands.Select(c => c.Name).ToList();
         Assert.Contains("bookmark_message", names);
     }
 
     [Fact]
-    public void Constructor_ScansMultipleHandlerTypes_RegistersAll()
+    public async Task Scanner_ScansMultipleHandlerTypes_RegistersAll()
     {
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services,
-            [typeof(TestUserHandler), typeof(TestMessageHandler), typeof(AnotherUserHandler)]);
-        var container = new CommandContainer();
+        var (_, module, _) = BuildHarness(typeof(TestUserHandler), typeof(TestMessageHandler), typeof(AnotherUserHandler));
+        var factory = new CapturingCommandUpdateFactory();
         var client = Substitute.For<IDiscordClient>();
 
-        registry.OnCommandsUpdateWindowOpened(client, container);
+        await module.OnCommandsUpdateWindowOpenedAsync(client, factory);
 
-        var names = container.GlobalCommands.Select(c => c.Name).ToList();
+        var names = factory.GlobalCommands.Select(c => c.Name).ToList();
         Assert.Contains("report_user", names);
         Assert.Contains("bookmark_message", names);
         Assert.Contains("greet_user", names);
     }
 
     [Fact]
-    public void OnCommandsUpdateWindowOpened_UserCommand_SetsCorrectType()
+    public async Task AutoRegister_UserCommand_SetsCorrectType()
     {
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services,
-            [typeof(TestUserHandler)]);
-        var container = new CommandContainer();
+        var (_, module, _) = BuildHarness(typeof(TestUserHandler));
+        var factory = new CapturingCommandUpdateFactory();
         var client = Substitute.For<IDiscordClient>();
 
-        registry.OnCommandsUpdateWindowOpened(client, container);
+        await module.OnCommandsUpdateWindowOpenedAsync(client, factory);
 
-        var cmd = container.GlobalCommands.Single(c => c.Name == "report_user");
+        var cmd = factory.GlobalCommands.Single(c => c.Name == "report_user");
         Assert.Equal(DiscoSdk.Models.Enums.ApplicationCommandType.User, cmd.Type);
     }
 
     [Fact]
-    public void OnCommandsUpdateWindowOpened_MessageCommand_SetsCorrectType()
+    public async Task AutoRegister_MessageCommand_SetsCorrectType()
     {
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services,
-            [typeof(TestMessageHandler)]);
-        var container = new CommandContainer();
+        var (_, module, _) = BuildHarness(typeof(TestMessageHandler));
+        var factory = new CapturingCommandUpdateFactory();
         var client = Substitute.For<IDiscordClient>();
 
-        registry.OnCommandsUpdateWindowOpened(client, container);
+        await module.OnCommandsUpdateWindowOpenedAsync(client, factory);
 
-        var cmd = container.GlobalCommands.Single(c => c.Name == "bookmark_message");
+        var cmd = factory.GlobalCommands.Single(c => c.Name == "bookmark_message");
         Assert.Equal(DiscoSdk.Models.Enums.ApplicationCommandType.Message, cmd.Type);
     }
 
     // --- Validation Tests ---
 
     [Fact]
-    public void Constructor_DuplicateUserCommandName_ThrowsInvalidOperationException()
+    public void Scanner_DuplicateUserCommandName_ThrowsInvalidOperationException()
     {
-        var services = new ServiceCollection();
-
         Assert.Throws<InvalidOperationException>(() =>
-            new ContextMenuCommandRegistry(services,
-                [typeof(TestUserHandler), typeof(DuplicateUserHandler)]));
+            Scan(typeof(TestUserHandler), typeof(DuplicateUserHandler)));
     }
 
     [Fact]
-    public void Constructor_DuplicateMessageCommandName_ThrowsInvalidOperationException()
+    public void Scanner_DuplicateMessageCommandName_ThrowsInvalidOperationException()
     {
-        var services = new ServiceCollection();
-
         Assert.Throws<InvalidOperationException>(() =>
-            new ContextMenuCommandRegistry(services,
-                [typeof(TestMessageHandler), typeof(DuplicateMessageHandler)]));
+            Scan(typeof(TestMessageHandler), typeof(DuplicateMessageHandler)));
     }
 
     [Fact]
-    public void Constructor_SameNameUserAndMessageCommands_ThrowsInvalidOperationException()
+    public void Scanner_SameNameUserAndMessageCommands_AllowedByDifferentTypes()
     {
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services,
-            [typeof(SameNameUserHandler), typeof(SameNameMessageHandler)]);
-        var container = new CommandContainer();
-        var client = Substitute.For<IDiscordClient>();
-
-        Assert.Throws<InvalidOperationException>(() =>
-            registry.OnCommandsUpdateWindowOpened(client, container));
+        // User and Message context menus can coexist with the same name —
+        // they live in different buckets keyed by (name, type).
+        Scan(typeof(SameNameUserHandler), typeof(SameNameMessageHandler));
     }
 
     // --- Routing Tests ---
@@ -134,29 +141,15 @@ public class ContextMenuCommandRegistryTests
     private static readonly Type[] RoutingTypes =
         [typeof(RoutingUserHandler), typeof(RoutingMessageHandler), typeof(AnotherRoutingUserHandler)];
 
-    private static IServiceProvider BuildServiceProvider()
-    {
-        var services = new ServiceCollection();
-        _ = new ContextMenuCommandRegistry(services, RoutingTypes);
-
-        var contextProvider = Substitute.For<ISdkContextProvider>();
-        contextProvider.GetContext().Returns(Substitute.For<IUserCommandContext>());
-        services.AddScoped(_ => contextProvider);
-
-        return services.BuildServiceProvider().CreateScope().ServiceProvider;
-    }
-
     [Fact]
     public async Task HandleAsync_UserCommand_RoutesToCorrectHandlerAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services, RoutingTypes);
+        var (dispatcher, _, sp) = BuildHarness(RoutingTypes);
 
-        var sp = BuildServiceProvider();
         var context = Substitute.For<IUserCommandContext>();
         context.Name.Returns("route_user_a");
-        var handler = (IDiscordEventHandler<IUserCommandContext>)registry;
+        var handler = (IDiscordEventHandler<IUserCommandContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -167,13 +160,11 @@ public class ContextMenuCommandRegistryTests
     public async Task HandleAsync_UserCommand_RoutesToOtherHandlerAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services, RoutingTypes);
+        var (dispatcher, _, sp) = BuildHarness(RoutingTypes);
 
-        var sp = BuildServiceProvider();
         var context = Substitute.For<IUserCommandContext>();
         context.Name.Returns("route_user_b");
-        var handler = (IDiscordEventHandler<IUserCommandContext>)registry;
+        var handler = (IDiscordEventHandler<IUserCommandContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -184,19 +175,11 @@ public class ContextMenuCommandRegistryTests
     public async Task HandleAsync_MessageCommand_RoutesToCorrectHandlerAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services, RoutingTypes);
-
-        var contextProvider = Substitute.For<ISdkContextProvider>();
-        contextProvider.GetContext().Returns(Substitute.For<IMessageCommandContext>());
-        var msgServices = new ServiceCollection();
-        _ = new ContextMenuCommandRegistry(msgServices, RoutingTypes);
-        msgServices.AddScoped(_ => contextProvider);
-        var sp = msgServices.BuildServiceProvider().CreateScope().ServiceProvider;
+        var (dispatcher, _, sp) = BuildHarness<IMessageCommandContext>(RoutingTypes);
 
         var context = Substitute.For<IMessageCommandContext>();
         context.Name.Returns("route_message_a");
-        var handler = (IDiscordEventHandler<IMessageCommandContext>)registry;
+        var handler = (IDiscordEventHandler<IMessageCommandContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -207,13 +190,11 @@ public class ContextMenuCommandRegistryTests
     public async Task HandleAsync_UnknownUserCommand_DoesNotThrowAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services, RoutingTypes);
+        var (dispatcher, _, sp) = BuildHarness(RoutingTypes);
 
-        var sp = BuildServiceProvider();
         var context = Substitute.For<IUserCommandContext>();
         context.Name.Returns("Nonexistent");
-        var handler = (IDiscordEventHandler<IUserCommandContext>)registry;
+        var handler = (IDiscordEventHandler<IUserCommandContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -224,19 +205,11 @@ public class ContextMenuCommandRegistryTests
     public async Task HandleAsync_UnknownMessageCommand_DoesNotThrowAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services, RoutingTypes);
-
-        var contextProvider = Substitute.For<ISdkContextProvider>();
-        contextProvider.GetContext().Returns(Substitute.For<IMessageCommandContext>());
-        var msgServices = new ServiceCollection();
-        _ = new ContextMenuCommandRegistry(msgServices, RoutingTypes);
-        msgServices.AddScoped(_ => contextProvider);
-        var sp = msgServices.BuildServiceProvider().CreateScope().ServiceProvider;
+        var (dispatcher, _, sp) = BuildHarness(RoutingTypes);
 
         var context = Substitute.For<IMessageCommandContext>();
         context.Name.Returns("Nonexistent");
-        var handler = (IDiscordEventHandler<IMessageCommandContext>)registry;
+        var handler = (IDiscordEventHandler<IMessageCommandContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -246,30 +219,27 @@ public class ContextMenuCommandRegistryTests
     // --- Implements Correct Interfaces ---
 
     [Fact]
-    public void Registry_ImplementsILifetimeDiscoModule()
+    public void Dispatcher_ImplementsIUserCommandHandler()
     {
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services, Array.Empty<Assembly>());
-
-        Assert.IsAssignableFrom<DiscoSdk.Modules.ICommandsUpdateWindowModule>(registry);
+        var registry = new CommandRegistryBuilder().Build();
+        var dispatcher = new ContextMenuCommandDispatcher(registry);
+        Assert.IsAssignableFrom<IUserCommandHandler>(dispatcher);
     }
 
     [Fact]
-    public void Registry_ImplementsIUserCommandHandler()
+    public void Dispatcher_ImplementsIMessageCommandHandler()
     {
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services, Array.Empty<Assembly>());
-
-        Assert.IsAssignableFrom<IUserCommandHandler>(registry);
+        var registry = new CommandRegistryBuilder().Build();
+        var dispatcher = new ContextMenuCommandDispatcher(registry);
+        Assert.IsAssignableFrom<IMessageCommandHandler>(dispatcher);
     }
 
     [Fact]
-    public void Registry_ImplementsIMessageCommandHandler()
+    public void AutoRegisterModule_ImplementsICommandsUpdateWindowModule()
     {
-        var services = new ServiceCollection();
-        var registry = new ContextMenuCommandRegistry(services, Array.Empty<Assembly>());
-
-        Assert.IsAssignableFrom<IMessageCommandHandler>(registry);
+        var registry = new CommandRegistryBuilder().Build();
+        var module = new CommandAutoRegisterModule(registry);
+        Assert.IsAssignableFrom<DiscoSdk.Modules.ICommandsUpdateWindowModule>(module);
     }
 
     // --- Test Handler Classes ---

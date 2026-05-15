@@ -36,7 +36,7 @@ public interface IDiscordClient
     /// <summary>Application-owned (global) emoji operations.</summary>
     IApplicationEmojis ApplicationEmojis { get; }
 
-    event EventHandler<CommandContainer>? CommandsUpdateWindowOpened;
+    event Func<IDiscordClient, ICommandUpdateSession, Task>? CommandsUpdateWindowOpened;
     event EventHandler<UnhandledErrorEventArgs>? UnhandledError;
     event EventHandler? OnConnectionLost;
 

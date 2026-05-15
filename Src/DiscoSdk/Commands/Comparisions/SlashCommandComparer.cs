@@ -3,9 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace DiscoSdk.Commands.Comparisions;
 
-internal class SlashCommandComparer : EqualityComparer<SlashCommand>
+internal class SlashCommandComparer : EqualityComparer<ApplicationCommand>
 {
-    public override bool Equals(SlashCommand? x, SlashCommand? y)
+    public override bool Equals(ApplicationCommand? x, ApplicationCommand? y)
     {
         if (ReferenceEquals(x, y))
             return true;
@@ -13,11 +13,12 @@ internal class SlashCommandComparer : EqualityComparer<SlashCommand>
         if (x is null || y is null)
             return false;
 
-        return string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
+        return string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase)
+            && (x.Type ?? Models.Enums.ApplicationCommandType.ChatInput) == (y.Type ?? Models.Enums.ApplicationCommandType.ChatInput);
     }
 
-    public override int GetHashCode([DisallowNull] SlashCommand obj)
-    {
-        return StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Name);
-    }
+    public override int GetHashCode([DisallowNull] ApplicationCommand obj)
+        => HashCode.Combine(
+            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Name),
+            obj.Type ?? Models.Enums.ApplicationCommandType.ChatInput);
 }

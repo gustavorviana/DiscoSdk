@@ -3,6 +3,7 @@ using DiscoSdk.Contexts;
 using DiscoSdk.Contexts.Interactions;
 using DiscoSdk.Events;
 using DiscoSdk.Hosting.Commands;
+using DiscoSdk.Hosting.Tests.Commands.TestHelpers;
 using DiscoSdk.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
@@ -87,16 +88,28 @@ public class AutocompleteSubcommandTests
     private static string? _lastInvokedMethod;
     private static void ResetTracker() => _lastInvokedMethod = null;
 
+    private static (SlashCommandDispatcher dispatcher, CommandAutoRegisterModule module, IServiceProvider services) BuildHarness()
+    {
+        var services = new ServiceCollection();
+        var builder = new CommandRegistryBuilder();
+        new SlashCommandScanner((IEnumerable<Type>)AutocompleteHandlerTypes).ApplyTo(builder, services);
+        var registry = builder.Build();
+
+        var contextProvider = Substitute.For<ISdkContextProvider>();
+        contextProvider.GetContext().Returns(Substitute.For<IInteractionContext>());
+        services.AddScoped(_ => contextProvider);
+
+        var sp = services.BuildServiceProvider().CreateScope().ServiceProvider;
+        return (new SlashCommandDispatcher(registry), new CommandAutoRegisterModule(registry), sp);
+    }
+
     [Fact]
     public async Task HandleAutocompleteAsync_FlatCommand_RoutesToFlatHandlerAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new SlashCommandRegistry(services, AutocompleteHandlerTypes);
-
-        var sp = BuildServiceProvider();
+        var (dispatcher, _, sp) = BuildHarness();
         var context = CreateMockAutocompleteContext("ac-flat", "query");
-        var handler = (IDiscordEventHandler<IAutocompleteContext>)registry;
+        var handler = (IDiscordEventHandler<IAutocompleteContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -107,12 +120,9 @@ public class AutocompleteSubcommandTests
     public async Task HandleAutocompleteAsync_SubcommandOption_RoutesToSubcommandHandlerAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new SlashCommandRegistry(services, AutocompleteHandlerTypes);
-
-        var sp = BuildServiceProvider();
+        var (dispatcher, _, sp) = BuildHarness();
         var context = CreateMockAutocompleteContext("ac-grouped", "song", subcommand: "play");
-        var handler = (IDiscordEventHandler<IAutocompleteContext>)registry;
+        var handler = (IDiscordEventHandler<IAutocompleteContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -123,12 +133,9 @@ public class AutocompleteSubcommandTests
     public async Task HandleAutocompleteAsync_GroupedSubcommandOption_RoutesToGroupedHandlerAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new SlashCommandRegistry(services, AutocompleteHandlerTypes);
-
-        var sp = BuildServiceProvider();
+        var (dispatcher, _, sp) = BuildHarness();
         var context = CreateMockAutocompleteContext("ac-grouped", "song", subcommand: "add", subcommandGroup: "queue");
-        var handler = (IDiscordEventHandler<IAutocompleteContext>)registry;
+        var handler = (IDiscordEventHandler<IAutocompleteContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -139,13 +146,10 @@ public class AutocompleteSubcommandTests
     public async Task HandleAutocompleteAsync_WrongSubcommand_DoesNotRouteAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new SlashCommandRegistry(services, AutocompleteHandlerTypes);
-
-        var sp = BuildServiceProvider();
+        var (dispatcher, _, sp) = BuildHarness();
         // "song" option only exists on subcommand "play", not on a flat lookup
         var context = CreateMockAutocompleteContext("ac-grouped", "song");
-        var handler = (IDiscordEventHandler<IAutocompleteContext>)registry;
+        var handler = (IDiscordEventHandler<IAutocompleteContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -153,17 +157,16 @@ public class AutocompleteSubcommandTests
     }
 
     [Fact]
-    public void CommandBuilder_SubcommandWithAutocomplete_SetsAutocompleteFlag()
+    public async Task CommandBuilder_SubcommandWithAutocomplete_SetsAutocompleteFlag()
     {
-        var services = new ServiceCollection();
-        var registry = new SlashCommandRegistry(services, AutocompleteHandlerTypes);
-        var container = new CommandContainer();
+        var (_, module, _) = BuildHarness();
+        var factory = new CapturingCommandUpdateFactory();
         var client = Substitute.For<IDiscordClient>();
 
-        registry.OnCommandsUpdateWindowOpened(client, container);
+        await module.OnCommandsUpdateWindowOpenedAsync(client, factory);
 
         // The grouped command should have subcommands with autocomplete-flagged options
-        var groupedCommand = container.GlobalCommands.FirstOrDefault(c => c.Name == "ac-grouped");
+        var groupedCommand = factory.GlobalCommands.FirstOrDefault(c => c.Name == "ac-grouped");
         Assert.NotNull(groupedCommand);
 
         // Find the "play" subcommand option
@@ -195,18 +198,6 @@ public class AutocompleteSubcommandTests
 
         context.Options.Returns(Array.Empty<IAutocompleteOptionValue>());
         return context;
-    }
-
-    private static IServiceProvider BuildServiceProvider()
-    {
-        var services = new ServiceCollection();
-        _ = new SlashCommandRegistry(services, AutocompleteHandlerTypes);
-
-        var contextProvider = Substitute.For<ISdkContextProvider>();
-        contextProvider.GetContext().Returns(Substitute.For<IInteractionContext>());
-        services.AddScoped(_ => contextProvider);
-
-        return services.BuildServiceProvider().CreateScope().ServiceProvider;
     }
 
     // ── Test handler classes ──

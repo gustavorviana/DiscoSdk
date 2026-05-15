@@ -27,30 +27,28 @@ public class SlashCommandRoutingTests
         return context;
     }
 
-    private static IServiceProvider BuildServiceProvider(SlashCommandRegistry registry)
+    private static (SlashCommandDispatcher dispatcher, IServiceProvider services) BuildDispatcher()
     {
         var services = new ServiceCollection();
-
-        // Re-create registry to register handler types in DI
-        _ = new SlashCommandRegistry(services, RoutingHandlerTypes);
+        var builder = new CommandRegistryBuilder();
+        new SlashCommandScanner((IEnumerable<Type>)RoutingHandlerTypes).ApplyTo(builder, services);
+        var registry = builder.Build();
 
         var contextProvider = Substitute.For<ISdkContextProvider>();
         contextProvider.GetContext().Returns(Substitute.For<IInteractionContext>());
         services.AddScoped(_ => contextProvider);
 
-        return services.BuildServiceProvider().CreateScope().ServiceProvider;
+        var sp = services.BuildServiceProvider().CreateScope().ServiceProvider;
+        return (new SlashCommandDispatcher(registry), sp);
     }
 
     [Fact]
     public async Task HandleAsync_FlatCommand_RoutesToFlatHandlerAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new SlashCommandRegistry(services, RoutingHandlerTypes);
-
-        var sp = BuildServiceProvider(registry);
+        var (dispatcher, sp) = BuildDispatcher();
         var context = CreateMockContext("route-flat");
-        var handler = (IDiscordEventHandler<ICommandContext>)registry;
+        var handler = (IDiscordEventHandler<ICommandContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -61,12 +59,9 @@ public class SlashCommandRoutingTests
     public async Task HandleAsync_OneLevelSubcommand_RoutesToSubcommandHandlerAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new SlashCommandRegistry(services, RoutingHandlerTypes);
-
-        var sp = BuildServiceProvider(registry);
+        var (dispatcher, sp) = BuildDispatcher();
         var context = CreateMockContext("route-grouped", subcommand: "sub-a");
-        var handler = (IDiscordEventHandler<ICommandContext>)registry;
+        var handler = (IDiscordEventHandler<ICommandContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -77,12 +72,9 @@ public class SlashCommandRoutingTests
     public async Task HandleAsync_OneLevelSubcommand_OtherSubcommand_RoutesCorrectlyAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new SlashCommandRegistry(services, RoutingHandlerTypes);
-
-        var sp = BuildServiceProvider(registry);
+        var (dispatcher, sp) = BuildDispatcher();
         var context = CreateMockContext("route-grouped", subcommand: "sub-b");
-        var handler = (IDiscordEventHandler<ICommandContext>)registry;
+        var handler = (IDiscordEventHandler<ICommandContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -93,12 +85,9 @@ public class SlashCommandRoutingTests
     public async Task HandleAsync_TwoLevelSubcommand_RoutesToGroupedSubcommandHandlerAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new SlashCommandRegistry(services, RoutingHandlerTypes);
-
-        var sp = BuildServiceProvider(registry);
+        var (dispatcher, sp) = BuildDispatcher();
         var context = CreateMockContext("route-grouped", subcommand: "nested-sub", subcommandGroup: "nested-group");
-        var handler = (IDiscordEventHandler<ICommandContext>)registry;
+        var handler = (IDiscordEventHandler<ICommandContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -109,12 +98,9 @@ public class SlashCommandRoutingTests
     public async Task HandleAsync_UnknownCommand_DoesNotThrowAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new SlashCommandRegistry(services, RoutingHandlerTypes);
-
-        var sp = BuildServiceProvider(registry);
+        var (dispatcher, sp) = BuildDispatcher();
         var context = CreateMockContext("nonexistent");
-        var handler = (IDiscordEventHandler<ICommandContext>)registry;
+        var handler = (IDiscordEventHandler<ICommandContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -125,12 +111,9 @@ public class SlashCommandRoutingTests
     public async Task HandleAsync_UnknownSubcommand_DoesNotThrowAsync()
     {
         ResetTracker();
-        var services = new ServiceCollection();
-        var registry = new SlashCommandRegistry(services, RoutingHandlerTypes);
-
-        var sp = BuildServiceProvider(registry);
+        var (dispatcher, sp) = BuildDispatcher();
         var context = CreateMockContext("route-grouped", subcommand: "nonexistent");
-        var handler = (IDiscordEventHandler<ICommandContext>)registry;
+        var handler = (IDiscordEventHandler<ICommandContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 

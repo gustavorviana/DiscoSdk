@@ -9,11 +9,11 @@ namespace DiscoSdk.Hosting.Commands.Localization;
 /// Applies an <see cref="IContextCommandLocalizationProvider"/> to a context menu command
 /// (User / Message) before it is sent to Discord. Context commands only carry
 /// <c>name_localizations</c> on the wire — no description, no options — so this localizer
-/// only touches <see cref="SlashCommand.NameLocalizations"/>.
+/// only touches <see cref="ApplicationCommand.NameLocalizations"/>.
 /// </summary>
 /// <remarks>
 /// Internal pipeline detail. Invoked by <c>CommandUpdateAction</c> for commands whose
-/// <see cref="SlashCommand.Type"/> is <c>User</c> or <c>Message</c>; slash commands go
+/// <see cref="ApplicationCommand.Type"/> is <c>User</c> or <c>Message</c>; slash commands go
 /// through <see cref="SlashCommandLocalizer"/> instead.
 /// </remarks>
 internal sealed class ContextCommandLocalizer
@@ -32,7 +32,7 @@ internal sealed class ContextCommandLocalizer
     /// Applies translations from the configured provider to <paramref name="command"/>.
     /// Manual localizations already present on the command are preserved.
     /// </summary>
-    public void Apply(SlashCommand command, Snowflake? guildId = null)
+    public void Apply(ApplicationCommand command, Snowflake? guildId = null)
     {
         ArgumentNullException.ThrowIfNull(command);
 

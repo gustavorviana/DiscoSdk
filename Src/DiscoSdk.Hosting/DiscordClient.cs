@@ -1,6 +1,4 @@
-﻿using DiscoSdk.Commands;
-using DiscoSdk.Commands.Localization;
-using DiscoSdk.Events;
+﻿using DiscoSdk.Events;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Events;
 using DiscoSdk.Hosting.Gateway.Payloads;
@@ -15,9 +13,6 @@ using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Applications;
 using DiscoSdk.Models.Channels;
-using DiscoSdk.Models.Enums;
-using DiscoSdk.Models.Monetization;
-using DiscoSdk.Models.OAuth2;
 using DiscoSdk.Modules;
 using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
@@ -32,19 +27,20 @@ namespace DiscoSdk.Hosting
     /// </summary>
     public class DiscordClient : IDiscordClient, IShardEventListener
     {
-        private readonly EventProcessorPool<ReceivedGatewayMessage> _eventProcessorPool;
         private readonly ManualResetEventSlim _shutdownEvent = new(false);
         private readonly ManualResetEventSlim _readyEvent = new(false);
+        internal IReadOnlyList<IDiscoModule> Modules { get; private set; } = [];
+        public IDiscordRestClient HttpClient { get; }
+        internal ChannelManager Channels { get; }
+        public GuildManager Guilds { get; }
+
+        public event Func<IDiscordClient, ICommandUpdateSession, Task>? CommandsUpdateWindowOpened;
+        public event EventHandler<UnhandledErrorEventArgs>? UnhandledError;
+
+        private EventProcessorPool<ReceivedGatewayMessage> _eventProcessorPool = null!;
         private readonly DiscordEventDispatcher _eventDispatcher;
-        internal IReadOnlyList<IDiscoModule> Modules { get; }
         private readonly DiscordClientConfig _config;
         private readonly ShardPool _shardPool;
-        public IDiscordRestClient HttpClient { get; }
-        public GuildManager Guilds { get; }
-        internal ChannelManager Channels { get; }
-
-        public event EventHandler<CommandContainer>? CommandsUpdateWindowOpened;
-        public event EventHandler<UnhandledErrorEventArgs>? UnhandledError;
 
         /// <summary>
         /// Gets the gateway intents configured for this client.
@@ -130,19 +126,20 @@ namespace DiscoSdk.Hosting
 
         internal DiscordClient(IServiceProvider services,
             DiscordClientConfig config,
-            IReadOnlyList<IDiscoModule> modules,
-            IReadOnlyList<IDiscordEventHandler> eventHandlers)
+            TimeProvider timeProvider,
+            IGatewaySocketFactory socketFactory,
+            JsonSerializerOptions serializerOptions,
+            ILogger logger,
+            IDiscordRestClient httpClient,
+            IObjectConverter objectConverter)
         {
             _config = config;
-            Modules = modules;
             Services = services;
-            var timeProvider = services.GetRequiredService<TimeProvider>();
-            var socketFactory = services.GetRequiredService<IGatewaySocketFactory>();
             _shardPool = new ShardPool(this, config, socketFactory, timeProvider);
-            SerializerOptions = services.GetRequiredService<JsonSerializerOptions>();
-            Logger = services.GetRequiredService<ILogger>();
+            SerializerOptions = serializerOptions;
+            Logger = logger;
             _eventDispatcher = new DiscordEventDispatcher(this);
-            HttpClient = services.GetRequiredService<IDiscordRestClient>();
+            HttpClient = httpClient;
             InteractionClient = new InteractionClient(this);
             MessageClient = new MessageClient(HttpClient);
             ChannelClient = new ChannelClient(HttpClient, MessageClient);
@@ -168,21 +165,22 @@ namespace DiscoSdk.Hosting
             Guilds = new GuildManager(this, Logger);
             Channels = new ChannelManager(this);
             DmRepository = new DmChannelRepository(this);
-            ObjectConverter = services.GetRequiredService<IObjectConverter>();
+            ObjectConverter = objectConverter;
+        }
 
-            var maxConcurrency = config.EventProcessorMaxConcurrency > 0
-                ? config.EventProcessorMaxConcurrency
+        internal void InternalInit(IReadOnlyList<IDiscoModule> modules, IReadOnlyList<IDiscordEventHandler> eventHandlers)
+        {
+            Modules = modules;
+            var maxConcurrency = _config.EventProcessorMaxConcurrency > 0
+                ? _config.EventProcessorMaxConcurrency
                 : Environment.ProcessorCount * 2;
 
             _eventDispatcher
                 .AddAll(modules.OfType<IDiscordEventHandler>())
                 .AddAll(eventHandlers);
 
-            var queueCapacity = Math.Max(1, config.EventProcessorQueueCapacity);
-            _eventProcessorPool = new EventProcessorPool<ReceivedGatewayMessage>(maxConcurrency, async (item) =>
-            {
-                await _eventDispatcher.ProcessEventAsync(item);
-            }, Logger, queueCapacity);
+            var queueCapacity = Math.Max(1, _config.EventProcessorQueueCapacity);
+            _eventProcessorPool = new EventProcessorPool<ReceivedGatewayMessage>(maxConcurrency, _eventDispatcher.ProcessEventAsync, Logger, queueCapacity);
         }
 
         /// <summary>
@@ -507,16 +505,22 @@ namespace DiscoSdk.Hosting
 
         private async Task InitSlashCommandsAsync()
         {
-            var commands = new CommandContainer();
+            // ApplicationId is now populated (gateway READY). The factory is a DI singleton —
+            // resolve it and build a session shared between the auto-register module and the
+            // user event handler; both accumulate into the same scopes and we commit once.
+            var factory = Services.GetRequiredService<CommandUpdateFactory>();
+            var session = new CommandUpdateSession(factory);
 
             foreach (var module in Modules.OfType<ICommandsUpdateWindowModule>())
-                module.OnCommandsUpdateWindowOpened(this, commands);
+                await module.OnCommandsUpdateWindowOpenedAsync(this, session);
 
-            CommandsUpdateWindowOpened?.Invoke(this, commands);
+            if (CommandsUpdateWindowOpened is { } evt)
+            {
+                foreach (var handler in evt.GetInvocationList().Cast<Func<IDiscordClient, ICommandUpdateSession, Task>>())
+                    await handler(this, session);
+            }
 
-            var localizationProvider = Services.GetService<ICommandLocalizationProvider>();
-            var contextLocalizationProvider = Services.GetService<IContextCommandLocalizationProvider>();
-            await new CommandUpdateAction(this, commands, localizationProvider, contextLocalizationProvider).ExecuteAsync();
+            await session.ApplyAllAsync();
         }
 
         Task IShardEventListener.OnResumeAsync(Shard shard)

@@ -8,13 +8,15 @@ internal class ContextMenuCommandInfo
 {
     public string Name { get; }
     public string[] GuildIds { get; }
+    public bool IsOnDemand { get; }
     public Type HandlerType { get; }
     private readonly MethodCaller _method;
 
-    private ContextMenuCommandInfo(string name, string[] guildIds, MethodCaller method)
+    private ContextMenuCommandInfo(string name, string[] guildIds, bool isOnDemand, MethodCaller method)
     {
         Name = name;
         GuildIds = guildIds;
+        IsOnDemand = isOnDemand;
         HandlerType = method.Method.DeclaringType!;
         _method = method;
     }
@@ -35,7 +37,10 @@ internal class ContextMenuCommandInfo
         {
             var attr = method.GetCustomAttribute<UserCommandAttribute>();
             if (attr != null)
-                yield return new ContextMenuCommandInfo(attr.Name, attr.GuildIds, MethodCaller.From(method));
+            {
+                var onDemand = method.GetCustomAttribute<OnDemandAttribute>() != null;
+                yield return new ContextMenuCommandInfo(attr.Name, attr.GuildIds, onDemand, MethodCaller.From(method));
+            }
         }
     }
 
@@ -48,7 +53,10 @@ internal class ContextMenuCommandInfo
         {
             var attr = method.GetCustomAttribute<MessageCommandAttribute>();
             if (attr != null)
-                yield return new ContextMenuCommandInfo(attr.Name, attr.GuildIds, MethodCaller.From(method));
+            {
+                var onDemand = method.GetCustomAttribute<OnDemandAttribute>() != null;
+                yield return new ContextMenuCommandInfo(attr.Name, attr.GuildIds, onDemand, MethodCaller.From(method));
+            }
         }
     }
 }

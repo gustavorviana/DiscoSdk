@@ -1,6 +1,7 @@
 using DiscoSdk.Commands;
 using DiscoSdk.Contexts.Interactions;
 using DiscoSdk.Hosting.Commands;
+using DiscoSdk.Hosting.Tests.Commands.TestHelpers;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
@@ -9,19 +10,18 @@ namespace DiscoSdk.Hosting.Tests.Commands;
 public class SlashCommandRegistryTests
 {
     [Fact]
-    public void Constructor_WithMultipleHandlerClasses_RegistersAllCommands()
+    public async Task Scanner_WithMultipleHandlerClasses_RegistersAllCommands()
     {
-        // Arrange
         var services = new ServiceCollection();
-        var registry = new SlashCommandRegistry(services, [typeof(TestHandlerA), typeof(TestHandlerB)]);
-        var container = new CommandContainer();
+        var builder = new CommandRegistryBuilder();
+        new SlashCommandScanner((IEnumerable<Type>)new[] { typeof(TestHandlerA), typeof(TestHandlerB) }).ApplyTo(builder, services);
+        var module = new CommandAutoRegisterModule(builder.Build());
+
+        var factory = new CapturingCommandUpdateFactory();
         var client = Substitute.For<IDiscordClient>();
+        await module.OnCommandsUpdateWindowOpenedAsync(client, factory);
 
-        // Act
-        registry.OnCommandsUpdateWindowOpened(client, container);
-
-        // Assert — both handler classes' commands must be in the container
-        var commandNames = container.GlobalCommands.Select(c => c.Name).ToList();
+        var commandNames = factory.GlobalCommands.Select(c => c.Name).ToList();
         Assert.Contains("test-handler-a-cmd", commandNames);
         Assert.Contains("test-handler-b-cmd", commandNames);
     }

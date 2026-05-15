@@ -8,10 +8,12 @@ using DiscoSdk.Hosting.Contexts;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Compression;
 using DiscoSdk.Hosting.Gateway.Shards;
+using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Models.JsonConverters;
 using DiscoSdk.Modules;
 using DiscoSdk.Rest;
+using DiscoSdk.Rest.Actions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -42,6 +44,10 @@ public class DiscordClientBuilder
     private IGatewaySocketFactory? _socketFactory;
     private IDiscordRestClient? _restClient;
     private readonly ServiceCollection _services = new();
+    private CommandRegistryBuilder? _commandRegistryBuilder;
+    private bool _slashDispatcherRegistered;
+    private bool _contextMenuDispatcherRegistered;
+    private bool _autoRegisterModuleRegistered;
 
     /// <summary>
     /// Initializes a new instance of <see cref="DiscordClientBuilder"/> with the required bot token.
@@ -69,12 +75,57 @@ public class DiscordClientBuilder
 
     public DiscordClientBuilder WithSlashCommands(params Assembly[] assemblies)
     {
-        return AddModule(new SlashCommandRegistry(_services, assemblies));
+        // Scanner runs once and dies — it just populates the builder + registers handler types.
+        new SlashCommandScanner(assemblies).ApplyTo(GetOrCreateRegistryBuilder(), _services);
+
+        EnsureSlashDispatcherRegistered();
+        EnsureAutoRegisterModuleRegistered();
+        return this;
     }
 
     public DiscordClientBuilder WithContextMenuCommands(params Assembly[] assemblies)
     {
-        return AddModule(new ContextMenuCommandRegistry(_services, assemblies));
+        new ContextMenuCommandScanner(assemblies).ApplyTo(GetOrCreateRegistryBuilder(), _services);
+
+        EnsureContextMenuDispatcherRegistered();
+        EnsureAutoRegisterModuleRegistered();
+        return this;
+    }
+
+    private CommandRegistryBuilder GetOrCreateRegistryBuilder()
+    {
+        if (_commandRegistryBuilder is not null)
+            return _commandRegistryBuilder;
+
+        _commandRegistryBuilder = new CommandRegistryBuilder();
+
+        _services.AddSingleton(sp => _commandRegistryBuilder.Build());
+        _services.AddSingleton<ICommandRegistry>(sp => sp.GetRequiredService<CommandRegistry>());
+        return _commandRegistryBuilder;
+    }
+
+    private void EnsureSlashDispatcherRegistered()
+    {
+        if (_slashDispatcherRegistered) return;
+        _slashDispatcherRegistered = true;
+        _services.AddSingleton<SlashCommandDispatcher>();
+        _eventHandlers.Add<SlashCommandDispatcher>();
+    }
+
+    private void EnsureContextMenuDispatcherRegistered()
+    {
+        if (_contextMenuDispatcherRegistered) return;
+        _contextMenuDispatcherRegistered = true;
+        _services.AddSingleton<ContextMenuCommandDispatcher>();
+        _eventHandlers.Add<ContextMenuCommandDispatcher>();
+    }
+
+    private void EnsureAutoRegisterModuleRegistered()
+    {
+        if (_autoRegisterModuleRegistered) return;
+        _autoRegisterModuleRegistered = true;
+        _services.AddSingleton<CommandAutoRegisterModule>();
+        _modules.Add<CommandAutoRegisterModule>();
     }
 
     public DiscordClientBuilder AddModule(IDiscoModule module)
@@ -327,8 +378,7 @@ public class DiscordClientBuilder
     /// <summary>
     /// Builds the <see cref="DiscordClient"/> instance, starts the connection to Discord Gateway,
     /// and returns the client ready for use. The client will be connecting in the background.
-    /// Use <see cref="DiscordClient.WaitReadyAsync(CancellationToken)"/> or <see cref="DiscordClient.WaitReadyAsync(TimeSpan
-	/// )"/> to wait for the bot to be fully ready.
+    /// Use <see cref="DiscordClient.WaitReadyAsync(CancellationToken)"/> or <see cref="DiscordClient.WaitReadyAsync(TimeSpan)"/> to wait for the bot to be fully ready.
     /// </summary>
     /// <returns>A task that represents the asynchronous build operation. The result contains the configured and started <see cref="DiscordClient"/>.</returns>
     /// <exception cref="InvalidOperationException">Thrown when required properties (Intents) are not set.</exception>
@@ -365,24 +415,40 @@ public class DiscordClientBuilder
             logger,
             timeProvider);
 
+        var objectConverter = _objectConverter ?? new ObjectConverter(CultureInfo.InvariantCulture);
+
         _services.AddSingleton(config)
             .AddSingleton(jsonOptions)
-            .AddSingleton(_objectConverter ?? new ObjectConverter(CultureInfo.InvariantCulture))
+            .AddSingleton(objectConverter)
             .AddSingleton(logger)
             .AddSingleton(timeProvider)
             .AddSingleton(socketFactory)
             .AddSingleton(restClient)
+            .AddSingleton<DiscordClientAccessor>()
+            .AddSingleton<IDiscordClientAccessor>(sp => sp.GetRequiredService<DiscordClientAccessor>())
+            .AddSingleton(sp => sp.GetRequiredService<IDiscordClientAccessor>().Client)
+            .AddSingleton<CommandUpdateFactory>()
+            .AddSingleton<ICommandUpdateFactory>(sp => sp.GetRequiredService<CommandUpdateFactory>())
+            .AddSingleton<IGuildCommandUpdateFactory>(sp => sp.GetRequiredService<CommandUpdateFactory>())
             .AddScoped<SdkContextProvider>()
             .AddScoped<ISdkContextProvider>(svc => svc.GetRequiredService<SdkContextProvider>());
 
         var serviceProvider = _services.BuildServiceProvider();
 
-        var builder = new DiscordClient(serviceProvider,
+        var client = new DiscordClient(serviceProvider,
             config,
-            _modules.Build(serviceProvider),
-            _eventHandlers.Build(serviceProvider)
+            timeProvider,
+            socketFactory,
+            jsonOptions,
+            logger,
+            restClient,
+            objectConverter
         );
+        
+        serviceProvider.GetRequiredService<DiscordClientAccessor>().Set(client);
 
-        return builder;
+        client.InternalInit(_modules.Build(serviceProvider), _eventHandlers.Build(serviceProvider));
+
+        return client;
     }
 }

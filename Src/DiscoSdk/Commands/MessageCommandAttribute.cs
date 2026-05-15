@@ -9,7 +9,7 @@ public sealed class MessageCommandAttribute : Attribute
 
     public MessageCommandAttribute(string name)
     {
-        UserCommandBuilder.ValidateContextMenuName(name);
+        ContextMenuBuilder.ValidateContextMenuName(name);
         Name = name;
     }
 
