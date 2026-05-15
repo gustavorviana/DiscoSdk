@@ -62,6 +62,12 @@ internal class CommandInfo : SlashCommandHandlerCaller
         builder.WithDescription(Info.Description);
         builder.WithType(ApplicationCommandType.ChatInput);
 
+        if (Info.IntegrationTypes is { Length: > 0 })
+            builder.WithIntegrationTypes(Info.IntegrationTypes);
+
+        if (Info.Contexts is { Length: > 0 })
+            builder.WithContexts(Info.Contexts);
+
         foreach (var option in BuildLeafOptions(hasAutocomplete))
             builder.AddOption(option);
 

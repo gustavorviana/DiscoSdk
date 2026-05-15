@@ -47,6 +47,12 @@ internal class SlashGroupInfo
         builder.WithDescription(ParentInfo.Description);
         builder.WithType(ApplicationCommandType.ChatInput);
 
+        if (ParentInfo.IntegrationTypes is { Length: > 0 })
+            builder.WithIntegrationTypes(ParentInfo.IntegrationTypes);
+
+        if (ParentInfo.Contexts is { Length: > 0 })
+            builder.WithContexts(ParentInfo.Contexts);
+
         var withoutGroup = _subcommands.Where(c => c.SubCommandGroup == null);
         var withGroup = _subcommands
             .Where(c => c.SubCommandGroup != null)
