@@ -375,4 +375,46 @@ public class CommandLocalizationBuilderTests
 
         Assert.NotNull(deepBuilt);
     }
+
+    [Fact]
+    public void ThenEnumChoice_EmitsOneChoicePerEnumValue_KeyedByMemberName()
+    {
+        var provider = new InMemoryCommandLocalizationProvider()
+            .DefineCommand("presence", b => b
+                .ForLocale("pt-BR", t => t
+                    .Option("status")
+                        .ThenEnumChoice<SampleStatus>(x => x
+                            .For(SampleStatus.Online, "Online")
+                            .For(SampleStatus.Idle, "Ausente")
+                            .For(SampleStatus.DoNotDisturb, "Não perturbe"))));
+
+        var choices = provider.GetLocalizations("presence", null)!["pt-BR"].Options![0].Choices!;
+        Assert.Equal(3, choices.Count);
+
+        Assert.Equal(nameof(SampleStatus.Online), choices[0].ChoiceName);
+        Assert.Equal("Online", choices[0].Name);
+
+        Assert.Equal(nameof(SampleStatus.Idle), choices[1].ChoiceName);
+        Assert.Equal("Ausente", choices[1].Name);
+
+        Assert.Equal(nameof(SampleStatus.DoNotDisturb), choices[2].ChoiceName);
+        Assert.Equal("Não perturbe", choices[2].Name);
+    }
+
+    [Fact]
+    public void ThenEnumChoice_RejectsBlankLocalizedName()
+    {
+        var builder = new CommandLocalizationBuilder();
+        Assert.Throws<ArgumentException>(() =>
+            builder.ForLocale("pt-BR", t => t
+                .Option("status")
+                    .ThenEnumChoice<SampleStatus>(x => x.For(SampleStatus.Online, "  "))));
+    }
+
+    private enum SampleStatus
+    {
+        Online,
+        Idle,
+        DoNotDisturb,
+    }
 }

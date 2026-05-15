@@ -18,6 +18,8 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
     private string? _defaultMemberPermissions;
     private bool? _dmPermission;
     private bool? _nsfw;
+    private ApplicationIntegrationType[]? _integrationTypes;
+    private InteractionContextType[]? _contexts;
     private string? _version;
 
     /// <summary>
@@ -154,6 +156,28 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
     public SlashCommandBuilder WithNsfw(bool nsfw)
     {
         _nsfw = nsfw;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the installation contexts where the command is available.
+    /// </summary>
+    /// <param name="integrationTypes">One or more <see cref="ApplicationIntegrationType"/> values.</param>
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder WithIntegrationTypes(params ApplicationIntegrationType[] integrationTypes)
+    {
+        _integrationTypes = integrationTypes.Length > 0 ? integrationTypes : null;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the interaction contexts where the command can be used.
+    /// </summary>
+    /// <param name="contexts">One or more <see cref="InteractionContextType"/> values.</param>
+    /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
+    public SlashCommandBuilder WithContexts(params InteractionContextType[] contexts)
+    {
+        _contexts = contexts.Length > 0 ? contexts : null;
         return this;
     }
 
@@ -692,6 +716,8 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
             DefaultMemberPermissions = _defaultMemberPermissions,
             DmPermission = _dmPermission,
             Nsfw = _nsfw,
+            IntegrationTypes = _integrationTypes,
+            Contexts = _contexts,
             Version = _version
         };
     }

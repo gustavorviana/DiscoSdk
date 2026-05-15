@@ -161,21 +161,21 @@ public class OnDemandRegistrationTests
 
     private class OnDemandOnlyUserHandler : UserContextMenuHandler
     {
-        [UserCommand("premium_user_ctx")]
+        [ContextMenuCommand("premium_user_ctx")]
         [OnDemand]
         protected Task ExecuteAsync(IUserCommandContext context) => Task.CompletedTask;
     }
 
     private class OnDemandOnlyMessageHandler : MessageContextMenuHandler
     {
-        [MessageCommand("premium_msg_ctx")]
+        [ContextMenuCommand("premium_msg_ctx")]
         [OnDemand]
         protected Task ExecuteAsync(IMessageCommandContext context) => Task.CompletedTask;
     }
 
     private class OnDemandGuildUserHandler : UserContextMenuHandler
     {
-        [UserCommand("beta_user_ctx", GuildIds = new[] { "111111111111111111" })]
+        [ContextMenuCommand("beta_user_ctx", GuildIds = new[] { "111111111111111111" })]
         [OnDemand]
         protected Task ExecuteAsync(IUserCommandContext context) => Task.CompletedTask;
     }

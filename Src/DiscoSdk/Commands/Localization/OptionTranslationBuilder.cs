@@ -99,6 +99,20 @@ public sealed class OptionTranslationBuilder : LocaleTranslationFluentNode
     public ChoiceTranslationBuilder ThenChoice(string choiceName, string localizedName)
         => ThenChoice(choiceName).WithName(localizedName);
 
+    /// <summary>
+    /// Adds translations for the choices produced by <see cref="EnumChoicesAttribute{T}"/>.
+    /// Each <c>.For(value, "name")</c> inside the callback maps one enum value to its localized
+    /// display name. The choice key is <c>value.ToString()</c> — identical to what
+    /// <see cref="EnumChoicesAttribute{T}"/> emits when generating the choices on the command itself.
+    /// </summary>
+    public OptionTranslationBuilder ThenEnumChoice<TEnum>(Action<EnumChoiceTranslationBuilder<TEnum>> configure)
+        where TEnum : struct, Enum
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(new EnumChoiceTranslationBuilder<TEnum>(_focused));
+        return this;
+    }
+
     private OptionScratch AddChildScratch(string optionName)
     {
         if (string.IsNullOrWhiteSpace(optionName))

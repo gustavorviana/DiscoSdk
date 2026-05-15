@@ -8,7 +8,7 @@ namespace TomoriBot.Commands;
 /// </summary>
 public class UserContextCommands : UserContextMenuHandler
 {
-    [UserCommand("show_user_info", GuildIds = ["773618860875579422"])]
+    [ContextMenuCommand("Show User Info", GuildIds = ["773618860875579422"])]
     public async Task ShowUserInfoAsync(IUserCommandContext context)
     {
         var user = context.TargetUser;
@@ -34,7 +34,7 @@ public class UserContextCommands : UserContextMenuHandler
             .ExecuteAsync();
     }
 
-    [UserCommand("dm_user_ping", GuildIds = ["773618860875579422"])]
+    [ContextMenuCommand("DM User Ping", GuildIds = ["773618860875579422"])]
     public Task PingUserAsync(IUserCommandContext context)
     {
         var user = context.TargetUser;

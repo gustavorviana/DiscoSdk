@@ -70,6 +70,18 @@ public class ApplicationCommand : IEquatable<ApplicationCommand?>
     public bool? Nsfw { get; set; }
 
     /// <summary>
+    /// Gets or sets the installation contexts where the command is available.
+    /// </summary>
+    [JsonPropertyName("integration_types")]
+    public ApplicationIntegrationType[]? IntegrationTypes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the interaction contexts where the command can be used.
+    /// </summary>
+    [JsonPropertyName("contexts")]
+    public InteractionContextType[]? Contexts { get; set; }
+
+    /// <summary>
     /// Gets or sets the version of the command.
     /// </summary>
     [JsonPropertyName("version")]
@@ -91,7 +103,9 @@ public class ApplicationCommand : IEquatable<ApplicationCommand?>
                CollectionUtils.SequenceEquals(Options, other.Options) &&
                DefaultMemberPermissions == other.DefaultMemberPermissions &&
                ValueUtils.UnsafeBoolComparer(DmPermission, other.DmPermission) &&
-               ValueUtils.UnsafeBoolComparer(Nsfw, other.Nsfw);
+               ValueUtils.UnsafeBoolComparer(Nsfw, other.Nsfw) &&
+               CollectionUtils.SequenceEquals(IntegrationTypes, other.IntegrationTypes) &&
+               CollectionUtils.SequenceEquals(Contexts, other.Contexts);
     }
 
     public override int GetHashCode()
@@ -106,6 +120,8 @@ public class ApplicationCommand : IEquatable<ApplicationCommand?>
         hash.Add(DefaultMemberPermissions);
         hash.Add(DmPermission);
         hash.Add(Nsfw);
+        hash.Add(IntegrationTypes);
+        hash.Add(Contexts);
         return hash.ToHashCode();
     }
 
@@ -141,6 +157,12 @@ public class ApplicationCommand : IEquatable<ApplicationCommand?>
 
         if (Nsfw.HasValue)
             details.Add($"nsfw={Nsfw.Value}");
+
+        if (IntegrationTypes is { Length: > 0 })
+            details.Add($"integration_types=[{string.Join(",", IntegrationTypes)}]");
+
+        if (Contexts is { Length: > 0 })
+            details.Add($"contexts=[{string.Join(",", Contexts)}]");
 
         if (Version is not null)
             details.Add($"v={Version}");

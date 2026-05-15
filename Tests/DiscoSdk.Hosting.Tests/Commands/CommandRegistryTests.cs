@@ -295,46 +295,46 @@ public class CommandRegistryTests
 
     private class ReportUserHandler : UserContextMenuHandler
     {
-        [UserCommand("ReportUser")]
+        [ContextMenuCommand("ReportUser")]
         protected Task ExecuteAsync(IUserCommandContext context) => Task.CompletedTask;
     }
 
     private class PremiumOnDemandUserHandler : UserContextMenuHandler
     {
-        [UserCommand("premium-user")]
+        [ContextMenuCommand("premium-user")]
         [OnDemand]
         protected Task ExecuteAsync(IUserCommandContext context) => Task.CompletedTask;
     }
 
     private class PremiumOnDemandUserContextHandler : UserContextMenuHandler
     {
-        [UserCommand("premium")]
+        [ContextMenuCommand("premium")]
         [OnDemand]
         protected Task ExecuteAsync(IUserCommandContext context) => Task.CompletedTask;
     }
 
     private class SharedUserHandler : UserContextMenuHandler
     {
-        [UserCommand("shared")]
+        [ContextMenuCommand("shared")]
         protected Task ExecuteAsync(IUserCommandContext context) => Task.CompletedTask;
     }
 
     private class BookmarkMessageHandler : MessageContextMenuHandler
     {
-        [MessageCommand("BookmarkMessage")]
+        [ContextMenuCommand("BookmarkMessage")]
         protected Task ExecuteAsync(IMessageCommandContext context) => Task.CompletedTask;
     }
 
     private class PremiumOnDemandMessageHandler : MessageContextMenuHandler
     {
-        [MessageCommand("premium-message")]
+        [ContextMenuCommand("premium-message")]
         [OnDemand]
         protected Task ExecuteAsync(IMessageCommandContext context) => Task.CompletedTask;
     }
 
     private class SharedMessageHandler : MessageContextMenuHandler
     {
-        [MessageCommand("shared")]
+        [ContextMenuCommand("shared")]
         protected Task ExecuteAsync(IMessageCommandContext context) => Task.CompletedTask;
     }
 

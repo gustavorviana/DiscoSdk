@@ -246,49 +246,49 @@ public class ContextMenuCommandRegistryTests
 
     public class TestUserHandler : UserContextMenuHandler
     {
-        [UserCommand("report_user")]
+        [ContextMenuCommand("report_user")]
         protected Task ExecuteAsync(IUserCommandContext context) => Task.CompletedTask;
     }
 
     public class AnotherUserHandler : UserContextMenuHandler
     {
-        [UserCommand("greet_user")]
+        [ContextMenuCommand("greet_user")]
         protected Task ExecuteAsync(IUserCommandContext context) => Task.CompletedTask;
     }
 
     public class TestMessageHandler : MessageContextMenuHandler
     {
-        [MessageCommand("bookmark_message")]
+        [ContextMenuCommand("bookmark_message")]
         protected Task ExecuteAsync(IMessageCommandContext context) => Task.CompletedTask;
     }
 
     public class DuplicateUserHandler : UserContextMenuHandler
     {
-        [UserCommand("report_user")]
+        [ContextMenuCommand("report_user")]
         protected Task ExecuteAsync(IUserCommandContext context) => Task.CompletedTask;
     }
 
     public class DuplicateMessageHandler : MessageContextMenuHandler
     {
-        [MessageCommand("bookmark_message")]
+        [ContextMenuCommand("bookmark_message")]
         protected Task ExecuteAsync(IMessageCommandContext context) => Task.CompletedTask;
     }
 
     public class SameNameUserHandler : UserContextMenuHandler
     {
-        [UserCommand("same_name")]
+        [ContextMenuCommand("same_name")]
         protected Task ExecuteAsync(IUserCommandContext context) => Task.CompletedTask;
     }
 
     public class SameNameMessageHandler : MessageContextMenuHandler
     {
-        [MessageCommand("same_name")]
+        [ContextMenuCommand("same_name")]
         protected Task ExecuteAsync(IMessageCommandContext context) => Task.CompletedTask;
     }
 
     public class RoutingUserHandler : UserContextMenuHandler
     {
-        [UserCommand("route_user_a")]
+        [ContextMenuCommand("route_user_a")]
         protected Task ExecuteAsync(IUserCommandContext context)
         {
             _lastInvokedMethod = "RoutingUserHandler.Execute";
@@ -298,7 +298,7 @@ public class ContextMenuCommandRegistryTests
 
     public class AnotherRoutingUserHandler : UserContextMenuHandler
     {
-        [UserCommand("route_user_b")]
+        [ContextMenuCommand("route_user_b")]
         protected Task ExecuteAsync(IUserCommandContext context)
         {
             _lastInvokedMethod = "AnotherRoutingUserHandler.Execute";
@@ -308,7 +308,7 @@ public class ContextMenuCommandRegistryTests
 
     public class RoutingMessageHandler : MessageContextMenuHandler
     {
-        [MessageCommand("route_message_a")]
+        [ContextMenuCommand("route_message_a")]
         protected Task ExecuteAsync(IMessageCommandContext context)
         {
             _lastInvokedMethod = "RoutingMessageHandler.Execute";

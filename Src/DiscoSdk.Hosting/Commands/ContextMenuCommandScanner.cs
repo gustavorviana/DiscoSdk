@@ -33,11 +33,8 @@ internal sealed class ContextMenuCommandScanner : ICommandScanner
 
         foreach (var type in _handlerTypes)
         {
-            foreach (var cmd in ContextMenuCommandInfo.GetUserCommands(type))
-                AddContextMenuEntry(builder, cmd, ApplicationCommandType.User, type);
-
-            foreach (var cmd in ContextMenuCommandInfo.GetMessageCommands(type))
-                AddContextMenuEntry(builder, cmd, ApplicationCommandType.Message, type);
+            foreach (var cmd in ContextMenuCommandInfo.GetCommands(type))
+                AddContextMenuEntry(builder, cmd, type);
 
             services.AddScoped(type);
         }
@@ -46,22 +43,20 @@ internal sealed class ContextMenuCommandScanner : ICommandScanner
     private static void AddContextMenuEntry(
         CommandRegistryBuilder builder,
         ContextMenuCommandInfo info,
-        ApplicationCommandType type,
         Type declaringType)
     {
-        var menuType = type == ApplicationCommandType.User ? ContextMenuType.User : ContextMenuType.Message;
-        var built = new ContextMenuBuilder().WithName(info.Name).Build(menuType);
+        var commandType = info.Type == ContextMenuType.User ? ApplicationCommandType.User : ApplicationCommandType.Message;
+        var built = new ContextMenuBuilder().WithName(info.Name).Build(info.Type);
         var guildIds = ParseGuildIds(info.GuildIds);
 
         try
         {
-            builder.AddContextMenu(info, built, type, guildIds, info.IsOnDemand);
+            builder.AddContextMenu(info, built, commandType, guildIds, info.IsOnDemand);
         }
         catch (InvalidOperationException ex)
         {
-            // Surface declaring type in the message to mirror the diagnostic the old registry produced.
             throw new InvalidOperationException(
-                $"Duplicate {(type == ApplicationCommandType.User ? "user" : "message")} command '{info.Name}' found in type '{declaringType.FullName}'.",
+                $"Duplicate {(info.Type == ContextMenuType.User ? "user" : "message")} command '{info.Name}' found in type '{declaringType.FullName}'.",
                 ex);
         }
     }

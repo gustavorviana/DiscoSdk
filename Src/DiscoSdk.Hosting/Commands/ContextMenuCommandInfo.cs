@@ -4,59 +4,47 @@ using System.Reflection;
 
 namespace DiscoSdk.Hosting.Commands;
 
-internal class ContextMenuCommandInfo
+internal class ContextMenuCommandInfo(ContextMenuType type, string name, string[] guildIds, bool isOnDemand, MethodCaller method)
 {
-    public string Name { get; }
-    public string[] GuildIds { get; }
-    public bool IsOnDemand { get; }
-    public Type HandlerType { get; }
-    private readonly MethodCaller _method;
-
-    private ContextMenuCommandInfo(string name, string[] guildIds, bool isOnDemand, MethodCaller method)
-    {
-        Name = name;
-        GuildIds = guildIds;
-        IsOnDemand = isOnDemand;
-        HandlerType = method.Method.DeclaringType!;
-        _method = method;
-    }
+    public string Name => name;
+    public string[] GuildIds => guildIds;
+    public bool IsOnDemand => isOnDemand;
+    public Type HandlerType => method.Method.DeclaringType!;
+    public ContextMenuType Type => type;
 
     public bool IsGuildCommand() => GuildIds is { Length: > 0 };
 
     public async Task ExecuteAsync(object handler, object context, CancellationToken token)
     {
-        await _method.ExecuteAsync(handler, [context], token);
+        await method!.ExecuteAsync(handler, [context], token);
     }
 
-    internal static IEnumerable<ContextMenuCommandInfo> GetUserCommands(Type handlerType)
+    public static IEnumerable<ContextMenuCommandInfo> GetCommands(Type handlerType)
     {
-        if (handlerType.IsAbstract || handlerType.IsInterface || !typeof(UserContextMenuHandler).IsAssignableFrom(handlerType))
+        if (handlerType.IsAbstract || handlerType.IsInterface)
+            yield break;
+
+        var menuType = InferMenuType(handlerType);
+        if (menuType is null)
             yield break;
 
         foreach (var method in handlerType.GetMethods(CommandReflection.Flags))
         {
-            var attr = method.GetCustomAttribute<UserCommandAttribute>();
-            if (attr != null)
-            {
-                var onDemand = method.GetCustomAttribute<OnDemandAttribute>() != null;
-                yield return new ContextMenuCommandInfo(attr.Name, attr.GuildIds, onDemand, MethodCaller.From(method));
-            }
+            var attr = method.GetCustomAttribute<ContextMenuCommandAttribute>();
+            if (attr is null)
+                continue;
+
+            var onDemand = method.GetCustomAttribute<OnDemandAttribute>() != null;
+            yield return new ContextMenuCommandInfo(menuType.Value, attr.Name, attr.GuildIds, onDemand, MethodCaller.From(method));
         }
     }
 
-    internal static IEnumerable<ContextMenuCommandInfo> GetMessageCommands(Type handlerType)
+    private static ContextMenuType? InferMenuType(Type handlerType)
     {
-        if (handlerType.IsAbstract || handlerType.IsInterface || !typeof(MessageContextMenuHandler).IsAssignableFrom(handlerType))
-            yield break;
-
-        foreach (var method in handlerType.GetMethods(CommandReflection.Flags))
-        {
-            var attr = method.GetCustomAttribute<MessageCommandAttribute>();
-            if (attr != null)
-            {
-                var onDemand = method.GetCustomAttribute<OnDemandAttribute>() != null;
-                yield return new ContextMenuCommandInfo(attr.Name, attr.GuildIds, onDemand, MethodCaller.From(method));
-            }
-        }
+        if (typeof(UserContextMenuHandler).IsAssignableFrom(handlerType))
+            return ContextMenuType.User;
+        if (typeof(MessageContextMenuHandler).IsAssignableFrom(handlerType))
+            return ContextMenuType.Message;
+        return null;
     }
 }

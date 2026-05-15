@@ -18,7 +18,8 @@ public class ContextMenuBuilder()
     private bool? _nsfw;
 
     /// <summary>
-    /// Sets the command name (1-32 characters, mixed case, no spaces).
+    /// Sets the command name (1-32 characters). Mixed case and spaces are allowed, matching
+    /// Discord's rules for USER and MESSAGE commands.
     /// </summary>
     /// <param name="name">The command name as shown in the Discord context menu.</param>
     /// <returns>The current <see cref="ContextMenuBuilder"/> instance.</returns>
@@ -112,12 +113,6 @@ public class ContextMenuBuilder()
 
         if (name.Length is < 1 or > 32)
             throw new ArgumentOutOfRangeException(nameof(name), $"Command name must be between 1 and 32 characters. Current length: {name.Length}.");
-
-        foreach (var ch in name)
-        {
-            if (char.IsWhiteSpace(ch))
-                throw new ArgumentException("Command name cannot contain whitespace characters.", nameof(name));
-        }
     }
 
     private static void ValidateNameLocalizations(Dictionary<string, string>? localizations)
@@ -143,14 +138,6 @@ public class ContextMenuBuilder()
             if (value.Length is < 1 or > 32)
                 throw new ArgumentOutOfRangeException(nameof(localizations),
                     $"Localized name value for locale '{locale}' must be between 1 and 32 characters. Current length: {value.Length}.");
-
-            foreach (var ch in value)
-            {
-                if (char.IsWhiteSpace(ch))
-                    throw new ArgumentException(
-                        $"Localized name value for locale '{locale}' cannot contain whitespace characters.",
-                        nameof(localizations));
-            }
         }
     }
 }

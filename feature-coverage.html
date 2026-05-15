@@ -94,9 +94,9 @@
     <span class="badge">Branch: <code>main</code></span>
   </div>
   <div class="summary-grid">
-    <div class="stat"><div class="num yes">~210</div><div class="label">Implemented</div></div>
+    <div class="stat"><div class="num yes">~212</div><div class="label">Implemented</div></div>
     <div class="stat"><div class="num partial">~3</div><div class="label">Partial</div></div>
-    <div class="stat"><div class="num no">~13</div><div class="label">Missing (non-voice)</div></div>
+    <div class="stat"><div class="num no">~11</div><div class="label">Missing (non-voice)</div></div>
     <div class="stat"><div class="num voice">~45</div><div class="label">Voice (ignored for now)</div></div>
     <div class="stat"><div class="num yes">~93%</div><div class="label">Non-voice coverage</div></div>
   </div>
@@ -160,8 +160,8 @@
   </div>
 
   <!-- ============================ GROUP 1 ============================ -->
-  <h2 id="g1">1. Application Commands (Slash Commands) <span class="meta">9 of 11 — 82%</span> <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands" target="_blank" rel="noopener">↗ docs</a></h2>
-  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:82%"></i><i class="b-no" style="width:18%"></i></div></div>
+  <h2 id="g1">1. Application Commands (Slash Commands) <span class="meta">11 of 11 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
   <p class="group-desc">Registration, editing, and management of application commands (slash, user, message), permissions, and localization.</p>
   <table>
     <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
@@ -179,8 +179,8 @@
     <tr><td class="feature"><code>default_member_permissions</code> <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#permissions" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">SlashCommand.DefaultMemberPermissions</td></tr>
     <tr><td class="feature"><code>dm_permission</code> <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">SlashCommand.DmPermission</td></tr>
     <tr><td class="feature">NSFW <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#agerestricted-commands" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">SlashCommand.Nsfw</td></tr>
-    <tr><td class="feature"><code>integration_types</code> (user-install) <a class="doc" href="https://discord.com/developers/docs/resources/application#application-object-application-integration-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">field absent in SlashCommand.cs</td></tr>
-    <tr><td class="feature"><code>contexts</code> (Guild/BotDM/Private) <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#application-command-object-interaction-context-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">field absent in SlashCommand.cs</td></tr>
+    <tr><td class="feature"><code>integration_types</code> (user-install) <a class="doc" href="https://discord.com/developers/docs/resources/application#application-object-application-integration-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationCommand.IntegrationTypes, SlashCommandBuilder.WithIntegrationTypes</td></tr>
+    <tr><td class="feature"><code>contexts</code> (Guild/BotDM/Private) <a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#application-command-object-interaction-context-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationCommand.Contexts (InteractionContextType), SlashCommandBuilder.WithContexts</td></tr>
   </table>
 
   <!-- ============================ GROUP 2 ============================ -->
@@ -716,11 +716,9 @@
   </div><!-- /voice-section -->
 
   <!-- ============================ FINAL SUMMARY ============================ -->
-  <h2 id="missing">Summary of what's still missing (excluding voice) <span class="meta">~13 items</span></h2>
+  <h2 id="missing">Summary of what's still missing (excluding voice) <span class="meta">~11 items</span></h2>
   <table>
     <tr><th>Domain</th><th>Missing item</th><th>Doc</th><th>Impact</th></tr>
-    <tr><td class="feature">Application Commands</td><td><code>integration_types</code> on SlashCommand</td><td><a class="doc" href="https://discord.com/developers/docs/resources/application#application-object-application-integration-types" target="_blank" rel="noopener">↗</a></td><td>Without this, commands cannot be installable in user scope (user-install).</td></tr>
-    <tr><td class="feature">Application Commands</td><td><code>contexts</code> on SlashCommand</td><td><a class="doc" href="https://discord.com/developers/docs/interactions/application-commands#application-command-object-interaction-context-types" target="_blank" rel="noopener">↗</a></td><td>Does not restrict command to Guild/BotDM/PrivateChannel.</td></tr>
     <tr><td class="feature">Application</td><td>Activity instances endpoint</td><td><a class="doc" href="https://discord.com/developers/docs/resources/application#get-application-activity-instance" target="_blank" rel="noopener">↗</a></td><td>Use restricted to embedded apps.</td></tr>
     <tr><td class="feature">Auto Moderation</td><td>Enum coverage (trigger/action types)</td><td><a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types" target="_blank" rel="noopener">↗</a></td><td>Verify that all 5 triggers and 4 actions are present.</td></tr>
     <tr><td class="feature">Interactions</td><td><code>PREMIUM_REQUIRED</code> (10)</td><td><a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td>Deprecated by Discord — probably not worth implementing.</td></tr>

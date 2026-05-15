@@ -15,8 +15,8 @@ namespace DiscoSdk.Commands;
 /// to pull the command by name + type and register it on the target guild.
 /// </para>
 /// <para>
-/// Combination with <c>GuildIds</c> (on <see cref="SlashCommandAttribute"/>, <see cref="UserCommandAttribute"/>,
-/// or <see cref="MessageCommandAttribute"/>) is allowed: the auto-register will still target the
+/// Combination with <c>GuildIds</c> (on <see cref="SlashCommandAttribute"/> or
+/// <see cref="ContextMenuCommandAttribute"/>) is allowed: the auto-register will still target the
 /// listed guilds, and the command remains available via the catalog for additional manual registrations.
 /// What <c>[OnDemand]</c> always suppresses is the <strong>global</strong> auto-register.
 /// </para>

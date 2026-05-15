@@ -79,6 +79,16 @@ public class ContextMenuBuilderTests
     }
 
     [Fact]
+    public void WithName_AcceptsSpacesAndMixedCase()
+    {
+        var command = new ContextMenuBuilder()
+            .WithName("Show User Info")
+            .Build(ContextMenuType.User);
+
+        Assert.Equal("Show User Info", command.Name);
+    }
+
+    [Fact]
     public void WithName_Accepts32Characters()
     {
         var command = new ContextMenuBuilder()
