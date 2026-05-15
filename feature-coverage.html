@@ -41,6 +41,7 @@
   .p-no { background: rgba(255,92,108,.13); color: var(--no); border: 1px solid rgba(255,92,108,.3); }
   .p-partial { background: rgba(255,180,84,.13); color: var(--partial); border: 1px solid rgba(255,180,84,.3); }
   .p-na { background: rgba(107,114,128,.16); color: var(--na); border: 1px solid rgba(107,114,128,.3); }
+  .p-deprecated { background: rgba(107,114,128,.16); color: var(--na); border: 1px dashed rgba(107,114,128,.45); }
   .p-voice { background: rgba(192,132,252,.13); color: var(--voice); border: 1px solid rgba(192,132,252,.3); }
   table { width: 100%; border-collapse: collapse; margin: 8px 0 4px; background: var(--panel); border-radius: 8px; overflow: hidden; }
   th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 13.5px; }
@@ -96,7 +97,7 @@
   <div class="summary-grid">
     <div class="stat"><div class="num yes">~212</div><div class="label">Implemented</div></div>
     <div class="stat"><div class="num partial">~3</div><div class="label">Partial</div></div>
-    <div class="stat"><div class="num no">~11</div><div class="label">Missing (non-voice)</div></div>
+    <div class="stat"><div class="num no">~10</div><div class="label">Missing (non-voice, excl. deprecated)</div></div>
     <div class="stat"><div class="num voice">~45</div><div class="label">Voice (ignored for now)</div></div>
     <div class="stat"><div class="num yes">~93%</div><div class="label">Non-voice coverage</div></div>
   </div>
@@ -107,6 +108,7 @@
     <span><i class="pill p-yes">IMPLEMENTED</i> available in the SDK</span>
     <span><i class="pill p-partial">PARTIAL</i> only some operations</span>
     <span><i class="pill p-no">MISSING</i> no support</span>
+    <span><i class="pill p-deprecated">DEPRECATED</i> removed by Discord — not counted</span>
     <span><i class="pill p-na">EXCLUDED</i> out of scope</span>
     <span><i class="pill p-voice">VOICE — IGNORED</i> future roadmap</span>
   </div>
@@ -400,8 +402,8 @@
   </table>
 
   <!-- ============================ GROUP 16 ============================ -->
-  <h2 id="g16">16. Interactions <span class="meta">10 of 12 — 83%</span> <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding" target="_blank" rel="noopener">↗ docs</a></h2>
-  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:83%"></i><i class="b-no" style="width:17%"></i></div></div>
+  <h2 id="g16">16. Interactions <span class="meta">10 of 11 — 91% (excl. deprecated)</span> <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:91%"></i><i class="b-no" style="width:9%"></i></div></div>
   <table>
     <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
     <tr><td class="feature">Receive interaction (gateway) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionContextWrapper + DiscordEventDispatcher</td></tr>
@@ -412,7 +414,7 @@
     <tr><td class="feature">UPDATE_MESSAGE (7) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.UpdateMessage</td></tr>
     <tr><td class="feature">APPLICATION_COMMAND_AUTOCOMPLETE_RESULT (8) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.ApplicationCommandAutocompleteResult</td></tr>
     <tr><td class="feature">MODAL (9) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.Modal</td></tr>
-    <tr><td class="feature">PREMIUM_REQUIRED (10) <em>deprecated</em> <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">not in InteractionCallbackType.cs</td></tr>
+    <tr><td class="feature">PREMIUM_REQUIRED (10) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-deprecated">DEPRECATED</span></td><td class="evidence">replaced by Premium Button (component style 6)</td></tr>
     <tr><td class="feature">LAUNCH_ACTIVITY (12) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">not in InteractionCallbackType.cs</td></tr>
     <tr><td class="feature">Follow-up messages (CRUD) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#create-followup-message" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">WebhookMessageClient (Execute/Get/Edit/Delete)</td></tr>
     <tr><td class="feature">Original interaction response <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#get-original-interaction-response" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">via WebhookMessageClient with original_message id</td></tr>
@@ -716,12 +718,11 @@
   </div><!-- /voice-section -->
 
   <!-- ============================ FINAL SUMMARY ============================ -->
-  <h2 id="missing">Summary of what's still missing (excluding voice) <span class="meta">~11 items</span></h2>
+  <h2 id="missing">Summary of what's still missing (excluding voice and deprecated) <span class="meta">~10 items</span></h2>
   <table>
     <tr><th>Domain</th><th>Missing item</th><th>Doc</th><th>Impact</th></tr>
     <tr><td class="feature">Application</td><td>Activity instances endpoint</td><td><a class="doc" href="https://discord.com/developers/docs/resources/application#get-application-activity-instance" target="_blank" rel="noopener">↗</a></td><td>Use restricted to embedded apps.</td></tr>
     <tr><td class="feature">Auto Moderation</td><td>Enum coverage (trigger/action types)</td><td><a class="doc" href="https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types" target="_blank" rel="noopener">↗</a></td><td>Verify that all 5 triggers and 4 actions are present.</td></tr>
-    <tr><td class="feature">Interactions</td><td><code>PREMIUM_REQUIRED</code> (10)</td><td><a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td>Deprecated by Discord — probably not worth implementing.</td></tr>
     <tr><td class="feature">Interactions</td><td><code>LAUNCH_ACTIVITY</code> (12)</td><td><a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td>Required to launch embedded Activities from commands.</td></tr>
     <tr><td class="feature">Users</td><td>Create Group DM</td><td><a class="doc" href="https://discord.com/developers/docs/resources/user#create-group-dm" target="_blank" rel="noopener">↗</a></td><td>Rare case (requires access_token from each user).</td></tr>
     <tr><td class="feature">Messages</td><td>Forward message (<code>message_snapshots</code>)</td><td><a class="doc" href="https://discord.com/developers/docs/resources/message#message-reference-types" target="_blank" rel="noopener">↗</a></td><td>Recent feature; normal reply works.</td></tr>
