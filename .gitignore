@@ -362,3 +362,9 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /docs
+
+
+*.lscache
+
+# GitHub Wiki clone (managed as separate repo)
+/DiscoSdk.wiki
