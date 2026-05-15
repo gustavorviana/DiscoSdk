@@ -1,7 +1,9 @@
+using DiscoSdk.Exceptions;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Applications;
 using DiscoSdk.Models.Monetization;
 using DiscoSdk.Rest;
+using System.Net;
 using System.Text;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
@@ -131,6 +133,37 @@ internal class ApplicationClient(IDiscordRestClient client)
 	{
 		var route = new DiscordRoute("skus/{sku_id}/subscriptions/{subscription_id}", skuId, subscriptionId);
 		return client.SendAsync<Subscription>(route, HttpMethod.Get, null, cancellationToken);
+	}
+
+	// ---- Activity instances ----
+
+	/// <summary>
+	/// Gets a running embedded-activity instance for the application. Returns <c>null</c>
+	/// when Discord answers with HTTP 404 (instance never existed, or was already torn down).
+	/// </summary>
+	/// <remarks>
+	/// Endpoint: <c>GET /applications/{application_id}/activity-instances/{instance_id}</c>.
+	/// Docs: <see href="https://discord.com/developers/docs/resources/application#get-application-activity-instance"/>.
+	/// </remarks>
+	public async Task<ActivityInstance?> GetActivityInstanceAsync(Snowflake applicationId, string instanceId, CancellationToken cancellationToken = default)
+	{
+		if (string.IsNullOrWhiteSpace(instanceId))
+			throw new ArgumentException("Instance ID cannot be null or empty.", nameof(instanceId));
+
+		var route = new DiscordRoute("applications/{application_id}/activity-instances/{instance_id}", applicationId, instanceId);
+		try
+		{
+			return await client.SendAsync<ActivityInstance>(route, HttpMethod.Get, null, cancellationToken);
+		}
+		catch (DiscordResourceNotFoundException)
+		{
+			return null;
+		}
+		catch (DiscordApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+		{
+			// Defensive: 404 without one of the Unknown X JSON codes still means "not found".
+			return null;
+		}
 	}
 
 	// ---- Application emojis ----

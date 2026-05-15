@@ -116,4 +116,18 @@ public interface IDiscordClient
     /// Gets a REST action that resolves an invite by its code. Returns <c>null</c> if the code does not exist.
     /// </summary>
     IRestAction<IInvite?> GetInvite(string code, bool? withCounts = null, bool? withExpiration = null, Snowflake? guildScheduledEventId = null);
+
+    /// <summary>
+    /// Gets a REST action that retrieves a running embedded-activity instance by its id, scoped
+    /// to the bot's own application. Returns <c>null</c> when the instance does not exist
+    /// (Discord 404).
+    /// </summary>
+    /// <remarks>
+    /// Typical use: pair with a <c>LaunchActivity</c> interaction callback executed with
+    /// <c>with_response=true</c> — the callback response carries the new instance id, which can
+    /// then be inspected here for the full <see cref="ActivityInstance"/> (location, users).
+    /// Discord docs:
+    /// <see href="https://discord.com/developers/docs/resources/application#get-application-activity-instance"/>.
+    /// </remarks>
+    IRestAction<ActivityInstance?> GetActivityInstance(string instanceId);
 }

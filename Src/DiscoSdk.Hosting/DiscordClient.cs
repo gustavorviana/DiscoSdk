@@ -457,6 +457,11 @@ namespace DiscoSdk.Hosting
                 return null;
             });
 
+        /// <inheritdoc />
+        public IRestAction<ActivityInstance?> GetActivityInstance(string instanceId)
+            => RestAction<ActivityInstance?>.Create(ct =>
+                ApplicationClient.GetActivityInstanceAsync(RequireApplicationId(), instanceId, ct));
+
         async Task IShardEventListener.OnReceiveMessageAsync(Shard shard, ReceivedGatewayMessage message)
         {
             if (message.Opcode != OpCodes.Dispatch || string.IsNullOrEmpty(message.EventType))

@@ -91,13 +91,13 @@
   <div class="version-bar">
     <span class="badge">Target API: <strong>v10</strong></span>
     <span class="badge">Doc baseline: <a href="https://discord.com/developers/docs/change-log" target="_blank" rel="noopener">Discord Change Log — May/2026</a></span>
-    <span class="badge">Last audit: <strong>2026-05-15</strong></span>
+    <span class="badge">Last audit: <strong>2026-05-15</strong> (updated)</span>
     <span class="badge">Branch: <code>main</code></span>
   </div>
   <div class="summary-grid">
-    <div class="stat"><div class="num yes">~214</div><div class="label">Implemented</div></div>
+    <div class="stat"><div class="num yes">~216</div><div class="label">Implemented</div></div>
     <div class="stat"><div class="num partial">~1</div><div class="label">Partial</div></div>
-    <div class="stat"><div class="num no">~10</div><div class="label">Missing (non-voice, excl. deprecated)</div></div>
+    <div class="stat"><div class="num no">~8</div><div class="label">Missing (non-voice, excl. deprecated)</div></div>
     <div class="stat"><div class="num voice">~45</div><div class="label">Voice (ignored for now)</div></div>
     <div class="stat"><div class="num yes">~93%</div><div class="label">Non-voice coverage</div></div>
   </div>
@@ -186,15 +186,15 @@
   </table>
 
   <!-- ============================ GROUP 2 ============================ -->
-  <h2 id="g2">2. Application <span class="meta">4 of 5 — 80%</span> <a class="doc" href="https://discord.com/developers/docs/resources/application" target="_blank" rel="noopener">↗ docs</a></h2>
-  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:80%"></i><i class="b-no" style="width:20%"></i></div></div>
+  <h2 id="g2">2. Application <span class="meta">5 of 5 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/application" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
   <table>
     <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
     <tr><td class="feature">Get current application <a class="doc" href="https://discord.com/developers/docs/resources/application#get-current-application" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.GetCurrentApplicationAsync</td></tr>
     <tr><td class="feature">Edit current application <a class="doc" href="https://discord.com/developers/docs/resources/application#edit-current-application" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ApplicationClient.EditCurrentApplicationAsync</td></tr>
     <tr><td class="feature">Application emojis (CRUD) <a class="doc" href="https://discord.com/developers/docs/resources/emoji#list-application-emojis" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">List/Get/Create/Modify/DeleteApplicationEmojiAsync</td></tr>
     <tr><td class="feature">Role connection metadata <a class="doc" href="https://discord.com/developers/docs/resources/application-role-connection-metadata" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GetRoleConnectionMetadataAsync, UpdateRoleConnectionMetadataAsync</td></tr>
-    <tr><td class="feature">Application activity instances <a class="doc" href="https://discord.com/developers/docs/resources/application#get-application-activity-instance" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">no dedicated endpoint (used in embedded apps)</td></tr>
+    <tr><td class="feature">Application activity instances <a class="doc" href="https://discord.com/developers/docs/resources/application#get-application-activity-instance" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">IDiscordClient.GetActivityInstance / ApplicationClient.GetActivityInstanceAsync (returns full ActivityInstance with Location + Users; 404 → null)</td></tr>
   </table>
 
   <!-- ============================ GROUP 3 ============================ -->
@@ -402,8 +402,8 @@
   </table>
 
   <!-- ============================ GROUP 16 ============================ -->
-  <h2 id="g16">16. Interactions <span class="meta">10 of 11 — 91% (excl. deprecated)</span> <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding" target="_blank" rel="noopener">↗ docs</a></h2>
-  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:91%"></i><i class="b-no" style="width:9%"></i></div></div>
+  <h2 id="g16">16. Interactions <span class="meta">11 of 11 — 100% (excl. deprecated)</span> <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
   <table>
     <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
     <tr><td class="feature">Receive interaction (gateway) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionContextWrapper + DiscordEventDispatcher</td></tr>
@@ -415,7 +415,7 @@
     <tr><td class="feature">APPLICATION_COMMAND_AUTOCOMPLETE_RESULT (8) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.ApplicationCommandAutocompleteResult</td></tr>
     <tr><td class="feature">MODAL (9) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.Modal</td></tr>
     <tr><td class="feature">PREMIUM_REQUIRED (10) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-deprecated">DEPRECATED</span></td><td class="evidence">replaced by Premium Button (component style 6)</td></tr>
-    <tr><td class="feature">LAUNCH_ACTIVITY (12) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">not in InteractionCallbackType.cs</td></tr>
+    <tr><td class="feature">LAUNCH_ACTIVITY (12) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">InteractionCallbackType.LaunchActivity + ILaunchActivityRestAction (context.LaunchActivity())</td></tr>
     <tr><td class="feature">Follow-up messages (CRUD) <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#create-followup-message" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">WebhookMessageClient (Execute/Get/Edit/Delete)</td></tr>
     <tr><td class="feature">Original interaction response <a class="doc" href="https://discord.com/developers/docs/interactions/receiving-and-responding#get-original-interaction-response" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">via WebhookMessageClient with original_message id</td></tr>
   </table>

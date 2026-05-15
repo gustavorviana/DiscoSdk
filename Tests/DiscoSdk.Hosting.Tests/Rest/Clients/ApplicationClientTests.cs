@@ -1,9 +1,13 @@
+using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Applications;
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Monetization;
 using DiscoSdk.Rest;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
+using System.Net;
 
 namespace DiscoSdk.Hosting.Tests.Rest.Clients;
 
@@ -229,5 +233,106 @@ public class ApplicationClientTests
 			HttpMethod.Get,
 			Arg.Any<object?>(),
 			Arg.Any<CancellationToken>());
+	}
+
+	// ---- Activity instances ----
+
+	[Fact]
+	public async Task GetActivityInstanceAsync_GetsInstanceRouteAsync()
+	{
+		var instance = new ActivityInstance
+		{
+			ApplicationId = _appId,
+			InstanceId = "i.abc",
+			LaunchId = "789",
+			Location = new ActivityInstanceLocation
+			{
+				Id = "loc-1",
+				Kind = ActivityLocationKind.GuildChannel,
+				ChannelId = new Snowflake(42),
+				GuildId = new Snowflake(100),
+			},
+			Users = [new Snowflake(7), new Snowflake(8)],
+		};
+		_http.SendAsync<ActivityInstance>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(instance);
+
+		var result = await _client.GetActivityInstanceAsync(_appId, "i.abc");
+
+		Assert.NotNull(result);
+		Assert.Equal("i.abc", result!.InstanceId);
+		Assert.Equal(ActivityLocationKind.GuildChannel, result.Location!.Kind);
+		Assert.Equal(2, result.Users.Length);
+
+		await _http.Received(1).SendAsync<ActivityInstance>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == $"applications/{_appId}/activity-instances/i.abc"),
+			HttpMethod.Get,
+			Arg.Any<object?>(),
+			Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task GetActivityInstanceAsync_OnUnknownInstance_ReturnsNullAsync()
+	{
+		// Discord 404 surfaces as DiscordResourceNotFoundException (10068 Unknown Voice State /
+		// similar Unknown X family). The endpoint maps it to null.
+		var notFound = new DiscordResourceNotFoundExceptionShim(
+			HttpStatusCode.NotFound,
+			"Not Found",
+			new DiscordApiError { Code = 10003, Message = "Unknown Channel" });
+		_http.SendAsync<ActivityInstance>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Throws(notFound);
+
+		var result = await _client.GetActivityInstanceAsync(_appId, "i.gone");
+
+		Assert.Null(result);
+	}
+
+	[Fact]
+	public async Task GetActivityInstanceAsync_OnGenericNotFound_ReturnsNullAsync()
+	{
+		// Defensive branch: 404 without a typed JSON error code (no DiscordResourceNotFoundException)
+		// still resolves to null.
+		var rawNotFound = new DiscordApiException(HttpStatusCode.NotFound, "Not Found", error: null);
+		_http.SendAsync<ActivityInstance>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Throws(rawNotFound);
+
+		var result = await _client.GetActivityInstanceAsync(_appId, "i.gone");
+
+		Assert.Null(result);
+	}
+
+	[Fact]
+	public async Task GetActivityInstanceAsync_OnOtherFailure_PropagatesAsync()
+	{
+		var permError = new DiscordApiException(
+			HttpStatusCode.Forbidden,
+			"Forbidden",
+			new DiscordApiError { Code = 50013, Message = "Missing Permissions" });
+		_http.SendAsync<ActivityInstance>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Throws(permError);
+
+		await Assert.ThrowsAsync<DiscordApiException>(() =>
+			_client.GetActivityInstanceAsync(_appId, "i.abc"));
+	}
+
+	[Fact]
+	public async Task GetActivityInstanceAsync_RejectsBlankInstanceIdAsync()
+	{
+		await Assert.ThrowsAsync<ArgumentException>(() =>
+			_client.GetActivityInstanceAsync(_appId, "   "));
+	}
+
+	/// <summary>
+	/// Test shim around <see cref="DiscordResourceNotFoundException"/> which has an internal
+	/// constructor. Subclassing here lets the test simulate the exact subtype the production
+	/// REST client raises for 404 + Unknown X codes.
+	/// </summary>
+	private sealed class DiscordResourceNotFoundExceptionShim : DiscordResourceNotFoundException
+	{
+		internal DiscordResourceNotFoundExceptionShim(HttpStatusCode statusCode, string? httpReasonPhrase, DiscordApiError error)
+			: base(statusCode, httpReasonPhrase, error)
+		{
+		}
 	}
 }
