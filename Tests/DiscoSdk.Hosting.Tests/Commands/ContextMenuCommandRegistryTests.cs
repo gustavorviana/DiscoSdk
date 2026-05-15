@@ -42,7 +42,7 @@ public class ContextMenuCommandRegistryTests
     // --- Scanning Tests ---
 
     [Fact]
-    public async Task Scanner_DiscoversUserCommandHandlers_RegistersUserCommands()
+    public async Task Scanner_DiscoversUserCommandHandlers_RegistersUserCommandsAsync()
     {
         var (_, module, _) = BuildHarness(typeof(TestUserHandler));
         var factory = new CapturingCommandUpdateFactory();
@@ -55,7 +55,7 @@ public class ContextMenuCommandRegistryTests
     }
 
     [Fact]
-    public async Task Scanner_DiscoversMessageCommandHandlers_RegistersMessageCommands()
+    public async Task Scanner_DiscoversMessageCommandHandlers_RegistersMessageCommandsAsync()
     {
         var (_, module, _) = BuildHarness(typeof(TestMessageHandler));
         var factory = new CapturingCommandUpdateFactory();
@@ -68,7 +68,7 @@ public class ContextMenuCommandRegistryTests
     }
 
     [Fact]
-    public async Task Scanner_ScansMultipleHandlerTypes_RegistersAll()
+    public async Task Scanner_ScansMultipleHandlerTypes_RegistersAllAsync()
     {
         var (_, module, _) = BuildHarness(typeof(TestUserHandler), typeof(TestMessageHandler), typeof(AnotherUserHandler));
         var factory = new CapturingCommandUpdateFactory();
@@ -83,7 +83,7 @@ public class ContextMenuCommandRegistryTests
     }
 
     [Fact]
-    public async Task AutoRegister_UserCommand_SetsCorrectType()
+    public async Task AutoRegister_UserCommand_SetsCorrectTypeAsync()
     {
         var (_, module, _) = BuildHarness(typeof(TestUserHandler));
         var factory = new CapturingCommandUpdateFactory();
@@ -96,7 +96,7 @@ public class ContextMenuCommandRegistryTests
     }
 
     [Fact]
-    public async Task AutoRegister_MessageCommand_SetsCorrectType()
+    public async Task AutoRegister_MessageCommand_SetsCorrectTypeAsync()
     {
         var (_, module, _) = BuildHarness(typeof(TestMessageHandler));
         var factory = new CapturingCommandUpdateFactory();

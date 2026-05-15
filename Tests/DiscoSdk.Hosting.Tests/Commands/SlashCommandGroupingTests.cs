@@ -11,7 +11,7 @@ namespace DiscoSdk.Hosting.Tests.Commands;
 public class SlashCommandGroupingTests
 {
     [Fact]
-    public async Task Constructor_WithSubCommands_GroupsByCommandName()
+    public async Task Constructor_WithSubCommands_GroupsByCommandNameAsync()
     {
         var services = new ServiceCollection();
         var builder = new CommandRegistryBuilder();
@@ -27,7 +27,7 @@ public class SlashCommandGroupingTests
     }
 
     [Fact]
-    public async Task Constructor_WithSubCommands_GeneratesSubCommandOptions()
+    public async Task Constructor_WithSubCommands_GeneratesSubCommandOptionsAsync()
     {
         var services = new ServiceCollection();
         var builder = new CommandRegistryBuilder();
@@ -51,7 +51,7 @@ public class SlashCommandGroupingTests
     }
 
     [Fact]
-    public async Task Constructor_WithSubCommandGroup_GeneratesGroupOptions()
+    public async Task Constructor_WithSubCommandGroup_GeneratesGroupOptionsAsync()
     {
         var services = new ServiceCollection();
         var builder = new CommandRegistryBuilder();
@@ -76,7 +76,7 @@ public class SlashCommandGroupingTests
     }
 
     [Fact]
-    public async Task Constructor_SubCommandWithOptions_OptionsAreLeafOfSubCommand()
+    public async Task Constructor_SubCommandWithOptions_OptionsAreLeafOfSubCommandAsync()
     {
         var services = new ServiceCollection();
         var builder = new CommandRegistryBuilder();
@@ -98,7 +98,7 @@ public class SlashCommandGroupingTests
     }
 
     [Fact]
-    public async Task Constructor_CrossHandlerGrouping_MethodsFromDifferentHandlersGroupedTogether()
+    public async Task Constructor_CrossHandlerGrouping_MethodsFromDifferentHandlersGroupedTogetherAsync()
     {
         var services = new ServiceCollection();
         var builder = new CommandRegistryBuilder();
@@ -119,7 +119,7 @@ public class SlashCommandGroupingTests
     }
 
     [Fact]
-    public async Task Constructor_FlatCommandsStillWork_AlongsideGroupedCommands()
+    public async Task Constructor_FlatCommandsStillWork_AlongsideGroupedCommandsAsync()
     {
         var services = new ServiceCollection();
         var builder = new CommandRegistryBuilder();

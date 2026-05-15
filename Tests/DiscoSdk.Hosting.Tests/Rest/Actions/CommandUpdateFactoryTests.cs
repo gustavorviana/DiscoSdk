@@ -22,7 +22,7 @@ public class CommandUpdateFactoryTests
     }
 
     [Fact]
-    public async Task OpenForGlobal_ReturnsScopeThatTargetsGlobalRoute()
+    public async Task OpenForGlobal_ReturnsScopeThatTargetsGlobalRouteAsync()
     {
         _rest.SendAsync<List<ApplicationCommand>>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
             .Returns(new List<ApplicationCommand>());
@@ -40,7 +40,7 @@ public class CommandUpdateFactoryTests
     }
 
     [Fact]
-    public async Task OpenForGuild_ReturnsScopeThatTargetsGuildRoute()
+    public async Task OpenForGuild_ReturnsScopeThatTargetsGuildRouteAsync()
     {
         var guildId = new Snowflake(5555);
         _rest.SendAsync<List<ApplicationCommand>>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
@@ -59,7 +59,7 @@ public class CommandUpdateFactoryTests
     }
 
     [Fact]
-    public async Task MultipleScopes_AreIndependent()
+    public async Task MultipleScopes_AreIndependentAsync()
     {
         var guildId = new Snowflake(5555);
         _rest.SendAsync<List<ApplicationCommand>>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
@@ -94,7 +94,7 @@ public class CommandUpdateFactoryTests
     }
 
     [Fact]
-    public async Task GuildCommandUpdateFactory_InterfaceAlone_OpensGuildScopes()
+    public async Task GuildCommandUpdateFactory_InterfaceAlone_OpensGuildScopesAsync()
     {
         _rest.SendAsync<List<ApplicationCommand>>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
             .Returns(new List<ApplicationCommand>());

@@ -31,7 +31,7 @@ public class OnDemandRegistrationTests
     // ── Slash commands ──
 
     [Fact]
-    public async Task SlashScanner_OnDemandWithoutGuildIds_DoesNotAutoRegisterGlobally()
+    public async Task SlashScanner_OnDemandWithoutGuildIds_DoesNotAutoRegisterGloballyAsync()
     {
         var (module, _) = BuildSlash(typeof(OnDemandOnlySlashHandler));
         var factory = new CapturingCommandUpdateFactory();
@@ -43,7 +43,7 @@ public class OnDemandRegistrationTests
     }
 
     [Fact]
-    public async Task SlashScanner_OnDemandWithoutGuildIds_StillEntersCatalog()
+    public async Task SlashScanner_OnDemandWithoutGuildIds_StillEntersCatalogAsync()
     {
         var (module, catalog) = BuildSlash(typeof(OnDemandOnlySlashHandler));
 
@@ -55,7 +55,7 @@ public class OnDemandRegistrationTests
     }
 
     [Fact]
-    public async Task SlashScanner_OnDemandWithGuildIds_AutoRegistersInGuildsAndEntersCatalog()
+    public async Task SlashScanner_OnDemandWithGuildIds_AutoRegistersInGuildsAndEntersCatalogAsync()
     {
         var (module, catalog) = BuildSlash(typeof(OnDemandGuildSlashHandler));
         var factory = new CapturingCommandUpdateFactory();
@@ -70,7 +70,7 @@ public class OnDemandRegistrationTests
     }
 
     [Fact]
-    public async Task SlashScanner_NonOnDemandCommand_EntersCatalogButNotOnDemandView()
+    public async Task SlashScanner_NonOnDemandCommand_EntersCatalogButNotOnDemandViewAsync()
     {
         var (module, catalog) = BuildSlash(typeof(PlainSlashHandler));
 
@@ -83,7 +83,7 @@ public class OnDemandRegistrationTests
     // ── Context menu commands ──
 
     [Fact]
-    public async Task ContextScanner_OnDemandUserCommand_DoesNotAutoRegisterGlobally()
+    public async Task ContextScanner_OnDemandUserCommand_DoesNotAutoRegisterGloballyAsync()
     {
         var (module, catalog) = BuildContext(typeof(OnDemandOnlyUserHandler));
         var factory = new CapturingCommandUpdateFactory();
@@ -95,7 +95,7 @@ public class OnDemandRegistrationTests
     }
 
     [Fact]
-    public async Task ContextScanner_OnDemandMessageCommand_DoesNotAutoRegisterGlobally()
+    public async Task ContextScanner_OnDemandMessageCommand_DoesNotAutoRegisterGloballyAsync()
     {
         var (module, catalog) = BuildContext(typeof(OnDemandOnlyMessageHandler));
         var factory = new CapturingCommandUpdateFactory();
@@ -107,7 +107,7 @@ public class OnDemandRegistrationTests
     }
 
     [Fact]
-    public async Task ContextScanner_OnDemandWithGuildIds_AutoRegistersInGuildsAndEntersCatalog()
+    public async Task ContextScanner_OnDemandWithGuildIds_AutoRegistersInGuildsAndEntersCatalogAsync()
     {
         var (module, catalog) = BuildContext(typeof(OnDemandGuildUserHandler));
         var factory = new CapturingCommandUpdateFactory();
@@ -124,7 +124,7 @@ public class OnDemandRegistrationTests
     // ── Mixed scenarios ──
 
     [Fact]
-    public async Task SlashScanner_MixedOnDemandAndPlain_AutoRegistersOnlyPlain()
+    public async Task SlashScanner_MixedOnDemandAndPlain_AutoRegistersOnlyPlainAsync()
     {
         var (module, catalog) = BuildSlash(typeof(PlainSlashHandler), typeof(OnDemandOnlySlashHandler));
         var factory = new CapturingCommandUpdateFactory();

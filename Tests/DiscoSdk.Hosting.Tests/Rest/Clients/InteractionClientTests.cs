@@ -24,7 +24,7 @@ public class InteractionClientTests
     }
 
     [Fact]
-    public async Task RespondWithAutocompleteAsync_MarksInteractionResponded()
+    public async Task RespondWithAutocompleteAsync_MarksInteractionRespondedAsync()
     {
         Assert.False(_handle.Responded);
 
@@ -37,7 +37,7 @@ public class InteractionClientTests
     }
 
     [Fact]
-    public async Task RespondWithAutocompleteAsync_MarksRespondedEvenIfDiscordRejects()
+    public async Task RespondWithAutocompleteAsync_MarksRespondedEvenIfDiscordRejectsAsync()
     {
         // Discord retorna "Interaction has already been acknowledged" → SendAsync lança.
         // O Responded ainda deve ser setado (no finally) pra evitar que handlers subsequentes
@@ -53,7 +53,7 @@ public class InteractionClientTests
     }
 
     [Fact]
-    public async Task RespondWithAutocompleteAsync_PostsToCallbackRoute()
+    public async Task RespondWithAutocompleteAsync_PostsToCallbackRouteAsync()
     {
         await _client.RespondWithAutocompleteAsync(_handle, Array.Empty<SlashCommandOptionChoice>());
 
@@ -65,7 +65,7 @@ public class InteractionClientTests
     }
 
     [Fact]
-    public async Task RespondWithAutocompleteAsync_RejectsMoreThan25Choices()
+    public async Task RespondWithAutocompleteAsync_RejectsMoreThan25ChoicesAsync()
     {
         var choices = Enumerable.Range(0, 26)
             .Select(i => new SlashCommandOptionChoice { Name = $"c{i}", Value = $"c{i}" })

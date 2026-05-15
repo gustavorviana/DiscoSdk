@@ -66,7 +66,7 @@ public class CommandUpdateScopeAddFromCatalogTests
     }
 
     [Fact]
-    public async Task AddFromCatalog_OnDemandCommand_QueuesAndAppliesIt()
+    public async Task AddFromCatalog_OnDemandCommand_QueuesAndAppliesItAsync()
     {
         _rest.SendAsync<List<ApplicationCommand>>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
             .Returns(new List<ApplicationCommand>());
@@ -146,7 +146,7 @@ public class CommandUpdateScopeAddFromCatalogTests
     }
 
     [Fact]
-    public async Task AddFromCatalog_GlobalScope_AlsoWorksWhenCommandIsOnDemand()
+    public async Task AddFromCatalog_GlobalScope_AlsoWorksWhenCommandIsOnDemandAsync()
     {
         // OnDemand só suprime *auto*-registration. Quem pega manualmente pode mandar pro global.
         _rest.SendAsync<List<ApplicationCommand>>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())

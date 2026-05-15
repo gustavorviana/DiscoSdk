@@ -10,7 +10,7 @@ namespace DiscoSdk.Hosting.Tests.Commands;
 public class SlashCommandRegistryTests
 {
     [Fact]
-    public async Task Scanner_WithMultipleHandlerClasses_RegistersAllCommands()
+    public async Task Scanner_WithMultipleHandlerClasses_RegistersAllCommandsAsync()
     {
         var services = new ServiceCollection();
         var builder = new CommandRegistryBuilder();

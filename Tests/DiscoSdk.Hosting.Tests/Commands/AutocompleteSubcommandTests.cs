@@ -157,7 +157,7 @@ public class AutocompleteSubcommandTests
     }
 
     [Fact]
-    public async Task CommandBuilder_SubcommandWithAutocomplete_SetsAutocompleteFlag()
+    public async Task CommandBuilder_SubcommandWithAutocomplete_SetsAutocompleteFlagAsync()
     {
         var (_, module, _) = BuildHarness();
         var factory = new CapturingCommandUpdateFactory();

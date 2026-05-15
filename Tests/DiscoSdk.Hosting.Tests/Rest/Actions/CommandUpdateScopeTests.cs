@@ -24,7 +24,7 @@ public class CommandUpdateScopeTests
     // ── Overwrite mode ──
 
     [Fact]
-    public async Task ApplyAsync_OverwriteGlobal_PutsBulkToGlobalRoute()
+    public async Task ApplyAsync_OverwriteGlobal_PutsBulkToGlobalRouteAsync()
     {
         _rest.SendAsync<List<ApplicationCommand>>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
             .Returns(new List<ApplicationCommand>());
@@ -43,7 +43,7 @@ public class CommandUpdateScopeTests
     }
 
     [Fact]
-    public async Task ApplyAsync_OverwriteGuild_PutsBulkToGuildRoute()
+    public async Task ApplyAsync_OverwriteGuild_PutsBulkToGuildRouteAsync()
     {
         _rest.SendAsync<List<ApplicationCommand>>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
             .Returns(new List<ApplicationCommand>());
@@ -61,7 +61,7 @@ public class CommandUpdateScopeTests
     }
 
     [Fact]
-    public async Task ApplyAsync_OverwriteEmpty_StillSendsPutToWipe()
+    public async Task ApplyAsync_OverwriteEmpty_StillSendsPutToWipeAsync()
     {
         _rest.SendAsync<List<ApplicationCommand>>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
             .Returns(new List<ApplicationCommand>());
@@ -75,7 +75,7 @@ public class CommandUpdateScopeTests
     // ── Append mode ──
 
     [Fact]
-    public async Task ApplyAsync_AppendGlobal_GetsExistingThenPostsNewCommands()
+    public async Task ApplyAsync_AppendGlobal_GetsExistingThenPostsNewCommandsAsync()
     {
         // Existing on Discord: just "ping" (with the exact same body the builder produces).
         // We add "ping" (no-op) + "ban" (POST).
@@ -109,7 +109,7 @@ public class CommandUpdateScopeTests
     }
 
     [Fact]
-    public async Task ApplyAsync_AppendGlobal_PatchesCommandThatChanged()
+    public async Task ApplyAsync_AppendGlobal_PatchesCommandThatChangedAsync()
     {
         var pingId = new Snowflake(100);
         var existing = new List<ApplicationCommand>
@@ -136,7 +136,7 @@ public class CommandUpdateScopeTests
     }
 
     [Fact]
-    public async Task ApplyAsync_AppendNeverDeletes()
+    public async Task ApplyAsync_AppendNeverDeletesAsync()
     {
         // Existing: "ping" + "old-cmd". We queue only "new-cmd". Append must NOT delete old-cmd.
         var existing = new List<ApplicationCommand>
@@ -159,7 +159,7 @@ public class CommandUpdateScopeTests
     }
 
     [Fact]
-    public async Task ApplyAsync_AppendEmpty_NoHttpCalls()
+    public async Task ApplyAsync_AppendEmpty_NoHttpCallsAsync()
     {
         var scope = GlobalScope(overwrite: false); // empty + append
 
@@ -224,7 +224,7 @@ public class CommandUpdateScopeTests
     }
 
     [Fact]
-    public async Task ApplyAsync_ReturnsBuilderForFluentChain()
+    public async Task ApplyAsync_ReturnsBuilderForFluentChainAsync()
     {
         _rest.SendAsync<List<ApplicationCommand>>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
             .Returns(new List<ApplicationCommand>());
