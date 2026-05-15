@@ -466,6 +466,9 @@ namespace DiscoSdk.Hosting
         public ICreateGroupDmAction CreateGroupDm()
             => new CreateGroupDmAction(this);
 
+        /// <inheritdoc />
+        public IReadOnlyList<IDmChannel> OpenedDms => DmRepository.GetAll();
+
         async Task IShardEventListener.OnReceiveMessageAsync(Shard shard, ReceivedGatewayMessage message)
         {
             if (message.Opcode != OpCodes.Dispatch || string.IsNullOrEmpty(message.EventType))

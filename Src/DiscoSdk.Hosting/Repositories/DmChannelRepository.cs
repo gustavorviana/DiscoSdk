@@ -24,11 +24,6 @@ namespace DiscoSdk.Hosting.Repositories
             });
         }
 
-        public void SignalDmOpen(Channel channel)
-        {
-
-        }
-
         public bool Close(Snowflake userId)
         {
             return _channels.Remove(userId);

@@ -82,6 +82,18 @@ public interface IDiscordClient
     IRestAction<IDmChannel> OpenDm(Snowflake userId);
 
     /// <summary>
+    /// Snapshot of every 1-to-1 DM channel opened during this session and still cached in
+    /// memory. Synchronous, no API call — the SDK populates the cache on each successful
+    /// <see cref="OpenDm(Snowflake)"/> and evicts entries when the channel is closed.
+    /// </summary>
+    /// <remarks>
+    /// Each call returns a fresh snapshot, so iteration is safe against concurrent
+    /// <see cref="OpenDm(Snowflake)"/> calls. Group DMs are not tracked here — fetch them via
+    /// <see cref="GetChannel(Snowflake)"/> or build them via <see cref="CreateGroupDm"/>.
+    /// </remarks>
+    IReadOnlyList<IDmChannel> OpenedDms { get; }
+
+    /// <summary>
     /// Builds a REST action that creates a new group DM channel with 2–10 recipients. Each
     /// recipient must have granted the application the OAuth2 <c>gdm.join</c> scope — bot tokens
     /// alone are not enough.
