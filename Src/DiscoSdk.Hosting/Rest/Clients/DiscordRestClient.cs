@@ -275,14 +275,38 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     }
 
     /// <summary>
-    /// Picks the right <see cref="DiscordApiException"/> subtype for a Discord failure response.
-    /// Returns <see cref="InsufficientPermissionException"/> when Discord answered with HTTP 403
-    /// and a JSON error code that signals the bot lacks the permission required for the
-    /// operation. Two codes qualify per Discord's JSON Error Codes table:
-    /// <c>50001 Missing Access</c> (bot cannot see/access the resource) and
-    /// <c>50013 Missing Permissions</c> (bot is missing a specific permission for the call).
-    /// Other 403 responses (token problems, age-gating, edit-others'-message constraints) stay
-    /// as the generic <see cref="DiscordApiException"/>.
+    /// Picks the right <see cref="DiscordApiException"/> subtype for a Discord failure response
+    /// based on the HTTP status code and the Discord JSON <c>code</c> field. Every typed
+    /// subclass inherits from <see cref="DiscordApiException"/>, so existing
+    /// <c>catch (DiscordApiException)</c> handlers continue to fire.
+    /// <list type="table">
+    /// <listheader><term>HTTP</term><term>Discord code(s)</term><term>Exception</term></listheader>
+    /// <item>
+    ///   <term>401</term>
+    ///   <term><c>40001</c> Unauthorized, <c>50014</c> Invalid authentication token</term>
+    ///   <term><see cref="InvalidTokenException"/></term>
+    /// </item>
+    /// <item>
+    ///   <term>403</term>
+    ///   <term><c>50001</c> Missing Access, <c>50013</c> Missing Permissions</term>
+    ///   <term><see cref="InsufficientPermissionException"/></term>
+    /// </item>
+    /// <item>
+    ///   <term>404</term>
+    ///   <term><c>10001</c>–<c>10068</c> (Unknown X family)</term>
+    ///   <term><see cref="DiscordResourceNotFoundException"/></term>
+    /// </item>
+    /// <item>
+    ///   <term>400</term>
+    ///   <term><c>50035</c> Invalid Form Body</term>
+    ///   <term><see cref="InvalidRequestBodyException"/> (carries <see cref="DiscordApiException.ValidationErrors"/>)</term>
+    /// </item>
+    /// <item>
+    ///   <term>any</term>
+    ///   <term>everything else</term>
+    ///   <term><see cref="DiscordApiException"/> (generic)</term>
+    /// </item>
+    /// </list>
     /// </summary>
     /// <remarks>
     /// Source: Discord JSON Error Codes —
@@ -290,8 +314,19 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// </remarks>
     internal static DiscordApiException BuildException(HttpStatusCode statusCode, string? httpReasonPhrase, DiscordApiError? error)
     {
-        if (statusCode == HttpStatusCode.Forbidden && error?.Code is 50001 or 50013)
-            return new InsufficientPermissionException(statusCode, httpReasonPhrase, error);
+        var code = error?.Code;
+
+        if (statusCode == HttpStatusCode.Unauthorized && code is 40001 or 50014)
+            return new InvalidTokenException(statusCode, httpReasonPhrase, error!);
+
+        if (statusCode == HttpStatusCode.Forbidden && code is 50001 or 50013)
+            return new InsufficientPermissionException(statusCode, httpReasonPhrase, error!);
+
+        if (statusCode == HttpStatusCode.NotFound && code is >= 10001 and <= 10068)
+            return new DiscordResourceNotFoundException(statusCode, httpReasonPhrase, error!);
+
+        if (statusCode == HttpStatusCode.BadRequest && code is 50035)
+            return new InvalidRequestBodyException(statusCode, httpReasonPhrase, error!);
 
         return new DiscordApiException(statusCode, httpReasonPhrase, error);
     }
