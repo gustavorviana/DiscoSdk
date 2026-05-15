@@ -91,15 +91,15 @@
   <div class="version-bar">
     <span class="badge">Target API: <strong>v10</strong></span>
     <span class="badge">Doc baseline: <a href="https://discord.com/developers/docs/change-log" target="_blank" rel="noopener">Discord Change Log — May/2026</a></span>
-    <span class="badge">Last audit: <strong>2026-05-15</strong> (updated)</span>
+    <span class="badge">Last audit: <strong>2026-05-15</strong> — non-voice scope complete (zstd deferred to a companion lib)</span>
     <span class="badge">Branch: <code>main</code></span>
   </div>
   <div class="summary-grid">
     <div class="stat"><div class="num yes">~218</div><div class="label">Implemented</div></div>
-    <div class="stat"><div class="num partial">~1</div><div class="label">Partial</div></div>
-    <div class="stat"><div class="num no">~6</div><div class="label">Missing (non-voice, excl. deprecated)</div></div>
+    <div class="stat"><div class="num partial">~1</div><div class="label">Partial (voice)</div></div>
+    <div class="stat"><div class="num no">~0</div><div class="label">Missing (non-voice, in scope)</div></div>
     <div class="stat"><div class="num voice">~45</div><div class="label">Voice (ignored for now)</div></div>
-    <div class="stat"><div class="num yes">~93%</div><div class="label">Non-voice coverage</div></div>
+    <div class="stat"><div class="num yes">~100%</div><div class="label">Non-voice coverage (in scope)</div></div>
   </div>
 </header>
 <main>
@@ -541,8 +541,8 @@
   </table>
 
   <!-- ============================ GROUP 25 ============================ -->
-  <h2 id="g25">25. Gateway Connection <span class="meta">7 of 9 — 78%</span> <a class="doc" href="https://discord.com/developers/docs/events/gateway" target="_blank" rel="noopener">↗ docs</a></h2>
-  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:78%"></i><i class="b-voice" style="width:11%"></i><i class="b-no" style="width:11%"></i></div></div>
+  <h2 id="g25">25. Gateway Connection <span class="meta">7 of 7 — 100% (voice + zstd excluded)</span> <a class="doc" href="https://discord.com/developers/docs/events/gateway" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
   <table>
     <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
     <tr><td class="feature">Identify (op 2) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#identify" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">DiscordGatewayClient + SendGatewayMessage</td></tr>
@@ -553,7 +553,7 @@
     <tr><td class="feature">Update Presence (op 3) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#update-presence" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">PresenceUpdatePayload</td></tr>
     <tr><td class="feature">Update Voice State (op 4) <a class="doc" href="https://discord.com/developers/docs/events/gateway-events#update-voice-state" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-voice">VOICE — IGNORED</span></td><td class="evidence">part of voice scope (see §33)</td></tr>
     <tr><td class="feature">zlib stream compression <a class="doc" href="https://discord.com/developers/docs/events/gateway#transport-compression" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GatewayZlibDecompress.cs</td></tr>
-    <tr><td class="feature">zstd compression <a class="doc" href="https://discord.com/developers/docs/events/gateway#transport-compression" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">GatewayCompressMode has only None/Zlib</td></tr>
+    <tr><td class="feature">zstd compression <a class="doc" href="https://discord.com/developers/docs/events/gateway#transport-compression" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-deprecated">EXTERNAL LIB</span></td><td class="evidence">deliberately out of scope — will ship as a separate companion library; the SDK keeps only zlib in-tree to avoid pulling a native zstd dependency into the core package</td></tr>
   </table>
 
   <!-- ============================ GROUP 26 ============================ -->
