@@ -38,6 +38,18 @@ public enum InteractionCallbackType
     /// <summary>
     /// Respond to an interaction with a popup modal.
     /// </summary>
-    Modal = 9
+    Modal = 9,
+
+    /// <summary>
+    /// Launch the Discord Activity (embedded application) associated with the app.
+    /// Only available for apps with Activities enabled in the developer portal.
+    /// The user must be in a voice channel; Discord opens the activity in that channel.
+    /// </summary>
+    /// <remarks>
+    /// Distinct from a message response — Discord does not send a message; it opens the
+    /// activity for the invoking user. Requires the bot's <c>application_id</c> to match an
+    /// EMBEDDED-flagged application in the Developer Portal.
+    /// </remarks>
+    LaunchActivity = 12
 }
 

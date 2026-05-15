@@ -1,3 +1,4 @@
+using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Hosting.Rest.Models;
@@ -174,7 +175,7 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
     }
 
     /// <inheritdoc />
-    public override Task<IMessage> ExecuteAsync(CancellationToken cancellationToken = default)
+    public override async Task<IMessage> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         ValidateMessageContent(null);
         ValidateEmbeds();
@@ -193,18 +194,27 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
         }
 
         if (_interactionHandle == null)
-            return SendChannelMessageAsync(cancellationToken);
+            return await SendChannelMessageAsync(cancellationToken);
 
+        // Follow-ups land after a successful Defer, which already flagged Responded — no need
+        // to touch the flag again here.
+        if (_interactionHandle.IsDeferred)
+            return await SendFollowUpAsync(cancellationToken);
+
+        // Initial interaction response: flag Responded only when Discord actually accepts the
+        // call (or answers with code 40060 "already acknowledged"). On any other failure
+        // (validation, permission, transport), the handle stays pending so the caller can fall
+        // back to another callback type.
         try
         {
-            if (_interactionHandle.IsDeferred)
-                return SendFollowUpAsync(cancellationToken);
-
-            return SendInteractionResponseAsync(cancellationToken);
+            var message = await SendInteractionResponseAsync(cancellationToken);
+            _interactionHandle.Responded = true;
+            return message;
         }
-        finally
+        catch (DiscordApiException ex) when (ex.DiscordCode == InteractionClient.AlreadyAcknowledgedCode)
         {
             _interactionHandle.Responded = true;
+            throw;
         }
     }
 

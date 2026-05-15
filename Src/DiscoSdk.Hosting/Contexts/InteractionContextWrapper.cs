@@ -26,4 +26,9 @@ internal class InteractionContextWrapper(DiscordClient client, InteractionWrappe
     {
         return Interaction.ReplyModal();
     }
+
+    public ILaunchActivityRestAction LaunchActivity()
+    {
+        return Interaction.LaunchActivity();
+    }
 }

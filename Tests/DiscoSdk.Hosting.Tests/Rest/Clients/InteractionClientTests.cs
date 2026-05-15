@@ -1,4 +1,5 @@
 using DiscoSdk;
+using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Models;
@@ -6,6 +7,7 @@ using DiscoSdk.Models.Commands;
 using DiscoSdk.Rest;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using System.Net;
 
 namespace DiscoSdk.Hosting.Tests.Rest.Clients;
 
@@ -37,19 +39,56 @@ public class InteractionClientTests
     }
 
     [Fact]
-    public async Task RespondWithAutocompleteAsync_MarksRespondedEvenIfDiscordRejectsAsync()
+    public async Task RespondWithAutocompleteAsync_DiscordCode40060_MarksRespondedAsync()
     {
-        // Discord retorna "Interaction has already been acknowledged" → SendAsync lança.
-        // O Responded ainda deve ser setado (no finally) pra evitar que handlers subsequentes
-        // do mesmo dispatch tentem responder de novo e gerem outro erro idêntico.
+        // Discord returns "Interaction has already been acknowledged" (JSON code 40060). The
+        // interaction is done on Discord's side, so the handle must be flagged to prevent
+        // further attempts from the same dispatch hammering the API with the same error.
+        var alreadyAcked = new DiscordApiException(
+            HttpStatusCode.BadRequest,
+            "Bad Request",
+            new DiscordApiError { Code = 40060, Message = "Interaction has already been acknowledged" });
         _http
             .SendAsync(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-            .Throws(new InvalidOperationException("simulated discord rejection"));
+            .Throws(alreadyAcked);
+
+        await Assert.ThrowsAsync<DiscordApiException>(() =>
+            _client.RespondWithAutocompleteAsync(_handle, Array.Empty<SlashCommandOptionChoice>()));
+
+        Assert.True(_handle.Responded);
+    }
+
+    [Fact]
+    public async Task RespondWithAutocompleteAsync_GenericException_LeavesHandlePendingAsync()
+    {
+        // Transient / non-API failures must NOT flag Responded — the caller may want to retry
+        // or fall back to a different callback type.
+        _http
+            .SendAsync(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+            .Throws(new InvalidOperationException("simulated transient failure"));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             _client.RespondWithAutocompleteAsync(_handle, Array.Empty<SlashCommandOptionChoice>()));
 
-        Assert.True(_handle.Responded);
+        Assert.False(_handle.Responded);
+    }
+
+    [Fact]
+    public async Task RespondWithAutocompleteAsync_NonAckDiscordError_LeavesHandlePendingAsync()
+    {
+        // 403 Missing Permissions / 400 validation / etc. must NOT flag Responded.
+        var permError = new DiscordApiException(
+            HttpStatusCode.Forbidden,
+            "Forbidden",
+            new DiscordApiError { Code = 50013, Message = "Missing Permissions" });
+        _http
+            .SendAsync(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+            .Throws(permError);
+
+        await Assert.ThrowsAsync<DiscordApiException>(() =>
+            _client.RespondWithAutocompleteAsync(_handle, Array.Empty<SlashCommandOptionChoice>()));
+
+        Assert.False(_handle.Responded);
     }
 
     [Fact]

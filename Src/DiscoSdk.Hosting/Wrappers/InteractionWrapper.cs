@@ -75,6 +75,14 @@ internal class InteractionWrapper(Interaction interaction,
         return new ReplyModalRestAction(_client, handle);
     }
 
+    public ILaunchActivityRestAction LaunchActivity()
+    {
+        if (handle.Responded)
+            throw new InvalidOperationException("This interaction has already been responded to.");
+
+        return new LaunchActivityRestAction(_client, handle);
+    }
+
     public IEditMessageRestAction Edit()
     {
         if (!_interaction.ChannelId.HasValue)

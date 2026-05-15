@@ -1,3 +1,4 @@
+using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Models;
 using DiscoSdk.Models;
@@ -17,6 +18,16 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 /// </remarks>
 internal class InteractionClient(IDiscordClient discordClient)
 {
+    /// <summary>
+    /// Discord JSON error code 40060 — "Interaction has already been acknowledged". When the
+    /// API responds with this code, the interaction is effectively done on Discord's side, so
+    /// callers should flag the handle as responded even though the request failed (to prevent
+    /// subsequent callbacks from the same dispatch hammering the API with the same error).
+    /// Every other failure (transport, validation, permission) leaves the handle pending so
+    /// the caller can fall back to a different callback type.
+    /// </summary>
+    internal const int AlreadyAcknowledgedCode = 40060;
+
     private IDiscordRestClient Client => discordClient.HttpClient;
 
     public async Task DeferAsync(InteractionHandle interaction, bool ephemeral = false, CancellationToken cancellationToken = default)
@@ -95,13 +106,16 @@ internal class InteractionClient(IDiscordClient discordClient)
         {
             Choices = choices is SlashCommandOptionChoice[] arr ? arr : choices.ToArray()
         };
+
         try
         {
             await SendCallbackAsync(interaction, data, InteractionCallbackType.ApplicationCommandAutocompleteResult, cancellationToken);
+            interaction.Responded = true;
         }
-        finally
+        catch (DiscordApiException ex) when (ex.DiscordCode == AlreadyAcknowledgedCode)
         {
             interaction.Responded = true;
+            throw;
         }
     }
 
