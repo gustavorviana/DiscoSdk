@@ -462,6 +462,10 @@ namespace DiscoSdk.Hosting
             => RestAction<ActivityInstance?>.Create(ct =>
                 ApplicationClient.GetActivityInstanceAsync(RequireApplicationId(), instanceId, ct));
 
+        /// <inheritdoc />
+        public ICreateGroupDmAction CreateGroupDm()
+            => new CreateGroupDmAction(this);
+
         async Task IShardEventListener.OnReceiveMessageAsync(Shard shard, ReceivedGatewayMessage message)
         {
             if (message.Opcode != OpCodes.Dispatch || string.IsNullOrEmpty(message.EventType))

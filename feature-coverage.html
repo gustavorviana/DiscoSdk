@@ -95,9 +95,9 @@
     <span class="badge">Branch: <code>main</code></span>
   </div>
   <div class="summary-grid">
-    <div class="stat"><div class="num yes">~216</div><div class="label">Implemented</div></div>
+    <div class="stat"><div class="num yes">~217</div><div class="label">Implemented</div></div>
     <div class="stat"><div class="num partial">~1</div><div class="label">Partial</div></div>
-    <div class="stat"><div class="num no">~8</div><div class="label">Missing (non-voice, excl. deprecated)</div></div>
+    <div class="stat"><div class="num no">~7</div><div class="label">Missing (non-voice, excl. deprecated)</div></div>
     <div class="stat"><div class="num voice">~45</div><div class="label">Voice (ignored for now)</div></div>
     <div class="stat"><div class="num yes">~93%</div><div class="label">Non-voice coverage</div></div>
   </div>
@@ -477,8 +477,8 @@
   </table>
 
   <!-- ============================ GROUP 22 ============================ -->
-  <h2 id="g22">22. Users <span class="meta">10 of 11 — 91%</span> <a class="doc" href="https://discord.com/developers/docs/resources/user" target="_blank" rel="noopener">↗ docs</a></h2>
-  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:91%"></i><i class="b-no" style="width:9%"></i></div></div>
+  <h2 id="g22">22. Users <span class="meta">11 of 11 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/user" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
   <table>
     <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
     <tr><td class="feature">Get current user <a class="doc" href="https://discord.com/developers/docs/resources/user#get-current-user" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.GetCurrentAsync</td></tr>
@@ -488,7 +488,7 @@
     <tr><td class="feature">Get current user guild member <a class="doc" href="https://discord.com/developers/docs/resources/user#get-current-user-guild-member" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.GetCurrentGuildMemberAsync</td></tr>
     <tr><td class="feature">Leave guild <a class="doc" href="https://discord.com/developers/docs/resources/user#leave-guild" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">GuildClient.LeaveAsync</td></tr>
     <tr><td class="feature">Create DM <a class="doc" href="https://discord.com/developers/docs/resources/user#create-dm" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">ChannelClient.CreateDMAsync</td></tr>
-    <tr><td class="feature">Create Group DM <a class="doc" href="https://discord.com/developers/docs/resources/user#create-group-dm" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">only Add/Remove recipient exists; missing POST /users/@me/channels endpoint with access_tokens</td></tr>
+    <tr><td class="feature">Create Group DM <a class="doc" href="https://discord.com/developers/docs/resources/user#create-group-dm" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">IDiscordClient.CreateGroupDm() builder action / ChannelClient.CreateGroupDmAsync (POST /users/@me/channels with access_tokens + nicks)</td></tr>
     <tr><td class="feature">Get user connections <a class="doc" href="https://discord.com/developers/docs/resources/user#get-current-user-connections" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.GetConnectionsAsync</td></tr>
     <tr><td class="feature">Get application role connection <a class="doc" href="https://discord.com/developers/docs/resources/user#get-current-user-application-role-connection" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.GetApplicationRoleConnectionAsync</td></tr>
     <tr><td class="feature">Update application role connection <a class="doc" href="https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">UserClient.UpdateApplicationRoleConnectionAsync</td></tr>

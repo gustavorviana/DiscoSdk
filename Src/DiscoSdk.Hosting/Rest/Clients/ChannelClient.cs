@@ -1,6 +1,7 @@
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Messages;
+using DiscoSdk.Models.Requests.Channels;
 using DiscoSdk.Rest;
 
 namespace DiscoSdk.Hosting.Rest.Clients;
@@ -455,6 +456,25 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 
 		var route = new DiscordRoute("users/@me/channels");
 		var request = new { recipient_id = userId.ToString() };
+		return client.SendAsync<Channel>(route, HttpMethod.Post, request, cancellationToken);
+	}
+
+	/// <summary>
+	/// Creates a new group DM channel with multiple users. Each participant must have granted
+	/// the application the OAuth2 <c>gdm.join</c> scope; bot tokens cannot invoke this endpoint.
+	/// </summary>
+	/// <param name="request">The group DM creation payload (<c>access_tokens</c>, optional <c>nicks</c> map).</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>The newly created group DM channel.</returns>
+	/// <remarks>
+	/// Endpoint: <c>POST /users/@me/channels</c>.
+	/// Docs: <see href="https://discord.com/developers/docs/resources/user#create-group-dm"/>.
+	/// </remarks>
+	public Task<Channel> CreateGroupDmAsync(CreateGroupDmRequest request, CancellationToken cancellationToken = default)
+	{
+		ArgumentNullException.ThrowIfNull(request);
+
+		var route = new DiscordRoute("users/@me/channels");
 		return client.SendAsync<Channel>(route, HttpMethod.Post, request, cancellationToken);
 	}
 

@@ -1,6 +1,7 @@
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
+using DiscoSdk.Models.Requests.Channels;
 using DiscoSdk.Rest;
 using NSubstitute;
 
@@ -212,6 +213,33 @@ public class ChannelClientTests
 			HttpMethod.Post,
 			Arg.Is<object?>(b => b!.GetType().GetProperty("recipient_id")!.GetValue(b)!.Equals(_userId.ToString())),
 			Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task CreateGroupDmAsync_PostsRequestBodyToMeChannelsRouteAsync()
+	{
+		_http.SendAsync<Channel>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new Channel());
+
+		var req = new CreateGroupDmRequest
+		{
+			AccessTokens = ["token-a", "token-b"],
+			Nicks = new() { ["100"] = "Alice", ["200"] = "Bob" },
+		};
+
+		await _client.CreateGroupDmAsync(req);
+
+		await _http.Received(1).SendAsync<Channel>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == "users/@me/channels"),
+			HttpMethod.Post,
+			req,
+			Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task CreateGroupDmAsync_NullRequest_ThrowsAsync()
+	{
+		await Assert.ThrowsAsync<ArgumentNullException>(() => _client.CreateGroupDmAsync(null!));
 	}
 
 	[Fact]

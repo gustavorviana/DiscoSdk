@@ -82,6 +82,16 @@ public interface IDiscordClient
     IRestAction<IDmChannel> OpenDm(Snowflake userId);
 
     /// <summary>
+    /// Builds a REST action that creates a new group DM channel with 2–10 recipients. Each
+    /// recipient must have granted the application the OAuth2 <c>gdm.join</c> scope — bot tokens
+    /// alone are not enough.
+    /// </summary>
+    /// <remarks>
+    /// Discord docs: <see href="https://discord.com/developers/docs/resources/user#create-group-dm"/>.
+    /// </remarks>
+    ICreateGroupDmAction CreateGroupDm();
+
+    /// <summary>
     /// Gets a REST action to retrieve a user by their ID from the Discord API.
     /// </summary>
     IRestAction<IUser?> GetUser(Snowflake userId);
