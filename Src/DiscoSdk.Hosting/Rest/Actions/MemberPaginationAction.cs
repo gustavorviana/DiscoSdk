@@ -1,3 +1,4 @@
+using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Rest.Actions;
@@ -38,8 +39,10 @@ internal class MemberPaginationAction(DiscordClient client, IGuild guild) : Rest
 	/// <inheritdoc />
 	public override async Task<IMember[]> ExecuteAsync(CancellationToken cancellationToken = default)
 	{
+		IntentGuard.Require(_client, DiscordIntent.GuildMembers, "list guild members");
+
 		var members = await _client.GuildClient.GetMembersAsync(guild.Id, _limit, _after, cancellationToken);
-		
+
 		return [.. members
 			.Where(m => m.User != null)
 			.Select(m => new GuildMemberWrapper(_client, m, guild))

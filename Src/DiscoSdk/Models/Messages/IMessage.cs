@@ -91,8 +91,13 @@ public interface IMessage : IMessageBase, IMentionable, IDeletable
     /// <param name="emoji">The emoji to react with (URL-encoded if custom emoji).</param>
     /// <returns>A REST action that can be executed to add the reaction.</returns>
     /// <remarks>
+    /// Requires <see cref="DiscordIntent.GuildMessageReactions"/> for guild messages or
+    /// <see cref="DiscordIntent.DirectMessageReactions"/> for DMs.
     /// Not supported for Webhooks.
     /// </remarks>
+    /// <exception cref="DiscoSdk.Exceptions.MissingIntentException">
+    /// Thrown when the appropriate reactions intent is not enabled on the client.
+    /// </exception>
     IRestAction AddReaction(string emoji);
 
     /// <summary>
@@ -103,8 +108,13 @@ public interface IMessage : IMessageBase, IMentionable, IDeletable
     /// <param name="limit">Maximum number of users to return (1-100, default 25).</param>
     /// <returns>A REST action that can be executed to get the reactions.</returns>
     /// <remarks>
+    /// Requires <see cref="DiscordIntent.GuildMessageReactions"/> for guild messages or
+    /// <see cref="DiscordIntent.DirectMessageReactions"/> for DMs.
     /// Not supported for Webhooks.
     /// </remarks>
+    /// <exception cref="DiscoSdk.Exceptions.MissingIntentException">
+    /// Thrown when the appropriate reactions intent is not enabled on the client.
+    /// </exception>
     IRestAction<User[]> GetReactions(string emoji, string? after = null, int? limit = null);
 
     /// <summary>
@@ -113,8 +123,13 @@ public interface IMessage : IMessageBase, IMentionable, IDeletable
     /// <param name="emoji">The emoji to remove all reactions for (URL-encoded if custom emoji).</param>
     /// <returns>A REST action that can be executed to delete all reactions for the emoji.</returns>
     /// <remarks>
+    /// Requires <see cref="DiscordIntent.GuildMessageReactions"/> for guild messages or
+    /// <see cref="DiscordIntent.DirectMessageReactions"/> for DMs.
     /// Not supported for Webhooks.
     /// </remarks>
+    /// <exception cref="DiscoSdk.Exceptions.MissingIntentException">
+    /// Thrown when the appropriate reactions intent is not enabled on the client.
+    /// </exception>
     IRestAction DeleteAllReactionsForEmoji(string emoji);
 
     /// <summary>
@@ -122,8 +137,13 @@ public interface IMessage : IMessageBase, IMentionable, IDeletable
     /// </summary>
     /// <returns>A REST action that can be executed to delete all reactions.</returns>
     /// <remarks>
+    /// Requires <see cref="DiscordIntent.GuildMessageReactions"/> for guild messages or
+    /// <see cref="DiscordIntent.DirectMessageReactions"/> for DMs.
     /// Not supported for Webhooks.
     /// </remarks>
+    /// <exception cref="DiscoSdk.Exceptions.MissingIntentException">
+    /// Thrown when the appropriate reactions intent is not enabled on the client.
+    /// </exception>
     IRestAction DeleteAllReactions();
 
     /// <summary>

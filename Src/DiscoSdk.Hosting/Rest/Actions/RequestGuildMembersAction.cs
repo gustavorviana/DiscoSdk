@@ -1,3 +1,4 @@
+using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Requests.Members;
@@ -106,6 +107,14 @@ internal sealed class RequestGuildMembersAction(DiscordClient client, Snowflake 
 		// the whole guild via empty query (caller needs the GUILD_MEMBERS privileged intent).
 		if (_query is null && _userIds is null)
 			_query = string.Empty;
+
+		// Per Discord docs: empty query (full member list) requires GUILD_MEMBERS;
+		// presences=true requires GUILD_PRESENCES.
+		if (_query == string.Empty)
+			IntentGuard.Require(_client, DiscordIntent.GuildMembers, "request the full guild member list");
+
+		if (_presences == true)
+			IntentGuard.Require(_client, DiscordIntent.GuildPresences, "request guild members with presences");
 
 		var request = new RequestGuildMembersRequest
 		{

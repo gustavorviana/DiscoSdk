@@ -61,31 +61,15 @@ internal class ReactionWrapper : IReaction
     }
 
     /// <summary>
-    /// Validates that the appropriate reaction intent is enabled based on whether the message is in a guild or DM.
+    /// Asserts that the appropriate reaction intent (<see cref="DiscordIntent.GuildMessageReactions"/>
+    /// or <see cref="DiscordIntent.DirectMessageReactions"/>) is enabled for this message's scope.
     /// </summary>
-    /// <param name="operation">The operation being performed.</param>
-    /// <exception cref="MissingIntentException">Thrown when the required intent is not enabled.</exception>
     private void ValidateReactionIntent(string operation)
     {
-        ValidateIntent(GetCurrentReactionIntent(), operation);
-    }
+        var required = _message.Guild?.Id != null
+            ? DiscordIntent.GuildMessageReactions
+            : DiscordIntent.DirectMessageReactions;
 
-    /// <summary>
-    /// Validates that the required intent is enabled.
-    /// </summary>
-    /// <param name="requiredIntent">The intent that is required.</param>
-    /// <param name="operation">The operation being performed.</param>
-    /// <exception cref="MissingIntentException">Thrown when the required intent is not enabled.</exception>
-    private void ValidateIntent(DiscordIntent requiredIntent, string operation)
-    {
-        if (!_client.Intents.HasFlag(requiredIntent))
-            throw new MissingIntentException(requiredIntent, operation);
-    }
-
-    private DiscordIntent GetCurrentReactionIntent()
-    {
-        return _message.Guild?.Id != null
-                    ? DiscordIntent.GuildMessageReactions
-                    : DiscordIntent.DirectMessageReactions;
+        IntentGuard.Require(_client, required, operation);
     }
 }

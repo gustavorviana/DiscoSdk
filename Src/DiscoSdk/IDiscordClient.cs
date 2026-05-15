@@ -19,6 +19,14 @@ public interface IDiscordClient
     ICurrentUser BotUser { get; }
     IServiceProvider Services { get; }
 
+    /// <summary>
+    /// Gateway intents configured for this client via
+    /// <see cref="DiscoSdk.Hosting.Builders.DiscordClientBuilder.WithIntents(DiscordIntent)"/>.
+    /// Use it to short-circuit operations that depend on intent-gated data before sending them
+    /// to Discord — see <see cref="DiscoSdk.Exceptions.MissingIntentException"/>.
+    /// </summary>
+    DiscordIntent Intents { get; }
+
     // ---- Grouped surfaces (cohesive feature subsystems live here, not as flat methods) ----
 
     /// <summary>OAuth2 token-flow operations: authorize URL, code exchange, refresh, revoke, <c>@me</c>.</summary>

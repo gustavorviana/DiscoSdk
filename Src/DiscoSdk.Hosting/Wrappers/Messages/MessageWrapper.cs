@@ -49,7 +49,7 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
     {
         get
         {
-            ValidateIntent(DiscordIntent.MessageContent, "access message content");
+            IntentGuard.Require(_client, DiscordIntent.MessageContent, "access message content");
             return Message.Content;
         }
     }
@@ -183,32 +183,16 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
     }
 
     /// <summary>
-    /// Validates that the required intent is enabled.
+    /// Asserts that the appropriate reaction intent (<see cref="DiscordIntent.GuildMessageReactions"/>
+    /// or <see cref="DiscordIntent.DirectMessageReactions"/>) is enabled for this message's scope.
     /// </summary>
-    /// <param name="requiredIntent">The intent that is required.</param>
-    /// <param name="operation">The operation being performed.</param>
-    /// <exception cref="MissingIntentException">Thrown when the required intent is not enabled.</exception>
-    private void ValidateIntent(DiscordIntent requiredIntent, string operation)
-    {
-        if (!_client.Intents.HasFlag(requiredIntent))
-            throw new MissingIntentException(requiredIntent, operation);
-    }
-
-    /// <summary>
-    /// Validates that the appropriate reaction intent is enabled based on whether the message is in a guild or DM.
-    /// </summary>
-    /// <param name="operation">The operation being performed.</param>
-    /// <exception cref="MissingIntentException">Thrown when the required intent is not enabled.</exception>
     private void ValidateReactionIntent(string operation)
     {
-        ValidateIntent(GetCurrentReactionIntent(), operation);
-    }
+        var required = Message.GuildId.HasValue
+            ? DiscordIntent.GuildMessageReactions
+            : DiscordIntent.DirectMessageReactions;
 
-    private DiscordIntent GetCurrentReactionIntent()
-    {
-        return Message.GuildId.HasValue
-                    ? DiscordIntent.GuildMessageReactions
-                    : DiscordIntent.DirectMessageReactions;
+        IntentGuard.Require(_client, required, operation);
     }
 
     public Channel GetChannel()

@@ -29,10 +29,12 @@ public abstract class WrapperTestBase
 		Http.JsonOptions.Returns(new JsonSerializerOptions());
 
 		// Enable every intent we might exercise from a wrapper test path so intent-guarded
-		// actions (reactions, etc.) don't need bespoke setup per test class.
+		// actions (reactions, member listing, message content, etc.) don't need bespoke
+		// setup per test class.
 		Client = DiscordClientBuilder.Create("test-token")
 			.WithIntents(
 				DiscordIntent.Guilds |
+				DiscordIntent.GuildMembers |
 				DiscordIntent.GuildMessages |
 				DiscordIntent.GuildMessageReactions |
 				DiscordIntent.DirectMessages |

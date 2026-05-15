@@ -5,6 +5,12 @@ namespace DiscoSdk.Rest.Actions;
 /// <summary>
 /// Represents a pagination action for retrieving guild members.
 /// </summary>
+/// <remarks>
+/// Executing this action (via <c>ExecuteAsync</c>) requires the privileged
+/// <see cref="DiscordIntent.GuildMembers"/> intent — Discord's <c>List Guild Members</c>
+/// endpoint enforces it. Without the intent, the SDK throws
+/// <see cref="DiscoSdk.Exceptions.MissingIntentException"/> before sending the request.
+/// </remarks>
 public interface IMemberPaginationAction : IPaginationAction<IMember, IMemberPaginationAction>
 {
 	/// <summary>

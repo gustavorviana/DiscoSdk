@@ -30,7 +30,7 @@ public class RequestGuildMembersActionTests
 		http.JsonOptions.Returns(new JsonSerializerOptions());
 
 		_client = DiscordClientBuilder.Create("test-token")
-			.WithIntents(DiscordIntent.Guilds | DiscordIntent.GuildMembers)
+			.WithIntents(DiscordIntent.Guilds | DiscordIntent.GuildMembers | DiscordIntent.GuildPresences)
 			.WithLogger(NullLogger.Instance)
 			.WithGatewaySocketFactory(new FakeGatewaySocketFactory(_socket))
 			.WithRestClient(http)

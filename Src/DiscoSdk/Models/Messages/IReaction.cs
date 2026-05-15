@@ -3,6 +3,12 @@ namespace DiscoSdk.Models.Messages;
 /// <summary>
 /// Represents a reaction to a message with operations.
 /// </summary>
+/// <remarks>
+/// <see cref="IDeletable.Delete"/> on a reaction requires
+/// <see cref="DiscordIntent.GuildMessageReactions"/> for guild messages or
+/// <see cref="DiscordIntent.DirectMessageReactions"/> for DMs. Without the matching intent,
+/// executing the returned action throws <see cref="DiscoSdk.Exceptions.MissingIntentException"/>.
+/// </remarks>
 public interface IReaction : IDeletable
 {
 	/// <summary>

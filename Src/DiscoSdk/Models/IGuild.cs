@@ -295,8 +295,17 @@ public interface IGuild
     /// </summary>
     /// <returns>A REST action that can be configured and executed to retrieve members.</returns>
     /// <remarks>
+    /// Requires the privileged <see cref="DiscordIntent.GuildMembers"/> intent — Discord's
+    /// <c>List Guild Members</c> endpoint refuses to return data without it. Executing the
+    /// returned action throws <see cref="DiscoSdk.Exceptions.MissingIntentException"/> when
+    /// the intent isn't enabled on the client.
+    /// <para>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
+    /// </para>
     /// </remarks>
+    /// <exception cref="DiscoSdk.Exceptions.MissingIntentException">
+    /// Thrown when <see cref="DiscordIntent.GuildMembers"/> is not enabled on the client.
+    /// </exception>
     IMemberPaginationAction GetMembers();
 
     /// <summary>
@@ -543,7 +552,17 @@ public interface IGuild
     /// <param name="file">Sticker image file (PNG/APNG/GIF/Lottie, max 512 KiB).</param>
     Rest.Actions.ICreateGuildStickerAction CreateSticker(string name, string tags, DiscoSdk.Models.Messages.MessageFile file);
 
-    /// <summary>Builds a Request Guild Members.</summary>
+    /// <summary>Builds a Request Guild Members gateway action.</summary>
+    /// <remarks>
+    /// Intent requirements depend on how the action is configured at terminal time:
+    /// <list type="bullet">
+    /// <item>Empty query (full member list) requires <see cref="DiscordIntent.GuildMembers"/>.</item>
+    /// <item><see cref="Rest.Actions.IRequestGuildMembersAction.SetPresences(bool)"/> with <c>true</c> requires <see cref="DiscordIntent.GuildPresences"/>.</item>
+    /// <item>A non-empty <see cref="Rest.Actions.IRequestGuildMembersAction.SetQuery(string)"/> or explicit <see cref="Rest.Actions.IRequestGuildMembersAction.SetUserIds(Snowflake[])"/> require no extra intent.</item>
+    /// </list>
+    /// Missing intents throw <see cref="DiscoSdk.Exceptions.MissingIntentException"/> when the
+    /// terminal <c>GetAsync</c> or <c>StreamAsync</c> is invoked, before any payload is sent.
+    /// </remarks>
     Rest.Actions.IRequestGuildMembersAction RequestMembers();
 
     /// <summary>

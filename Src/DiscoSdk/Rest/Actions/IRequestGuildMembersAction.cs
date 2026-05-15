@@ -11,7 +11,10 @@ namespace DiscoSdk.Rest.Actions;
 /// <remarks>
 /// Either <see cref="SetQuery"/> or <see cref="SetUserIds"/> must be supplied — or neither, in
 /// which case the SDK sends an empty <c>query</c> to fetch every member (requires the
-/// privileged <c>GUILD_MEMBERS</c> intent).
+/// privileged <see cref="DiscordIntent.GuildMembers"/> intent). Setting
+/// <see cref="SetPresences(bool)"/> additionally requires <see cref="DiscordIntent.GuildPresences"/>.
+/// Both checks happen at terminal time and throw
+/// <see cref="DiscoSdk.Exceptions.MissingIntentException"/> before anything is sent to Discord.
 /// </remarks>
 public interface IRequestGuildMembersAction
 {
@@ -25,6 +28,11 @@ public interface IRequestGuildMembersAction
 	IRequestGuildMembersAction SetLimit(int limit);
 
 	/// <summary>Includes presence data on each chunk.</summary>
+	/// <remarks>
+	/// Setting this to <c>true</c> requires the privileged <see cref="DiscordIntent.GuildPresences"/>
+	/// intent — the terminal call (<see cref="GetAsync"/> / <see cref="StreamAsync"/>) throws
+	/// <see cref="DiscoSdk.Exceptions.MissingIntentException"/> otherwise.
+	/// </remarks>
 	IRequestGuildMembersAction SetPresences(bool presences);
 
 	/// <summary>
@@ -37,6 +45,10 @@ public interface IRequestGuildMembersAction
 	/// Convenient when you genuinely need the full set — avoid for very large guilds where memory
 	/// matters; prefer <see cref="StreamAsync"/> instead.
 	/// </summary>
+	/// <exception cref="DiscoSdk.Exceptions.MissingIntentException">
+	/// Thrown when the configuration requires an intent that isn't enabled on the client.
+	/// See the remarks on <see cref="IRequestGuildMembersAction"/> for the rules.
+	/// </exception>
 	Task<IReadOnlyList<IMember>> GetAsync(CancellationToken cancellationToken = default);
 
 	/// <summary>
@@ -44,5 +56,9 @@ public interface IRequestGuildMembersAction
 	/// pace via <c>await foreach</c>; breaking early or cancelling the token aborts the pending
 	/// request immediately.
 	/// </summary>
+	/// <exception cref="DiscoSdk.Exceptions.MissingIntentException">
+	/// Thrown when the configuration requires an intent that isn't enabled on the client.
+	/// See the remarks on <see cref="IRequestGuildMembersAction"/> for the rules.
+	/// </exception>
 	IAsyncEnumerable<IMember> StreamAsync(CancellationToken cancellationToken = default);
 }
