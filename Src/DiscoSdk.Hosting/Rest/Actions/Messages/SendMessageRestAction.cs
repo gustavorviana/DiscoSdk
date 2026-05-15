@@ -110,6 +110,15 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
 
     /// <inheritdoc />
     public ISendMessageRestAction SetMessageReference(string? messageId, string? channelId = null, string? guildId = null, bool? failIfNotExists = null)
+        => SetMessageReference(MessageReferenceType.Default, messageId, channelId, guildId, failIfNotExists);
+
+    /// <summary>
+    /// Internal overload that sets the reference <paramref name="type"/> alongside the rest of
+    /// the fields. Forward semantics (<see cref="MessageReferenceType.Forward"/>) require the
+    /// channel id of the source message; reply semantics
+    /// (<see cref="MessageReferenceType.Default"/>) only require the message id.
+    /// </summary>
+    internal ISendMessageRestAction SetMessageReference(MessageReferenceType type, string? messageId, string? channelId = null, string? guildId = null, bool? failIfNotExists = null)
     {
         if (messageId == null)
         {
@@ -119,10 +128,13 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
 
         _messageReference = new MessageReference
         {
+            // Type is omitted on the wire for Default to match historical replies Discord
+            // still emits without a type field — only set it explicitly for Forward.
+            Type = type == MessageReferenceType.Forward ? type : null,
             MessageId = messageId,
             ChannelId = channelId,
             GuildId = guildId,
-            FailIfNotExists = failIfNotExists
+            FailIfNotExists = failIfNotExists,
         };
 
         return this;
@@ -177,7 +189,13 @@ internal class SendMessageRestAction : MessageBuilderAction<ISendMessageRestActi
     /// <inheritdoc />
     public override async Task<IMessage> ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        ValidateMessageContent(null);
+        // Forwarded messages carry no content/embeds of their own — Discord populates the
+        // snapshot server-side from the source message — so the "must have content" check
+        // has to be skipped on the forward path.
+        var isForward = _messageReference?.Type == MessageReferenceType.Forward;
+        if (!isForward)
+            ValidateMessageContent(null);
+
         ValidateEmbeds();
         ValidateComponents();
         ValidateStickers();

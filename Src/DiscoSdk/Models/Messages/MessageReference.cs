@@ -1,12 +1,26 @@
-﻿using System.Text.Json.Serialization;
+﻿using DiscoSdk.Models.Enums;
+using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Messages;
 
 /// <summary>
-/// Represents a message reference.
+/// Represents a message reference — used for replies, forwards, crossposts, channel-follows
+/// and pinned messages. See <see cref="MessageReferenceType"/> for the distinction between
+/// the historical default behaviour and the forward semantics added later.
 /// </summary>
+/// <remarks>
+/// Source: <see href="https://discord.com/developers/docs/resources/message#message-reference-structure"/>.
+/// </remarks>
 public class MessageReference
 {
+    /// <summary>
+    /// Kind of reference. Defaults to <see cref="MessageReferenceType.Default"/> when omitted —
+    /// matches the historical (pre-forward) shape Discord still emits on existing replies.
+    /// Set to <see cref="MessageReferenceType.Forward"/> when sending a forwarded message.
+    /// </summary>
+    [JsonPropertyName("type")]
+    public MessageReferenceType? Type { get; set; }
+
     /// <summary>
     /// Gets or sets the ID of the originating message.
     /// </summary>

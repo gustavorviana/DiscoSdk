@@ -55,6 +55,17 @@ public interface IMessage : IMessageBase, IMentionable, IDeletable
     /// </remarks>
     IReaction[] Reactions { get; }
 
+    /// <summary>
+    /// Frozen snapshots of source messages when this message was created as a forward. Empty
+    /// array for non-forward messages.
+    /// </summary>
+    /// <remarks>
+    /// Snapshots do not propagate edits/deletes from the source — they are point-in-time
+    /// copies. The original message is identified by <c>message_reference</c> (with
+    /// <c>type = Forward</c>) on the same message object.
+    /// </remarks>
+    IReadOnlyList<MessageSnapshot> MessageSnapshots { get; }
+
     IUserMention[] Mentions { get; }
 
     /// <summary>
@@ -75,6 +86,24 @@ public interface IMessage : IMessageBase, IMentionable, IDeletable
     /// Not supported for Webhooks.
     /// </remarks>
     ISendMessageRestAction Reply(string? content = null);
+
+    /// <summary>
+    /// Creates a builder for forwarding this message to <paramref name="target"/>. The returned
+    /// action is pre-configured with the Forward-type message reference pointing back to this
+    /// message; calling <c>ExecuteAsync</c> produces a frozen <see cref="MessageSnapshot"/> of
+    /// this message inside <paramref name="target"/>.
+    /// </summary>
+    /// <param name="target">The channel that will receive the forward.</param>
+    /// <returns>An <see cref="ISendMessageRestAction"/> targeting <paramref name="target"/>.</returns>
+    /// <remarks>
+    /// Forwards carry no content/embeds/components of their own — Discord ignores those fields
+    /// when <c>message_reference.type</c> is <c>Forward</c>. The snapshot stays frozen even if
+    /// the source message is later edited or deleted.
+    /// <para>
+    /// Docs: <see href="https://discord.com/developers/docs/resources/message#message-reference-types"/>.
+    /// </para>
+    /// </remarks>
+    ISendMessageRestAction ForwardTo(Channels.ITextBasedChannel target);
 
     /// <summary>
     /// Crossposts this message (only for news channels).

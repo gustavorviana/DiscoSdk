@@ -55,6 +55,7 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
     }
     public IInteractionComponent[]? Components => Message.Components;
     public IReaction[] Reactions { get; }
+    public IReadOnlyList<MessageSnapshot> MessageSnapshots => Message.MessageSnapshots ?? [];
     public string Timestamp => Message.Timestamp;
     public string? EditedTimestamp => Message.EditedTimestamp;
 
@@ -90,6 +91,20 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
     {
         return new SendMessageRestAction(_client, null, Channel, content)
             .SetMessageReference(Message.Id.ToString(), Message.ChannelId.ToString(), Message.GuildId?.ToString());
+    }
+
+    public ISendMessageRestAction ForwardTo(ITextBasedChannel target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+
+        // Forwards carry no content/embeds — Discord ignores those when type=Forward — so the
+        // builder is created with null content and callers should not set content/embeds on it.
+        var action = new SendMessageRestAction(_client, null, target, content: null);
+        action.SetMessageReference(MessageReferenceType.Forward,
+            Message.Id.ToString(),
+            Message.ChannelId.ToString(),
+            Message.GuildId?.ToString());
+        return action;
     }
 
     // Direct Operations

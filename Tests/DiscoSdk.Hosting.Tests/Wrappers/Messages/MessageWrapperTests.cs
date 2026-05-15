@@ -4,6 +4,7 @@ using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
+using DiscoSdk.Models.Requests.Messages;
 using DiscoSdk.Models.Users;
 using DiscoSdk.Rest;
 using NSubstitute;
@@ -149,5 +150,44 @@ public class MessageWrapperTests : WrapperTestBase
 		await Http.Received(1).SendAsync<Message>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/messages"),
 			HttpMethod.Post, Arg.Any<object?>(), Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task ForwardTo_PostsToTargetChannelWithForwardReferenceAsync()
+	{
+		Http.SendAsync<Message>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new Message { Author = new User { UserId = new Snowflake(1), Username = "bot" } });
+
+		var (wrapper, _) = NewWrapper();
+
+		var targetChannel = Substitute.For<ITextBasedChannel>();
+		targetChannel.Id.Returns(new Snowflake(900));
+
+		MessageCreateRequest? capturedBody = null;
+		Http.When(h => h.SendAsync<Message>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>()))
+			.Do(call => capturedBody = call.Arg<object?>() as MessageCreateRequest);
+
+		await wrapper.ForwardTo(targetChannel).ExecuteAsync();
+
+		// Route must hit the target channel, not the source.
+		await Http.Received(1).SendAsync<Message>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/900/messages"),
+			HttpMethod.Post, Arg.Any<object?>(), Arg.Any<CancellationToken>());
+
+		// Body must carry the Forward-type message_reference pointing back at the source.
+		Assert.NotNull(capturedBody);
+		Assert.NotNull(capturedBody!.MessageReference);
+		Assert.Equal(MessageReferenceType.Forward, capturedBody.MessageReference!.Type);
+		Assert.Equal(_messageId.ToString(), capturedBody.MessageReference.MessageId);
+		Assert.Equal(_channelId.ToString(), capturedBody.MessageReference.ChannelId);
+		Assert.Equal(_guildId.ToString(), capturedBody.MessageReference.GuildId);
+	}
+
+	[Fact]
+	public void ForwardTo_NullTarget_Throws()
+	{
+		var (wrapper, _) = NewWrapper();
+
+		Assert.Throws<ArgumentNullException>(() => wrapper.ForwardTo(null!));
 	}
 }

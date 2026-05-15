@@ -214,5 +214,14 @@ public class Message
     /// </summary>
     [JsonPropertyName("pool")]
     public Poll? Pool { get; set; }
+
+    /// <summary>
+    /// Frozen snapshots of source messages when this message was created as a forward
+    /// (<see cref="MessageReference.Type"/> = <see cref="Enums.MessageReferenceType.Forward"/>).
+    /// Null/empty for non-forward messages. Snapshots do not propagate edits/deletes from the
+    /// source — they are point-in-time copies.
+    /// </summary>
+    [JsonPropertyName("message_snapshots")]
+    public MessageSnapshot[]? MessageSnapshots { get; set; }
 }
 

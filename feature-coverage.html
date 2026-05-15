@@ -95,9 +95,9 @@
     <span class="badge">Branch: <code>main</code></span>
   </div>
   <div class="summary-grid">
-    <div class="stat"><div class="num yes">~217</div><div class="label">Implemented</div></div>
+    <div class="stat"><div class="num yes">~218</div><div class="label">Implemented</div></div>
     <div class="stat"><div class="num partial">~1</div><div class="label">Partial</div></div>
-    <div class="stat"><div class="num no">~7</div><div class="label">Missing (non-voice, excl. deprecated)</div></div>
+    <div class="stat"><div class="num no">~6</div><div class="label">Missing (non-voice, excl. deprecated)</div></div>
     <div class="stat"><div class="num voice">~45</div><div class="label">Voice (ignored for now)</div></div>
     <div class="stat"><div class="num yes">~93%</div><div class="label">Non-voice coverage</div></div>
   </div>
@@ -599,12 +599,12 @@
   </table>
 
   <!-- ============================ GROUP 31 ============================ -->
-  <h2 id="g31">31. Reply / Forward <span class="meta">1 of 2 — 50%</span> <a class="doc" href="https://discord.com/developers/docs/resources/message#message-reference-structure" target="_blank" rel="noopener">↗ docs</a></h2>
-  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:50%"></i><i class="b-no" style="width:50%"></i></div></div>
+  <h2 id="g31">31. Reply / Forward <span class="meta">2 of 2 — 100%</span> <a class="doc" href="https://discord.com/developers/docs/resources/message#message-reference-structure" target="_blank" rel="noopener">↗ docs</a></h2>
+  <div class="group-bar-wrap"><div class="bar"><i class="b-yes" style="width:100%"></i></div></div>
   <table>
     <tr><th>Feature</th><th>Status</th><th>Evidence</th></tr>
     <tr><td class="feature">Reply (message_reference + fail_if_not_exists) <a class="doc" href="https://discord.com/developers/docs/resources/message#message-reference-structure" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageReference.cs</td></tr>
-    <tr><td class="feature">Forward (type=FORWARD + message_snapshots) <a class="doc" href="https://discord.com/developers/docs/resources/message#message-reference-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-no">MISSING</span></td><td class="evidence">MessageReference.cs without `type` field; no message_snapshots support</td></tr>
+    <tr><td class="feature">Forward (type=FORWARD + message_snapshots) <a class="doc" href="https://discord.com/developers/docs/resources/message#message-reference-types" target="_blank" rel="noopener">↗</a></td><td class="status"><span class="pill p-yes">IMPLEMENTED</span></td><td class="evidence">MessageReference.Type (MessageReferenceType.Forward) + Message.MessageSnapshots[] + IMessage.ForwardTo(target) builder</td></tr>
   </table>
 
   <!-- ============================ GROUP 32 ============================ -->
