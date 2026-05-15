@@ -10,7 +10,7 @@ namespace DiscoSdk.Exceptions
     /// The exception message is derived from the Discord error payload when available; otherwise, it falls back
     /// to the HTTP status code and reason phrase.
     /// </remarks>
-    public sealed class DiscordApiException(HttpStatusCode statusCode, string? httpReasonPhrase, DiscordApiError? error)
+    public class DiscordApiException(HttpStatusCode statusCode, string? httpReasonPhrase, DiscordApiError? error)
         : DiscoException(GetValidMessage(statusCode, httpReasonPhrase, error))
     {
         /// <summary>

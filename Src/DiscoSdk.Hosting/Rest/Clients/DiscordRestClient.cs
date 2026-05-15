@@ -271,7 +271,29 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         {
         }
 
-        return new DiscordApiException(res.StatusCode, res.ReasonPhrase, error);
+        return BuildException(res.StatusCode, res.ReasonPhrase, error);
+    }
+
+    /// <summary>
+    /// Picks the right <see cref="DiscordApiException"/> subtype for a Discord failure response.
+    /// Returns <see cref="InsufficientPermissionException"/> when Discord answered with HTTP 403
+    /// and a JSON error code that signals the bot lacks the permission required for the
+    /// operation. Two codes qualify per Discord's JSON Error Codes table:
+    /// <c>50001 Missing Access</c> (bot cannot see/access the resource) and
+    /// <c>50013 Missing Permissions</c> (bot is missing a specific permission for the call).
+    /// Other 403 responses (token problems, age-gating, edit-others'-message constraints) stay
+    /// as the generic <see cref="DiscordApiException"/>.
+    /// </summary>
+    /// <remarks>
+    /// Source: Discord JSON Error Codes —
+    /// <see href="https://discord.com/developers/docs/topics/opcodes-and-status-codes#json"/>.
+    /// </remarks>
+    internal static DiscordApiException BuildException(HttpStatusCode statusCode, string? httpReasonPhrase, DiscordApiError? error)
+    {
+        if (statusCode == HttpStatusCode.Forbidden && error?.Code is 50001 or 50013)
+            return new InsufficientPermissionException(statusCode, httpReasonPhrase, error);
+
+        return new DiscordApiException(statusCode, httpReasonPhrase, error);
     }
 
 
