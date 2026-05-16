@@ -15,7 +15,7 @@ public interface IOnboardingPromptOption
 	IReadOnlyList<Snowflake> RoleIds { get; }
 
 	/// <summary>The emoji of the option.</summary>
-	IEmoji? Emoji { get; }
+	Emoji? Emoji { get; }
 
 	/// <summary>The title of the option.</summary>
 	string Title { get; }

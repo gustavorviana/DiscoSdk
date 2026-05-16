@@ -1,7 +1,7 @@
 using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Models;
-using DiscoSdk.Models.Requests.Members;
+using DiscoSdk.Hosting.Models.Requests.Members;
 using DiscoSdk.Rest.Actions;
 using System.Runtime.CompilerServices;
 

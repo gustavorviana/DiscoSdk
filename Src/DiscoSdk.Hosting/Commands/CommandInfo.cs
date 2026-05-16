@@ -2,6 +2,7 @@ using DiscoSdk.Commands;
 using DiscoSdk.Contexts.Interactions;
 using DiscoSdk.Hosting.Commands.Callers.Parameters;
 using DiscoSdk.Hosting.Commands.Callers.Results;
+using DiscoSdk.Models.Commands;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Utils;
 using System.Reflection;
@@ -74,9 +75,9 @@ internal class CommandInfo : SlashCommandHandlerCaller
         return builder;
     }
 
-    internal Models.Commands.SlashCommandOption[] BuildLeafOptions(Func<AutocompleteName, bool> hasAutocomplete)
+    internal SlashCommandOption[] BuildLeafOptions(Func<AutocompleteName, bool> hasAutocomplete)
     {
-        var options = new List<Models.Commands.SlashCommandOption>();
+        var options = new List<SlashCommandOption>();
 
         if (_methodOptions != null)
         {
@@ -86,7 +87,7 @@ internal class CommandInfo : SlashCommandHandlerCaller
                     throw new InvalidOperationException(
                         $"Method-level '{nameof(SlashOptionAttribute)}' on command '{Info.Name}' must have a Name.");
 
-                options.Add(new Models.Commands.SlashCommandOption
+                options.Add(new SlashCommandOption
                 {
                     Autocomplete = option.AutocompleteType != null || hasAutocomplete(new AutocompleteName(Info.Name, option.Name, SubCommand?.Name, SubCommandGroup?.Name)),
                     Name = option.Name,
@@ -109,7 +110,7 @@ internal class CommandInfo : SlashCommandHandlerCaller
                 if (parameter.Type == null)
                     continue;
 
-                options.Add(new Models.Commands.SlashCommandOption
+                options.Add(new SlashCommandOption
                 {
                     Autocomplete = parameter.Autocomplete != null || hasAutocomplete(new AutocompleteName(Info.Name, parameter.Name, SubCommand?.Name, SubCommandGroup?.Name)),
                     Name = parameter.Name,

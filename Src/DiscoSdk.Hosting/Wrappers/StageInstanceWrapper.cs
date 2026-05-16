@@ -1,7 +1,7 @@
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
-using DiscoSdk.Models.Requests.StageInstances;
+using DiscoSdk.Hosting.Models.Requests.StageInstances;
 using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 

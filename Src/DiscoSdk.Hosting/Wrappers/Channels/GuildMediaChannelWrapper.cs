@@ -16,9 +16,9 @@ namespace DiscoSdk.Hosting.Wrappers.Channels;
 /// <param name="client">The Discord client for performing operations.</param>
 internal class GuildMediaChannelWrapper(Channel channel, IGuild guild, DiscordClient client) : GuildChannelWrapperBase(client, channel, guild), IGuildMediaChannel
 {
-    public DefaultReaction? DefaultReactionEmoji => _channel.DefaultReactionEmoji;
+    public IDefaultReaction? DefaultReactionEmoji => _channel.DefaultReactionEmoji;
     public SortOrderType? DefaultSortOrder => _channel.DefaultSortOrder is { } sortOrder ? (SortOrderType)sortOrder : null;
-    public ForumTag[]? AvailableTags => _channel.AvailableTags;
+    public IReadOnlyList<IForumTag>? AvailableTags => _channel.AvailableTags;
     public ChannelFlags? Flags => _channel.Flags;
     public int DefaultThreadSlowmode => _channel.DefaultThreadRateLimitPerUser ?? 0;
 

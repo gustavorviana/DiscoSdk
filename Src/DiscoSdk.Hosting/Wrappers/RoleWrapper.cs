@@ -62,7 +62,7 @@ internal class RoleWrapper(DiscordClient client, Role role, IGuild guild) : IRol
     public IGuild Guild => _guild;
 
     /// <inheritdoc />
-    public RoleTags Tags => _role.Tags ?? new();
+    public IRoleTags Tags => _role.Tags ?? new RoleTags();
 
     /// <inheritdoc />
     public RoleIcon? Icon

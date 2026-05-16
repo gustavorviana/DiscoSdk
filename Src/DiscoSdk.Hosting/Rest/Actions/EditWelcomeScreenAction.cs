@@ -6,7 +6,7 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <summary>
 /// Implementation of <see cref="IEditWelcomeScreenAction"/> for editing a guild welcome screen.
 /// </summary>
-internal class EditWelcomeScreenAction : RestAction<WelcomeScreen>, IEditWelcomeScreenAction
+internal class EditWelcomeScreenAction : RestAction<IWelcomeScreen>, IEditWelcomeScreenAction
 {
 	private readonly DiscordClient _client;
 	private readonly IGuild _guild;
@@ -78,7 +78,7 @@ internal class EditWelcomeScreenAction : RestAction<WelcomeScreen>, IEditWelcome
 	}
 
 	/// <inheritdoc />
-	public override async Task<WelcomeScreen> ExecuteAsync(CancellationToken cancellationToken = default)
+	public override async Task<IWelcomeScreen> ExecuteAsync(CancellationToken cancellationToken = default)
 	{
 		var request = new Dictionary<string, object?>();
 

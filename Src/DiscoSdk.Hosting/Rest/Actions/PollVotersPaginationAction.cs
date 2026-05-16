@@ -1,3 +1,4 @@
+using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Users;
 using DiscoSdk.Rest.Actions;
@@ -7,7 +8,7 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <summary>
 /// Implementation of <see cref="IPollVotersPaginationAction"/> for retrieving poll voters.
 /// </summary>
-internal class PollVotersPaginationAction : RestAction<User[]>, IPollVotersPaginationAction
+internal class PollVotersPaginationAction : RestAction<IUser[]>, IPollVotersPaginationAction
 {
 	private readonly DiscordClient _client;
 	private readonly Snowflake _channelId;
@@ -48,8 +49,9 @@ internal class PollVotersPaginationAction : RestAction<User[]>, IPollVotersPagin
 	}
 
 	/// <inheritdoc />
-	public override async Task<User[]> ExecuteAsync(CancellationToken cancellationToken = default)
+	public override async Task<IUser[]> ExecuteAsync(CancellationToken cancellationToken = default)
 	{
-		return await _client.MessageClient.GetPollVotersAsync(_channelId, _messageId, _answerId, _after?.ToString(), _limit, cancellationToken);
+		var users = await _client.MessageClient.GetPollVotersAsync(_channelId, _messageId, _answerId, _after?.ToString(), _limit, cancellationToken);
+		return [.. users.Select(u => new UserWrapper(_client, u))];
 	}
 }

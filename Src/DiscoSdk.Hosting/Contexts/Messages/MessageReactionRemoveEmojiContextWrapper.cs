@@ -6,12 +6,12 @@ namespace DiscoSdk.Hosting.Contexts.Messages;
 
 internal class MessageReactionRemoveEmojiContextWrapper(DiscordClient client,
 	Snowflake messageId,
-	IEmoji emoji,
+	Emoji emoji,
 	ITextBasedChannel channel,
 	IGuild? guild) : ContextWrapper(client), IMessageReactionRemoveEmojiContext
 {
 	public Snowflake MessageId => messageId;
-	public IEmoji Emoji => emoji;
+	public Emoji Emoji => emoji;
 	public ITextBasedChannel Channel => channel;
 	public IGuild? Guild => guild;
 }

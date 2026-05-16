@@ -272,7 +272,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="request">The emoji creation request.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The created emoji.</returns>
-    public Task<Emoji> CreateEmojiAsync(Snowflake guildId, object request, CancellationToken cancellationToken = default)
+    public Task<InternalEmoji> CreateEmojiAsync(Snowflake guildId, object request, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -280,7 +280,7 @@ internal class GuildClient(IDiscordRestClient client)
         ArgumentNullException.ThrowIfNull(request);
 
         var route = new DiscordRoute("guilds/{guild_id}/emojis", guildId);
-        return client.SendAsync<Emoji>(route, HttpMethod.Post, request, cancellationToken);
+        return client.SendAsync<InternalEmoji>(route, HttpMethod.Post, request, cancellationToken);
     }
 
     /// <summary>
@@ -291,7 +291,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="request">The emoji edit request.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The edited emoji.</returns>
-    public Task<Emoji> EditEmojiAsync(Snowflake guildId, Snowflake emojiId, object request, CancellationToken cancellationToken = default)
+    public Task<InternalEmoji> EditEmojiAsync(Snowflake guildId, Snowflake emojiId, object request, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -302,7 +302,7 @@ internal class GuildClient(IDiscordRestClient client)
         ArgumentNullException.ThrowIfNull(request);
 
         var route = new DiscordRoute("guilds/{guild_id}/emojis/{emoji_id}", guildId, emojiId);
-        return client.SendAsync<Emoji>(route, HttpMethod.Patch, request, cancellationToken);
+        return client.SendAsync<InternalEmoji>(route, HttpMethod.Patch, request, cancellationToken);
     }
 
     /// <summary>
@@ -416,7 +416,7 @@ internal class GuildClient(IDiscordRestClient client)
         return auditLog.AuditLogEntries;
     }
 
-    public async Task<VanityUrl?> GetVanityUrlAsync(Snowflake guildId, CancellationToken cancellationToken = default)
+    public async Task<IVanityUrl?> GetVanityUrlAsync(Snowflake guildId, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -750,7 +750,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// Modifies the guild's incident actions — temporarily disables invites and/or DMs until the
     /// specified timestamps. Pass <c>null</c> to clear the suspension.
     /// </summary>
-    public Task<IncidentsData> ModifyIncidentActionsAsync(Snowflake guildId, DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil, CancellationToken cancellationToken = default)
+    public async Task<IIncidentsData> ModifyIncidentActionsAsync(Snowflake guildId, DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil, CancellationToken cancellationToken = default)
     {
         var body = new
         {
@@ -758,7 +758,7 @@ internal class GuildClient(IDiscordRestClient client)
             dms_disabled_until = dmsDisabledUntil?.ToString("o")
         };
         var route = new DiscordRoute("guilds/{guild_id}/incident-actions", guildId);
-        return client.SendAsync<IncidentsData>(route, HttpMethod.Put, body, cancellationToken);
+        return await client.SendAsync<IncidentsData>(route, HttpMethod.Put, body, cancellationToken);
     }
 
     /// <summary>

@@ -64,7 +64,7 @@ public interface IMessage : IMessageBase, IMentionable, IDeletable
     /// copies. The original message is identified by <c>message_reference</c> (with
     /// <c>type = Forward</c>) on the same message object.
     /// </remarks>
-    IReadOnlyList<MessageSnapshot> MessageSnapshots { get; }
+    IReadOnlyList<IMessageSnapshot> MessageSnapshots { get; }
 
     IUserMention[] Mentions { get; }
 

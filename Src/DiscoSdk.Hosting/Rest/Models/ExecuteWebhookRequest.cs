@@ -3,7 +3,7 @@ using DiscoSdk.Models.JsonConverters;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
 using DiscoSdk.Models.Messages.Pools;
-using DiscoSdk.Models.Requests.Messages;
+using DiscoSdk.Hosting.Models.Requests.Messages;
 using DiscoSdk.Rest.Actions.Messages;
 using System.Text.Json.Serialization;
 

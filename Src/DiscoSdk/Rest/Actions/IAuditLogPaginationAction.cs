@@ -6,7 +6,7 @@ namespace DiscoSdk.Rest.Actions;
 /// <summary>
 /// Represents a pagination action for retrieving audit logs from a guild.
 /// </summary>
-public interface IAuditLogPaginationAction : IPaginationAction<AuditLogEntry, IAuditLogPaginationAction>
+public interface IAuditLogPaginationAction : IPaginationAction<IAuditLogEntry, IAuditLogPaginationAction>
 {
 	/// <summary>
 	/// Gets audit log entries before this entry ID.

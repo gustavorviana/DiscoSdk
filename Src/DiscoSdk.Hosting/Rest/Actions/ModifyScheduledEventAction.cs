@@ -1,7 +1,7 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
-using DiscoSdk.Models.Requests.ScheduledEvents;
+using DiscoSdk.Hosting.Models.Requests.ScheduledEvents;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;

@@ -1,6 +1,6 @@
 using DiscoSdk.Models;
 using DiscoSdk.Models.Commands;
-using DiscoSdk.Models.Requests.Commands;
+using DiscoSdk.Hosting.Models.Requests.Commands;
 using DiscoSdk.Rest;
 using System.Net.Http.Headers;
 

@@ -17,7 +17,7 @@ public class EmojiWrapperTests : WrapperTestBase
 		_guild.Id.Returns(new Snowflake(100));
 	}
 
-	private static Emoji Model() => new()
+	private static InternalEmoji Model() => new()
 	{
 		Id = new Snowflake(42),
 		Name = "smile",
@@ -28,13 +28,13 @@ public class EmojiWrapperTests : WrapperTestBase
 	[Fact]
 	public async Task Edit_PatchesEmojiAsync()
 	{
-		Http.SendAsync<Emoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+		Http.SendAsync<InternalEmoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(Model());
 		var wrapper = new EmojiWrapper(Client, Model(), _guild);
 
 		await wrapper.Edit().SetName("new").ExecuteAsync();
 
-		await Http.Received(1).SendAsync<Emoji>(
+		await Http.Received(1).SendAsync<InternalEmoji>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/emojis/42"),
 			HttpMethod.Patch,
 			Arg.Is<object?>(b => BodyContains(b, "name", "new")),

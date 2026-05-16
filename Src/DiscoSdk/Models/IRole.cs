@@ -66,7 +66,7 @@ public interface IRole : IMentionable, IPermissionHolder, IComparable<IRole>, ID
 	/// <summary>
 	/// Gets the tags associated with this role.
 	/// </summary>
-	RoleTags Tags { get; }
+	IRoleTags Tags { get; }
 
 	/// <summary>
 	/// Gets the icon of this role, if any.

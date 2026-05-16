@@ -2,7 +2,7 @@ using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.JsonConverters;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
-using DiscoSdk.Models.Requests.Messages;
+using DiscoSdk.Hosting.Models.Requests.Messages;
 using DiscoSdk.Tests.Models.Messages.Components;
 using System.Text.Json;
 using System.Text.Json.Nodes;

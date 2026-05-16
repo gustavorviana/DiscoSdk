@@ -1,69 +1,49 @@
-using DiscoSdk.Models.Users;
 using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;
 
 /// <summary>
-/// Represents a Discord emoji.
+/// Partial emoji reference — the minimal shape Discord accepts in component payloads
+/// (<c>button.emoji</c>, <c>select_option.emoji</c>), reaction endpoints, and onboarding prompts.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Construct one of these whenever you need to attach an emoji to a button, select option, poll
+/// answer, or reaction:
+/// </para>
+/// <list type="bullet">
+///   <item><term>Unicode</term><description><c>new Emoji { Name = "✅" }</c></description></item>
+///   <item><term>Custom</term><description><c>new Emoji { Id = 123, Name = "smile", Animated = false }</c></description></item>
+/// </list>
+/// <para>
+/// The richer guild-emoji shape (with creator, allowed roles, managed/available flags) is
+/// represented by <see cref="IEmoji"/> and is only returned from guild emoji listings.
+/// </para>
+/// </remarks>
 public class Emoji
 {
-    /// <summary>
-    /// Gets or sets the emoji's unique identifier.
-    /// </summary>
+    /// <summary>The emoji's id when it's a custom guild emoji, otherwise <c>null</c> (Unicode).</summary>
     [JsonPropertyName("id")]
     public Snowflake? Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the emoji's name.
+    /// The emoji's name — the literal Unicode character for built-in emojis, or the alias for
+    /// custom emojis. <c>null</c> only inside deserialized reaction payloads where Discord omits
+    /// it for deleted custom emojis.
     /// </summary>
     [JsonPropertyName("name")]
     public string? Name { get; set; }
 
-    /// <summary>
-    /// Gets or sets the roles allowed to use this emoji.
-    /// </summary>
-    [JsonPropertyName("roles")]
-    public string[] Roles { get; set; } = [];
-
-    /// <summary>
-    /// Gets or sets the user that created this emoji.
-    /// </summary>
-    [JsonPropertyName("user")]
-    public User? User { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether this emoji must be wrapped in colons.
-    /// </summary>
-    [JsonPropertyName("require_colons")]
-    public bool RequireColons { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether this emoji is managed.
-    /// </summary>
-    [JsonPropertyName("managed")]
-    public bool Managed { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether this emoji is animated.
-    /// </summary>
+    /// <summary>Whether the custom emoji is animated. Always <c>false</c> for Unicode emojis.</summary>
     [JsonPropertyName("animated")]
-    public bool Animated { get; set; }
+    public bool? Animated { get; set; }
 
-    /// <summary>
-    /// Gets or sets a value indicating whether this emoji is available.
-    /// </summary>
-    [JsonPropertyName("available")]
-    public bool Available { get; set; }
-
+    /// <inheritdoc />
     public override string ToString()
     {
         if (Id.HasValue)
-            // Custom emoji: name:id format
             return $"{Name}:{Id.Value}";
 
-        // Unicode emoji: just the name
         return Name ?? string.Empty;
     }
 }
-

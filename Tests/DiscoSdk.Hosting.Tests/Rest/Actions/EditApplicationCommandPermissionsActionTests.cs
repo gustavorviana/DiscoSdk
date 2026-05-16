@@ -97,13 +97,13 @@ public class EditApplicationCommandPermissionsActionTests : WrapperTestBase
 
     private static int RequestPermissionCount(object? body)
     {
-        var req = body as DiscoSdk.Models.Requests.Commands.EditApplicationCommandPermissionsRequest;
+        var req = body as DiscoSdk.Hosting.Models.Requests.Commands.EditApplicationCommandPermissionsRequest;
         return req?.Permissions.Length ?? -1;
     }
 
     private static bool RequestHasExactlyOnePermission(object? body, ApplicationCommandPermissionType type, Snowflake id, bool allowed)
     {
-        var req = body as DiscoSdk.Models.Requests.Commands.EditApplicationCommandPermissionsRequest;
+        var req = body as DiscoSdk.Hosting.Models.Requests.Commands.EditApplicationCommandPermissionsRequest;
         if (req is null || req.Permissions.Length != 1) return false;
         var p = req.Permissions[0];
         return p.Type == type && p.Id == id && p.Permission == allowed;

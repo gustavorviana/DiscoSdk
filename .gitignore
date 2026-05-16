@@ -368,3 +368,4 @@ FodyWeavers.xsd
 
 # GitHub Wiki clone (managed as separate repo)
 /DiscoSdk.wiki
+reports/*

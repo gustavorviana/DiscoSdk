@@ -1,8 +1,8 @@
-﻿using DiscoSdk.Hosting.Contexts.Models;
+using DiscoSdk.Hosting.Contexts.Models;
 using DiscoSdk.Hosting.Rest.Models;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Messages;
-using DiscoSdk.Models.Requests.Messages;
+using DiscoSdk.Hosting.Models.Requests.Messages;
 using DiscoSdk.Rest;
 using System.Text;
 

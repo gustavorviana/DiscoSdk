@@ -6,7 +6,7 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <summary>
 /// Implementation of <see cref="IEditGuildWidgetAction"/> for editing a guild widget.
 /// </summary>
-internal class EditGuildWidgetAction : RestAction<GuildWidget>, IEditGuildWidgetAction
+internal class EditGuildWidgetAction : RestAction<IGuildWidget>, IEditGuildWidgetAction
 {
 	private readonly DiscordClient _client;
 	private readonly IGuild _guild;
@@ -43,7 +43,7 @@ internal class EditGuildWidgetAction : RestAction<GuildWidget>, IEditGuildWidget
 	}
 
 	/// <inheritdoc />
-	public override async Task<GuildWidget> ExecuteAsync(CancellationToken cancellationToken = default)
+	public override async Task<IGuildWidget> ExecuteAsync(CancellationToken cancellationToken = default)
 	{
 		var request = new Dictionary<string, object?>();
 

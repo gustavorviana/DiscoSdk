@@ -16,7 +16,7 @@ public interface IAutoModerationActionExecutionContext : IContext
 	Snowflake RuleId { get; }
 
 	/// <summary>The action that was executed.</summary>
-	AutoModerationAction Action { get; }
+	IAutoModerationAction Action { get; }
 
 	/// <summary>The user who triggered the rule.</summary>
 	Snowflake UserId { get; }

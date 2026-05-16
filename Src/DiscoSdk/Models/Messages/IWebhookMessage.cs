@@ -1,5 +1,4 @@
-﻿using DiscoSdk.Models.Messages.Mentions;
-using DiscoSdk.Rest.Actions;
+﻿using DiscoSdk.Rest.Actions;
 using DiscoSdk.Rest.Actions.Messages.Webhooks;
 
 namespace DiscoSdk.Models.Messages;
@@ -8,7 +7,7 @@ public interface IWebhookMessage : IMessageBase
 {
     Snowflake ChannelId { get; }
 
-    MessageMentionUser[] Mentions { get; }
+    IReadOnlyList<IUserMention> Mentions { get; }
 
     /// <summary>
     /// Creates a builder for editing this message.

@@ -10,7 +10,7 @@ namespace DiscoSdk.Hosting.Wrappers;
 /// always <c>null</c>; <see cref="Edit"/> and <see cref="Delete"/> route through
 /// <see cref="ApplicationClient"/> instead of <c>GuildClient</c>.
 /// </summary>
-internal sealed class ApplicationEmojiWrapper(DiscordClient client, Emoji emoji) : IEmoji
+internal sealed class ApplicationEmojiWrapper(DiscordClient client, InternalEmoji emoji) : IEmoji
 {
 	/// <inheritdoc />
 	public Snowflake Id => emoji.Id ?? throw new InvalidOperationException("Emoji must have an ID.");

@@ -2,27 +2,18 @@ using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;
 
-/// <summary>
-/// Represents avatar decoration data for a user.
-/// </summary>
+/// <summary>Read-only user avatar-decoration metadata.</summary>
 public class AvatarDecorationData
 {
-    /// <summary>
-    /// Gets or sets the SKU ID.
-    /// </summary>
+    /// <summary>SKU id of the decoration.</summary>
     [JsonPropertyName("sku_id")]
-    public Snowflake? SkuId { get; set; }
+    public Snowflake? SkuId { get; init; }
 
-    /// <summary>
-    /// Gets or sets the expiration timestamp.
-    /// </summary>
+    /// <summary>Unix-seconds timestamp when the decoration expires, or <c>null</c>.</summary>
     [JsonPropertyName("expires_at")]
-    public long? ExpiresAt { get; set; }
+    public long? ExpiresAt { get; init; }
 
-    /// <summary>
-    /// Gets or sets the asset.
-    /// </summary>
+    /// <summary>Decoration asset identifier.</summary>
     [JsonPropertyName("asset")]
-    public string? Asset { get; set; }
+    public string? Asset { get; init; }
 }
-

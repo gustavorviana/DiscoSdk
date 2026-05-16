@@ -10,7 +10,7 @@ namespace DiscoSdk.Contexts.Guilds;
 public interface IPresenceUpdateContext : IContext
 {
 	/// <summary>The presence payload.</summary>
-	Presence Presence { get; }
+	IPresence Presence { get; }
 
 	/// <summary>The guild the presence applies to, or null if not available.</summary>
 	IGuild? Guild { get; }

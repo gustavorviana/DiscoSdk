@@ -7,7 +7,7 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <summary>
 /// Implementation of <see cref="IAuditLogPaginationAction"/> for retrieving audit logs from a guild.
 /// </summary>
-internal class AuditLogPaginationAction : RestAction<AuditLogEntry[]>, IAuditLogPaginationAction
+internal class AuditLogPaginationAction : RestAction<IAuditLogEntry[]>, IAuditLogPaginationAction
 {
 	private readonly DiscordClient _client;
 	private readonly IGuild _guild;
@@ -59,7 +59,7 @@ internal class AuditLogPaginationAction : RestAction<AuditLogEntry[]>, IAuditLog
 	}
 
 	/// <inheritdoc />
-	public override async Task<AuditLogEntry[]> ExecuteAsync(CancellationToken cancellationToken = default)
+	public override async Task<IAuditLogEntry[]> ExecuteAsync(CancellationToken cancellationToken = default)
 	{
 		var entries = await _client.GuildClient.GetAuditLogsAsync(
 			_guild.Id,

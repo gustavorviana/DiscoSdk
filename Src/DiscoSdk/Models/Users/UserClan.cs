@@ -1,35 +1,23 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Users;
 
-/// Represents clan identity information attached to a user.
-///
-/// This structure describes an identity that is backed by a specific guild
-/// and can be displayed on the user's profile.
-/// </summary>
+/// <summary>Read-only clan-identity metadata attached to a user.</summary>
 public sealed class UserClan
 {
-    /// <summary>
-    /// The guild ID associated with this clan identity.
-    /// </summary>
+    /// <summary>Guild backing this clan identity.</summary>
     [JsonPropertyName("identity_guild_id")]
-    public Snowflake IdentityGuildId { get; set; }
+    public Snowflake IdentityGuildId { get; init; }
 
-    /// <summary>
-    /// Indicates whether this identity is currently enabled for the user.
-    /// </summary>
+    /// <summary>Whether the user opted to display this identity.</summary>
     [JsonPropertyName("identity_enabled")]
-    public bool IdentityEnabled { get; set; }
+    public bool IdentityEnabled { get; init; }
 
-    /// <summary>
-    /// The short tag displayed for this clan identity.
-    /// </summary>
+    /// <summary>The short clan tag.</summary>
     [JsonPropertyName("tag")]
-    public string? Tag { get; set; }
+    public string? Tag { get; init; }
 
-    /// <summary>
-    /// The badge identifier or hash associated with this identity.
-    /// </summary>
+    /// <summary>Badge asset identifier.</summary>
     [JsonPropertyName("badge")]
-    public string? Badge { get; set; }
+    public string? Badge { get; init; }
 }

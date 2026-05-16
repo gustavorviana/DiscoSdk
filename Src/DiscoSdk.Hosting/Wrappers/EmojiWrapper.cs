@@ -5,15 +5,15 @@ using DiscoSdk.Rest.Actions;
 namespace DiscoSdk.Hosting.Wrappers;
 
 /// <summary>
-/// Wrapper that implements <see cref="IEmoji"/> for an <see cref="Emoji"/> instance.
+/// Wrapper that implements <see cref="IEmoji"/> for an <see cref="InternalEmoji"/> instance.
 /// </summary>
 internal class EmojiWrapper : IEmoji
 {
-    private readonly Emoji _emoji;
+    private readonly InternalEmoji _emoji;
     private readonly IGuild? _guild;
     private readonly DiscordClient _client;
 
-    public EmojiWrapper(DiscordClient client, Emoji emoji, IGuild? guild)
+    public EmojiWrapper(DiscordClient client, InternalEmoji emoji, IGuild? guild)
     {
         _emoji = emoji ?? throw new ArgumentNullException(nameof(emoji));
         _client = client ?? throw new ArgumentNullException(nameof(client));

@@ -13,7 +13,7 @@ public interface IMessageReactionRemoveEmojiContext : IContext
 	Snowflake MessageId { get; }
 
 	/// <summary>The emoji whose reactions were cleared.</summary>
-	IEmoji Emoji { get; }
+	Emoji Emoji { get; }
 
 	/// <summary>The channel the message is in.</summary>
 	ITextBasedChannel Channel { get; }

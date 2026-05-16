@@ -14,7 +14,7 @@ internal class WebhookMessageWrapper(WebhookIdentity id, WebhookMessageClient cl
 {
     public Snowflake ChannelId => Message.ChannelId;
 
-    public MessageMentionUser[] Mentions { get; } = [.. message.Mentions];
+    public IReadOnlyList<IUserMention> Mentions { get; } = [.. message.Mentions.Select(m => new UserMentionWrapper(client: null, m, guild: null))];
 
     public IRestAction Delete(Snowflake? threadId = null)
     {

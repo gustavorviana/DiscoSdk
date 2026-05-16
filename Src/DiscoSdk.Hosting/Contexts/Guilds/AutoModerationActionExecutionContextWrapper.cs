@@ -14,7 +14,7 @@ internal class AutoModerationActionExecutionContextWrapper(DiscordClient client,
 {
 	public IGuild Guild => guild;
 	public Snowflake RuleId => ruleId;
-	public AutoModerationAction Action => action;
+	public IAutoModerationAction Action => action;
 	public Snowflake UserId => userId;
 	public Snowflake? ChannelId => channelId;
 	public string? MatchedContent => matchedContent;

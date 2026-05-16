@@ -55,7 +55,11 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
     }
     public IInteractionComponent[]? Components => Message.Components;
     public IReaction[] Reactions { get; }
-    public IReadOnlyList<MessageSnapshot> MessageSnapshots => Message.MessageSnapshots ?? [];
+    private IReadOnlyList<IMessageSnapshot>? _messageSnapshots;
+    public IReadOnlyList<IMessageSnapshot> MessageSnapshots => _messageSnapshots ??=
+        Message.MessageSnapshots is { Length: > 0 } snapshots
+            ? [.. snapshots.Select(s => new MessageSnapshotWrapper(_client, s, Guild))]
+            : [];
     public string Timestamp => Message.Timestamp;
     public string? EditedTimestamp => Message.EditedTimestamp;
 

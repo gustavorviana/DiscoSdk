@@ -268,12 +268,12 @@ public class GuildWrapperTests : WrapperTestBase
 	[Fact]
 	public async Task CreateEmoji_PostsGuildEmojisRouteAsync()
 	{
-		Http.SendAsync<Emoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-			.Returns(new Emoji { Id = new Snowflake(11), Name = "smile" });
+		Http.SendAsync<InternalEmoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new InternalEmoji { Id = new Snowflake(11), Name = "smile" });
 
 		await _wrapper.CreateEmoji("smile", new DiscordImageBuffer([1, 2, 3], "png")).ExecuteAsync();
 
-		await Http.Received(1).SendAsync<Emoji>(
+		await Http.Received(1).SendAsync<InternalEmoji>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/emojis"),
 			HttpMethod.Post,
 			Arg.Is<object?>(b => BodyContains(b, "name", "smile")),

@@ -9,7 +9,7 @@ using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Models.Messages.Components;
 using DiscoSdk.Models.Messages.Embeds;
-using DiscoSdk.Models.Requests.Messages;
+using DiscoSdk.Hosting.Models.Requests.Messages;
 using DiscoSdk.Rest.Actions.Messages;
 
 namespace DiscoSdk.Hosting.Rest.Actions.Messages;

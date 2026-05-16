@@ -1,7 +1,7 @@
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
-using DiscoSdk.Models.Requests.Channels;
+using DiscoSdk.Hosting.Models.Requests.Channels;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;

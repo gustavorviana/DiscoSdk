@@ -9,5 +9,5 @@ namespace DiscoSdk.Contexts.Guilds;
 public interface IEntitlementContext : IContext
 {
 	/// <summary>The entitlement payload.</summary>
-	Entitlement Entitlement { get; }
+	IEntitlement Entitlement { get; }
 }

@@ -1,6 +1,6 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
-using DiscoSdk.Models.Requests.Stickers;
+using DiscoSdk.Hosting.Models.Requests.Stickers;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;

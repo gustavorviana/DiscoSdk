@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Models;
+using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Messages;
 using DiscoSdk.Rest.Actions;
@@ -16,5 +16,5 @@ public interface IMessageDeleteReactionContext : IContext
 
     IRestAction<IMessage> GetMessage();
 
-    IEmoji Emoji { get; }
+    Emoji Emoji { get; }
 }

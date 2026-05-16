@@ -10,7 +10,7 @@ public interface IThreadBasedChannel : IStandardGuildChannel, IThreadContainer
 	/// <summary>
 	/// Gets the default reaction emoji shown on the add reaction button on posts.
 	/// </summary>
-	DefaultReaction? DefaultReactionEmoji { get; }
+	IDefaultReaction? DefaultReactionEmoji { get; }
 
 	/// <summary>
 	/// Gets the default sort order used to order posts in this channel, or <c>null</c> if Discord
@@ -21,7 +21,7 @@ public interface IThreadBasedChannel : IStandardGuildChannel, IThreadContainer
 	/// <summary>
 	/// Gets the set of tags that can be used in this channel.
 	/// </summary>
-	ForumTag[]? AvailableTags { get; }
+	IReadOnlyList<IForumTag>? AvailableTags { get; }
 
 	/// <summary>
 	/// Gets the channel flags (e.g., REQUIRE_TAG, HIDE_MEDIA_DOWNLOAD_OPTIONS).

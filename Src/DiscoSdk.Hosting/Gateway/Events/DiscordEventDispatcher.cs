@@ -507,7 +507,7 @@ internal class DiscordEventDispatcher
             user,
             messageId,
             wrappedMember,
-            new EmojiWrapper(_discordClient, emoji, guild));
+            emoji);
 
         await HandleAllAsync<IMessageReactionAddHandler, IMessageAddReactionContext>(eventData);
     }
@@ -527,7 +527,7 @@ internal class DiscordEventDispatcher
             guild,
             userId,
             messageId,
-            new EmojiWrapper(_discordClient, emoji, guild));
+            emoji);
 
         await HandleAllAsync<IMessageReactionRemoveHandler, IMessageDeleteReactionContext>(eventData);
     }
@@ -698,7 +698,7 @@ internal class DiscordEventDispatcher
         if (emoji is null) return;
 
         var eventData = new MessageReactionRemoveEmojiContextWrapper(
-            _discordClient, messageId.Value, new EmojiWrapper(_discordClient, emoji, guild), channel!, guild);
+            _discordClient, messageId.Value, emoji, channel!, guild);
         await HandleAllAsync<IMessageReactionRemoveEmojiHandler, IMessageReactionRemoveEmojiContext>(eventData);
     }
 
@@ -944,11 +944,11 @@ internal class DiscordEventDispatcher
         if (guild is null) return;
 
         var emojisEl = payload.Get("emojis");
-        var emojis = ImmutableArray.CreateBuilder<Emoji>();
+        var emojis = ImmutableArray.CreateBuilder<InternalEmoji>();
         if (emojisEl is not null)
             foreach (var item in emojisEl.Value.EnumerateArray())
             {
-                var emoji = item.Deserialize<Emoji>(_discordClient.SerializerOptions);
+                var emoji = item.Deserialize<InternalEmoji>(_discordClient.SerializerOptions);
                 if (emoji is not null) emojis.Add(emoji);
             }
 

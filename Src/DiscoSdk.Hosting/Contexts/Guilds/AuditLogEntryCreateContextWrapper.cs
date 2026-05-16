@@ -6,6 +6,6 @@ namespace DiscoSdk.Hosting.Contexts.Guilds;
 internal class AuditLogEntryCreateContextWrapper(DiscordClient client, AuditLogEntry entry, IGuild guild)
 	: ContextWrapper(client), IAuditLogEntryCreateContext
 {
-	public AuditLogEntry Entry => entry;
+	public IAuditLogEntry Entry => entry;
 	public IGuild Guild => guild;
 }

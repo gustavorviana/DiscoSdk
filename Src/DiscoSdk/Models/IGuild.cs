@@ -199,6 +199,11 @@ public interface IGuild
     /// </summary>
     bool? Unavailable { get; }
 
+    /// <summary>
+    /// Gets the hub type of this guild (Student Hub program), or null if this guild is not a hub.
+    /// </summary>
+    GuildHubType? HubType { get; }
+
     // Guild Actions
 
     /// <summary>
@@ -435,7 +440,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IRestAction<IReadOnlyList<VoiceRegion>> GetVoiceRegions();
+    IRestAction<IReadOnlyList<IVoiceRegion>> GetVoiceRegions();
 
     /// <summary>
     /// Gets a REST action to retrieve the preview of this guild (for public guilds).
@@ -453,7 +458,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IRestAction<GuildWidget> GetWidget();
+    IRestAction<IGuildWidget> GetWidget();
 
     /// <summary>
     /// Creates a REST action to modify the widget of this guild.
@@ -471,7 +476,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IRestAction<WelcomeScreen> GetWelcomeScreen();
+    IRestAction<IWelcomeScreen> GetWelcomeScreen();
 
     /// <summary>
     /// Creates a REST action to modify the welcome screen of this guild.
@@ -489,7 +494,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IRestAction<VanityUrl?> GetVanityUrl();
+    IRestAction<IVanityUrl?> GetVanityUrl();
 
     /// <summary>
     /// Gets a REST action to retrieve the widget image of this guild.
@@ -652,7 +657,7 @@ public interface IGuild
     /// Gets a REST action that suspends invites and/or DMs for this guild until the supplied
     /// timestamps. Pass <c>null</c> to clear either suspension.
     /// </summary>
-    IRestAction<IncidentsData> ModifyIncidentActions(DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil);
+    IRestAction<IIncidentsData> ModifyIncidentActions(DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil);
 
     /// <summary>
     /// Gets a REST action that lists all webhooks attached to channels in this guild.

@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Contexts.Messages;
+using DiscoSdk.Contexts.Messages;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Wrappers.Messages;
 using DiscoSdk.Models;
@@ -13,7 +13,7 @@ internal class MessageDeleteReactionContextWrapper(DiscordClient client,
     IGuild? guild,
     Snowflake userId,
     Snowflake messageId,
-    IEmoji emoji) : ContextWrapper(client), IMessageDeleteReactionContext
+    Emoji emoji) : ContextWrapper(client), IMessageDeleteReactionContext
 {
     public ITextBasedChannel Channel => channel;
 
@@ -21,7 +21,7 @@ internal class MessageDeleteReactionContextWrapper(DiscordClient client,
 
     public Snowflake MessageId => messageId;
 
-    public IEmoji Emoji => emoji;
+    public Emoji Emoji => emoji;
 
     public IRestAction<IMessage> GetMessage()
     {

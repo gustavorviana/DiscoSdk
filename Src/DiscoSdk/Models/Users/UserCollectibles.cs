@@ -2,14 +2,10 @@ using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Users;
 
-/// <summary>
-/// Represents collectibles for a user.
-/// </summary>
+/// <summary>Read-only collectibles bag attached to a user (currently just the nameplate).</summary>
 public class UserCollectibles
 {
-    /// <summary>
-    /// Gets or sets the nameplate.
-    /// </summary>
+    /// <summary>Nameplate the user has equipped, if any.</summary>
     [JsonPropertyName("nameplate")]
-    public Nameplate? Nameplate { get; set; }
+    public Nameplate? Nameplate { get; init; }
 }

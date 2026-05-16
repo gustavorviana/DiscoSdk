@@ -7,7 +7,7 @@ using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Wrappers.Messages;
 
-internal class UserMentionWrapper(DiscordClient client, MessageMentionUser user, IGuild? guild) : IUserMention
+internal class UserMentionWrapper(DiscordClient? client, MessageMentionUser user, IGuild? guild) : IUserMention
 {
     public Snowflake UserId => user.UserId;
 
@@ -35,6 +35,9 @@ internal class UserMentionWrapper(DiscordClient client, MessageMentionUser user,
 
     public IRestAction<IUser> ResolveUserAsync()
     {
+        if (client is null)
+            return RestAction<IUser>.Empty!;
+
         return client.Users.Get(UserId)!;
     }
 }

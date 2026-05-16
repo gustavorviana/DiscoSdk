@@ -1,12 +1,11 @@
 using DiscoSdk.Models;
-using DiscoSdk.Models.Users;
 
 namespace DiscoSdk.Rest.Actions;
 
 /// <summary>
 /// Represents a pagination action for retrieving reaction users.
 /// </summary>
-public interface IReactionPaginationAction : IPaginationAction<User, IReactionPaginationAction>
+public interface IReactionPaginationAction : IPaginationAction<IUser, IReactionPaginationAction>
 {
     IReactionPaginationAction After(Snowflake userId);
 }

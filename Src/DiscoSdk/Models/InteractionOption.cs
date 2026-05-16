@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Models.Enums;
+using DiscoSdk.Models.Enums;
 using DiscoSdk.Models.JsonConverters;
 using System.Text.Json.Serialization;
 

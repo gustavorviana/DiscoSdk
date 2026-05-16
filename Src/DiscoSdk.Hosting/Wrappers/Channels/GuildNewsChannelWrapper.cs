@@ -30,19 +30,19 @@ internal class GuildNewsChannelWrapper(DiscordClient client, Channel channel, IG
         });
     }
 
-    public IRestAction<FollowedChannel> Follow(Snowflake targetChannelId)
+    public IRestAction<IFollowedChannel> Follow(Snowflake targetChannelId)
     {
-        return RestAction<FollowedChannel>.Create(async cancellationToken =>
+        return RestAction<IFollowedChannel>.Create(async cancellationToken =>
         {
             return await _client.ChannelClient.FollowAsync(Id, targetChannelId, cancellationToken);
         });
     }
 
-    public IRestAction<FollowedChannel> Follow(IGuildTextChannel targetChannel)
+    public IRestAction<IFollowedChannel> Follow(IGuildTextChannel targetChannel)
     {
         ArgumentNullException.ThrowIfNull(targetChannel);
 
-        return RestAction<FollowedChannel>.Create(async cancellationToken =>
+        return RestAction<IFollowedChannel>.Create(async cancellationToken =>
         {
             var selfMember = await Guild.GetMember(Snowflake.Parse(_client.BotUser.Id)).ExecuteAsync(cancellationToken)
             ?? throw new InvalidOperationException("Cannot get self member from guild.");

@@ -1,4 +1,4 @@
-﻿using DiscoSdk.Contexts.Messages;
+using DiscoSdk.Contexts.Messages;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Wrappers.Messages;
 using DiscoSdk.Models;
@@ -14,7 +14,7 @@ namespace DiscoSdk.Hosting.Contexts.Messages
     IUser user,
     Snowflake messageId,
     IMember? member,
-    IEmoji emoji) : ContextWrapper(client), IMessageAddReactionContext
+    Emoji emoji) : ContextWrapper(client), IMessageAddReactionContext
     {
         public ITextBasedChannel Channel => channel;
 
@@ -22,7 +22,7 @@ namespace DiscoSdk.Hosting.Contexts.Messages
 
         public Snowflake MessageId => messageId;
 
-        public IEmoji Emoji => emoji;
+        public Emoji Emoji => emoji;
 
         public IMember? Member => member;
 

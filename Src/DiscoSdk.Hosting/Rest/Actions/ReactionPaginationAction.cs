@@ -1,3 +1,4 @@
+using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Users;
 using DiscoSdk.Rest.Actions;
@@ -7,7 +8,7 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 /// <summary>
 /// Implementation of <see cref="IReactionPaginationAction"/> for retrieving reaction users.
 /// </summary>
-internal class ReactionPaginationAction : RestAction<User[]>, IReactionPaginationAction
+internal class ReactionPaginationAction : RestAction<IUser[]>, IReactionPaginationAction
 {
 	private readonly DiscordClient _client;
 	private readonly Snowflake _channelId;
@@ -49,8 +50,9 @@ internal class ReactionPaginationAction : RestAction<User[]>, IReactionPaginatio
 	}
 
 	/// <inheritdoc />
-	public override async Task<User[]> ExecuteAsync(CancellationToken cancellationToken = default)
+	public override async Task<IUser[]> ExecuteAsync(CancellationToken cancellationToken = default)
 	{
-		return await _client.MessageClient.GetReactionsAsync(_channelId, _messageId, _emoji, _after?.ToString(), _limit, cancellationToken);
+		var users = await _client.MessageClient.GetReactionsAsync(_channelId, _messageId, _emoji, _after?.ToString(), _limit, cancellationToken);
+		return [.. users.Select(u => new UserWrapper(_client, u))];
 	}
 }

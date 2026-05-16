@@ -2,39 +2,27 @@ using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models.Channels;
 
-/// <summary>
-/// Represents a tag that can be applied to threads in a forum or media channel.
-/// </summary>
-public class ForumTag
+/// <inheritdoc cref="IForumTag"/>
+/// <remarks>Public because it doubles as the input shape for <see cref="Rest.Actions.ICreateChannelAction.SetAvailableTags"/>.</remarks>
+public class ForumTag : IForumTag
 {
-	/// <summary>
-	/// Gets or sets the ID of the tag.
-	/// </summary>
+	/// <inheritdoc />
 	[JsonPropertyName("id")]
-	public Snowflake? Id { get; set; }
+	public Snowflake? Id { get; init; }
 
-	/// <summary>
-	/// Gets or sets the name of the tag (max 20 characters).
-	/// </summary>
+	/// <inheritdoc />
 	[JsonPropertyName("name")]
-	public string Name { get; set; } = default!;
+	public string Name { get; init; } = default!;
 
-	/// <summary>
-	/// Gets or sets whether this tag can only be applied to or removed from threads by members with the MANAGE_THREADS permission.
-	/// </summary>
+	/// <inheritdoc />
 	[JsonPropertyName("moderated")]
-	public bool Moderated { get; set; }
+	public bool Moderated { get; init; }
 
-	/// <summary>
-	/// Gets or sets the ID of a guild's custom emoji.
-	/// </summary>
+	/// <inheritdoc />
 	[JsonPropertyName("emoji_id")]
-	public Snowflake? EmojiId { get; set; }
+	public Snowflake? EmojiId { get; init; }
 
-	/// <summary>
-	/// Gets or sets the unicode character of the emoji.
-	/// </summary>
+	/// <inheritdoc />
 	[JsonPropertyName("emoji_name")]
-	public string? EmojiName { get; set; }
+	public string? EmojiName { get; init; }
 }
-

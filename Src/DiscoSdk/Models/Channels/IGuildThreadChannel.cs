@@ -43,7 +43,7 @@ public interface IGuildThreadChannel : IGuildMessageChannel
     /// <summary>
     /// Gets the thread metadata containing thread-specific information.
     /// </summary>
-    ThreadMetadata? Metadata { get; }
+    IThreadMetadata? Metadata { get; }
 
     /// <summary>
     /// Gets the IDs of the tags applied to this thread (for threads in forum/media channels).

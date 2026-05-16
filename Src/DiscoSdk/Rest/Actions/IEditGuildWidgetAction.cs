@@ -5,7 +5,7 @@ namespace DiscoSdk.Rest.Actions;
 /// <summary>
 /// Represents a REST action for editing a guild widget.
 /// </summary>
-public interface IEditGuildWidgetAction : IRestAction<GuildWidget>
+public interface IEditGuildWidgetAction : IRestAction<IGuildWidget>
 {
 	/// <summary>
 	/// Sets whether the widget is enabled.

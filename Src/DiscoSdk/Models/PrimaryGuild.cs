@@ -2,32 +2,22 @@ using System.Text.Json.Serialization;
 
 namespace DiscoSdk.Models;
 
-/// <summary>
-/// Represents a primary guild for a user.
-/// </summary>
+/// <summary>Read-only user "primary guild" / clan-identity metadata.</summary>
 public class PrimaryGuild
 {
-    /// <summary>
-    /// Gets or sets the tag.
-    /// </summary>
+    /// <summary>The clan tag shown on the profile.</summary>
     [JsonPropertyName("tag")]
-    public string? Tag { get; set; }
+    public string? Tag { get; init; }
 
-    /// <summary>
-    /// Gets or sets the identity guild ID.
-    /// </summary>
+    /// <summary>Id of the guild backing this identity.</summary>
     [JsonPropertyName("identity_guild_id")]
-    public Snowflake? IdentityGuildId { get; set; }
+    public Snowflake? IdentityGuildId { get; init; }
 
-    /// <summary>
-    /// Gets or sets a value indicating whether identity is enabled.
-    /// </summary>
+    /// <summary>Whether the user opted to display this identity.</summary>
     [JsonPropertyName("identity_enabled")]
-    public bool IdentityEnabled { get; set; }
+    public bool IdentityEnabled { get; init; }
 
-    /// <summary>
-    /// Gets or sets the badge.
-    /// </summary>
+    /// <summary>Badge asset identifier.</summary>
     [JsonPropertyName("badge")]
-    public string? Badge { get; set; }
+    public string? Badge { get; init; }
 }

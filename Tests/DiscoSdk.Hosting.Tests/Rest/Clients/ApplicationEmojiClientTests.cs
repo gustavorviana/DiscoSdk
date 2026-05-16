@@ -37,12 +37,12 @@ public class ApplicationEmojiClientTests
 	[Fact]
 	public async Task GetApplicationEmojiAsync_GetsByIdAsync()
 	{
-		_http.SendAsync<Emoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-			.Returns(new Emoji());
+		_http.SendAsync<InternalEmoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new InternalEmoji());
 
 		await _client.GetApplicationEmojiAsync(_appId, _emojiId);
 
-		await _http.Received(1).SendAsync<Emoji>(
+		await _http.Received(1).SendAsync<InternalEmoji>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == $"applications/{_appId}/emojis/{_emojiId}"),
 			HttpMethod.Get,
 			Arg.Any<object?>(),
@@ -52,13 +52,13 @@ public class ApplicationEmojiClientTests
 	[Fact]
 	public async Task CreateApplicationEmojiAsync_PostsAsync()
 	{
-		_http.SendAsync<Emoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-			.Returns(new Emoji());
+		_http.SendAsync<InternalEmoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new InternalEmoji());
 
 		var req = new { name = "smile", image = "data:image/png;base64,xxx" };
 		await _client.CreateApplicationEmojiAsync(_appId, req);
 
-		await _http.Received(1).SendAsync<Emoji>(
+		await _http.Received(1).SendAsync<InternalEmoji>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == $"applications/{_appId}/emojis"),
 			HttpMethod.Post,
 			req,
@@ -68,13 +68,13 @@ public class ApplicationEmojiClientTests
 	[Fact]
 	public async Task ModifyApplicationEmojiAsync_PatchesAsync()
 	{
-		_http.SendAsync<Emoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-			.Returns(new Emoji());
+		_http.SendAsync<InternalEmoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new InternalEmoji());
 
 		var req = new { name = "renamed" };
 		await _client.ModifyApplicationEmojiAsync(_appId, _emojiId, req);
 
-		await _http.Received(1).SendAsync<Emoji>(
+		await _http.Received(1).SendAsync<InternalEmoji>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == $"applications/{_appId}/emojis/{_emojiId}"),
 			HttpMethod.Patch,
 			req,

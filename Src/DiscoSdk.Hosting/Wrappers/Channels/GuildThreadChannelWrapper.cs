@@ -30,7 +30,7 @@ internal class GuildThreadChannelWrapper : GuildTextBasedChannelWrapper, IGuildT
     public int? TotalMessageSent => _channel.TotalMessageSent;
     public ThreadAutoArchiveDuration? AutoArchiveDuration => _channel.ThreadMetadata?.AutoArchiveDuration;
     public Snowflake? OwnerId => _channel.OwnerId;
-    public ThreadMetadata? Metadata => _channel.ThreadMetadata;
+    public IThreadMetadata? Metadata => _channel.ThreadMetadata;
     public Snowflake[]? AppliedTags => _channel.AppliedTags;
 
     public IRestAction<IGuildThreadChannel> JoinThread()

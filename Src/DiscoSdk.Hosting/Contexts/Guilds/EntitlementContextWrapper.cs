@@ -1,4 +1,5 @@
 using DiscoSdk.Contexts.Guilds;
+using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models.Monetization;
 
 namespace DiscoSdk.Hosting.Contexts.Guilds;
@@ -6,5 +7,6 @@ namespace DiscoSdk.Hosting.Contexts.Guilds;
 internal class EntitlementContextWrapper(DiscordClient client, Entitlement entitlement)
 	: ContextWrapper(client), IEntitlementContext
 {
-	public Entitlement Entitlement => entitlement;
+	private IEntitlement? _wrapped;
+	public IEntitlement Entitlement => _wrapped ??= new EntitlementWrapper(client, entitlement);
 }

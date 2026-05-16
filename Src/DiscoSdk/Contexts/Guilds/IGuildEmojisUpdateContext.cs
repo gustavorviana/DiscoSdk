@@ -12,5 +12,5 @@ public interface IGuildEmojisUpdateContext : IContext
 	IGuild Guild { get; }
 
 	/// <summary>The new emoji set.</summary>
-	ImmutableArray<Emoji> Emojis { get; }
+	ImmutableArray<IEmoji> Emojis { get; }
 }

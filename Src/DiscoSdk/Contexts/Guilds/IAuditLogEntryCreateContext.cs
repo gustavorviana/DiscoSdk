@@ -9,7 +9,7 @@ namespace DiscoSdk.Contexts.Guilds;
 public interface IAuditLogEntryCreateContext : IContext
 {
 	/// <summary>The new audit log entry.</summary>
-	AuditLogEntry Entry { get; }
+	IAuditLogEntry Entry { get; }
 
 	/// <summary>The guild the entry belongs to.</summary>
 	IGuild Guild { get; }

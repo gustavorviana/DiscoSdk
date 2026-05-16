@@ -35,7 +35,7 @@ public interface IGuildNewsChannel : IStandardGuildMessageChannel
 	/// <remarks>
 	/// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
 	/// </remarks>
-	IRestAction<FollowedChannel> Follow(Snowflake targetChannelId);
+	IRestAction<IFollowedChannel> Follow(Snowflake targetChannelId);
 
 	/// <summary>
 	/// Follows this announcement channel to send messages to a target channel.
@@ -46,6 +46,6 @@ public interface IGuildNewsChannel : IStandardGuildMessageChannel
 	/// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
 	/// Requires MANAGE_WEBHOOKS permission in the target channel.
 	/// </remarks>
-	IRestAction<FollowedChannel> Follow(IGuildTextChannel targetChannel);
+	IRestAction<IFollowedChannel> Follow(IGuildTextChannel targetChannel);
 }
 

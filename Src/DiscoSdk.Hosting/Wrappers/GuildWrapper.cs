@@ -97,6 +97,8 @@ internal class GuildWrapper : IGuild
 
     public int? MaxVideoChannelUsers => _guild.MaxVideoChannelUsers;
 
+    public GuildHubType? HubType => _guild.HubType;
+
     public int? ApproximateMemberCount => _guild.ApproximateMemberCount;
 
     public int? ApproximatePresenceCount => _guild.ApproximatePresenceCount;
@@ -334,9 +336,9 @@ internal class GuildWrapper : IGuild
         });
     }
 
-    public IRestAction<IReadOnlyList<VoiceRegion>> GetVoiceRegions()
+    public IRestAction<IReadOnlyList<IVoiceRegion>> GetVoiceRegions()
     {
-        return RestAction<IReadOnlyList<VoiceRegion>>.Create(async cancellationToken =>
+        return RestAction<IReadOnlyList<IVoiceRegion>>.Create(async cancellationToken =>
         {
             var regions = await _client.GuildClient.GetVoiceRegionsAsync(_guild.Id, cancellationToken);
             return [.. regions];
@@ -351,9 +353,9 @@ internal class GuildWrapper : IGuild
         });
     }
 
-    public IRestAction<GuildWidget> GetWidget()
+    public IRestAction<IGuildWidget> GetWidget()
     {
-        return RestAction<GuildWidget>.Create(async cancellationToken =>
+        return RestAction<IGuildWidget>.Create(async cancellationToken =>
         {
             return await _client.GuildClient.GetWidgetAsync(_guild.Id, cancellationToken);
         });
@@ -364,9 +366,9 @@ internal class GuildWrapper : IGuild
         return new EditGuildWidgetAction(_client, this);
     }
 
-    public IRestAction<WelcomeScreen> GetWelcomeScreen()
+    public IRestAction<IWelcomeScreen> GetWelcomeScreen()
     {
-        return RestAction<WelcomeScreen>.Create(async cancellationToken =>
+        return RestAction<IWelcomeScreen>.Create(async cancellationToken =>
         {
             return await _client.GuildClient.GetWelcomeScreenAsync(_guild.Id, cancellationToken);
         });
@@ -377,9 +379,9 @@ internal class GuildWrapper : IGuild
         return new EditWelcomeScreenAction(_client, this);
     }
 
-    public IRestAction<VanityUrl?> GetVanityUrl()
+    public IRestAction<IVanityUrl?> GetVanityUrl()
     {
-        return RestAction<VanityUrl?>.Create(async token =>
+        return RestAction<IVanityUrl?>.Create(async token =>
         {
             return await _client.GuildClient.GetVanityUrlAsync(Id, token);
         });
@@ -534,8 +536,8 @@ internal class GuildWrapper : IGuild
             return integrations.Select(i => (IIntegration)new IntegrationWrapper(_client, _guild.Id, i)).ToList().AsReadOnly();
         });
 
-    public IRestAction<IncidentsData> ModifyIncidentActions(DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil)
-        => RestAction<IncidentsData>.Create(ct => _client.GuildClient.ModifyIncidentActionsAsync(_guild.Id, invitesDisabledUntil, dmsDisabledUntil, ct));
+    public IRestAction<IIncidentsData> ModifyIncidentActions(DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil)
+        => RestAction<IIncidentsData>.Create(ct => _client.GuildClient.ModifyIncidentActionsAsync(_guild.Id, invitesDisabledUntil, dmsDisabledUntil, ct));
 
     public IRestAction<IReadOnlyList<IWebhook>> GetWebhooks()
         => RestAction<IReadOnlyList<IWebhook>>.Create(async ct =>

@@ -1,7 +1,7 @@
 using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Messages;
-using DiscoSdk.Models.Requests.Messages;
+using DiscoSdk.Hosting.Models.Requests.Messages;
 using DiscoSdk.Models.Users;
 using DiscoSdk.Rest;
 using NSubstitute;

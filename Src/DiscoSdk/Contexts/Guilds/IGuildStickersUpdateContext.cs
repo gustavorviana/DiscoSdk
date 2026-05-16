@@ -1,5 +1,4 @@
 using DiscoSdk.Models;
-using DiscoSdk.Models.Messages;
 using System.Collections.Immutable;
 
 namespace DiscoSdk.Contexts.Guilds;
@@ -13,5 +12,5 @@ public interface IGuildStickersUpdateContext : IContext
 	IGuild Guild { get; }
 
 	/// <summary>The new sticker set.</summary>
-	ImmutableArray<Sticker> Stickers { get; }
+	ImmutableArray<ISticker> Stickers { get; }
 }

@@ -23,7 +23,7 @@ internal class GuildForumChannelWrapper : GuildChannelWrapperBase, IGuildForumCh
     }
 
     /// <inheritdoc />
-    public DefaultReaction? DefaultReactionEmoji => _channel.DefaultReactionEmoji;
+    public IDefaultReaction? DefaultReactionEmoji => _channel.DefaultReactionEmoji;
 
     /// <inheritdoc />
     public SortOrderType? DefaultSortOrder => _channel.DefaultSortOrder is { } sortOrder
@@ -36,7 +36,7 @@ internal class GuildForumChannelWrapper : GuildChannelWrapperBase, IGuildForumCh
         : ForumLayoutType.NotSet;
 
     /// <inheritdoc />
-    public ForumTag[]? AvailableTags => _channel.AvailableTags;
+    public IReadOnlyList<IForumTag>? AvailableTags => _channel.AvailableTags;
 
     /// <inheritdoc />
     public ChannelFlags? Flags => _channel.Flags;

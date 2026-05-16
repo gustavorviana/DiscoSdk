@@ -21,17 +21,17 @@ public class ApplicationEmojiWrapperTests : WrapperTestBase
 	}
 
 	private ApplicationEmojiWrapper NewWrapper(string name = "smile") =>
-		new(Client, new Emoji { Id = _emojiId, Name = name });
+		new(Client, new InternalEmoji { Id = _emojiId, Name = name });
 
 	[Fact]
 	public async Task Edit_PatchesApplicationEmojiAsync()
 	{
-		Http.SendAsync<Emoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-			.Returns(new Emoji { Id = _emojiId, Name = "renamed" });
+		Http.SendAsync<InternalEmoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new InternalEmoji { Id = _emojiId, Name = "renamed" });
 
 		await NewWrapper().Edit().SetName("renamed").ExecuteAsync();
 
-		await Http.Received(1).SendAsync<Emoji>(
+		await Http.Received(1).SendAsync<InternalEmoji>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == $"applications/{_appId}/emojis/{_emojiId}"),
 			HttpMethod.Patch,
 			Arg.Is<object?>(b => BodyPropertyEquals(b, "Name", "renamed")),
@@ -41,13 +41,13 @@ public class ApplicationEmojiWrapperTests : WrapperTestBase
 	[Fact]
 	public async Task Edit_SetRolesIsNoopOnApplicationEmojiAsync()
 	{
-		Http.SendAsync<Emoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-			.Returns(new Emoji { Id = _emojiId, Name = "x" });
+		Http.SendAsync<InternalEmoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new InternalEmoji { Id = _emojiId, Name = "x" });
 
 		// SetRoles should be silently dropped — only name reaches the wire.
 		await NewWrapper().Edit().SetName("x").SetRoles(new Snowflake(123)).ExecuteAsync();
 
-		await Http.Received(1).SendAsync<Emoji>(
+		await Http.Received(1).SendAsync<InternalEmoji>(
 			Arg.Any<DiscordRoute>(),
 			HttpMethod.Patch,
 			Arg.Is<object?>(b => BodyPropertyEquals(b, "Name", "x")),

@@ -5,7 +5,7 @@ namespace DiscoSdk.Rest.Actions;
 /// <summary>
 /// Represents a REST action for editing a guild welcome screen.
 /// </summary>
-public interface IEditWelcomeScreenAction : IRestAction<WelcomeScreen>
+public interface IEditWelcomeScreenAction : IRestAction<IWelcomeScreen>
 {
     /// <summary>
     /// Enables or disables the welcome screen.

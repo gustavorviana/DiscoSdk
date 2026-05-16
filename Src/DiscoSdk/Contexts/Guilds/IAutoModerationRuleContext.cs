@@ -10,7 +10,7 @@ namespace DiscoSdk.Contexts.Guilds;
 public interface IAutoModerationRuleContext : IContext
 {
 	/// <summary>The auto-moderation rule.</summary>
-	AutoModerationRule Rule { get; }
+	IAutoModerationRule Rule { get; }
 
 	/// <summary>The guild owning the rule.</summary>
 	IGuild Guild { get; }
