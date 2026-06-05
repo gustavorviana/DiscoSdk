@@ -1,4 +1,5 @@
 using DiscoSdk.Commands;
+using DiscoSdk.Events;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Applications;
 using DiscoSdk.Models.Channels;
@@ -48,10 +49,46 @@ public interface IDiscordClient
     event EventHandler<UnhandledErrorEventArgs>? UnhandledError;
     event EventHandler? OnConnectionLost;
 
+    /// <summary>
+    /// Fires whenever a shard's gateway link drops. The handler receives the shard that dropped,
+    /// the underlying exception, and whether the SDK plans to auto-reconnect (see
+    /// <c>DiscordClientConfig.AutoReconnect</c>).
+    /// </summary>
+    /// <remarks>
+    /// Async handlers are awaited sequentially in subscription order; the next shard event is held
+    /// until they all return. Throwing from a handler routes the exception through
+    /// <see cref="UnhandledError"/>.
+    /// </remarks>
+    event GatewayDisconnectedEventHandler? GatewayDisconnected;
+
+    /// <summary>
+    /// Fires once per retry attempt while a shard climbs the exponential backoff after a drop.
+    /// Observational — useful for metrics, alerts, "still reconnecting" UX. To alter recovery
+    /// behaviour, set <c>DiscordClientConfig.AutoReconnect</c>, tune
+    /// <c>DiscordClientConfig.ReconnectDelay</c>, or call <see cref="ReconnectAsync"/>.
+    /// </summary>
+    event GatewayReconnectingEventHandler? GatewayReconnecting;
+
     event EventHandler? OnReady;
+
+    /// <summary>
+    /// Snapshot of every shard owned by this client. Use to inspect per-shard <see cref="IShard.Id"/>
+    /// and <see cref="IShard.IsReady"/>; recovery is managed by the SDK (see
+    /// <see cref="ReconnectAsync"/> for the client-wide override).
+    /// </summary>
+    IReadOnlyList<IShard> Shards { get; }
 
     Task StartAsync();
     Task StopAsync();
+
+    /// <summary>
+    /// Forces a soft reconnect of every shard. Closes the current WebSocket connections and opens
+    /// new ones using the cached gateway URI; module lifecycle hooks, slash command registration,
+    /// and gateway-info fetch are NOT repeated. Use this when the bot needs to forcibly reconcile
+    /// the gateway link (e.g. suspected zombie session) without paying the cost of a full
+    /// <see cref="StopAsync"/> + <see cref="StartAsync"/>.
+    /// </summary>
+    Task ReconnectAsync(CancellationToken cancellationToken = default);
     Task WaitReadyAsync(CancellationToken cancellationToken = default);
     Task WaitReadyAsync(TimeSpan timeout);
     Task WaitShutdownAsync(CancellationToken ct = default);

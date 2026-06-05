@@ -25,6 +25,8 @@ public class ShardReconnectTests
 			Token = "test-token",
 			Intents = DiscordIntent.Guilds,
 			ReconnectDelay = _reconnectDelay,
+			HeartbeatJitter = 0.0,
+			ReconnectBackoffJitter = 0.0,
 		}, _pool);
 	}
 
@@ -34,7 +36,7 @@ public class ShardReconnectTests
 		await _shard.StartAsync();
 		await _socket.EnqueueInbound(TestFrames.Hello());
 		await _socket.EnqueueInbound(TestFrames.Ready(sessionId: "sess-1", resumeGatewayUrl: "wss://resume.test/"));
-		await WaitFor(() => _shard.Status == DiscoSdk.Hosting.Gateway.Shards.ShardStatus.Ready);
+		await WaitFor(() => _shard.Status == ShardStatus.Ready);
 
 		await _socket.EnqueueInbound(TestFrames.Reconnect());
 
@@ -54,7 +56,7 @@ public class ShardReconnectTests
 		await _shard.StartAsync();
 		await _socket.EnqueueInbound(TestFrames.Hello());
 		await _socket.EnqueueInbound(TestFrames.Ready());
-		await WaitFor(() => _shard.Status == DiscoSdk.Hosting.Gateway.Shards.ShardStatus.Ready);
+		await WaitFor(() => _shard.Status == ShardStatus.Ready);
 
 		// Non-resumable invalid session → shard wipes session id and reconnects to the pool's
 		// gateway URI (not the resume URL).
@@ -64,6 +66,31 @@ public class ShardReconnectTests
 		await AdvanceUntil(() => _socket.ConnectCount >= 2, _reconnectDelay);
 
 		Assert.Equal(_pool.GatewayUri.ToUri(), _socket.ConnectedTo);
+	}
+
+	[Fact]
+	public async Task OnInvalidSessionResumable_AttemptsResumeOnResumeUrlAsync()
+	{
+		await _shard.StartAsync();
+		await _socket.EnqueueInbound(TestFrames.Hello());
+		await _socket.EnqueueInbound(TestFrames.Ready(sessionId: "sess-9", resumeGatewayUrl: "wss://resume.test/"));
+		await WaitFor(() => _shard.Status == ShardStatus.Ready);
+
+		await _socket.EnqueueInbound(TestFrames.InvalidSession(resumable: true));
+		await WaitFor(() => _socket.Closed);
+
+		await AdvanceUntil(() => _socket.ConnectCount >= 2, _reconnectDelay);
+
+		// Resume URL is the target — proves _preferResume took effect over a fresh Identify.
+		Assert.Equal(new Uri("wss://resume.test/"), _socket.ConnectedTo);
+
+		// Discord greets the new connection with HELLO; the shard must respond with RESUME, not IDENTIFY.
+		await _socket.EnqueueInbound(TestFrames.Hello());
+
+		await WaitFor(() => _socket.SentFrames.Any(f => f.OpCode == DiscoSdk.Hosting.Gateway.OpCodes.Resume));
+
+		// Identify count must still be one (the original startup); the resume reconnect did NOT issue a fresh identify.
+		Assert.Single(_socket.SentFrames.Where(f => f.OpCode == DiscoSdk.Hosting.Gateway.OpCodes.Identify));
 	}
 
 	private static async Task WaitFor(Func<bool> condition, int timeoutMs = 2000)

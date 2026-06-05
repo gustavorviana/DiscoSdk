@@ -38,6 +38,10 @@ public class DiscordClientBuilder
     private ILogger? _logger;
     private JsonSerializerOptions? _jsonOptions;
     private TimeSpan? _reconnectDelay;
+    private bool _autoReconnect = true;
+    private string? _gatewayUserAgent;
+    private TimeSpan? _closeTimeout;
+    private int? _maxReconnectAttempts;
     private IObjectConverter? _objectConverter;
     private GatewayCompressMode? _gatewayCompressMode;
     private TimeProvider? _timeProvider;
@@ -300,6 +304,55 @@ public class DiscordClientBuilder
     }
 
     /// <summary>
+    /// Disables (or re-enables) automatic gateway reconnect. Defaults to enabled.
+    /// </summary>
+    /// <remarks>
+    /// When disabled, a dropped shard stays in <c>ConnectionLost</c> and the bot is expected to
+    /// subscribe to <see cref="IDiscordClient.GatewayDisconnected"/> and call
+    /// <see cref="IDiscordClient.ReconnectShardAsync"/> when ready. The disconnect event still fires
+    /// either way — only the SDK-initiated retry is gated.
+    /// </remarks>
+    public DiscordClientBuilder WithAutoReconnect(bool enabled)
+    {
+        _autoReconnect = enabled;
+        return this;
+    }
+
+    /// <summary>
+    /// Overrides the User-Agent header sent on the gateway WebSocket dial. Discord requires the
+    /// form <c>DiscordBot ($url, $version)</c>. Defaults to a DiscoSdk-branded UA.
+    /// </summary>
+    public DiscordClientBuilder WithGatewayUserAgent(string userAgent)
+    {
+        if (string.IsNullOrWhiteSpace(userAgent))
+            throw new ArgumentException("User-Agent cannot be null or empty.", nameof(userAgent));
+        _gatewayUserAgent = userAgent;
+        return this;
+    }
+
+    /// <summary>
+    /// Overrides the WebSocket close handshake timeout. Default 5 seconds.
+    /// </summary>
+    public DiscordClientBuilder WithCloseTimeout(TimeSpan timeout)
+    {
+        if (timeout <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(timeout), "Close timeout must be positive.");
+        _closeTimeout = timeout;
+        return this;
+    }
+
+    /// <summary>
+    /// Caps the number of reconnect attempts before the shard gives up and surfaces
+    /// <see cref="Exceptions.DiscordFatalException"/> from <c>WaitShutdownAsync</c>. Default 20.
+    /// Pass <c>0</c> or a negative value for unlimited retries.
+    /// </summary>
+    public DiscordClientBuilder WithMaxReconnectAttempts(int max)
+    {
+        _maxReconnectAttempts = max;
+        return this;
+    }
+
+    /// <summary>
     /// Sets the object converter used to transform raw interaction values into strongly-typed objects.
     /// This converter is applied when resolving command arguments, modal fields, and other interaction data.
     /// </summary>
@@ -395,7 +448,11 @@ public class DiscordClientBuilder
             EventProcessorMaxConcurrency = _eventProcessorMaxConcurrency,
             EventProcessorQueueCapacity = _eventProcessorQueueCapacity,
             ReconnectDelay = _reconnectDelay ?? TimeSpan.FromSeconds(5),
+            AutoReconnect = _autoReconnect,
             GatewayCompressMode = _gatewayCompressMode ?? GatewayCompressMode.ZlibStream,
+            GatewayUserAgent = _gatewayUserAgent ?? DiscordClientConfig.DefaultGatewayUserAgent,
+            CloseTimeout = _closeTimeout ?? DiscordClientConfig.DefaultCloseTimeout,
+            MaxReconnectAttempts = _maxReconnectAttempts ?? 20,
         };
 
         var jsonOptions = _jsonOptions ?? DiscoJson.Create();
@@ -406,7 +463,7 @@ public class DiscordClientBuilder
         WithParamProvider<UserParamProvider>();
 
         var timeProvider = _timeProvider ?? TimeProvider.System;
-        var socketFactory = _socketFactory ?? new DefaultGatewaySocketFactory(new GatewayDecompressFactory(config.GatewayCompressMode));
+        var socketFactory = _socketFactory ?? new DefaultGatewaySocketFactory(new GatewayDecompressFactory(config.GatewayCompressMode), config);
         var logger = _logger ?? NullLogger.Instance;
         var restClient = _restClient ?? new DiscordRestClient(
             _token,

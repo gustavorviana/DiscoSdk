@@ -24,5 +24,18 @@ internal interface IShardEventListener
     /// </summary>
     Task OnConnectionLostAsync(Shard shard, Exception exception);
 
+    /// <summary>
+    /// Raised once per retry attempt during the exponential backoff. Observational —
+    /// the listener cannot vote on whether to proceed or alter the delay.
+    /// </summary>
+    Task OnReconnectingAsync(Shard shard, int attempt, TimeSpan delay, bool isResume);
+
+    /// <summary>
+    /// Raised when the shard encountered an exception the recovery path cannot handle — the run
+    /// loop has already exited. The listener is expected to mark the client as terminally failed
+    /// so callers awaiting shutdown observe the cause instead of a clean return.
+    /// </summary>
+    Task OnFatalAsync(Shard shard, Exception exception);
+
     void OnUnhandledError(Exception exception);
 }

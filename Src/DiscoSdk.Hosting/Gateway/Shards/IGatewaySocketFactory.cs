@@ -14,9 +14,11 @@ internal interface IGatewaySocketFactory
 
 /// <summary>
 /// Default factory that produces a real <see cref="DefaultGatewaySocket"/> wrapping
-/// <see cref="System.Net.WebSockets.ClientWebSocket"/> and the supplied decompression factory.
+/// <see cref="System.Net.WebSockets.ClientWebSocket"/>, the supplied decompression factory,
+/// and the <see cref="DiscordClientConfig"/> knobs the socket reads at runtime (User-Agent,
+/// close timeout).
 /// </summary>
-internal sealed class DefaultGatewaySocketFactory(GatewayDecompressFactory decompressFactory) : IGatewaySocketFactory
+internal sealed class DefaultGatewaySocketFactory(GatewayDecompressFactory decompressFactory, DiscordClientConfig config) : IGatewaySocketFactory
 {
-	public IGatewaySocket Create() => new DefaultGatewaySocket(decompressFactory);
+	public IGatewaySocket Create() => new DefaultGatewaySocket(decompressFactory, config);
 }

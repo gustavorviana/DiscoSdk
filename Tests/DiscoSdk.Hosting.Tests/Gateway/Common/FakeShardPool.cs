@@ -16,6 +16,8 @@ internal sealed class FakeShardPool(IGatewaySocket socket, TimeProvider timeProv
 	public List<ReadyPayload> ReadyEvents { get; } = new();
 	public int ResumeEvents { get; private set; }
 	public List<Exception> ConnectionLostEvents { get; } = new();
+	public List<Exception> FatalEvents { get; } = new();
+	public List<(int Attempt, TimeSpan Delay, bool IsResume)> ReconnectingEvents { get; } = new();
 	public List<Exception> UnhandledErrors { get; } = new();
 
 	public IdentifyGate Gate { get; } = new();
@@ -23,6 +25,7 @@ internal sealed class FakeShardPool(IGatewaySocket socket, TimeProvider timeProv
 	public CancellationToken CancellationToken => _cts.Token;
 	public IGatewaySocketFactory SocketFactory { get; } = new FakeGatewaySocketFactory((FakeGatewaySocket)socket);
 	public TimeProvider TimeProvider { get; } = timeProvider;
+	public int TotalShards { get; set; } = 1;
 
 	public Task OnReceiveMessageAsync(Shard shard, ReceivedGatewayMessage message)
 	{
@@ -45,6 +48,18 @@ internal sealed class FakeShardPool(IGatewaySocket socket, TimeProvider timeProv
 	public Task OnConnectionLostAsync(Shard shard, Exception exception)
 	{
 		ConnectionLostEvents.Add(exception);
+		return Task.CompletedTask;
+	}
+
+	public Task OnFatalAsync(Shard shard, Exception exception)
+	{
+		FatalEvents.Add(exception);
+		return Task.CompletedTask;
+	}
+
+	public Task OnReconnectingAsync(Shard shard, int attempt, TimeSpan delay, bool isResume)
+	{
+		ReconnectingEvents.Add((attempt, delay, isResume));
 		return Task.CompletedTask;
 	}
 

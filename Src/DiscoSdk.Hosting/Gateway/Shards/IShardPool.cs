@@ -7,4 +7,5 @@ internal interface IShardPool : IShardEventListener
     CancellationToken CancellationToken { get; }
     IGatewaySocketFactory SocketFactory { get; }
     TimeProvider TimeProvider { get; }
+    int TotalShards { get; }
 }

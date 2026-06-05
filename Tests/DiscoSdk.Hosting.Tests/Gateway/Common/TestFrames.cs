@@ -35,6 +35,11 @@ internal static class TestFrames
 	public static ReceivedGatewayMessage Reconnect() =>
 		ReceivedGatewayMessage.Parse("""{"op": 7, "d": null}""");
 
+	/// <summary>Server-initiated heartbeat request (OP 1 inbound). Discord sends this when it
+	/// needs an immediate heartbeat from the client outside the normal interval.</summary>
+	public static ReceivedGatewayMessage HeartbeatRequest() =>
+		ReceivedGatewayMessage.Parse("""{"op": 1, "d": null}""");
+
 	public static ReceivedGatewayMessage InvalidSession(bool resumable = false) =>
 		ReceivedGatewayMessage.Parse($"{{\"op\": 9, \"d\": {(resumable ? "true" : "false")}}}");
 }

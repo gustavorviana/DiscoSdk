@@ -25,6 +25,8 @@ public class ShardIdentifyFlowTests
 			Token = "test-token",
 			Intents = DiscordIntent.Guilds,
 			ReconnectDelay = TimeSpan.FromSeconds(5),
+			HeartbeatJitter = 0.0,
+			ReconnectBackoffJitter = 0.0,
 		}, _pool);
 	}
 

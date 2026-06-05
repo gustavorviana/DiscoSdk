@@ -1,4 +1,5 @@
 ﻿using DiscoSdk.Events;
+using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Events;
 using DiscoSdk.Hosting.Gateway.Payloads;
@@ -27,8 +28,10 @@ namespace DiscoSdk.Hosting
     /// </summary>
     public class DiscordClient : IDiscordClient, IShardEventListener
     {
-        private readonly ManualResetEventSlim _shutdownEvent = new(false);
-        private readonly ManualResetEventSlim _readyEvent = new(false);
+        // RunContinuationsAsynchronously matters: TrySetResult runs from the receive loop / shutdown
+        // path; without it, awaiters resume inline on the producer thread, risking reentrancy.
+        private readonly TaskCompletionSource _shutdownTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _readyTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal IReadOnlyList<IDiscoModule> Modules { get; private set; } = [];
         public IDiscordRestClient HttpClient { get; }
         internal ChannelManager Channels { get; }
@@ -36,18 +39,24 @@ namespace DiscoSdk.Hosting
 
         public event Func<IDiscordClient, ICommandUpdateSession, Task>? CommandsUpdateWindowOpened;
         public event EventHandler<UnhandledErrorEventArgs>? UnhandledError;
+        public event GatewayDisconnectedEventHandler? GatewayDisconnected;
+        public event GatewayReconnectingEventHandler? GatewayReconnecting;
 
         private EventProcessorPool<ReceivedGatewayMessage> _eventProcessorPool = null!;
         private readonly DiscordEventDispatcher _eventDispatcher;
         private readonly DiscordClientConfig _config;
         private readonly ShardPool _shardPool;
+        // Set once via Interlocked when any shard exits the run loop with an unrecoverable
+        // exception. The Wait* methods consult ThrowIfFatal() and rethrow wrapped in DiscordFatalException.
+        private Exception? _fatalException;
 
         /// <summary>
         /// Gets the gateway intents configured for this client.
         /// </summary>
         public DiscordIntent Intents => _config.Intents;
-        private bool _isInitialized = false;
-        private bool _isShuttingDown = false;
+        // 0/1 instead of bool so the transition can be done atomically with Interlocked.Exchange.
+        private int _isInitialized;
+        private int _isShuttingDown;
 
         /// <summary>
         /// Gets the JSON serializer options used for deserializing Gateway events.
@@ -212,88 +221,107 @@ namespace DiscoSdk.Hosting
         /// <returns>A task that represents the asynchronous stop operation.</returns>
         public async Task StopAsync()
         {
-            if (_isShuttingDown)
+            // Atomic transition. The first caller does the work; a concurrent / re-entrant second
+            // caller awaits the shutdown TCS instead of returning prematurely (the previous
+            // `if (_isShuttingDown) return;` lied — the second caller's `await StopAsync()` resolved
+            // before the first caller had actually torn anything down).
+            if (Interlocked.Exchange(ref _isShuttingDown, 1) == 1)
+            {
+                await _shutdownTcs.Task;
                 return;
+            }
 
-            _isShuttingDown = true;
+            try
+            {
+                foreach (var item in Modules.OfType<ILifetimeDiscoModule>())
+                    try { await item.OnShutdownAsync(this); } catch { }
 
-            foreach (var item in Modules.OfType<ILifetimeDiscoModule>())
-                try { await item.OnShutdownAsync(this); } catch { }
-
-            // Stop event processor pool
-            await _eventProcessorPool.StopAsync();
-            await _shardPool.ClearShardsAsync();
-            _isInitialized = false;
-
-            // Signal shutdown completion
-            _shutdownEvent.Set();
+                await _eventProcessorPool.StopAsync();
+                await _shardPool.ClearShardsAsync();
+                _shardPool.Dispose();
+                Interlocked.Exchange(ref _isInitialized, 0);
+            }
+            finally
+            {
+                // Always wake awaiters, even if shutdown work threw — they'd hang forever otherwise.
+                _shutdownTcs.TrySetResult();
+            }
         }
 
         /// <summary>
         /// Waits for the bot to be ready (all shards connected and ready).
         /// </summary>
         /// <param name="cancellationToken">Cancellation token to cancel the wait operation.</param>
-        /// <returns>A task that completes when the bot is ready.</returns>
         public async Task WaitReadyAsync(CancellationToken cancellationToken = default)
         {
             if (IsReady)
+            {
+                ThrowIfFatal();
                 return;
+            }
 
-            await Task.Run(() => _readyEvent.Wait(cancellationToken), cancellationToken);
+            await _readyTcs.Task.WaitAsync(cancellationToken);
+            ThrowIfFatal();
         }
 
         /// <summary>
         /// Waits for the bot to be ready (all shards connected and ready) with a timeout.
         /// </summary>
-        /// <param name="timeout">Maximum time to wait for the bot to be ready.</param>
-        /// <returns>A task that completes when the bot is ready or times out.</returns>
         /// <exception cref="TimeoutException">Thrown when the timeout is reached before the bot is ready.</exception>
         public async Task WaitReadyAsync(TimeSpan timeout)
         {
             if (IsReady)
+            {
+                ThrowIfFatal();
                 return;
+            }
 
-            using var cts = new CancellationTokenSource(timeout);
             try
             {
-                await Task.Run(() => _readyEvent.Wait(cts.Token), cts.Token);
+                await _readyTcs.Task.WaitAsync(timeout);
             }
-            catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+            catch (TimeoutException)
             {
+                ThrowIfFatal();
                 throw new TimeoutException($"The bot did not become ready within the specified timeout of {timeout.TotalSeconds} seconds.");
             }
+
+            ThrowIfFatal();
         }
 
         /// <summary>
         /// Waits for the bot to shutdown.
         /// </summary>
         /// <param name="ct">Cancellation token to cancel the wait operation.</param>
-        /// <returns>A task that completes when the bot is shutdown.</returns>
         public async Task WaitShutdownAsync(CancellationToken ct = default)
         {
-            if (_isShuttingDown && _shutdownEvent.IsSet)
+            if (Volatile.Read(ref _isShuttingDown) == 1 && _shutdownTcs.Task.IsCompleted)
+            {
+                ThrowIfFatal();
                 return;
+            }
 
-            await Task.Run(() => _shutdownEvent.Wait(ct), ct);
+            await _shutdownTcs.Task.WaitAsync(ct);
+            ThrowIfFatal();
         }
 
         /// <summary>
         /// Waits for the bot to shutdown with a timeout.
         /// </summary>
-        /// <param name="timeout">Maximum time to wait for the bot to shutdown.</param>
-        /// <returns>A task that completes when the bot is shutdown or times out.</returns>
-        /// <exception cref="TimeoutException">Thrown when the timeout is reached before the bot shuts down.</exception>
+        /// <exception cref="TimeoutException">Thrown when the timeout is reached before shutdown.</exception>
         public async Task WaitShutdownAsync(TimeSpan timeout)
         {
-            using var cts = new CancellationTokenSource(timeout);
             try
             {
-                await Task.Run(() => _shutdownEvent.Wait(cts.Token), cts.Token);
+                await _shutdownTcs.Task.WaitAsync(timeout);
             }
-            catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+            catch (TimeoutException)
             {
+                ThrowIfFatal();
                 throw new TimeoutException($"The bot did not shutdown within the specified timeout of {timeout.TotalSeconds} seconds.");
             }
+
+            ThrowIfFatal();
         }
 
         internal int GetGuidShard(ulong guildId)
@@ -307,6 +335,21 @@ namespace DiscoSdk.Hosting
                 throw new ArgumentOutOfRangeException(nameof(shardId), "Shard ID is out of range.");
 
             return _shardPool.Shards[shardId];
+        }
+
+        /// <inheritdoc />
+        public IReadOnlyList<IShard> Shards => _shardPool.Shards;
+
+        /// <inheritdoc />
+        public async Task ReconnectAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            // Soft reconnect: tear down + reopen every shard's transport. Does NOT re-run module
+            // OnPreInitialize / OnGatewayReady hooks, refetch gateway info, or repeat slash command
+            // registration — _isInitialized stays at 1, the next OnReadyAsync sees it and skips the
+            // first-ready block.
+            await _shardPool.ClearShardsAsync();
+            await _shardPool.InitShardsAsync();
         }
 
         /// <summary>
@@ -460,7 +503,7 @@ namespace DiscoSdk.Hosting
             if (message.Opcode != OpCodes.Dispatch || string.IsNullOrEmpty(message.EventType))
                 return;
 
-            Logger.Log(LogLevel.Trace, "Received {EventType} event from shard {ShardId}", message.EventType, shard.ShardId);
+            Logger.Log(LogLevel.Trace, "Received {EventType} event from shard {ShardId}", message.EventType, shard.Id);
 
             await _eventProcessorPool.EnqueueAsync(message);
         }
@@ -474,31 +517,37 @@ namespace DiscoSdk.Hosting
             if (ApplicationId == null)
                 ApplicationId = Snowflake.Parse(payload.Application.Id);
 
-            Logger.Log(LogLevel.Information, "Shard {ShardId} of {BotUsername} is ready.", shard.ShardId, BotUser.Username);
+            Logger.Log(LogLevel.Information, "Shard {ShardId} of {BotUsername} is ready.", shard.Id, BotUser.Username);
 
-            // Initialize pending guilds list from Ready payload (only once, on shard 0)
-            if (IsReady && shard.ShardId == 0 && !_isInitialized)
+            // First-fully-ready work — runs exactly once across the client's lifetime. Subsequent
+            // READY frames (a shard reconnecting via auto-retry, a manual ReconnectAsync, RESUMED
+            // failures escalating to fresh identify) skip this block: command registration,
+            // lifetime module hooks, and pending-guild seeding are already done.
+            if (IsReady && Interlocked.Exchange(ref _isInitialized, 1) == 0)
             {
-                _isInitialized = true;
+                if (shard.Id == 0)
+                {
+                    var guildIds = payload.Guilds
+                        .Where(g => !string.IsNullOrEmpty(g.Id))
+                        .Select(g => Snowflake.TryParse(g.Id, out var id) ? id : default);
 
-                // Initialize pending guilds from Ready payload
-                var guildIds = payload.Guilds
-                    .Where(g => !string.IsNullOrEmpty(g.Id))
-                    .Select(g => Snowflake.TryParse(g.Id, out var id) ? id : default);
+                    Guilds.InitializePendingGuilds(guildIds);
+                }
 
-                Guilds.InitializePendingGuilds(guildIds);
+                foreach (var item in Modules.OfType<ILifetimeDiscoModule>())
+                    try { await item.OnGatewayReadyAsync(this); } catch { }
+
+                await InitSlashCommandsAsync();
             }
 
-            foreach (var item in Modules.OfType<ILifetimeDiscoModule>())
-                try { await item.OnGatewayReadyAsync(this); } catch { }
-
-            await InitSlashCommandsAsync();
-
-            if (IsReady && OnReady != null)
-                OnReady(this, EventArgs.Empty);
-
-            if (IsReady)
-                _readyEvent.Set();
+            // One-shot — matches the docstring "Event raised when all shards are ready". Subsequent
+            // shard reconnects do not refire OnReady; subscribers tracking individual shard liveness
+            // listen to GatewayDisconnected + IShard.IsReady instead.
+            if (IsReady && !_readyTcs.Task.IsCompleted)
+            {
+                OnReady?.Invoke(this, EventArgs.Empty);
+                _readyTcs.TrySetResult();
+            }
         }
 
         private async Task InitSlashCommandsAsync()
@@ -523,17 +572,33 @@ namespace DiscoSdk.Hosting
 
         Task IShardEventListener.OnResumeAsync(Shard shard)
         {
-            if (IsReady && OnReady != null)
-                OnReady(this, EventArgs.Empty);
+            if (IsReady)
+            {
+                if (_readyTcs.Task.IsCompleted == false)
+                {
+                    OnReady?.Invoke(this, EventArgs.Empty);
+                    _readyTcs.TrySetResult();
+                }
+            }
 
             return Task.CompletedTask;
         }
 
-        Task IShardEventListener.OnConnectionLostAsync(Shard shard, Exception exception)
+        async Task IShardEventListener.OnConnectionLostAsync(Shard shard, Exception exception)
         {
             OnConnectionLost?.Invoke(this, EventArgs.Empty);
 
-            return Task.CompletedTask;
+            if (GatewayDisconnected is { } evt)
+            {
+                // WillReconnect reflects what the shard's catch path will actually do: non-transport
+                // exceptions get routed to OnFatalAsync (no reconnect), and AutoReconnect=false also
+                // skips the retry. Classification lives in GatewayExceptions so Shard and DiscordClient
+                // never drift.
+                var willReconnect = _config.AutoReconnect && GatewayExceptions.IsRecoverableTransport(exception);
+                var args = new GatewayDisconnectedEventArgs(shard, exception, willReconnect);
+                foreach (var handler in evt.GetInvocationList().Cast<GatewayDisconnectedEventHandler>())
+                    await handler(args);
+            }
         }
 
         void IShardEventListener.OnUnhandledError(Exception exception)
@@ -541,6 +606,47 @@ namespace DiscoSdk.Hosting
             Logger.Log(LogLevel.Error, exception, "Unhandled shard error");
 
             UnhandledError?.Invoke(this, new UnhandledErrorEventArgs(exception));
+        }
+
+        Task IShardEventListener.OnFatalAsync(Shard shard, Exception exception)
+        {
+            Logger.Log(LogLevel.Critical, exception, "Shard {ShardId} hit a fatal error — terminating client.", shard.Id);
+            MarkFatal(exception);
+            return Task.CompletedTask;
+        }
+
+        async Task IShardEventListener.OnReconnectingAsync(Shard shard, int attempt, TimeSpan delay, bool isResume)
+        {
+            Logger.Log(LogLevel.Information, "Shard {ShardId} reconnect attempt {Attempt} in {DelaySeconds:F1}s (resume={IsResume}).",
+                shard.Id, attempt, delay.TotalSeconds, isResume);
+
+            if (GatewayReconnecting is { } evt)
+            {
+                var args = new GatewayReconnectingEventArgs(shard, attempt, delay, isResume);
+                foreach (var handler in evt.GetInvocationList().Cast<GatewayReconnectingEventHandler>())
+                    await handler(args);
+            }
+        }
+
+        /// <summary>
+        /// Capture the first fatal exception and wake every Wait* awaiter. The TCS only carry "done"
+        /// state — the actual rethrow happens in <see cref="ThrowIfFatal"/> after the wait, so the
+        /// fatal flow stays visible at every Wait* call site.
+        /// </summary>
+        private void MarkFatal(Exception exception)
+        {
+            // First fatal wins; subsequent shards reporting the same outage do not overwrite the cause.
+            if (Interlocked.CompareExchange(ref _fatalException, exception, null) is not null)
+                return;
+
+            _readyTcs.TrySetResult();
+            _shutdownTcs.TrySetResult();
+        }
+
+        private void ThrowIfFatal()
+        {
+            if (_fatalException is { } ex)
+                throw new DiscordFatalException(GatewayMessages.DiscordClientTerminated, ex);
         }
     }
 }

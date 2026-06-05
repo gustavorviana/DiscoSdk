@@ -18,7 +18,7 @@ internal abstract class GatewayDecompress(WebSocket webSocket) : IDisposable
     protected void ThrowIfClosed(WebSocketReceiveResult result)
     {
         if (result.MessageType == WebSocketMessageType.Close)
-            throw new DiscordSocketException(webSocket.CloseStatus ?? WebSocketCloseStatus.Empty, webSocket.CloseStatusDescription ?? "Gateway closed socket.");
+            throw new DiscordSocketException(webSocket.CloseStatus ?? WebSocketCloseStatus.Empty, webSocket.CloseStatusDescription ?? GatewayMessages.GatewayClosedSocket);
     }
 
     #region IDisposed
