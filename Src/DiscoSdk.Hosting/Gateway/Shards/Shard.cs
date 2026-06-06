@@ -1,4 +1,5 @@
 ﻿using DiscoSdk.Hosting.Gateway.Payloads;
+using DiscoSdk.Hosting.Observability;
 using System.Net.Http;
 using System.Net.WebSockets;
 
@@ -25,6 +26,12 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
     // visibility we need without a lock; Interlocked is unnecessary because writes are simple
     // assignments, not RMW.
     private bool _heartbeatAck = true;
+    // TimeProvider timestamp captured immediately before each outbound heartbeat. Read by the
+    // HEARTBEAT_ACK handler to compute round-trip latency and record on
+    // DiscoSdkDiagnostics.GatewayHeartbeatLatency. Uses pool.TimeProvider so virtual-time tests
+    // see virtual elapsed-time instead of real wall-clock noise.
+    // -1 means "no heartbeat sent yet" (skips record).
+    private long _heartbeatSentTimestamp = -1;
     private int _heartbeatIntervalMs;
     private string? _sessionId = null;
     // Faults raised by the fire-and-forget heartbeat task are parked here so the
@@ -367,11 +374,13 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
                 break;
 
             case OpCodes.Heartbeat:
+                MarkHeartbeatSent();
                 await _socket.SendHeartbeatAsync(_shardCts.Token);
                 break;
 
             case OpCodes.HeartbeatAck:
                 Volatile.Write(ref _heartbeatAck, true);
+                RecordHeartbeatLatency();
                 break;
 
             case OpCodes.Reconnect:
@@ -502,6 +511,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
             if (jitterMs > 0)
                 await Task.Delay(TimeSpan.FromMilliseconds(jitterMs), pool.TimeProvider, token);
 
+            MarkHeartbeatSent();
             await _socket.SendHeartbeatAsync(token);
 
             while (!token.IsCancellationRequested)
@@ -515,6 +525,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
                 }
 
                 Volatile.Write(ref _heartbeatAck, false);
+                MarkHeartbeatSent();
                 await _socket.SendHeartbeatAsync(token);
             }
         }
@@ -577,6 +588,32 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
 
     public Task SendAsync(OpCodes codes, object? data, CancellationToken cancellationToken = default)
         => _socket.SendAsync(new(codes, data), cancellationToken);
+
+    /// <summary>
+    /// Stamps the timestamp immediately before an outbound heartbeat. Uses the pool's
+    /// <see cref="TimeProvider"/> so tests with <c>FakeTimeProvider</c> see virtual-time
+    /// latencies instead of wall-clock noise. Paired with <see cref="RecordHeartbeatLatency"/>
+    /// on the corresponding HEARTBEAT_ACK to publish the round-trip onto
+    /// <c>discosdk.gateway.heartbeat.latency</c>.
+    /// </summary>
+    private void MarkHeartbeatSent() => Volatile.Write(ref _heartbeatSentTimestamp, pool.TimeProvider.GetTimestamp());
+
+    /// <summary>
+    /// Records the heartbeat round-trip on the SDK's metrics surface. Called from the HEARTBEAT_ACK
+    /// handler. Defensive against an ACK arriving without a recorded send (race during reconnect):
+    /// in that case the helper short-circuits instead of emitting a nonsense value.
+    /// </summary>
+    private void RecordHeartbeatLatency()
+    {
+        var sentAt = Volatile.Read(ref _heartbeatSentTimestamp);
+        if (sentAt < 0)
+            return;
+
+        var elapsedMs = pool.TimeProvider.GetElapsedTime(sentAt).TotalMilliseconds;
+        DiscoSdkDiagnostics.GatewayHeartbeatLatency.Record(
+            elapsedMs,
+            new KeyValuePair<string, object?>(DiagnosticTags.ShardId, shardId));
+    }
 
     public void Dispose()
     {

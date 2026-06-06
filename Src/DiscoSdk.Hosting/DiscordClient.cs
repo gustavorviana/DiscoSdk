@@ -6,6 +6,7 @@ using DiscoSdk.Hosting.Gateway.Payloads;
 using DiscoSdk.Hosting.Gateway.Payloads.Models;
 using DiscoSdk.Hosting.Gateway.Shards;
 using DiscoSdk.Hosting.Managers;
+using DiscoSdk.Hosting.Observability;
 using DiscoSdk.Hosting.Repositories;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Rest.Clients;
@@ -502,6 +503,11 @@ namespace DiscoSdk.Hosting
         {
             if (message.Opcode != OpCodes.Dispatch || string.IsNullOrEmpty(message.EventType))
                 return;
+
+            DiscoSdkDiagnostics.GatewayEventsReceived.Add(
+                1,
+                new KeyValuePair<string, object?>(DiagnosticTags.ShardId, shard.Id),
+                new KeyValuePair<string, object?>(DiagnosticTags.EventType, message.EventType));
 
             Logger.Log(LogLevel.Trace, "Received {EventType} event from shard {ShardId}", message.EventType, shard.Id);
 

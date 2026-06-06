@@ -1,4 +1,7 @@
+using DiscoSdk.Hosting.Observability;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Net;
 
 namespace DiscoSdk.Hosting.Rest.RateLimit;
@@ -142,7 +145,15 @@ internal sealed class BucketRequestQueue : IDisposable
             // off until the window rolls so we do not push past the hard cap and earn an IP ban.
             await _invalidRequestTracker.WaitIfNearLimitAsync(token).ConfigureAwait(false);
 
-            var response = await SendOnceAsync(requestFactory, token).ConfigureAwait(false);
+            // HttpClient does not always reattach RequestMessage on the response after a custom
+            // handler returns (test stubs in particular skip it), so observe the method directly
+            // from inside the factory invocation rather than relying on response.RequestMessage.
+            // Timestamp is taken off the bucket's TimeProvider so virtual-time tests measure
+            // virtual elapsed time instead of wall-clock noise.
+            HttpMethod? observedMethod = null;
+            var sendStartedAt = _timeProvider.GetTimestamp();
+            var response = await SendOnceAsync(requestFactory, token, m => observedMethod = m).ConfigureAwait(false);
+            RecordResponseMetrics(response, observedMethod, sendStartedAt);
 
             _invalidRequestTracker.RecordResponse(response.StatusCode);
 
@@ -170,6 +181,11 @@ internal sealed class BucketRequestQueue : IDisposable
 
             if (response.StatusCode != HttpStatusCode.TooManyRequests)
                 return response;
+
+            DiscoSdkDiagnostics.RestRateLimited.Add(
+                1,
+                new KeyValuePair<string, object?>(DiagnosticTags.Route, _bucket),
+                new KeyValuePair<string, object?>(DiagnosticTags.Scope, NormaliseScope(rateLimit.Scope)));
 
             // X-RateLimit-Scope = "shared" means the bucket is enforced across multiple resources
             // (e.g. all reactions on a channel share one budget). Hitting it tells us the cause
@@ -216,12 +232,47 @@ internal sealed class BucketRequestQueue : IDisposable
         return null;
     }
 
-    private async Task<HttpResponseMessage> SendOnceAsync(Func<HttpRequestMessage> requestFactory, CancellationToken token)
+    /// <summary>
+    /// Records request count + latency metrics for the just-completed HTTP attempt. The bucket
+    /// name is used as the <see cref="DiagnosticTags.Route"/> tag — Discord's bucket key is a
+    /// stable, low-cardinality identifier for a route family.
+    /// </summary>
+    private void RecordResponseMetrics(HttpResponseMessage response, HttpMethod? observedMethod, long sendStartedAt)
+    {
+        var elapsedMs = Stopwatch.GetElapsedTime(sendStartedAt).TotalMilliseconds;
+        var method = (observedMethod ?? response.RequestMessage?.Method)?.Method ?? "UNKNOWN";
+        var statusCode = (int)response.StatusCode;
+
+        DiscoSdkDiagnostics.RestRequests.Add(
+            1,
+            new KeyValuePair<string, object?>(DiagnosticTags.Route, _bucket),
+            new KeyValuePair<string, object?>(DiagnosticTags.HttpMethod, method),
+            new KeyValuePair<string, object?>(DiagnosticTags.HttpStatusClass, DiagnosticTags.ClassifyStatus(statusCode)));
+
+        DiscoSdkDiagnostics.RestLatency.Record(
+            elapsedMs,
+            new KeyValuePair<string, object?>(DiagnosticTags.Route, _bucket),
+            new KeyValuePair<string, object?>(DiagnosticTags.HttpMethod, method));
+    }
+
+    /// <summary>
+    /// Discord omits the <c>X-RateLimit-Scope</c> header on bucket-scoped 429s — the implicit
+    /// default is <c>user</c>. Normalising here keeps the <see cref="DiagnosticTags.Scope"/> tag
+    /// to a stable closed set of values across dashboards.
+    /// </summary>
+    private static string NormaliseScope(string? scope)
+        => string.IsNullOrWhiteSpace(scope) ? "user" : scope.ToLowerInvariant();
+
+    private async Task<HttpResponseMessage> SendOnceAsync(
+        Func<HttpRequestMessage> requestFactory,
+        CancellationToken token,
+        Action<HttpMethod>? methodObserver = null)
     {
         return await TransientRetryPolicy.DefaultPipeline.ExecuteAsync(
             async ct =>
             {
                 using var request = requestFactory();
+                methodObserver?.Invoke(request.Method);
                 return await _http
                     .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct)
                     .ConfigureAwait(false);
