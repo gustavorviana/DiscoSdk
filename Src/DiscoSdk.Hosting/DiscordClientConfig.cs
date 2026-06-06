@@ -20,6 +20,15 @@ public class DiscordClientConfig
     public required string Token { get; set; }
 
     /// <summary>
+    /// Returns the configuration with the token masked — safe to log or include in exception
+    /// messages. Discord bot tokens leaking into a shared log aggregator (Datadog, ELK, Sentry)
+    /// is one of the most common ways bots get hijacked; routing every config dump through this
+    /// override means no caller has to remember to redact.
+    /// </summary>
+    public override string ToString()
+        => $"{nameof(DiscordClientConfig)} {{ Token = {TokenSanitizer.Mask(Token)}, Intents = {Intents}, TotalShards = {TotalShards?.ToString() ?? "auto"} }}";
+
+    /// <summary>
     /// Gets or sets the gateway intents to subscribe to.
     /// </summary>
     public required DiscordIntent Intents { get; set; }

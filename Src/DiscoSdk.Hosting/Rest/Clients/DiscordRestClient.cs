@@ -41,6 +41,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     private readonly ConcurrentDictionary<string, BucketRequestQueue> _buckets = [];
     private readonly ConcurrentDictionary<string, string> _routeToHash = [];
     private readonly GlobalRateLimitManager _globalRateLimiter;
+    private readonly InvalidRequestTracker _invalidRequestTracker;
     private readonly SemaphoreSlim _inflightGate = new(MaxConcurrentRequests, MaxConcurrentRequests);
     private readonly CancellationTokenSource _shutdownCts = new();
 
@@ -109,6 +110,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         JsonOptions = jsonOptions;
         _http.BaseAddress = apiUri;
         _globalRateLimiter = new GlobalRateLimitManager(_logger, _timeProvider);
+        _invalidRequestTracker = new InvalidRequestTracker(_timeProvider, _logger);
 
         // Read the SDK version from assembly metadata so the User-Agent stays in sync with
         // package releases automatically. AssemblyName.Version is preferred over the
@@ -233,6 +235,58 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         }
     }
 
+    /// <summary>
+    /// Internal entry point that lets concrete REST actions attach an <c>X-Audit-Log-Reason</c>
+    /// header to mutating requests (ban, kick, channel delete, etc.). Returns void; for
+    /// deserialised responses use the generic overload.
+    /// </summary>
+    internal Task SendWithReasonAsync(DiscordRoute path, HttpMethod method, object? body, string? auditLogReason, CancellationToken ct)
+        => SendAuditableInternalAsync(path, method, body, auditLogReason, ct);
+
+    /// <summary>Generic counterpart of <see cref="SendWithReasonAsync"/>.</summary>
+    internal Task<T> SendWithReasonAsync<T>(DiscordRoute path, HttpMethod method, object? body, string? auditLogReason, CancellationToken ct)
+        => SendAuditableInternalAsync<T>(path, method, body, auditLogReason, ct);
+
+    private async Task SendAuditableInternalAsync(DiscordRoute path, HttpMethod method, object? body, string? auditLogReason, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(method);
+        using var res = await DispatchAsync(path, method, BuildFactoryWithReason(path, method, body, auditLogReason), ct);
+        if (res.IsSuccessStatusCode || res.StatusCode == HttpStatusCode.NoContent)
+            return;
+        throw await GetDiscordExceptionAsync(res, ct);
+    }
+
+    private async Task<T> SendAuditableInternalAsync<T>(DiscordRoute path, HttpMethod method, object? body, string? auditLogReason, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(method);
+        using var res = await DispatchAsync(path, method, BuildFactoryWithReason(path, method, body, auditLogReason), ct);
+        if (res.IsSuccessStatusCode)
+        {
+            if (res.StatusCode == HttpStatusCode.NoContent) return default!;
+            await using var stream = await res.Content.ReadAsStreamAsync(ct);
+            var data = await JsonSerializer.DeserializeAsync<T>(stream, JsonOptions, ct);
+            return data ?? throw new DiscordApiException(res.StatusCode, "Discord API returned empty JSON.", null);
+        }
+        throw await GetDiscordExceptionAsync(res, ct);
+    }
+
+    private Func<HttpRequestMessage> BuildFactoryWithReason(DiscordRoute path, HttpMethod method, object? body, string? auditLogReason)
+    {
+        if (string.IsNullOrWhiteSpace(auditLogReason))
+            return () => CreateRequestWithBody(path, method, body);
+
+        return () =>
+        {
+            var req = CreateRequestWithBody(path, method, body);
+            // Discord requires X-Audit-Log-Reason to be URL-encoded and limited to 512 chars.
+            // Anything beyond is silently truncated by Discord — we truncate eagerly so the
+            // reason is at least predictable.
+            var trimmed = auditLogReason.Length > 512 ? auditLogReason[..512] : auditLogReason;
+            req.Headers.TryAddWithoutValidation("X-Audit-Log-Reason", Uri.EscapeDataString(trimmed));
+            return req;
+        };
+    }
+
     internal HttpRequestMessage CreateRequestWithBody(DiscordRoute path, HttpMethod method, object? body)
     {
         var req = new HttpRequestMessage(method, path.ToString());
@@ -345,6 +399,7 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
 
         return _buckets.GetOrAdd(bucketKey, key => new BucketRequestQueue(
             _globalRateLimiter,
+            _invalidRequestTracker,
             _logger,
             _http,
             key,

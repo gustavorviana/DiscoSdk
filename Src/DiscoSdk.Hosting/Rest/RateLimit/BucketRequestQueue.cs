@@ -34,6 +34,7 @@ internal sealed class BucketRequestQueue : IDisposable
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly GlobalRateLimitManager _globalRateLimiter;
+    private readonly InvalidRequestTracker _invalidRequestTracker;
     private readonly HttpClient _http;
     private readonly Action<string>? _onHashLearned;
     private readonly ILogger _logger;
@@ -53,6 +54,7 @@ internal sealed class BucketRequestQueue : IDisposable
     /// </param>
     public BucketRequestQueue(
         GlobalRateLimitManager globalRateLimiter,
+        InvalidRequestTracker invalidRequestTracker,
         ILogger logger,
         HttpClient http,
         string bucket,
@@ -61,12 +63,14 @@ internal sealed class BucketRequestQueue : IDisposable
         Action<string>? onHashLearned = null)
     {
         ArgumentNullException.ThrowIfNull(globalRateLimiter);
+        ArgumentNullException.ThrowIfNull(invalidRequestTracker);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(http);
         ArgumentException.ThrowIfNullOrWhiteSpace(bucket);
         ArgumentNullException.ThrowIfNull(timeProvider);
 
         _globalRateLimiter = globalRateLimiter;
+        _invalidRequestTracker = invalidRequestTracker;
         _http = http;
         _logger = logger;
         _bucket = bucket;
@@ -134,8 +138,13 @@ internal sealed class BucketRequestQueue : IDisposable
         for (var attempt = 0; attempt < MaxRateLimitRetries; attempt++)
         {
             await _globalRateLimiter.WaitForGlobalAsync(token).ConfigureAwait(false);
+            // Cloudflare safety pause — if we are near the 10k/10min invalid-request limit, hold
+            // off until the window rolls so we do not push past the hard cap and earn an IP ban.
+            await _invalidRequestTracker.WaitIfNearLimitAsync(token).ConfigureAwait(false);
 
             var response = await SendOnceAsync(requestFactory, token).ConfigureAwait(false);
+
+            _invalidRequestTracker.RecordResponse(response.StatusCode);
 
             // Global 429 (X-RateLimit-Global): the manager has recorded the deadline and waited.
             if (await _globalRateLimiter.ReadAndWaitForGlobalAsync(response, token).ConfigureAwait(false))
@@ -162,16 +171,49 @@ internal sealed class BucketRequestQueue : IDisposable
             if (response.StatusCode != HttpStatusCode.TooManyRequests)
                 return response;
 
-            // Bucket-scope 429: back off for the reported window (or a small fixed delay if Discord
-            // omitted the header) and retry.
-            var retryDelay = rateLimit.ResetAfter is { } retryAfterSeconds
-                ? TimeSpan.FromSeconds(retryAfterSeconds)
-                : DefaultRateLimitBackoff;
+            // X-RateLimit-Scope = "shared" means the bucket is enforced across multiple resources
+            // (e.g. all reactions on a channel share one budget). Hitting it tells us the cause
+            // is not a single hot route — log at info so the operator can correlate spikes; user
+            // and global already get logged elsewhere.
+            if (string.Equals(rateLimit.Scope, "shared", StringComparison.OrdinalIgnoreCase))
+                _logger.Log(LogLevel.Information, "Shared-scope 429 on bucket {Bucket}; budget is split with sibling resources.", _bucket);
+
+            // Bucket-scope 429: prefer Discord's X-RateLimit-Reset-After (always seconds, never
+            // null on a Discord-issued 429). When the 429 came from Cloudflare in front of Discord
+            // — which only emits the standard Retry-After header — read that instead. Final
+            // fallback is a small fixed backoff if neither header is parseable.
+            var retryDelay = rateLimit.ResetAfter is { } resetAfterSeconds
+                ? TimeSpan.FromSeconds(resetAfterSeconds)
+                : ReadRetryAfterHeader(response) ?? DefaultRateLimitBackoff;
             await Task.Delay(retryDelay, _timeProvider, token).ConfigureAwait(false);
             response.Dispose();
         }
 
         throw new HttpRequestException("Exceeded maximum retry attempts due to rate limiting.");
+    }
+
+    /// <summary>
+    /// Reads the standard HTTP <c>Retry-After</c> header from a 429 response. Discord uses
+    /// <c>X-RateLimit-Reset-After</c> on rate-limit 429s, but Cloudflare in front of Discord may
+    /// only emit the standard header — without parsing it we would default-backoff 1s and bang
+    /// against Cloudflare's wall immediately.
+    /// </summary>
+    private static TimeSpan? ReadRetryAfterHeader(HttpResponseMessage response)
+    {
+        var retryAfter = response.Headers.RetryAfter;
+        if (retryAfter == null)
+            return null;
+
+        if (retryAfter.Delta is { } delta)
+            return delta;
+
+        if (retryAfter.Date is { } date)
+        {
+            var now = DateTimeOffset.UtcNow;
+            return date > now ? date - now : TimeSpan.Zero;
+        }
+
+        return null;
     }
 
     private async Task<HttpResponseMessage> SendOnceAsync(Func<HttpRequestMessage> requestFactory, CancellationToken token)

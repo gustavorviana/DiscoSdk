@@ -5,9 +5,14 @@ namespace DiscoSdk.Rest;
 
 public readonly struct DiscordRoute(string template, params object[] args)
 {
+    // Discord's docs list these as major rate-limit parameters: each unique value gets its own
+    // bucket scope. webhook_token and interaction_token are explicitly called out alongside the
+    // id variants — without them, distinct webhooks / interactions that happen to share an id
+    // (rare but possible) would converge on the same bucket and serialise unnecessarily.
     private static readonly HashSet<string> MajorParameters = new(StringComparer.OrdinalIgnoreCase)
     {
-        "{channel_id}","{guild_id}","{webhook_id}","{interaction_id}"
+        "{channel_id}","{guild_id}","{webhook_id}","{webhook_token}",
+        "{interaction_id}","{interaction_token}"
     };
 
     private readonly object[] _args = args ?? [];

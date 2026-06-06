@@ -33,11 +33,13 @@ public class BucketRequestQueueTests
 
     private GlobalRateLimitManager NewGlobalLimiter() => new(_logger, _timeProvider);
 
+    private InvalidRequestTracker NewInvalidTracker() => new(_timeProvider, _logger);
+
     private BucketRequestQueue NewQueue(
         HttpClient http,
         CancellationToken shutdownToken = default,
         Action<string>? onHashLearned = null) =>
-        new(NewGlobalLimiter(), _logger, http, "test-bucket", shutdownToken, _timeProvider, onHashLearned);
+        new(NewGlobalLimiter(), NewInvalidTracker(), _logger, http, "test-bucket", shutdownToken, _timeProvider, onHashLearned);
 
     private static HttpRequestMessage NewRequest() =>
         new(HttpMethod.Get, "https://discord.local/test");
