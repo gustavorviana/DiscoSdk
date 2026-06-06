@@ -11,11 +11,24 @@ namespace DiscoSdk.Hosting.Gateway.Shards;
 /// Owns the WebSocket and the decompressor; <see cref="ReadAsync"/> yields already-decompressed
 /// <see cref="ReceivedGatewayMessage"/> instances.
 /// </summary>
-internal sealed class DefaultGatewaySocket(GatewayDecompressFactory decompressFactory, DiscordClientConfig config) : IGatewaySocket
+internal sealed class DefaultGatewaySocket(GatewayDecompressFactory decompressFactory, DiscordClientConfig config, TimeProvider timeProvider) : IGatewaySocket
 {
+    // Discord enforces 120 gateway commands per 60-second window per connection. Going over
+    // earns a 4008 close — so we self-throttle. 10 tokens are reserved exclusively for the
+    // heartbeat path so user-code spam (presence updates, voice state changes, request guild
+    // members in a loop) cannot starve the heartbeat and trigger a zombie-link reconnect.
+    private const int NormalTokensPerWindow = 110;
+    private const int HeartbeatTokensPerWindow = 10;
+    private static readonly TimeSpan SendWindow = TimeSpan.FromSeconds(60);
+
     // ClientWebSocket.SendAsync is NOT thread-safe; concurrent senders (heartbeat task + receive
     // loop responses + user presence updates) would interleave bytes and corrupt frames. Serialise.
     private readonly SemaphoreSlim _sendLock = new(1, 1);
+    // Token bucket. _bucketLock is held only for nanoseconds (refill window check + decrement).
+    private readonly object _bucketLock = new();
+    private long _windowStartUnixMs;
+    private int _normalTokens = NormalTokensPerWindow;
+    private int _heartbeatTokens = HeartbeatTokensPerWindow;
     private GatewayDecompress? _decompressor;
     private ClientWebSocket? _websocket;
     private bool _disposed;
@@ -101,7 +114,9 @@ internal sealed class DefaultGatewaySocket(GatewayDecompressFactory decompressFa
     {
         var seq = Interlocked.Read(ref _seq);
         // null is the correct heartbeat value before any event has been seen.
-        return SendAsync(OpCodes.Heartbeat, seq < 0 ? (long?)null : seq, cancellationToken);
+        // Heartbeat is the only path that can dip into the reserved heartbeat-tokens bucket —
+        // see SendInternalAsync.
+        return SendInternalAsync(new(OpCodes.Heartbeat, seq < 0 ? (long?)null : seq), priority: true, cancellationToken);
     }
 
     public Task SendAsync(OpCodes codes, object? data, CancellationToken cancellationToken = default)
@@ -113,7 +128,10 @@ internal sealed class DefaultGatewaySocket(GatewayDecompressFactory decompressFa
     /// <see cref="ClientWebSocket.SendAsync(System.ArraySegment{byte}, WebSocketMessageType, bool, CancellationToken)"/>
     /// is documented as NOT thread-safe.
     /// </summary>
-    public async Task SendAsync(SendGatewayMessage payload, CancellationToken token)
+    public Task SendAsync(SendGatewayMessage payload, CancellationToken token)
+        => SendInternalAsync(payload, priority: false, token);
+
+    private async Task SendInternalAsync(SendGatewayMessage payload, bool priority, CancellationToken token)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         var websocket = _websocket;
@@ -122,6 +140,11 @@ internal sealed class DefaultGatewaySocket(GatewayDecompressFactory decompressFa
 
         var json = JsonSerializer.Serialize(new { op = payload.OpCode, d = payload.Data });
         var bytes = Encoding.UTF8.GetBytes(json);
+
+        // Bucket gate first — if Discord's 120/60s budget is empty, wait until the window
+        // refills. Heartbeats (priority=true) have a reserved 10-token side bucket so they keep
+        // flowing even when user-code saturates the 110 normal tokens.
+        await WaitForSendTokenAsync(priority, token).ConfigureAwait(false);
 
         await _sendLock.WaitAsync(token).ConfigureAwait(false);
         try
@@ -137,6 +160,54 @@ internal sealed class DefaultGatewaySocket(GatewayDecompressFactory decompressFa
         {
             try { _sendLock.Release(); } catch (ObjectDisposedException) { }
         }
+    }
+
+    /// <summary>
+    /// Waits for a send token from the per-connection 120/60s bucket. Heartbeat callers
+    /// (<paramref name="priority"/> = true) first try the reserved heartbeat side bucket and only
+    /// fall back to the normal bucket when both are full — the fallback is intentional so a
+    /// heartbeat under extreme starvation can still preempt user-code instead of letting the
+    /// link go zombie.
+    /// </summary>
+    private async Task WaitForSendTokenAsync(bool priority, CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            long waitMs;
+            lock (_bucketLock)
+            {
+                var nowMs = timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
+                var windowEndMs = _windowStartUnixMs + (long)SendWindow.TotalMilliseconds;
+                if (_windowStartUnixMs == 0 || nowMs >= windowEndMs)
+                {
+                    _windowStartUnixMs = nowMs;
+                    _normalTokens = NormalTokensPerWindow;
+                    _heartbeatTokens = HeartbeatTokensPerWindow;
+                    windowEndMs = nowMs + (long)SendWindow.TotalMilliseconds;
+                }
+
+                if (priority && _heartbeatTokens > 0)
+                {
+                    _heartbeatTokens--;
+                    return;
+                }
+
+                if (_normalTokens > 0)
+                {
+                    _normalTokens--;
+                    return;
+                }
+
+                // Last-resort fallback for heartbeat: dip into the (drained) normal bucket as
+                // soon as the next token frees. For non-priority callers the wait is the full
+                // window expiry.
+                waitMs = Math.Max(1, windowEndMs - nowMs);
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(waitMs), timeProvider, token).ConfigureAwait(false);
+        }
+
+        token.ThrowIfCancellationRequested();
     }
 
     /// <summary>

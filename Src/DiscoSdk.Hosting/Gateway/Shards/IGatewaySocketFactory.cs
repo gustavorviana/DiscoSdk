@@ -18,7 +18,7 @@ internal interface IGatewaySocketFactory
 /// and the <see cref="DiscordClientConfig"/> knobs the socket reads at runtime (User-Agent,
 /// close timeout).
 /// </summary>
-internal sealed class DefaultGatewaySocketFactory(GatewayDecompressFactory decompressFactory, DiscordClientConfig config) : IGatewaySocketFactory
+internal sealed class DefaultGatewaySocketFactory(GatewayDecompressFactory decompressFactory, DiscordClientConfig config, TimeProvider timeProvider) : IGatewaySocketFactory
 {
-	public IGatewaySocket Create() => new DefaultGatewaySocket(decompressFactory, config);
+	public IGatewaySocket Create() => new DefaultGatewaySocket(decompressFactory, config, timeProvider);
 }

@@ -463,7 +463,7 @@ public class DiscordClientBuilder
         WithParamProvider<UserParamProvider>();
 
         var timeProvider = _timeProvider ?? TimeProvider.System;
-        var socketFactory = _socketFactory ?? new DefaultGatewaySocketFactory(new GatewayDecompressFactory(config.GatewayCompressMode), config);
+        var socketFactory = _socketFactory ?? new DefaultGatewaySocketFactory(new GatewayDecompressFactory(config.GatewayCompressMode), config, timeProvider);
         var logger = _logger ?? NullLogger.Instance;
         var restClient = _restClient ?? new DiscordRestClient(
             _token,
