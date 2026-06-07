@@ -87,4 +87,25 @@ public class RoleClientTests
 	{
 		await Assert.ThrowsAsync<ArgumentNullException>(() => _client.CreateAsync(_guildId, null!));
 	}
+
+	[Fact]
+	public async Task GetAsync_GetsGuildRoleByIdAsync()
+	{
+		_http.SendAsync<Role?>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new Role());
+
+		await _client.GetAsync(_guildId, _roleId);
+
+		await _http.Received(1).SendAsync<Role?>(
+			Arg.Is<DiscordRoute>(r => r.Template == "guilds/{guild_id}/roles/{role_id}" && r.ToString() == $"guilds/{_guildId}/roles/{_roleId}"),
+			HttpMethod.Get,
+			Arg.Any<object?>(),
+			Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task GetAsync_DefaultRoleId_ThrowsAsync()
+	{
+		await Assert.ThrowsAsync<ArgumentException>(() => _client.GetAsync(_guildId, default));
+	}
 }

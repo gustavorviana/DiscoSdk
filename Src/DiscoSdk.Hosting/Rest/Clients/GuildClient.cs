@@ -126,6 +126,27 @@ internal class GuildClient(IDiscordRestClient client)
     }
 
     /// <summary>
+    /// Lists every active (non-archived) thread the bot can see in the guild via
+    /// <c>GET /guilds/{guild.id}/threads/active</c>. The endpoint also returns thread member
+    /// objects for the threads the bot is in, but those are dropped here — membership state is
+    /// already broadcast via <c>THREAD_MEMBER_UPDATE</c> / <c>THREAD_MEMBERS_UPDATE</c> events.
+    /// </summary>
+    public async Task<Channel[]> ListActiveThreadsAsync(Snowflake guildId, CancellationToken cancellationToken = default)
+    {
+        if (guildId == default)
+            throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
+
+        var route = new DiscordRoute("guilds/{guild_id}/threads/active", guildId);
+        var response = await client.SendAsync<ActiveThreadsResponse>(route, HttpMethod.Get, null, cancellationToken);
+        return response.Threads;
+    }
+
+    private sealed class ActiveThreadsResponse
+    {
+        public Channel[] Threads { get; set; } = [];
+    }
+
+    /// <summary>
     /// Gets a guild by its ID.
     /// </summary>
     /// <param name="guildId">The ID of the guild.</param>

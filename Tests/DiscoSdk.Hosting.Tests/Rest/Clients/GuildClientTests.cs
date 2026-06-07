@@ -390,4 +390,25 @@ public class GuildClientTests
 			Arg.Any<object?>(),
 			Arg.Any<CancellationToken>());
 	}
+
+	[Fact]
+	public async Task ListActiveThreadsAsync_HitsGuildThreadsActiveAsync()
+	{
+		// Drive through ReceivedCalls because the response DTO is private (SendAsync<T> binds at
+		// runtime to the internal ActiveThreadsResponse). NSubstitute can't match the generic by
+		// name in Arg.Any<T>, so we let the call no-op (returns default T = null) and inspect.
+		try { await _client.ListActiveThreadsAsync(_guildId); } catch (NullReferenceException) { }
+
+		var match = _http.ReceivedCalls().Any(c =>
+		{
+			var info = c.GetMethodInfo();
+			if (info.Name != nameof(IDiscordRestClient.SendAsync) || !info.IsGenericMethod) return false;
+			var args = c.GetArguments();
+			return args[0] is DiscordRoute r
+				&& r.Template == "guilds/{guild_id}/threads/active"
+				&& r.ToString() == $"guilds/{_guildId}/threads/active"
+				&& args[1] is HttpMethod m && m == HttpMethod.Get;
+		});
+		Assert.True(match);
+	}
 }

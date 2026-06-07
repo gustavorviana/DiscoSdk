@@ -399,6 +399,31 @@ public interface IGuild
     IRestAction<IReadOnlyList<IRole>> GetRoles();
 
     /// <summary>
+    /// Gets a REST action to retrieve a single role by id. Uses the dedicated
+    /// <c>GET /guilds/{guild.id}/roles/{role.id}</c> endpoint Discord introduced in 2024 — does
+    /// not pull the full role list and filter client-side. Returns <c>null</c> when the role
+    /// does not exist in this guild.
+    /// </summary>
+    /// <param name="roleId">The role ID.</param>
+    IRestAction<IRole?> GetRole(Snowflake roleId);
+
+    /// <summary>
+    /// Creates a builder for bulk-reordering roles in this guild via
+    /// <c>PATCH /guilds/{guild.id}/roles</c>. Call <c>Move(roleId, position)</c> for each role
+    /// you want to move; roles you omit keep their current position. Optional audit-log reason
+    /// via <c>WithReason</c>.
+    /// </summary>
+    IModifyRolePositionsAction ModifyRolePositions();
+
+    /// <summary>
+    /// Lists every active (non-archived) thread in this guild the bot has permission to view,
+    /// across every parent channel. Mirrors <c>GET /guilds/{guild.id}/threads/active</c>.
+    /// Membership state for the threads the bot is already in arrives via
+    /// <c>THREAD_MEMBER_UPDATE</c> / <c>THREAD_MEMBERS_UPDATE</c> events.
+    /// </summary>
+    IRestAction<IReadOnlyList<IGuildThreadChannel>> ListActiveThreads();
+
+    /// <summary>
     /// Gets a REST action to retrieve all invites in this guild.
     /// </summary>
     /// <returns>A REST action that can be executed to retrieve invites.</returns>

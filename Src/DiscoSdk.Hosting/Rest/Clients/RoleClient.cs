@@ -56,6 +56,22 @@ internal class RoleClient(IDiscordRestClient client)
 	}
 
 	/// <summary>
+	/// Gets a single role by id. Discord exposed this endpoint in 2024 — until then callers had to
+	/// list every role and filter client-side. Returns <c>null</c> if the role does not exist.
+	/// </summary>
+	public Task<Role?> GetAsync(Snowflake guildId, Snowflake roleId, CancellationToken cancellationToken = default)
+	{
+		if (guildId == default)
+			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
+
+		if (roleId == default)
+			throw new ArgumentException("Role ID cannot be null or empty.", nameof(roleId));
+
+		var route = new DiscordRoute("guilds/{guild_id}/roles/{role_id}", guildId, roleId);
+		return client.SendAsync<Role?>(route, HttpMethod.Get, null, cancellationToken);
+	}
+
+	/// <summary>
 	/// Modifies the positions of roles in the specified guild.
 	/// </summary>
 	public Task<Role[]> ModifyPositionsAsync(Snowflake guildId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)

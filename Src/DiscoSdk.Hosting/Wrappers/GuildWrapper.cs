@@ -293,6 +293,34 @@ internal class GuildWrapper : IGuild
         });
     }
 
+    public IRestAction<IRole?> GetRole(Snowflake roleId)
+    {
+        if (roleId == default)
+            throw new ArgumentException("Role ID cannot be null or empty.", nameof(roleId));
+
+        return RestAction<IRole?>.Create(async cancellationToken =>
+        {
+            var role = await _client.RoleClient.GetAsync(_guild.Id, roleId, cancellationToken);
+            return role is null ? null : new RoleWrapper(_client, role, this);
+        });
+    }
+
+    public IModifyRolePositionsAction ModifyRolePositions()
+        => new ModifyRolePositionsAction(_client, this);
+
+    public IRestAction<IReadOnlyList<IGuildThreadChannel>> ListActiveThreads()
+    {
+        return RestAction<IReadOnlyList<IGuildThreadChannel>>.Create(async cancellationToken =>
+        {
+            var threads = await _client.GuildClient.ListActiveThreadsAsync(_guild.Id, cancellationToken);
+            return threads
+                .Select(c => Channels.ChannelWrapper.ToSpecificType(_client, c, this))
+                .OfType<IGuildThreadChannel>()
+                .ToList()
+                .AsReadOnly();
+        });
+    }
+
     public IRestAction<IReadOnlyList<IInvite>> GetInvites()
     {
         return RestAction<IReadOnlyList<IInvite>>.Create(async cancellationToken =>
