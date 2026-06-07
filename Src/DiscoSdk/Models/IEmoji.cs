@@ -5,7 +5,7 @@ namespace DiscoSdk.Models;
 /// <summary>
 /// Represents a Discord emoji.
 /// </summary>
-public interface IEmoji : IMentionable, IDeletable
+public interface IEmoji : IMentionable, IReasonedDeletable
 {
 	/// <summary>
 	/// Gets the emoji's name.

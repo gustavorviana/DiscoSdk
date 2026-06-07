@@ -33,13 +33,37 @@ public class StageInstanceWrapperTests : WrapperTestBase
 			.Returns(new StageInstance { Id = new Snowflake(500), Topic = "New" });
 
 		var stage = NewWrapper();
-		await stage.Modify(topic: "New").ExecuteAsync();
+		await stage.Modify().SetTopic("New").ExecuteAsync();
 
 		await Http.Received(1).SendAsync<StageInstance>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == $"stage-instances/{_channelId}"),
 			HttpMethod.Patch,
 			Arg.Is<object?>(b => BodyPropertyEquals(b, "Topic", "New")),
 			Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task Modify_WithReason_RoutesThroughReasonedSendAsync()
+	{
+		Http.SendWithReasonAsync<StageInstance>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+			.Returns(new StageInstance { Id = new Snowflake(500), Topic = "New" });
+
+		var stage = NewWrapper();
+		await stage.Modify().SetTopic("New").WithReason("Speaker rotation").ExecuteAsync();
+
+		await Http.Received(1).SendWithReasonAsync<StageInstance>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == $"stage-instances/{_channelId}"),
+			HttpMethod.Patch,
+			Arg.Any<object?>(),
+			"Speaker rotation",
+			Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task Modify_NoFields_ThrowsAsync()
+	{
+		var stage = NewWrapper();
+		await Assert.ThrowsAsync<InvalidOperationException>(() => stage.Modify().ExecuteAsync());
 	}
 
 	[Fact]
@@ -51,6 +75,20 @@ public class StageInstanceWrapperTests : WrapperTestBase
 		await Http.Received(1).SendAsync(
 			Arg.Is<DiscordRoute>(r => r.ToString() == $"stage-instances/{_channelId}"),
 			HttpMethod.Delete,
+			Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task Delete_WithReason_RoutesThroughReasonedSendAsync()
+	{
+		var stage = NewWrapper();
+		await stage.Delete().WithReason("Stage ended").ExecuteAsync();
+
+		await Http.Received(1).SendWithReasonAsync(
+			Arg.Is<DiscordRoute>(r => r.ToString() == $"stage-instances/{_channelId}"),
+			HttpMethod.Delete,
+			Arg.Any<object?>(),
+			"Stage ended",
 			Arg.Any<CancellationToken>());
 	}
 }

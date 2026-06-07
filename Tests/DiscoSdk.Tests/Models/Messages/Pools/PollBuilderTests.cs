@@ -305,6 +305,7 @@ public class PollBuilderTests
         public bool Available => true;
         public IGuild? Guild => null;
         public IEditEmojiAction Edit() => throw new NotImplementedException();
-        public IRestAction Delete() => throw new NotImplementedException();
+        public IReasonedRestAction Delete() => throw new NotImplementedException();
+        IRestAction IDeletable.Delete() => Delete();
     }
 }

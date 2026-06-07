@@ -47,10 +47,18 @@ internal sealed class ApplicationEmojiWrapper(DiscordClient client, InternalEmoj
 		=> new EditApplicationEmojiAction(client, Id);
 
 	/// <inheritdoc />
-	public IRestAction Delete()
+	/// <remarks>
+	/// Returns <see cref="IReasonedRestAction"/> to satisfy <see cref="IEmoji"/>'s
+	/// <see cref="IReasonedDeletable"/> contract, but Discord does NOT record application-emoji
+	/// deletes in any audit log — the reason set via <c>WithReason</c> is silently dropped
+	/// (application emojis are global to the bot, not bound to a guild).
+	/// </remarks>
+	public IReasonedRestAction Delete()
 	{
 		var emojiId = Id;
-		return RestAction.Create(ct =>
+		return new ReasonedRestAction((_, ct) =>
 			client.ApplicationClient.DeleteApplicationEmojiAsync(client.RequireApplicationId(), emojiId, ct));
 	}
+
+	IRestAction IDeletable.Delete() => Delete();
 }

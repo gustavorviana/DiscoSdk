@@ -7,7 +7,7 @@ namespace DiscoSdk.Models;
 /// Public read/action surface for a Discord Stage Instance — the "live stage" attached to a
 /// stage channel.
 /// </summary>
-public interface IStageInstance
+public interface IStageInstance : IReasonedDeletable
 {
 	/// <summary>The stage instance id.</summary>
 	Snowflake Id { get; }
@@ -28,11 +28,9 @@ public interface IStageInstance
 	Snowflake? GuildScheduledEventId { get; }
 
 	/// <summary>
-	/// Modifies the stage instance's topic and/or privacy level. Pass <c>null</c> for a field
-	/// to leave it unchanged.
+	/// Creates a builder for modifying the stage instance's topic and/or privacy level. Only
+	/// fields touched via the builder are sent on the wire. Chain
+	/// <see cref="IRestActionWithReason{TSelf}.WithReason"/> to record the change in the audit log.
 	/// </summary>
-	IRestAction<IStageInstance> Modify(string? topic = null, StagePrivacyLevel? privacyLevel = null);
-
-	/// <summary>Deletes the stage instance, ending the live stage.</summary>
-	IRestAction Delete();
+	IModifyStageInstanceAction Modify();
 }

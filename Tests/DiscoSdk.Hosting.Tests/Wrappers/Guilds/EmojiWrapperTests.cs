@@ -52,4 +52,19 @@ public class EmojiWrapperTests : WrapperTestBase
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/emojis/42"),
 			HttpMethod.Delete, Arg.Any<CancellationToken>());
 	}
+
+	[Fact]
+	public async Task Delete_WithReason_RoutesThroughReasonedSendAsync()
+	{
+		var wrapper = new EmojiWrapper(Client, Model(), _guild);
+
+		await wrapper.Delete().WithReason("Replaced with new emoji").ExecuteAsync();
+
+		await Http.Received(1).SendWithReasonAsync(
+			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/emojis/42"),
+			HttpMethod.Delete,
+			Arg.Any<object?>(),
+			"Replaced with new emoji",
+			Arg.Any<CancellationToken>());
+	}
 }

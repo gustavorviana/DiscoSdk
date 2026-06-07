@@ -63,7 +63,7 @@ internal class EmojiWrapper : IEmoji
     }
 
     /// <inheritdoc />
-    public IRestAction Delete()
+    public IReasonedRestAction Delete()
     {
         if (!_emoji.Id.HasValue)
             throw new InvalidOperationException("Cannot delete an emoji without an ID.");
@@ -75,4 +75,6 @@ internal class EmojiWrapper : IEmoji
         var emojiId = _emoji.Id.Value;
         return new ReasonedRestAction((reason, ct) => _client.GuildClient.DeleteEmojiAsync(guildId, emojiId, reason, ct));
     }
+
+    IRestAction IDeletable.Delete() => Delete();
 }

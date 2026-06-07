@@ -1,8 +1,6 @@
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
-using DiscoSdk.Hosting.Models.Requests.StageInstances;
-using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Wrappers;
@@ -34,23 +32,15 @@ internal sealed class StageInstanceWrapper(DiscordClient client, StageInstance m
 	public Snowflake? GuildScheduledEventId => _model.GuildScheduledEventId;
 
 	/// <inheritdoc />
-	public IRestAction<IStageInstance> Modify(string? topic = null, StagePrivacyLevel? privacyLevel = null)
-	{
-		return RestAction<IStageInstance>.Create(async ct =>
-		{
-			var request = new ModifyStageInstanceRequest
-			{
-				Topic = topic,
-				PrivacyLevel = privacyLevel,
-			};
-
-			var updated = await client.StageInstanceClient.ModifyAsync(_model.ChannelId, request, ct);
-			_model = updated;
-			return (IStageInstance)this;
-		});
-	}
+	public IModifyStageInstanceAction Modify()
+		=> new ModifyStageInstanceAction(client, _model.ChannelId);
 
 	/// <inheritdoc />
-	public IRestAction Delete()
-		=> RestAction.Create(ct => client.StageInstanceClient.DeleteAsync(_model.ChannelId, ct));
+	public IReasonedRestAction Delete()
+	{
+		var channelId = _model.ChannelId;
+		return new ReasonedRestAction((reason, ct) => client.StageInstanceClient.DeleteAsync(channelId, reason, ct));
+	}
+
+	IRestAction IDeletable.Delete() => Delete();
 }

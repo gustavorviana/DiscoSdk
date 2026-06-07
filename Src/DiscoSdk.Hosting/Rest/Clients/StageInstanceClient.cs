@@ -25,18 +25,22 @@ internal class StageInstanceClient(IDiscordRestClient client)
 	}
 
 	/// <summary>Modifies an existing Stage Instance (topic / privacy level).</summary>
-	public Task<StageInstance> ModifyAsync(Snowflake channelId, object request, CancellationToken cancellationToken = default)
+	public Task<StageInstance> ModifyAsync(Snowflake channelId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(request);
 
 		var route = new DiscordRoute("stage-instances/{channel_id}", channelId);
-		return client.SendAsync<StageInstance>(route, HttpMethod.Patch, request, cancellationToken);
+		return string.IsNullOrEmpty(auditLogReason)
+			? client.SendAsync<StageInstance>(route, HttpMethod.Patch, request, cancellationToken)
+			: client.SendWithReasonAsync<StageInstance>(route, HttpMethod.Patch, request, auditLogReason, cancellationToken);
 	}
 
 	/// <summary>Deletes the Stage Instance associated with the given Stage channel.</summary>
-	public Task DeleteAsync(Snowflake channelId, CancellationToken cancellationToken = default)
+	public Task DeleteAsync(Snowflake channelId, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		var route = new DiscordRoute("stage-instances/{channel_id}", channelId);
-		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+		return string.IsNullOrEmpty(auditLogReason)
+			? client.SendAsync(route, HttpMethod.Delete, cancellationToken)
+			: client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken);
 	}
 }
