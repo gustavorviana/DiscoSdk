@@ -190,4 +190,159 @@ public class MessageWrapperTests : WrapperTestBase
 
 		Assert.Throws<ArgumentNullException>(() => wrapper.ForwardTo(null!));
 	}
+
+	[Fact]
+	public async Task ToBuilder_NullTarget_DefaultsToSourceChannelAsync()
+	{
+		Http.SendAsync<Message>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new Message { Author = new User { UserId = new Snowflake(1), Username = "bot" } });
+		var (wrapper, _) = NewWrapper();
+
+		await wrapper.ToBuilder().ExecuteAsync();
+
+		await Http.Received(1).SendAsync<Message>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/messages"),
+			HttpMethod.Post, Arg.Any<object?>(), Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task ToBuilder_ExplicitTarget_RoutesToTargetChannelAsync()
+	{
+		Http.SendAsync<Message>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new Message { Author = new User { UserId = new Snowflake(1), Username = "bot" } });
+		var (wrapper, _) = NewWrapper();
+
+		var target = Substitute.For<ITextBasedChannel>();
+		target.Id.Returns(new Snowflake(900));
+
+		await wrapper.ToBuilder(target).ExecuteAsync();
+
+		await Http.Received(1).SendAsync<Message>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/900/messages"),
+			HttpMethod.Post, Arg.Any<object?>(), Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task ToBuilder_CarriesFlagsTtsStickersPollAndMessageReferenceAsync()
+	{
+		MessageCreateRequest? capturedBody = null;
+		Http.SendAsync<Message>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new Message { Author = new User { UserId = new Snowflake(1), Username = "bot" } });
+		Http.When(h => h.SendAsync<Message>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>()))
+			.Do(call => capturedBody = call.Arg<object?>() as MessageCreateRequest);
+
+		var channel = Substitute.For<ITextBasedChannel>();
+		channel.Id.Returns(_channelId);
+		var msg = new Message
+		{
+			Id = _messageId,
+			ChannelId = _channelId,
+			GuildId = _guildId,
+			Content = "hi",
+			Timestamp = "2024-01-01T00:00:00+00:00",
+			Author = new User { UserId = new Snowflake(1), Username = "bot" },
+			Tts = true,
+			Flags = MessageFlags.SuppressNotifications | MessageFlags.SuppressEmbeds,
+			StickerItems = [new DiscoSdk.Models.Messages.StickerItem { Id = new Snowflake(777), Name = "s", FormatType = DiscoSdk.Models.Enums.StickerFormatType.Png }],
+			Pool = new DiscoSdk.Models.Messages.Pools.Poll { Question = new DiscoSdk.Models.Messages.Pools.PollText { Text = "Q?" } },
+			MessageReference = new DiscoSdk.Models.Messages.MessageReference
+			{
+				MessageId = "555",
+				ChannelId = "200",
+				GuildId = "100",
+			},
+			Mentions = [],
+			Reactions = [],
+		};
+		var wrapper = new MessageWrapper(Client, channel, msg, interactionHandle: null);
+
+		await wrapper.ToBuilder().ExecuteAsync();
+
+		Assert.NotNull(capturedBody);
+		Assert.True(capturedBody!.Tts);
+		Assert.True(capturedBody.Flags!.Value.HasFlag(MessageFlags.SuppressNotifications));
+		Assert.True(capturedBody.Flags!.Value.HasFlag(MessageFlags.SuppressEmbeds));
+		Assert.NotNull(capturedBody.StickerIds);
+		Assert.Equal("777", Assert.Single(capturedBody.StickerIds!));
+		Assert.NotNull(capturedBody.Poll);
+		Assert.Equal("Q?", capturedBody.Poll!.Question.Text);
+		Assert.NotNull(capturedBody.MessageReference);
+		Assert.Equal("555", capturedBody.MessageReference!.MessageId);
+		Assert.Equal("200", capturedBody.MessageReference.ChannelId);
+	}
+
+	[Fact]
+	public async Task ToBuilder_ClonesComponentsAsync()
+	{
+		MessageCreateRequest? capturedBody = null;
+		Http.SendAsync<Message>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new Message { Author = new User { UserId = new Snowflake(1), Username = "bot" } });
+		Http.When(h => h.SendAsync<Message>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>()))
+			.Do(call => capturedBody = call.Arg<object?>() as MessageCreateRequest);
+
+		var channel = Substitute.For<ITextBasedChannel>();
+		channel.Id.Returns(_channelId);
+		var msg = new Message
+		{
+			Id = _messageId,
+			ChannelId = _channelId,
+			GuildId = _guildId,
+			Content = "row",
+			Timestamp = "2024-01-01T00:00:00+00:00",
+			Author = new User { UserId = new Snowflake(1), Username = "bot" },
+			Components = [new DiscoSdk.Models.Messages.Components.MessageActionRowComponent
+			{
+				Components = [new DiscoSdk.Models.Messages.Components.ButtonComponent
+				{
+					Style = DiscoSdk.Models.Enums.ButtonStyle.Primary,
+					Label = "Click",
+					CustomId = "cid",
+				}],
+			}],
+			Mentions = [],
+			Reactions = [],
+		};
+		var wrapper = new MessageWrapper(Client, channel, msg, interactionHandle: null);
+
+		await wrapper.ToBuilder().ExecuteAsync();
+
+		Assert.NotNull(capturedBody);
+		Assert.NotNull(capturedBody!.Components);
+		Assert.Single(capturedBody.Components!);
+	}
+
+	[Fact]
+	public async Task ToBuilder_CarriesContentAndClonedEmbedsAsync()
+	{
+		MessageCreateRequest? capturedBody = null;
+		Http.SendAsync<Message>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new Message { Author = new User { UserId = new Snowflake(1), Username = "bot" } });
+		Http.When(h => h.SendAsync<Message>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>()))
+			.Do(call => capturedBody = call.Arg<object?>() as MessageCreateRequest);
+
+		var channel = Substitute.For<ITextBasedChannel>();
+		channel.Id.Returns(_channelId);
+		var msg = new Message
+		{
+			Id = _messageId,
+			ChannelId = _channelId,
+			GuildId = _guildId,
+			Content = "hello world",
+			Timestamp = "2024-01-01T00:00:00+00:00",
+			Author = new User { UserId = new Snowflake(1), Username = "bot" },
+			Embeds = [new DiscoSdk.Models.Messages.Embeds.Embed { Title = "T", Description = "D" }],
+			Mentions = [],
+			Reactions = [],
+		};
+		var wrapper = new MessageWrapper(Client, channel, msg, interactionHandle: null);
+
+		await wrapper.ToBuilder().ExecuteAsync();
+
+		Assert.NotNull(capturedBody);
+		Assert.Equal("hello world", capturedBody!.Content);
+		Assert.NotNull(capturedBody.Embeds);
+		Assert.Single(capturedBody.Embeds!);
+		Assert.Equal("T", capturedBody.Embeds![0].Title);
+		Assert.Equal("D", capturedBody.Embeds[0].Description);
+	}
 }

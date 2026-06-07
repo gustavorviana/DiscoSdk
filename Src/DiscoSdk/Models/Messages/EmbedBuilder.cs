@@ -9,8 +9,8 @@ namespace DiscoSdk.Models.Messages;
 public class EmbedBuilder
 {
     private readonly List<EmbedField> _fields = [];
-    private readonly string? _title;
-    private readonly string? _url;
+    private string? _title;
+    private string? _url;
     private string? _type;
     private string? _description;
     private string? _timestamp;
@@ -41,6 +41,44 @@ public class EmbedBuilder
 
         _title = title;
         _url = url;
+    }
+
+    /// <summary>
+    /// Used internally by <see cref="From(Embed)"/> to bypass the title-required guard when
+    /// hydrating from a Discord-issued embed (where title is optional).
+    /// </summary>
+    private EmbedBuilder() { }
+
+    /// <summary>
+    /// Clones an existing <see cref="Embed"/> into a mutable builder so callers can edit a
+    /// message-bound embed in place (e.g. flip color on react, append a field on update).
+    /// Skips the title-required guard the public constructor enforces — Discord-issued embeds
+    /// (e.g. from received messages) often have a null title.
+    /// </summary>
+    public static EmbedBuilder From(Embed embed)
+    {
+        ArgumentNullException.ThrowIfNull(embed);
+
+        var b = new EmbedBuilder
+        {
+            _title = embed.Title,
+            _url = embed.Url,
+            _type = embed.Type,
+            _description = embed.Description,
+            _timestamp = embed.Timestamp,
+            _color = embed.Color,
+            _footer = embed.Footer,
+            _image = embed.Image,
+            _thumbnail = embed.Thumbnail,
+            _video = embed.Video,
+            _provider = embed.Provider,
+            _author = embed.Author,
+        };
+
+        if (embed.Fields is { Length: > 0 } fields)
+            b._fields.AddRange(fields);
+
+        return b;
     }
 
     /// <summary>

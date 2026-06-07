@@ -768,4 +768,76 @@ public class EmbedBuilderTests
 		Assert.NotNull(embed.Thumbnail);
 		Assert.NotNull(embed.Image);
 	}
+
+	[Fact]
+	public void From_ClonesEveryFieldIncludingFields()
+	{
+		var source = new DiscoSdk.Models.Messages.Embeds.Embed
+		{
+			Title = "T",
+			Description = "D",
+			Url = "https://example.com",
+			Type = "rich",
+			Color = new Color(0xAABBCC),
+			Timestamp = "2026-06-07T00:00:00.000Z",
+			Author = new DiscoSdk.Models.Messages.Embeds.EmbedAuthor { Name = "Author", Url = "https://author", IconUrl = "https://author/icon" },
+			Footer = new DiscoSdk.Models.Messages.Embeds.EmbedFooter { Text = "Footer", IconUrl = "https://footer/icon" },
+			Image = new DiscoSdk.Models.Messages.Embeds.EmbedImage { Url = "https://image" },
+			Thumbnail = new DiscoSdk.Models.Messages.Embeds.EmbedThumbnail { Url = "https://thumb" },
+			Video = new DiscoSdk.Models.Messages.Embeds.EmbedVideo { Url = "https://video", Width = 16, Height = 9 },
+			Provider = new DiscoSdk.Models.Messages.Embeds.EmbedProvider { Name = "Provider", Url = "https://provider" },
+			Fields = [
+				new DiscoSdk.Models.Messages.Embeds.EmbedField { Name = "F1", Value = "V1", Inline = true },
+				new DiscoSdk.Models.Messages.Embeds.EmbedField { Name = "F2", Value = "V2" },
+			],
+		};
+
+		var clone = EmbedBuilder.From(source).Build();
+
+		Assert.Equal(source.Title, clone.Title);
+		Assert.Equal(source.Description, clone.Description);
+		Assert.Equal(source.Url, clone.Url);
+		Assert.Equal(source.Type, clone.Type);
+		Assert.Equal(source.Color, clone.Color);
+		Assert.Equal(source.Timestamp, clone.Timestamp);
+		Assert.Equal(source.Author!.Name, clone.Author!.Name);
+		Assert.Equal(source.Footer!.Text, clone.Footer!.Text);
+		Assert.Equal(source.Image!.Url, clone.Image!.Url);
+		Assert.Equal(source.Thumbnail!.Url, clone.Thumbnail!.Url);
+		Assert.Equal(source.Video!.Url, clone.Video!.Url);
+		Assert.Equal(source.Provider!.Name, clone.Provider!.Name);
+		Assert.Equal(2, clone.Fields.Length);
+		Assert.Equal("F1", clone.Fields[0].Name);
+		Assert.True(clone.Fields[0].Inline);
+	}
+
+	[Fact]
+	public void From_NullTitle_Allowed()
+	{
+		var source = new DiscoSdk.Models.Messages.Embeds.Embed { Title = null, Description = "Body" };
+		var clone = EmbedBuilder.From(source).Build();
+		Assert.Null(clone.Title);
+		Assert.Equal("Body", clone.Description);
+	}
+
+	[Fact]
+	public void From_NullEmbed_Throws()
+	{
+		Assert.Throws<ArgumentNullException>(() => EmbedBuilder.From(null!));
+	}
+
+	[Fact]
+	public void From_MutationsAfterCloneDoNotAffectSource()
+	{
+		var source = new DiscoSdk.Models.Messages.Embeds.Embed
+		{
+			Title = "Original",
+			Fields = [new DiscoSdk.Models.Messages.Embeds.EmbedField { Name = "X", Value = "Y" }],
+		};
+
+		var clone = EmbedBuilder.From(source).AddField("New", "Value").Build();
+
+		Assert.Single(source.Fields);
+		Assert.Equal(2, clone.Fields.Length);
+	}
 }

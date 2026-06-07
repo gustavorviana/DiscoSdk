@@ -78,6 +78,19 @@ public interface IMessage : IMessageBase, IMentionable, IReasonedDeletable
     IEditMessageRestAction Edit();
 
     /// <summary>
+    /// Forks this message into a fresh <see cref="ISendMessageRestAction"/> pre-populated with
+    /// its content and embeds (cloned via <see cref="EmbedBuilder.From"/>). Use this when you
+    /// want to repost a near-copy with tweaks — chain <c>SetContent</c>/<c>AddEmbeds</c> to
+    /// override or add. Attachments are NOT carried over (Discord requires fresh file bytes
+    /// per send) and components are NOT cloned (rebuild via the per-type builders).
+    /// </summary>
+    /// <param name="target">
+    /// Destination channel for the new message. Pass <c>null</c> to default to this message's
+    /// own channel.
+    /// </param>
+    ISendMessageRestAction ToBuilder(Channels.ITextBasedChannel? target = null);
+
+    /// <summary>
     /// Creates a builder for replying to this message.
     /// </summary>
     /// <param name="content">The initial reply content.</param>

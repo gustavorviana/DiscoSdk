@@ -122,6 +122,65 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
         return new EditMessageRestAction(_client, Channel, Message, _interactionHandle);
     }
 
+    public ISendMessageRestAction ToBuilder(ITextBasedChannel? target = null)
+    {
+        // Reads against Content / Embeds / Components / Poll flow through the guarded properties
+        // so the MessageContent warn-once fires for callers cloning a message they only have
+        // header access to (the gated fields will come back empty in that case and the fork still
+        // produces something Discord accepts).
+        var builder = new SendMessageRestAction(_client, null, target ?? Channel, content: Content);
+
+        if (Embeds is { Length: > 0 })
+        {
+            builder.SetEmbeds([.. Embeds
+                .Select(EmbedBuilder.From)
+                .Select(b => b.Build())]);
+        }
+
+        if (Components is { Length: > 0 })
+        {
+            foreach (var component in Components)
+            {
+                if (component is IMessageComponent mc)
+                    builder.AddComponent(mc);
+            }
+        }
+
+        if (Poll != null)
+            builder.SetPoll(Poll);
+
+        if (Message.Tts)
+            builder.SetTts(true);
+
+        if (Message.Flags.HasFlag(MessageFlags.SuppressNotifications))
+            builder.SetSuppressNotifications(true);
+
+        if (Message.Flags.HasFlag(MessageFlags.SuppressEmbeds))
+            builder.SetSuppressEmbeds(true);
+
+        if (Message.Flags.HasFlag(MessageFlags.Ephemeral))
+            builder.SetEphemeral(true);
+
+        // StickerItems is the always-populated id+name+format projection; the Stickers field
+        // (full sticker objects) is rare and not needed here — Discord re-resolves from ids.
+        if (Message.StickerItems is { Length: > 0 } stickers)
+            builder.SetStickers(stickers.Select(s => s.Id));
+
+        // Preserve reply / forward references. The Type field decides whether Discord interprets
+        // the new send as a reply or a forward; default replies omit Type on the wire.
+        if (Message.MessageReference is { } reference && !string.IsNullOrEmpty(reference.MessageId))
+        {
+            builder.SetMessageReference(
+                reference.Type ?? MessageReferenceType.Default,
+                reference.MessageId,
+                reference.ChannelId,
+                reference.GuildId,
+                reference.FailIfNotExists);
+        }
+
+        return builder;
+    }
+
     public ISendMessageRestAction Reply(string? content = null)
     {
         return new SendMessageRestAction(_client, null, Channel, content)
