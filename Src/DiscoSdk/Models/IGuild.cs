@@ -424,6 +424,13 @@ public interface IGuild
     IRestAction<IReadOnlyList<IGuildThreadChannel>> ListActiveThreads();
 
     /// <summary>
+    /// Creates a builder for the onboarding write-side (<c>PUT /guilds/{guild.id}/onboarding</c>)
+    /// without first fetching the current state. Use <see cref="GetOnboarding"/> when you need
+    /// to read existing prompts before mutating them; use this when the new config is independent.
+    /// </summary>
+    IEditGuildOnboardingAction EditOnboarding();
+
+    /// <summary>
     /// Gets a REST action to retrieve all invites in this guild.
     /// </summary>
     /// <returns>A REST action that can be executed to retrieve invites.</returns>

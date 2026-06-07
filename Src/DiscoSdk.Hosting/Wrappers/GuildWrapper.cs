@@ -459,6 +459,9 @@ internal class GuildWrapper : IGuild
     public IRestAction<IGuildOnboarding> GetOnboarding()
         => RestAction<IGuildOnboarding>.Create(async ct => new GuildOnboardingWrapper(_client, await _client.GuildTemplateClient.GetOnboardingAsync(_guild.Id, ct)));
 
+    public IEditGuildOnboardingAction EditOnboarding()
+        => new EditGuildOnboardingAction(_client, _guild.Id);
+
     public IRestAction<IReadOnlyList<IGuildTemplate>> GetTemplates()
         => RestAction<IReadOnlyList<IGuildTemplate>>.Create(async ct =>
         {

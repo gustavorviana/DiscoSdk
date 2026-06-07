@@ -99,13 +99,15 @@ internal class GuildTemplateClient(IDiscordRestClient client)
 	}
 
 	/// <summary>Modifies the onboarding configuration for a guild.</summary>
-	public Task<GuildOnboarding> ModifyOnboardingAsync(Snowflake guildId, object request, CancellationToken cancellationToken = default)
+	public Task<GuildOnboarding> ModifyOnboardingAsync(Snowflake guildId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 		ArgumentNullException.ThrowIfNull(request);
 
 		var route = new DiscordRoute("guilds/{guild_id}/onboarding", guildId);
-		return client.SendAsync<GuildOnboarding>(route, HttpMethod.Put, request, cancellationToken);
+		return string.IsNullOrEmpty(auditLogReason)
+			? client.SendAsync<GuildOnboarding>(route, HttpMethod.Put, request, cancellationToken)
+			: client.SendWithReasonAsync<GuildOnboarding>(route, HttpMethod.Put, request, auditLogReason, cancellationToken);
 	}
 }
