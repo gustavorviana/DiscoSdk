@@ -49,11 +49,42 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
     {
         get
         {
-            IntentGuard.Require(_client, DiscordIntent.MessageContent, "access message content");
-            return Message.Content;
+            WarnIfMessageContentMissing(MessageContentField.Content);
+            return Message.Content ?? string.Empty;
         }
     }
-    public IInteractionComponent[]? Components => Message.Components;
+    public override DiscoSdk.Models.Messages.Embeds.Embed[] Embeds
+    {
+        get
+        {
+            WarnIfMessageContentMissing(MessageContentField.Embeds);
+            return Message.Embeds ?? [];
+        }
+    }
+    public override DiscoSdk.Models.Messages.Attachment[] Attachments
+    {
+        get
+        {
+            WarnIfMessageContentMissing(MessageContentField.Attachments);
+            return Message.Attachments ?? [];
+        }
+    }
+    public override DiscoSdk.Models.Messages.Pools.Poll? Poll
+    {
+        get
+        {
+            WarnIfMessageContentMissing(MessageContentField.Poll);
+            return Message.Pool;
+        }
+    }
+    public IInteractionComponent[]? Components
+    {
+        get
+        {
+            WarnIfMessageContentMissing(MessageContentField.Components);
+            return Message.Components;
+        }
+    }
     public IReaction[] Reactions { get; }
     private IReadOnlyList<IMessageSnapshot>? _messageSnapshots;
     public IReadOnlyList<IMessageSnapshot> MessageSnapshots => _messageSnapshots ??=
@@ -226,12 +257,53 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
     /// <returns>True if the message author is the bot, false otherwise.</returns>
     private bool IsBotMessage()
     {
-        if (string.IsNullOrEmpty(_client.BotUser?.Id))
-            return false;
-
-        if (!Snowflake.TryParse(_client.BotUser.Id, out var botId))
+        if (!TryGetBotUserId(out var botId))
             return false;
 
         return Message.Author.UserId == botId;
+    }
+
+    /// <summary>
+    /// Parses the bot's user id from <see cref="DiscordClient.BotUser"/> into a <see cref="Snowflake"/>.
+    /// </summary>
+    private bool TryGetBotUserId(out Snowflake botId)
+    {
+        botId = default;
+        if (string.IsNullOrEmpty(_client.BotUser?.Id))
+            return false;
+
+        return Snowflake.TryParse(_client.BotUser.Id, out botId);
+    }
+
+    /// <summary>
+    /// Emits a one-shot warning (per field, per process) when a content-gated field is read
+    /// without the privileged <see cref="DiscordIntent.MessageContent"/> intent and outside
+    /// Discord's exemption list (bot is author, bot is mentioned, channel is DM / group DM).
+    /// The accessor itself returns the underlying value — empty for non-exempt messages without
+    /// the intent — so callers using <c>?.</c>, LINQ, logging, or serialization don't blow up
+    /// on a property getter. Warn-once-per-field prevents log spam on hot paths while giving
+    /// the operator a single grep target the first time the misconfig is hit.
+    /// </summary>
+    private void WarnIfMessageContentMissing(MessageContentField field)
+    {
+        // Intent on — nothing to warn about.
+        if (_client.Intents.HasFlag(DiscordIntent.MessageContent))
+            return;
+
+        // Bot is the author — Discord populates content on its own messages.
+        if (IsBotMessage())
+            return;
+
+        // DM / group DM — Discord exempts the entire channel category from MessageContent.
+        if (Channel.Type is ChannelType.Dm or ChannelType.GroupDm)
+            return;
+
+        // Bot is mentioned — Discord populates content on @-mention.
+        if (TryGetBotUserId(out var botId)
+            && Message.Mentions is { Length: > 0 } mentions
+            && mentions.Any(m => m.UserId == botId))
+            return;
+
+        MessageContentWarnTracker.WarnOnce(_client.Logger, field);
     }
 }

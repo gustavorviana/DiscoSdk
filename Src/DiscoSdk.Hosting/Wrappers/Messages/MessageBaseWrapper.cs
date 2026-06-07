@@ -13,11 +13,11 @@ internal abstract class MessageBaseWrapper(Message message) : IMessageBase
 
     public virtual string Content => message.Content;
 
-    public Poll? Poll => message.Pool;
+    public virtual Poll? Poll => message.Pool;
 
-    public Embed[] Embeds => message.Embeds;
+    public virtual Embed[] Embeds => message.Embeds;
 
-    public Attachment[] Attachments => message.Attachments;
+    public virtual Attachment[] Attachments => message.Attachments;
 
     public DateTimeOffset? UpdatedAt { get; }
         = message.EditedTimestamp != null

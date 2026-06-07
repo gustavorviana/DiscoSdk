@@ -201,6 +201,8 @@ namespace DiscoSdk.Hosting
         /// <returns>A task that represents the asynchronous start operation.</returns>
         public async Task StartAsync()
         {
+            LogPrivilegedIntentReminder();
+
             var gatewayInfo = await new DiscordGatewayClient(HttpClient).GetGatewayBotInfoAsync();
 
             foreach (var module in Modules.OfType<ILifetimeDiscoModule>())
@@ -214,6 +216,32 @@ namespace DiscoSdk.Hosting
             _eventProcessorPool.Start();
             _shardPool.SetGateway(gatewayInfo);
             await _shardPool.InitShardsAsync();
+        }
+
+        /// <summary>
+        /// Emits a one-shot Information log naming every privileged intent the bot requested
+        /// (<see cref="DiscordIntent.GuildMembers"/>, <see cref="DiscordIntent.GuildPresences"/>,
+        /// <see cref="DiscordIntent.MessageContent"/>) so the operator has a single grep target
+        /// when chasing a Discord close code 4014. Sending a privileged bit in <c>IDENTIFY</c>
+        /// without the matching Developer Portal flag is the cause; surfacing the requested set
+        /// here turns "shard refuses to identify" into a one-line correlation, instead of an
+        /// opaque connection loop.
+        /// </summary>
+        internal void LogPrivilegedIntentReminder()
+        {
+            const DiscordIntent privilegedMask =
+                DiscordIntent.GuildMembers
+                | DiscordIntent.GuildPresences
+                | DiscordIntent.MessageContent;
+
+            var privileged = _config.Intents & privilegedMask;
+            if (privileged == DiscordIntent.None)
+                return;
+
+            Logger.Log(
+                LogLevel.Information,
+                "Privileged gateway intents requested: {Privileged}. Each must also be enabled in the Discord Developer Portal — sending a privileged bit in IDENTIFY without the portal flag earns close code 4014 (Disallowed Intents) and refuses the session.",
+                privileged);
         }
 
         /// <summary>
