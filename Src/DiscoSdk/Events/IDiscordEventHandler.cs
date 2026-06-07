@@ -22,6 +22,7 @@ public interface IDiscordEventHandler<TContext> : IDiscordEventHandler
 /// <summary>
 /// Interface for handling message creation events.
 /// </summary>
+[RequiresIntent(DiscordIntent.GuildMessages | DiscordIntent.DirectMessages)]
 public interface IMessageCreateHandler : IDiscordEventHandler<IMessageCreateContext>
 {
 }
@@ -29,6 +30,7 @@ public interface IMessageCreateHandler : IDiscordEventHandler<IMessageCreateCont
 /// <summary>
 /// Interface for handling message update events.
 /// </summary>
+[RequiresIntent(DiscordIntent.GuildMessages | DiscordIntent.DirectMessages)]
 public interface IMessageUpdateHandler : IDiscordEventHandler<IMessageUpdateContext>
 {
 }
@@ -36,6 +38,7 @@ public interface IMessageUpdateHandler : IDiscordEventHandler<IMessageUpdateCont
 /// <summary>
 /// Interface for handling message deletion events.
 /// </summary>
+[RequiresIntent(DiscordIntent.GuildMessages | DiscordIntent.DirectMessages)]
 public interface IMessageDeleteHandler : IDiscordEventHandler<IMessageDeleteContext>
 {
 }
@@ -43,6 +46,7 @@ public interface IMessageDeleteHandler : IDiscordEventHandler<IMessageDeleteCont
 /// <summary>
 /// Interface for handling guild creation events.
 /// </summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IGuildCreateHandler : IDiscordEventHandler<IGuildContext>
 {
 }
@@ -50,6 +54,7 @@ public interface IGuildCreateHandler : IDiscordEventHandler<IGuildContext>
 /// <summary>
 /// Interface for handling guild update events.
 /// </summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IGuildUpdateHandler : IDiscordEventHandler<IGuildContext>
 {
 }
@@ -57,6 +62,7 @@ public interface IGuildUpdateHandler : IDiscordEventHandler<IGuildContext>
 /// <summary>
 /// Interface for handling guild deletion events.
 /// </summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IGuildDeleteHandler : IDiscordEventHandler<IGuildDeleteContext>
 {
 }
@@ -64,6 +70,7 @@ public interface IGuildDeleteHandler : IDiscordEventHandler<IGuildDeleteContext>
 /// <summary>
 /// Interface for handling channel creation events.
 /// </summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IChannelCreateHandler : IDiscordEventHandler<IChannelContext>
 {
 }
@@ -71,6 +78,7 @@ public interface IChannelCreateHandler : IDiscordEventHandler<IChannelContext>
 /// <summary>
 /// Interface for handling channel update events.
 /// </summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IChannelUpdateHandler : IDiscordEventHandler<IChannelContext>
 {
 }
@@ -78,6 +86,7 @@ public interface IChannelUpdateHandler : IDiscordEventHandler<IChannelContext>
 /// <summary>
 /// Interface for handling channel deletion events.
 /// </summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IChannelDeleteHandler : IDiscordEventHandler<IChannelDeleteContext>
 {
 }
@@ -85,6 +94,7 @@ public interface IChannelDeleteHandler : IDiscordEventHandler<IChannelDeleteCont
 /// <summary>
 /// Interface for handling message reaction add events.
 /// </summary>
+[RequiresIntent(DiscordIntent.GuildMessageReactions | DiscordIntent.DirectMessageReactions)]
 public interface IMessageReactionAddHandler : IDiscordEventHandler<IMessageAddReactionContext>
 {
 }
@@ -92,6 +102,7 @@ public interface IMessageReactionAddHandler : IDiscordEventHandler<IMessageAddRe
 /// <summary>
 /// Interface for handling message reaction remove events.
 /// </summary>
+[RequiresIntent(DiscordIntent.GuildMessageReactions | DiscordIntent.DirectMessageReactions)]
 public interface IMessageReactionRemoveHandler : IDiscordEventHandler<IMessageDeleteReactionContext>
 {
 }
@@ -99,6 +110,7 @@ public interface IMessageReactionRemoveHandler : IDiscordEventHandler<IMessageDe
 /// <summary>
 /// Interface for handling typing start events.
 /// </summary>
+[RequiresIntent(DiscordIntent.GuildMessageTyping | DiscordIntent.DirectMessageTyping)]
 public interface ITypingStartHandler : IDiscordEventHandler<ITypingContext>
 {
 }
@@ -161,6 +173,7 @@ public interface IMessageCommandHandler : IDiscordEventHandler<IMessageCommandCo
 /// <summary>
 /// Interface for handling <c>GUILD_MEMBER_ADD</c> events — a user joined a guild.
 /// </summary>
+[RequiresIntent(DiscordIntent.GuildMembers)]
 public interface IGuildMemberAddHandler : IDiscordEventHandler<IGuildMemberAddContext>
 {
 }
@@ -168,6 +181,7 @@ public interface IGuildMemberAddHandler : IDiscordEventHandler<IGuildMemberAddCo
 /// <summary>
 /// Interface for handling <c>GUILD_MEMBER_REMOVE</c> events — a user left, was kicked, or banned.
 /// </summary>
+[RequiresIntent(DiscordIntent.GuildMembers)]
 public interface IGuildMemberRemoveHandler : IDiscordEventHandler<IGuildMemberRemoveContext>
 {
 }
@@ -175,46 +189,55 @@ public interface IGuildMemberRemoveHandler : IDiscordEventHandler<IGuildMemberRe
 /// <summary>
 /// Interface for handling <c>GUILD_MEMBER_UPDATE</c> events — a member's roles/nickname/timeout/etc. changed.
 /// </summary>
+[RequiresIntent(DiscordIntent.GuildMembers)]
 public interface IGuildMemberUpdateHandler : IDiscordEventHandler<IGuildMemberUpdateContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_ROLE_CREATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IGuildRoleCreateHandler : IDiscordEventHandler<IGuildRoleContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_ROLE_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IGuildRoleUpdateHandler : IDiscordEventHandler<IGuildRoleContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_ROLE_DELETE</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IGuildRoleDeleteHandler : IDiscordEventHandler<IGuildRoleDeleteContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_BAN_ADD</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildModeration)]
 public interface IGuildBanAddHandler : IDiscordEventHandler<IGuildBanContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_BAN_REMOVE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildModeration)]
 public interface IGuildBanRemoveHandler : IDiscordEventHandler<IGuildBanContext>
 {
 }
 
 /// <summary>Interface for handling <c>MESSAGE_DELETE_BULK</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildMessages)]
 public interface IMessageDeleteBulkHandler : IDiscordEventHandler<IMessageDeleteBulkContext>
 {
 }
 
 /// <summary>Interface for handling <c>MESSAGE_REACTION_REMOVE_ALL</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildMessageReactions | DiscordIntent.DirectMessageReactions)]
 public interface IMessageReactionRemoveAllHandler : IDiscordEventHandler<IMessageReactionRemoveAllContext>
 {
 }
 
 /// <summary>Interface for handling <c>MESSAGE_REACTION_REMOVE_EMOJI</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildMessageReactions | DiscordIntent.DirectMessageReactions)]
 public interface IMessageReactionRemoveEmojiHandler : IDiscordEventHandler<IMessageReactionRemoveEmojiContext>
 {
 }
@@ -225,126 +248,151 @@ public interface IUserUpdateHandler : IDiscordEventHandler<IUserUpdateContext>
 }
 
 /// <summary>Interface for handling <c>CHANNEL_PINS_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds | DiscordIntent.DirectMessages)]
 public interface IChannelPinsUpdateHandler : IDiscordEventHandler<IChannelPinsUpdateContext>
 {
 }
 
 /// <summary>Interface for handling <c>WEBHOOKS_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildWebhooks)]
 public interface IWebhooksUpdateHandler : IDiscordEventHandler<IWebhooksUpdateContext>
 {
 }
 
 /// <summary>Interface for handling <c>INVITE_CREATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildInvites)]
 public interface IInviteCreateHandler : IDiscordEventHandler<IInviteCreateContext>
 {
 }
 
 /// <summary>Interface for handling <c>INVITE_DELETE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildInvites)]
 public interface IInviteDeleteHandler : IDiscordEventHandler<IInviteDeleteContext>
 {
 }
 
 /// <summary>Interface for handling <c>THREAD_CREATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IThreadCreateHandler : IDiscordEventHandler<IThreadContext>
 {
 }
 
 /// <summary>Interface for handling <c>THREAD_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IThreadUpdateHandler : IDiscordEventHandler<IThreadContext>
 {
 }
 
 /// <summary>Interface for handling <c>THREAD_DELETE</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IThreadDeleteHandler : IDiscordEventHandler<IThreadDeleteContext>
 {
 }
 
 /// <summary>Interface for handling <c>THREAD_LIST_SYNC</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IThreadListSyncHandler : IDiscordEventHandler<IThreadListSyncContext>
 {
 }
 
 /// <summary>Interface for handling <c>THREAD_MEMBER_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IThreadMemberUpdateHandler : IDiscordEventHandler<IThreadMemberUpdateContext>
 {
 }
 
 /// <summary>Interface for handling <c>THREAD_MEMBERS_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IThreadMembersUpdateHandler : IDiscordEventHandler<IThreadMembersUpdateContext>
 {
 }
 
 /// <summary>Interface for handling <c>STAGE_INSTANCE_CREATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IStageInstanceCreateHandler : IDiscordEventHandler<IStageInstanceContext>
 {
 }
 
 /// <summary>Interface for handling <c>STAGE_INSTANCE_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IStageInstanceUpdateHandler : IDiscordEventHandler<IStageInstanceContext>
 {
 }
 
 /// <summary>Interface for handling <c>STAGE_INSTANCE_DELETE</c> events.</summary>
+[RequiresIntent(DiscordIntent.Guilds)]
 public interface IStageInstanceDeleteHandler : IDiscordEventHandler<IStageInstanceContext>
 {
 }
 
 /// <summary>Interface for handling <c>AUTO_MODERATION_RULE_CREATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.AutoModerationConfiguration)]
 public interface IAutoModerationRuleCreateHandler : IDiscordEventHandler<IAutoModerationRuleContext>
 {
 }
 
 /// <summary>Interface for handling <c>AUTO_MODERATION_RULE_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.AutoModerationConfiguration)]
 public interface IAutoModerationRuleUpdateHandler : IDiscordEventHandler<IAutoModerationRuleContext>
 {
 }
 
 /// <summary>Interface for handling <c>AUTO_MODERATION_RULE_DELETE</c> events.</summary>
+[RequiresIntent(DiscordIntent.AutoModerationConfiguration)]
 public interface IAutoModerationRuleDeleteHandler : IDiscordEventHandler<IAutoModerationRuleContext>
 {
 }
 
 /// <summary>Interface for handling <c>AUTO_MODERATION_ACTION_EXECUTION</c> events.</summary>
+[RequiresIntent(DiscordIntent.AutoModerationExecution)]
 public interface IAutoModerationActionExecutionHandler : IDiscordEventHandler<IAutoModerationActionExecutionContext>
 {
 }
 
 /// <summary>Interface for handling <c>INTEGRATION_CREATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildIntegrations)]
 public interface IIntegrationCreateHandler : IDiscordEventHandler<IIntegrationContext>
 {
 }
 
 /// <summary>Interface for handling <c>INTEGRATION_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildIntegrations)]
 public interface IIntegrationUpdateHandler : IDiscordEventHandler<IIntegrationContext>
 {
 }
 
 /// <summary>Interface for handling <c>INTEGRATION_DELETE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildIntegrations)]
 public interface IIntegrationDeleteHandler : IDiscordEventHandler<IIntegrationDeleteContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_SCHEDULED_EVENT_CREATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildScheduledEvents)]
 public interface IGuildScheduledEventCreateHandler : IDiscordEventHandler<IGuildScheduledEventContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_SCHEDULED_EVENT_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildScheduledEvents)]
 public interface IGuildScheduledEventUpdateHandler : IDiscordEventHandler<IGuildScheduledEventContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_SCHEDULED_EVENT_DELETE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildScheduledEvents)]
 public interface IGuildScheduledEventDeleteHandler : IDiscordEventHandler<IGuildScheduledEventContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_SCHEDULED_EVENT_USER_ADD</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildScheduledEvents)]
 public interface IGuildScheduledEventUserAddHandler : IDiscordEventHandler<IGuildScheduledEventUserContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_SCHEDULED_EVENT_USER_REMOVE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildScheduledEvents)]
 public interface IGuildScheduledEventUserRemoveHandler : IDiscordEventHandler<IGuildScheduledEventUserContext>
 {
 }
@@ -365,26 +413,31 @@ public interface IEntitlementDeleteHandler : IDiscordEventHandler<IEntitlementCo
 }
 
 /// <summary>Interface for handling <c>GUILD_AUDIT_LOG_ENTRY_CREATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildModeration)]
 public interface IAuditLogEntryCreateHandler : IDiscordEventHandler<IAuditLogEntryCreateContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_EMOJIS_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildExpressions)]
 public interface IGuildEmojisUpdateHandler : IDiscordEventHandler<IGuildEmojisUpdateContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_STICKERS_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildExpressions)]
 public interface IGuildStickersUpdateHandler : IDiscordEventHandler<IGuildStickersUpdateContext>
 {
 }
 
 /// <summary>Interface for handling <c>GUILD_INTEGRATIONS_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildIntegrations)]
 public interface IGuildIntegrationsUpdateHandler : IDiscordEventHandler<IGuildIntegrationsUpdateContext>
 {
 }
 
 /// <summary>Interface for handling <c>PRESENCE_UPDATE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildPresences)]
 public interface IPresenceUpdateHandler : IDiscordEventHandler<IPresenceUpdateContext>
 {
 }
@@ -395,11 +448,13 @@ public interface IGuildMembersChunkHandler : IDiscordEventHandler<IGuildMembersC
 }
 
 /// <summary>Interface for handling <c>MESSAGE_POLL_VOTE_ADD</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildMessagePolls | DiscordIntent.DirectMessagePolls)]
 public interface IMessagePollVoteAddHandler : IDiscordEventHandler<IMessagePollVoteContext>
 {
 }
 
 /// <summary>Interface for handling <c>MESSAGE_POLL_VOTE_REMOVE</c> events.</summary>
+[RequiresIntent(DiscordIntent.GuildMessagePolls | DiscordIntent.DirectMessagePolls)]
 public interface IMessagePollVoteRemoveHandler : IDiscordEventHandler<IMessagePollVoteContext>
 {
 }

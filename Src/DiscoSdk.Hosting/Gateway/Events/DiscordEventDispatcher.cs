@@ -87,6 +87,11 @@ internal class DiscordEventDispatcher
                     _handlerIndicesByType[interfaceType] = indices;
                 }
                 indices.Add(index);
+
+                EventHandlerIntentWarnTracker.CheckAndWarn(
+                    _discordClient.Logger,
+                    interfaceType,
+                    _discordClient.Intents);
             }
         }
     }
