@@ -47,9 +47,23 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
     }
 
     /// <summary>
-    /// Gets a read-only dictionary of cached guilds.
+    /// Gets a read-only dictionary of cached guilds. Returns an empty dictionary (without
+    /// touching the cache) when the client lacks <see cref="DiscordIntent.Guilds"/>, since
+    /// the cache is unreachable in that mode.
     /// </summary>
-    public IReadOnlyDictionary<Snowflake, IGuild> All => _guildCache;
+    public IReadOnlyDictionary<Snowflake, IGuild> All
+    {
+        get
+        {
+            if (!client.Intents.HasFlag(DiscordIntent.Guilds))
+            {
+                GuildCacheWarnTracker.WarnMissing(_logger);
+                return new Dictionary<Snowflake, IGuild>();
+            }
+
+            return _guildCache;
+        }
+    }
 
     /// <summary>
     /// Initializes the pending guilds list from the Ready payload.
@@ -146,6 +160,12 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
         if (guildId.Empty)
             return null;
 
+        if (!client.Intents.HasFlag(DiscordIntent.Guilds))
+        {
+            GuildCacheWarnTracker.WarnMissing(_logger);
+            return null;
+        }
+
         if (_guildCache.TryGetValue(guildId, out var cachedGuild))
             return cachedGuild;
 
@@ -182,6 +202,13 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
     {
         if (guildId.Empty)
         {
+            guild = null;
+            return false;
+        }
+
+        if (!client.Intents.HasFlag(DiscordIntent.Guilds))
+        {
+            GuildCacheWarnTracker.WarnMissing(_logger);
             guild = null;
             return false;
         }
