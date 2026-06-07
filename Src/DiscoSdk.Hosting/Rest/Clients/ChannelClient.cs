@@ -52,13 +52,13 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 	/// <param name="channelId">The ID of the channel to delete.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The deleted channel.</returns>
-	public Task DeleteAsync(Snowflake channelId, CancellationToken cancellationToken = default)
+	public Task DeleteAsync(Snowflake channelId, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		if (channelId == default)
 			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
 		var route = new DiscordRoute("channels/{channel_id}", channelId);
-		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>
@@ -97,7 +97,7 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 	/// <returns>A task that represents the asynchronous operation.</returns>
 	public Task DeleteMessageAsync(Snowflake channelId, Snowflake messageId, CancellationToken cancellationToken = default)
 	{
-		return messageClient.DeleteAsync(channelId, messageId, cancellationToken);
+		return messageClient.DeleteAsync(channelId, messageId, cancellationToken: cancellationToken);
 	}
 
 	/// <summary>

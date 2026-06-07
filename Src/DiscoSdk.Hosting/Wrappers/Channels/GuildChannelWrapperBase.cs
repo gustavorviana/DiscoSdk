@@ -46,4 +46,15 @@ internal abstract class GuildChannelWrapperBase(DiscordClient client, Channel ch
     {
         return new ChannelPermissionCalculator(guild, GetPermissionContainer()).GetPermission(member);
     }
+
+    /// <summary>
+    /// Audit-log-aware override of <see cref="ChannelWrapper.Delete"/>: guild channel deletion is
+    /// recorded in the audit log, so the wrapper exposes a <see cref="IReasonedRestAction"/> so
+    /// callers can chain <see cref="IRestActionWithReason{TSelf}.WithReason"/>. The base
+    /// <see cref="IDeletable.Delete"/> contract is satisfied via the explicit interface impl below.
+    /// </summary>
+    public new IReasonedRestAction Delete()
+        => new ReasonedRestAction((reason, ct) => _client.ChannelClient.DeleteAsync(_channel.Id, reason, ct));
+
+    IRestAction IDeletable.Delete() => Delete();
 }

@@ -1,6 +1,7 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Hosting.Models.Requests.Stickers;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -15,6 +16,7 @@ internal sealed class ModifyGuildStickerAction(DiscordClient client, Snowflake g
 	private string? _name;
 	private string? _description;
 	private string? _tags;
+	private string? _reason;
 
 	/// <inheritdoc />
 	public IModifyGuildStickerAction SetName(string name) { _name = name; return this; }
@@ -22,6 +24,13 @@ internal sealed class ModifyGuildStickerAction(DiscordClient client, Snowflake g
 	public IModifyGuildStickerAction SetDescription(string description) { _description = description; return this; }
 	/// <inheritdoc />
 	public IModifyGuildStickerAction SetTags(string tags) { _tags = tags; return this; }
+
+	/// <inheritdoc />
+	public IModifyGuildStickerAction WithReason(string reason)
+	{
+		_reason = AuditLogReason.Validate(reason);
+		return this;
+	}
 
 	/// <inheritdoc />
 	public override async Task<ISticker> ExecuteAsync(CancellationToken cancellationToken = default)
@@ -33,7 +42,7 @@ internal sealed class ModifyGuildStickerAction(DiscordClient client, Snowflake g
 			Tags = _tags,
 		};
 
-		var model = await _client.StickerClient.ModifyGuildStickerAsync(_guildId, _stickerId, request, cancellationToken);
+		var model = await _client.StickerClient.ModifyGuildStickerAsync(_guildId, _stickerId, request, _reason, cancellationToken);
 		return new StickerWrapper(_client, model);
 	}
 }

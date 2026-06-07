@@ -1,5 +1,6 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -12,6 +13,7 @@ internal sealed class ModifyWebhookAction : RestAction<IWebhook>, IModifyWebhook
     private string? _avatar;
     private bool _setAvatar;
     private Snowflake? _channelId;
+    private string? _reason;
 
     public ModifyWebhookAction(DiscordClient client, Snowflake webhookId)
     {
@@ -47,6 +49,12 @@ internal sealed class ModifyWebhookAction : RestAction<IWebhook>, IModifyWebhook
         return this;
     }
 
+    public IModifyWebhookAction WithReason(string reason)
+    {
+        _reason = AuditLogReason.Validate(reason);
+        return this;
+    }
+
     public override async Task<IWebhook> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         var body = new Dictionary<string, object?>();
@@ -54,7 +62,7 @@ internal sealed class ModifyWebhookAction : RestAction<IWebhook>, IModifyWebhook
         if (_setAvatar) body["avatar"] = _avatar;
         if (_channelId.HasValue) body["channel_id"] = _channelId.Value.ToString();
 
-        var updated = await _client.WebhookClient.ModifyAsync(_webhookId, body, cancellationToken);
+        var updated = await _client.WebhookClient.ModifyAsync(_webhookId, body, _reason, cancellationToken);
         return new WebhookWrapper(_client, updated);
     }
 }

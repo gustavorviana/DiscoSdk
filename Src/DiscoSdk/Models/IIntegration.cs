@@ -6,7 +6,7 @@ namespace DiscoSdk.Models;
 /// <summary>
 /// Represents a Discord guild integration (subscriber-sync from Twitch / YouTube / Discord bots, etc).
 /// </summary>
-public interface IIntegration : IWithSnowflake
+public interface IIntegration : IWithSnowflake, IReasonedDeletable
 {
 	/// <summary>The display name of the integration.</summary>
 	string Name { get; }
@@ -50,8 +50,4 @@ public interface IIntegration : IWithSnowflake
 	/// <summary>The scopes the integration was authorized for.</summary>
 	IReadOnlyList<string>? Scopes { get; }
 
-	/// <summary>
-	/// Gets a REST action that deletes this guild integration (revokes it and removes the linked role).
-	/// </summary>
-	IRestAction Delete();
 }

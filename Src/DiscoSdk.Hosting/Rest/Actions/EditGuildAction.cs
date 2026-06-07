@@ -1,6 +1,7 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -37,6 +38,13 @@ internal class EditGuildAction : RestAction<IGuild>, IEditGuildAction
 	private bool? _premiumProgressBarEnabled;
 	private Snowflake? _safetyAlertsChannelId;
 	private bool _safetyAlertsChannelIdSet;
+	private string? _reason;
+
+	public IEditGuildAction WithReason(string reason)
+	{
+		_reason = AuditLogReason.Validate(reason);
+		return this;
+	}
 
 	public EditGuildAction(DiscordClient client, IGuild guild)
 	{
@@ -229,7 +237,7 @@ internal class EditGuildAction : RestAction<IGuild>, IEditGuildAction
 		if (_safetyAlertsChannelIdSet)
 			request["safety_alerts_channel_id"] = _safetyAlertsChannelId?.ToString();
 
-		var guild = await _client.GuildClient.EditAsync(_guild.Id, request, cancellationToken);
+		var guild = await _client.GuildClient.EditAsync(_guild.Id, request, _reason, cancellationToken);
 
 		// Update the wrapper if it's a GuildWrapper
 		if (_guild is GuildWrapper wrapper)

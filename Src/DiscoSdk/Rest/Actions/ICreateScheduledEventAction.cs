@@ -8,7 +8,7 @@ namespace DiscoSdk.Rest.Actions;
 /// required <c>name</c>, <c>scheduled_start_time</c>, and <c>entity_type</c>; the optional fields
 /// are set through the chain.
 /// </summary>
-public interface ICreateScheduledEventAction : IRestAction<IGuildScheduledEvent>
+public interface ICreateScheduledEventAction : IRestAction<IGuildScheduledEvent>, IRestActionWithReason<ICreateScheduledEventAction>
 {
 	/// <summary>Sets the privacy level. Defaults to <see cref="ScheduledEventPrivacyLevel.GuildOnly"/>.</summary>
 	ICreateScheduledEventAction SetPrivacyLevel(ScheduledEventPrivacyLevel privacyLevel);

@@ -1,4 +1,5 @@
 using DiscoSdk.Models;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -16,12 +17,8 @@ internal class EditWelcomeScreenAction : RestAction<IWelcomeScreen>, IEditWelcom
 	private bool _enabledSet;
 	private bool _descriptionSet;
 	private bool _channelsCleared;
+	private string? _reason;
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="EditWelcomeScreenAction"/> class.
-	/// </summary>
-	/// <param name="client">The Discord client.</param>
-	/// <param name="guild">The guild to edit the welcome screen for.</param>
 	public EditWelcomeScreenAction(DiscordClient client, IGuild guild)
 	{
 		_client = client ?? throw new ArgumentNullException(nameof(client));
@@ -78,6 +75,13 @@ internal class EditWelcomeScreenAction : RestAction<IWelcomeScreen>, IEditWelcom
 	}
 
 	/// <inheritdoc />
+	public IEditWelcomeScreenAction WithReason(string reason)
+	{
+		_reason = AuditLogReason.Validate(reason);
+		return this;
+	}
+
+	/// <inheritdoc />
 	public override async Task<IWelcomeScreen> ExecuteAsync(CancellationToken cancellationToken = default)
 	{
 		var request = new Dictionary<string, object?>();
@@ -91,7 +95,6 @@ internal class EditWelcomeScreenAction : RestAction<IWelcomeScreen>, IEditWelcom
 		if (_channelsCleared || _channels.Count > 0)
 			request["welcome_channels"] = _channels.ToArray();
 
-		return await _client.GuildClient.EditWelcomeScreenAsync(_guild.Id, request, cancellationToken);
+		return await _client.GuildClient.EditWelcomeScreenAsync(_guild.Id, request, _reason, cancellationToken);
 	}
 }
-

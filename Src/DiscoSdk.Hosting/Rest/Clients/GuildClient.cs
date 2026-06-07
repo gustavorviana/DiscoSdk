@@ -194,7 +194,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="request">The channel creation request.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The created channel.</returns>
-    public Task<Channel> CreateChannelAsync(Snowflake guildId, object request, CancellationToken cancellationToken = default)
+    public Task<Channel> CreateChannelAsync(Snowflake guildId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -202,7 +202,7 @@ internal class GuildClient(IDiscordRestClient client)
         ArgumentNullException.ThrowIfNull(request);
 
         var route = new DiscordRoute("guilds/{guild_id}/channels", guildId);
-        return client.SendAsync<Channel>(route, HttpMethod.Post, request, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<Channel>(route, HttpMethod.Post, request, cancellationToken) : client.SendWithReasonAsync<Channel>(route, HttpMethod.Post, request, auditLogReason, cancellationToken));
     }
 
     /// <summary>
@@ -213,7 +213,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="request">The ban request.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public Task BanMemberAsync(Snowflake guildId, Snowflake userId, object request, CancellationToken cancellationToken = default)
+    public Task BanMemberAsync(Snowflake guildId, Snowflake userId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -224,7 +224,7 @@ internal class GuildClient(IDiscordRestClient client)
         ArgumentNullException.ThrowIfNull(request);
 
         var route = new DiscordRoute("guilds/{guild_id}/bans/{user_id}", guildId, userId);
-        return client.SendAsync(route, HttpMethod.Put, request, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Put, request, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Put, request, auditLogReason, cancellationToken));
     }
 
     /// <summary>
@@ -234,7 +234,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="userId">The ID of the user to unban.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public Task UnbanMemberAsync(Snowflake guildId, Snowflake userId, CancellationToken cancellationToken = default)
+    public Task UnbanMemberAsync(Snowflake guildId, Snowflake userId, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -243,7 +243,7 @@ internal class GuildClient(IDiscordRestClient client)
             throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
         var route = new DiscordRoute("guilds/{guild_id}/bans/{user_id}", guildId, userId);
-        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
     }
 
     /// <summary>
@@ -253,7 +253,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="userId">The ID of the user to kick.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public Task KickMemberAsync(Snowflake guildId, Snowflake userId, CancellationToken cancellationToken = default)
+    public Task KickMemberAsync(Snowflake guildId, Snowflake userId, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -262,7 +262,7 @@ internal class GuildClient(IDiscordRestClient client)
             throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
 
         var route = new DiscordRoute("guilds/{guild_id}/members/{user_id}", guildId, userId);
-        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
     }
 
     /// <summary>
@@ -272,7 +272,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="request">The emoji creation request.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The created emoji.</returns>
-    public Task<InternalEmoji> CreateEmojiAsync(Snowflake guildId, object request, CancellationToken cancellationToken = default)
+    public Task<InternalEmoji> CreateEmojiAsync(Snowflake guildId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -280,7 +280,7 @@ internal class GuildClient(IDiscordRestClient client)
         ArgumentNullException.ThrowIfNull(request);
 
         var route = new DiscordRoute("guilds/{guild_id}/emojis", guildId);
-        return client.SendAsync<InternalEmoji>(route, HttpMethod.Post, request, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<InternalEmoji>(route, HttpMethod.Post, request, cancellationToken) : client.SendWithReasonAsync<InternalEmoji>(route, HttpMethod.Post, request, auditLogReason, cancellationToken));
     }
 
     /// <summary>
@@ -291,7 +291,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="request">The emoji edit request.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The edited emoji.</returns>
-    public Task<InternalEmoji> EditEmojiAsync(Snowflake guildId, Snowflake emojiId, object request, CancellationToken cancellationToken = default)
+    public Task<InternalEmoji> EditEmojiAsync(Snowflake guildId, Snowflake emojiId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -302,7 +302,7 @@ internal class GuildClient(IDiscordRestClient client)
         ArgumentNullException.ThrowIfNull(request);
 
         var route = new DiscordRoute("guilds/{guild_id}/emojis/{emoji_id}", guildId, emojiId);
-        return client.SendAsync<InternalEmoji>(route, HttpMethod.Patch, request, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<InternalEmoji>(route, HttpMethod.Patch, request, cancellationToken) : client.SendWithReasonAsync<InternalEmoji>(route, HttpMethod.Patch, request, auditLogReason, cancellationToken));
     }
 
     /// <summary>
@@ -312,7 +312,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="emojiId">The ID of the emoji to delete.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public Task DeleteEmojiAsync(Snowflake guildId, Snowflake emojiId, CancellationToken cancellationToken = default)
+    public Task DeleteEmojiAsync(Snowflake guildId, Snowflake emojiId, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -321,7 +321,7 @@ internal class GuildClient(IDiscordRestClient client)
             throw new ArgumentException("Emoji ID cannot be null or empty.", nameof(emojiId));
 
         var route = new DiscordRoute("guilds/{guild_id}/emojis/{emoji_id}", guildId, emojiId);
-        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
     }
 
     /// <summary>
@@ -331,7 +331,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="request">The guild edit request.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The edited guild.</returns>
-    public Task<Guild> EditAsync(Snowflake guildId, object request, CancellationToken cancellationToken = default)
+    public Task<Guild> EditAsync(Snowflake guildId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -339,7 +339,7 @@ internal class GuildClient(IDiscordRestClient client)
         ArgumentNullException.ThrowIfNull(request);
 
         var route = new DiscordRoute("guilds/{guild_id}", guildId);
-        return client.SendAsync<Guild>(route, HttpMethod.Patch, request, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<Guild>(route, HttpMethod.Patch, request, cancellationToken) : client.SendWithReasonAsync<Guild>(route, HttpMethod.Patch, request, auditLogReason, cancellationToken));
     }
 
     /// <summary>
@@ -486,7 +486,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="includeRoles">The role IDs to include in the prune.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The number of members pruned.</returns>
-    public async Task<int> BeginPruneAsync(Snowflake guildId, int days, Snowflake[]? includeRoles = null, CancellationToken cancellationToken = default)
+    public async Task<int> BeginPruneAsync(Snowflake guildId, int days, Snowflake[]? includeRoles = null, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -500,7 +500,9 @@ internal class GuildClient(IDiscordRestClient client)
             request["include_roles"] = includeRoles.Select(r => r.ToString()).ToArray();
 
         var route = new DiscordRoute("guilds/{guild_id}/prune", guildId);
-        var response = await client.SendAsync<Dictionary<string, object>>(route, HttpMethod.Post, request, cancellationToken);
+        var response = await (string.IsNullOrEmpty(auditLogReason)
+            ? client.SendAsync<Dictionary<string, object>>(route, HttpMethod.Post, request, cancellationToken)
+            : client.SendWithReasonAsync<Dictionary<string, object>>(route, HttpMethod.Post, request, auditLogReason, cancellationToken));
         
         if (response.TryGetValue("pruned", out var prunedValue))
         {
@@ -567,7 +569,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="request">The widget edit request.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The updated guild widget.</returns>
-    public Task<GuildWidget> EditWidgetAsync(Snowflake guildId, object request, CancellationToken cancellationToken = default)
+    public Task<GuildWidget> EditWidgetAsync(Snowflake guildId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -575,7 +577,7 @@ internal class GuildClient(IDiscordRestClient client)
         ArgumentNullException.ThrowIfNull(request);
 
         var route = new DiscordRoute("guilds/{guild_id}/widget", guildId);
-        return client.SendAsync<GuildWidget>(route, HttpMethod.Patch, request, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<GuildWidget>(route, HttpMethod.Patch, request, cancellationToken) : client.SendWithReasonAsync<GuildWidget>(route, HttpMethod.Patch, request, auditLogReason, cancellationToken));
     }
 
     /// <summary>
@@ -600,7 +602,7 @@ internal class GuildClient(IDiscordRestClient client)
     /// <param name="request">The welcome screen edit request.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The updated welcome screen.</returns>
-    public Task<WelcomeScreen> EditWelcomeScreenAsync(Snowflake guildId, object request, CancellationToken cancellationToken = default)
+    public Task<WelcomeScreen> EditWelcomeScreenAsync(Snowflake guildId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (guildId == default)
             throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -608,18 +610,18 @@ internal class GuildClient(IDiscordRestClient client)
         ArgumentNullException.ThrowIfNull(request);
 
         var route = new DiscordRoute("guilds/{guild_id}/welcome-screen", guildId);
-        return client.SendAsync<WelcomeScreen>(route, HttpMethod.Patch, request, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<WelcomeScreen>(route, HttpMethod.Patch, request, cancellationToken) : client.SendWithReasonAsync<WelcomeScreen>(route, HttpMethod.Patch, request, auditLogReason, cancellationToken));
     }
 
     /// <summary>
     /// Modifies the positions of a set of channel objects in the guild. <paramref name="positions"/> is
     /// a list of <c>{ id, position, lock_permissions, parent_id }</c>-shaped objects.
     /// </summary>
-    public Task ModifyChannelPositionsAsync(Snowflake guildId, IEnumerable<object> positions, CancellationToken cancellationToken = default)
+    public Task ModifyChannelPositionsAsync(Snowflake guildId, IEnumerable<object> positions, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(positions);
         var route = new DiscordRoute("guilds/{guild_id}/channels", guildId);
-        return client.SendAsync(route, HttpMethod.Patch, positions, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Patch, positions, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Patch, positions, auditLogReason, cancellationToken));
     }
 
     /// <summary>
@@ -645,21 +647,21 @@ internal class GuildClient(IDiscordRestClient client)
     /// Bulk-bans up to 200 users from a guild in a single call. Returns the user IDs that were banned
     /// and those that failed (via the response object's <c>banned_users</c> / <c>failed_users</c> fields).
     /// </summary>
-    public Task<JsonElement> BulkBanAsync(Snowflake guildId, IEnumerable<Snowflake> userIds, int? deleteMessageSeconds = null, CancellationToken cancellationToken = default)
+    public Task<JsonElement> BulkBanAsync(Snowflake guildId, IEnumerable<Snowflake> userIds, int? deleteMessageSeconds = null, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(userIds);
         var route = new DiscordRoute("guilds/{guild_id}/bulk-ban", guildId);
         var body = deleteMessageSeconds.HasValue
             ? (object)new { user_ids = userIds.Select(u => u.ToString()).ToArray(), delete_message_seconds = deleteMessageSeconds.Value }
             : new { user_ids = userIds.Select(u => u.ToString()).ToArray() };
-        return client.SendAsync<JsonElement>(route, HttpMethod.Post, body, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<JsonElement>(route, HttpMethod.Post, body, cancellationToken) : client.SendWithReasonAsync<JsonElement>(route, HttpMethod.Post, body, auditLogReason, cancellationToken));
     }
 
     /// <summary>
     /// Adds a user to a guild using an OAuth2 access token granted with the <c>guilds.join</c> scope.
     /// Returns the resulting guild member, or null if the user was already a member.
     /// </summary>
-    public async Task<GuildMember?> AddMemberAsync(Snowflake guildId, Snowflake userId, string accessToken, string? nick = null, IEnumerable<Snowflake>? roles = null, bool? mute = null, bool? deaf = null, CancellationToken cancellationToken = default)
+    public async Task<GuildMember?> AddMemberAsync(Snowflake guildId, Snowflake userId, string accessToken, string? nick = null, IEnumerable<Snowflake>? roles = null, bool? mute = null, bool? deaf = null, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new ArgumentException("Access token cannot be null or empty.", nameof(accessToken));
@@ -673,7 +675,7 @@ internal class GuildClient(IDiscordRestClient client)
         var route = new DiscordRoute("guilds/{guild_id}/members/{user_id}", guildId, userId);
         try
         {
-            return await client.SendAsync<GuildMember>(route, HttpMethod.Put, body, cancellationToken);
+            return await (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<GuildMember>(route, HttpMethod.Put, body, cancellationToken) : client.SendWithReasonAsync<GuildMember>(route, HttpMethod.Put, body, auditLogReason, cancellationToken));
         }
         catch (DiscordApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NoContent)
         {
@@ -684,48 +686,48 @@ internal class GuildClient(IDiscordRestClient client)
     /// <summary>
     /// Modifies the bot's own nickname in a guild.
     /// </summary>
-    public Task<GuildMember> ModifyCurrentMemberAsync(Snowflake guildId, string? nick, CancellationToken cancellationToken = default)
+    public Task<GuildMember> ModifyCurrentMemberAsync(Snowflake guildId, string? nick, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         var route = new DiscordRoute("guilds/{guild_id}/members/@me", guildId);
-        return client.SendAsync<GuildMember>(route, HttpMethod.Patch, new { nick }, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<GuildMember>(route, HttpMethod.Patch, new { nick }, cancellationToken) : client.SendWithReasonAsync<GuildMember>(route, HttpMethod.Patch, new { nick }, auditLogReason, cancellationToken));
     }
 
     /// <summary>
     /// Modifies attributes of a guild member. The body should be a partial shape with any subset of
     /// <c>nick</c>, <c>roles</c>, <c>mute</c>, <c>deaf</c>, <c>channel_id</c>, <c>communication_disabled_until</c>, <c>flags</c>.
     /// </summary>
-    public Task<GuildMember> ModifyMemberAsync(Snowflake guildId, Snowflake userId, object request, CancellationToken cancellationToken = default)
+    public Task<GuildMember> ModifyMemberAsync(Snowflake guildId, Snowflake userId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         var route = new DiscordRoute("guilds/{guild_id}/members/{user_id}", guildId, userId);
-        return client.SendAsync<GuildMember>(route, HttpMethod.Patch, request, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<GuildMember>(route, HttpMethod.Patch, request, cancellationToken) : client.SendWithReasonAsync<GuildMember>(route, HttpMethod.Patch, request, auditLogReason, cancellationToken));
     }
 
     /// <summary>
     /// Adds a role to a guild member.
     /// </summary>
-    public Task AddMemberRoleAsync(Snowflake guildId, Snowflake userId, Snowflake roleId, CancellationToken cancellationToken = default)
+    public Task AddMemberRoleAsync(Snowflake guildId, Snowflake userId, Snowflake roleId, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         var route = new DiscordRoute("guilds/{guild_id}/members/{user_id}/roles/{role_id}", guildId, userId, roleId);
-        return client.SendAsync(route, HttpMethod.Put, body: null, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Put, body: null, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Put, body: null, auditLogReason, cancellationToken));
     }
 
     /// <summary>
     /// Removes a role from a guild member.
     /// </summary>
-    public Task RemoveMemberRoleAsync(Snowflake guildId, Snowflake userId, Snowflake roleId, CancellationToken cancellationToken = default)
+    public Task RemoveMemberRoleAsync(Snowflake guildId, Snowflake userId, Snowflake roleId, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         var route = new DiscordRoute("guilds/{guild_id}/members/{user_id}/roles/{role_id}", guildId, userId, roleId);
-        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
     }
 
     /// <summary>
     /// Modifies the required MFA level for the guild. Caller must be the guild owner.
     /// </summary>
-    public Task ModifyMfaLevelAsync(Snowflake guildId, MfaLevel level, CancellationToken cancellationToken = default)
+    public Task ModifyMfaLevelAsync(Snowflake guildId, MfaLevel level, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         var route = new DiscordRoute("guilds/{guild_id}/mfa", guildId);
-        return client.SendAsync(route, HttpMethod.Post, new { level = (int)level }, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Post, new { level = (int)level }, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Post, new { level = (int)level }, auditLogReason, cancellationToken));
     }
 
     /// <summary>
@@ -740,17 +742,17 @@ internal class GuildClient(IDiscordRestClient client)
     /// <summary>
     /// Deletes a guild integration and removes the linked role.
     /// </summary>
-    public Task DeleteIntegrationAsync(Snowflake guildId, Snowflake integrationId, CancellationToken cancellationToken = default)
+    public Task DeleteIntegrationAsync(Snowflake guildId, Snowflake integrationId, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         var route = new DiscordRoute("guilds/{guild_id}/integrations/{integration_id}", guildId, integrationId);
-        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
     }
 
     /// <summary>
     /// Modifies the guild's incident actions — temporarily disables invites and/or DMs until the
     /// specified timestamps. Pass <c>null</c> to clear the suspension.
     /// </summary>
-    public async Task<IIncidentsData> ModifyIncidentActionsAsync(Snowflake guildId, DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil, CancellationToken cancellationToken = default)
+    public async Task<IIncidentsData> ModifyIncidentActionsAsync(Snowflake guildId, DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         var body = new
         {
@@ -758,7 +760,7 @@ internal class GuildClient(IDiscordRestClient client)
             dms_disabled_until = dmsDisabledUntil?.ToString("o")
         };
         var route = new DiscordRoute("guilds/{guild_id}/incident-actions", guildId);
-        return await client.SendAsync<IncidentsData>(route, HttpMethod.Put, body, cancellationToken);
+        return await (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<IncidentsData>(route, HttpMethod.Put, body, cancellationToken) : client.SendWithReasonAsync<IncidentsData>(route, HttpMethod.Put, body, auditLogReason, cancellationToken));
     }
 
     /// <summary>

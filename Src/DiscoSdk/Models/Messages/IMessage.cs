@@ -17,7 +17,7 @@ namespace DiscoSdk.Models.Messages;
 /// - Replying, reacting, pinning, crossposting, and querying reactions are NOT supported.
 /// - Components are visual-only; they do not produce interaction events.
 /// </remarks>
-public interface IMessage : IMessageBase, IMentionable, IDeletable
+public interface IMessage : IMessageBase, IMentionable, IReasonedDeletable
 {
     /// <summary>
     /// Gets the channel the message was sent in.

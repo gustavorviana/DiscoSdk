@@ -61,6 +61,7 @@ internal static class ClientUtils
         IReadOnlyDictionary<string, string> fields,
         string fileFieldName,
         MessageFile file,
+        string? auditLogReason = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
@@ -70,7 +71,7 @@ internal static class ClientUtils
         ArgumentNullException.ThrowIfNull(file);
 
         Func<HttpContent> factory = () => BuildFormDataContent(fields, fileFieldName, file);
-        return client.SendAsync<TResponse>(route, method, factory, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<TResponse>(route, method, factory, cancellationToken) : client.SendWithReasonAsync<TResponse>(route, method, factory, auditLogReason, cancellationToken));
     }
 
     private static MultipartFormDataContent BuildFormDataContent(

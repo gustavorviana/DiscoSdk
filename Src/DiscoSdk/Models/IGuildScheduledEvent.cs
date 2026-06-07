@@ -6,7 +6,7 @@ namespace DiscoSdk.Models;
 /// <summary>
 /// Public read/action surface for a Discord guild scheduled event.
 /// </summary>
-public interface IGuildScheduledEvent
+public interface IGuildScheduledEvent : IReasonedDeletable
 {
 	/// <summary>The scheduled event id.</summary>
 	Snowflake Id { get; }
@@ -63,8 +63,6 @@ public interface IGuildScheduledEvent
 	/// </summary>
 	IModifyScheduledEventAction Modify();
 
-	/// <summary>Deletes (cancels) the event.</summary>
-	IRestAction Delete();
 
 	/// <summary>
 	/// Lists users that subscribed to this event. <paramref name="limit"/> caps the page at 100.

@@ -8,7 +8,7 @@ namespace DiscoSdk.Rest.Actions;
 /// supplies the file; required fields <c>name</c>, <c>tags</c> and the file are required,
 /// while <c>description</c> is optional.
 /// </summary>
-public interface ICreateGuildStickerAction : IRestAction<ISticker>
+public interface ICreateGuildStickerAction : IRestAction<ISticker>, IRestActionWithReason<ICreateGuildStickerAction>
 {
 	/// <summary>Sets the description (2-100 chars).</summary>
 	ICreateGuildStickerAction SetDescription(string description);

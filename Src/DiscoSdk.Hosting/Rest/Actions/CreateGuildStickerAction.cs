@@ -1,6 +1,7 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Messages;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -19,6 +20,7 @@ internal sealed class CreateGuildStickerAction(DiscordClient client, Snowflake g
 		: throw new ArgumentException("Tags cannot be null or empty.", nameof(tags));
 	private MessageFile _file = file ?? throw new ArgumentNullException(nameof(file));
 	private string? _description;
+	private string? _reason;
 
 	/// <inheritdoc />
 	public ICreateGuildStickerAction SetDescription(string description) { _description = description; return this; }
@@ -38,10 +40,17 @@ internal sealed class CreateGuildStickerAction(DiscordClient client, Snowflake g
 	}
 
 	/// <inheritdoc />
+	public ICreateGuildStickerAction WithReason(string reason)
+	{
+		_reason = AuditLogReason.Validate(reason);
+		return this;
+	}
+
+	/// <inheritdoc />
 	public override async Task<ISticker> ExecuteAsync(CancellationToken cancellationToken = default)
 	{
 		var model = await _client.StickerClient.CreateGuildStickerAsync(
-			_guildId, _name, _description, _tags, _file, cancellationToken);
+			_guildId, _name, _description, _tags, _file, _reason, cancellationToken);
 		return new StickerWrapper(_client, model);
 	}
 }

@@ -1,7 +1,7 @@
+using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
-using DiscoSdk.Hosting.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Wrappers;
 
@@ -31,6 +31,8 @@ internal sealed class IntegrationWrapper(DiscordClient client, Snowflake guildId
 	public bool? Revoked => _model.Revoked;
 	public IReadOnlyList<string>? Scopes => _model.Scopes;
 
-	public IRestAction Delete()
-		=> RestAction.Create(ct => _client.GuildClient.DeleteIntegrationAsync(guildId, _model.Id, ct));
+	public IReasonedRestAction Delete()
+		=> new ReasonedRestAction((reason, ct) => _client.GuildClient.DeleteIntegrationAsync(guildId, _model.Id, reason, ct));
+
+	IRestAction IDeletable.Delete() => Delete();
 }

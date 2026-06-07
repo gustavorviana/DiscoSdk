@@ -8,7 +8,7 @@ namespace DiscoSdk.Rest.Actions;
 /// A REST action that modifies an existing auto-moderation rule. Every field is optional — only the
 /// ones that are set are sent.
 /// </summary>
-public interface IModifyAutoModerationRuleAction : IRestAction<IAutoModerationRule>
+public interface IModifyAutoModerationRuleAction : IRestAction<IAutoModerationRule>, IRestActionWithReason<IModifyAutoModerationRuleAction>
 {
 	/// <summary>Sets a new name for the rule.</summary>
 	IModifyAutoModerationRuleAction SetName(string name);

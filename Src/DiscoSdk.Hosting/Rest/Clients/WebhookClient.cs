@@ -14,14 +14,14 @@ namespace DiscoSdk.Hosting.Rest.Clients;
 internal sealed class WebhookClient(IDiscordRestClient client)
 {
 	/// <summary>Creates a new webhook on a guild channel.</summary>
-	public Task<Webhook> CreateAsync(Snowflake channelId, string name, string? avatar = null, CancellationToken cancellationToken = default)
+	public Task<Webhook> CreateAsync(Snowflake channelId, string name, string? avatar = null, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		if (string.IsNullOrWhiteSpace(name))
 			throw new ArgumentException("Webhook name cannot be null or empty.", nameof(name));
 
 		var body = avatar is null ? (object)new { name } : new { name, avatar };
 		var route = new DiscordRoute("channels/{channel_id}/webhooks", channelId);
-		return client.SendAsync<Webhook>(route, HttpMethod.Post, body, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<Webhook>(route, HttpMethod.Post, body, cancellationToken) : client.SendWithReasonAsync<Webhook>(route, HttpMethod.Post, body, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>Lists all webhooks on a channel.</summary>
@@ -73,11 +73,11 @@ internal sealed class WebhookClient(IDiscordRestClient client)
 	}
 
 	/// <summary>Modifies a webhook with a preconstructed body (used by the builder action).</summary>
-	public Task<Webhook> ModifyAsync(Snowflake webhookId, IDictionary<string, object?> body, CancellationToken cancellationToken = default)
+	public Task<Webhook> ModifyAsync(Snowflake webhookId, IDictionary<string, object?> body, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(body);
 		var route = new DiscordRoute("webhooks/{webhook_id}", webhookId);
-		return client.SendAsync<Webhook>(route, HttpMethod.Patch, body, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<Webhook>(route, HttpMethod.Patch, body, cancellationToken) : client.SendWithReasonAsync<Webhook>(route, HttpMethod.Patch, body, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>
@@ -98,10 +98,10 @@ internal sealed class WebhookClient(IDiscordRestClient client)
 	}
 
 	/// <summary>Deletes a webhook permanently.</summary>
-	public Task DeleteAsync(Snowflake webhookId, CancellationToken cancellationToken = default)
+	public Task DeleteAsync(Snowflake webhookId, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		var route = new DiscordRoute("webhooks/{webhook_id}", webhookId);
-		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>Deletes a webhook permanently using its token (no permission check).</summary>

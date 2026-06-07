@@ -21,12 +21,12 @@ internal class GuildScheduledEventClient(IDiscordRestClient client)
 	}
 
 	/// <summary>Creates a scheduled event in a guild.</summary>
-	public Task<GuildScheduledEvent> CreateAsync(Snowflake guildId, object request, CancellationToken cancellationToken = default)
+	public Task<GuildScheduledEvent> CreateAsync(Snowflake guildId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(request);
 
 		var route = new DiscordRoute("guilds/{guild_id}/scheduled-events", guildId);
-		return client.SendAsync<GuildScheduledEvent>(route, HttpMethod.Post, request, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<GuildScheduledEvent>(route, HttpMethod.Post, request, cancellationToken) : client.SendWithReasonAsync<GuildScheduledEvent>(route, HttpMethod.Post, request, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>Gets a single scheduled event.</summary>
@@ -41,19 +41,19 @@ internal class GuildScheduledEventClient(IDiscordRestClient client)
 	}
 
 	/// <summary>Modifies a scheduled event.</summary>
-	public Task<GuildScheduledEvent> ModifyAsync(Snowflake guildId, Snowflake eventId, object request, CancellationToken cancellationToken = default)
+	public Task<GuildScheduledEvent> ModifyAsync(Snowflake guildId, Snowflake eventId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(request);
 
 		var route = new DiscordRoute("guilds/{guild_id}/scheduled-events/{event_id}", guildId, eventId);
-		return client.SendAsync<GuildScheduledEvent>(route, HttpMethod.Patch, request, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<GuildScheduledEvent>(route, HttpMethod.Patch, request, cancellationToken) : client.SendWithReasonAsync<GuildScheduledEvent>(route, HttpMethod.Patch, request, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>Deletes a scheduled event.</summary>
-	public Task DeleteAsync(Snowflake guildId, Snowflake eventId, CancellationToken cancellationToken = default)
+	public Task DeleteAsync(Snowflake guildId, Snowflake eventId, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		var route = new DiscordRoute("guilds/{guild_id}/scheduled-events/{event_id}", guildId, eventId);
-		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>

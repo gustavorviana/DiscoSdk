@@ -2,6 +2,7 @@ using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.AutoModeration;
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -21,6 +22,13 @@ internal sealed class CreateAutoModerationRuleAction : RestAction<IAutoModeratio
 	private bool? _enabled;
 	private Snowflake[]? _exemptRoles;
 	private Snowflake[]? _exemptChannels;
+	private string? _reason;
+
+	public ICreateAutoModerationRuleAction WithReason(string reason)
+	{
+		_reason = AuditLogReason.Validate(reason);
+		return this;
+	}
 
 	public CreateAutoModerationRuleAction(DiscordClient client, Snowflake guildId, string name, AutoModerationEventType eventType, AutoModerationTriggerType triggerType)
 	{
@@ -81,7 +89,7 @@ internal sealed class CreateAutoModerationRuleAction : RestAction<IAutoModeratio
 		if (_exemptChannels != null)
 			request["exempt_channels"] = _exemptChannels.Select(c => c.ToString()).ToArray();
 
-		var rule = await _client.AutoModerationClient.CreateRuleAsync(_guildId, request, cancellationToken);
+		var rule = await _client.AutoModerationClient.CreateRuleAsync(_guildId, request, _reason, cancellationToken);
 		return new AutoModerationRuleWrapper(_client, rule);
 	}
 }

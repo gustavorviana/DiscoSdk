@@ -48,13 +48,15 @@ internal sealed class StickerWrapper(DiscordClient client, Sticker model) : ISti
 	}
 
 	/// <inheritdoc />
-	public IRestAction Delete()
+	public IReasonedRestAction Delete()
 	{
 		if (model.GuildId is null || model.GuildId.Value.Empty)
 			throw new InvalidOperationException("Only guild stickers can be deleted. Standard pack stickers are read-only.");
 
 		var guildId = model.GuildId.Value;
 		var stickerId = model.Id;
-		return RestAction.Create(ct => client.StickerClient.DeleteGuildStickerAsync(guildId, stickerId, ct));
+		return new ReasonedRestAction((reason, ct) => client.StickerClient.DeleteGuildStickerAsync(guildId, stickerId, reason, ct));
 	}
+
+	IRestAction IDeletable.Delete() => Delete();
 }

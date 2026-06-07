@@ -33,18 +33,18 @@ internal class AutoModerationClient(IDiscordRestClient client)
 	}
 
 	/// <summary>Creates a new auto-moderation rule in a guild.</summary>
-	public Task<AutoModerationRule> CreateRuleAsync(Snowflake guildId, object request, CancellationToken cancellationToken = default)
+	public Task<AutoModerationRule> CreateRuleAsync(Snowflake guildId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
 		ArgumentNullException.ThrowIfNull(request);
 
 		var route = new DiscordRoute("guilds/{guild_id}/auto-moderation/rules", guildId);
-		return client.SendAsync<AutoModerationRule>(route, HttpMethod.Post, request, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<AutoModerationRule>(route, HttpMethod.Post, request, cancellationToken) : client.SendWithReasonAsync<AutoModerationRule>(route, HttpMethod.Post, request, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>Modifies an existing auto-moderation rule.</summary>
-	public Task<AutoModerationRule> ModifyRuleAsync(Snowflake guildId, Snowflake ruleId, object request, CancellationToken cancellationToken = default)
+	public Task<AutoModerationRule> ModifyRuleAsync(Snowflake guildId, Snowflake ruleId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -53,11 +53,11 @@ internal class AutoModerationClient(IDiscordRestClient client)
 		ArgumentNullException.ThrowIfNull(request);
 
 		var route = new DiscordRoute("guilds/{guild_id}/auto-moderation/rules/{rule_id}", guildId, ruleId);
-		return client.SendAsync<AutoModerationRule>(route, HttpMethod.Patch, request, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<AutoModerationRule>(route, HttpMethod.Patch, request, cancellationToken) : client.SendWithReasonAsync<AutoModerationRule>(route, HttpMethod.Patch, request, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>Deletes an auto-moderation rule.</summary>
-	public Task DeleteRuleAsync(Snowflake guildId, Snowflake ruleId, CancellationToken cancellationToken = default)
+	public Task DeleteRuleAsync(Snowflake guildId, Snowflake ruleId, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -65,6 +65,6 @@ internal class AutoModerationClient(IDiscordRestClient client)
 			throw new ArgumentException("Rule ID cannot be null or empty.", nameof(ruleId));
 
 		var route = new DiscordRoute("guilds/{guild_id}/auto-moderation/rules/{rule_id}", guildId, ruleId);
-		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
 	}
 }

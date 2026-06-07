@@ -5,7 +5,7 @@ namespace DiscoSdk.Models;
 /// <summary>
 /// Represents a Discord invite.
 /// </summary>
-public interface IInvite : IDeletable
+public interface IInvite : IReasonedDeletable
 {
 	/// <summary>
 	/// Gets the invite code.

@@ -71,13 +71,8 @@ internal class EmojiWrapper : IEmoji
         if (_emoji.User is null || _guild is null)
             throw new InvalidOperationException("Cannot delete a non-guild emoji.");
 
-        return RestAction.Create(async cancellationToken =>
-        {
-            await _client.GuildClient.DeleteEmojiAsync(
-                _guild.Id,
-                _emoji.Id.Value,
-                cancellationToken
-            );
-        });
+        var guildId = _guild.Id;
+        var emojiId = _emoji.Id.Value;
+        return new ReasonedRestAction((reason, ct) => _client.GuildClient.DeleteEmojiAsync(guildId, emojiId, reason, ct));
     }
 }

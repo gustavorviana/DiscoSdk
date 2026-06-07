@@ -222,7 +222,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IRestAction Delete();
+    IReasonedRestAction Delete();
 
     /// <summary>
     /// Gets a REST action for leaving this guild.
@@ -279,21 +279,17 @@ public interface IGuild
     /// Creates a REST action to unban a user from this guild.
     /// </summary>
     /// <param name="userId">The ID of the user to unban.</param>
-    /// <returns>A REST action that can be executed to unban the user.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction UnbanMember(Snowflake userId);
+    /// <returns>A REST action that can be executed to unban the user. Chain
+    /// <see cref="IRestActionWithReason{TSelf}.WithReason"/> to attach an audit-log reason.</returns>
+    IReasonedRestAction UnbanMember(Snowflake userId);
 
     /// <summary>
     /// Creates a REST action to kick a member from this guild.
     /// </summary>
     /// <param name="userId">The ID of the user to kick.</param>
-    /// <returns>A REST action that can be executed to kick the member.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction KickMember(Snowflake userId);
+    /// <returns>A REST action that can be executed to kick the member. Chain
+    /// <see cref="IRestActionWithReason{TSelf}.WithReason"/> to attach an audit-log reason.</returns>
+    IReasonedRestAction KickMember(Snowflake userId);
 
     /// <summary>
     /// Creates a REST action to get members of this guild with pagination.
@@ -431,7 +427,7 @@ public interface IGuild
     /// <remarks>
     /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
     /// </remarks>
-    IRestAction<int> BeginPrune(int days, params Snowflake[] includeRoles);
+    IReasonedRestAction<int> BeginPrune(int days, params Snowflake[] includeRoles);
 
     /// <summary>
     /// Gets a REST action to retrieve voice regions available for this guild.
@@ -596,7 +592,7 @@ public interface IGuild
     /// </summary>
     /// <param name="userIds">The users to ban.</param>
     /// <param name="deleteMessageSeconds">If set, the number of seconds of recent message history to wipe (0 to 604 800 / 7 days).</param>
-    IRestAction<IReadOnlyList<Snowflake>> BulkBan(IEnumerable<Snowflake> userIds, int? deleteMessageSeconds = null);
+    IReasonedRestAction<IReadOnlyList<Snowflake>> BulkBan(IEnumerable<Snowflake> userIds, int? deleteMessageSeconds = null);
 
     /// <summary>
     /// Gets a REST action that searches the guild's member list by username/nickname prefix.
@@ -616,7 +612,7 @@ public interface IGuild
     /// <summary>
     /// Gets a REST action that updates the bot's own nickname in this guild. Pass <c>null</c> to clear it.
     /// </summary>
-    IRestAction<IMember> ModifyCurrentMember(string? nick);
+    IReasonedRestAction<IMember> ModifyCurrentMember(string? nick);
 
     /// <summary>
     /// Builds a REST action that modifies a guild member. Each setter on the builder corresponds to
@@ -629,24 +625,24 @@ public interface IGuild
     /// <summary>
     /// Gets a REST action that adds a role to a guild member.
     /// </summary>
-    IRestAction AddMemberRole(Snowflake userId, Snowflake roleId);
+    IReasonedRestAction AddMemberRole(Snowflake userId, Snowflake roleId);
 
     /// <summary>
     /// Gets a REST action that removes a role from a guild member.
     /// </summary>
-    IRestAction RemoveMemberRole(Snowflake userId, Snowflake roleId);
+    IReasonedRestAction RemoveMemberRole(Snowflake userId, Snowflake roleId);
 
     /// <summary>
     /// Gets a REST action that updates the required MFA level for this guild. The caller must be the guild owner.
     /// </summary>
-    IRestAction ModifyMfaLevel(MfaLevel level);
+    IReasonedRestAction ModifyMfaLevel(MfaLevel level);
 
     /// <summary>
     /// Gets a REST action that reorders channels in this guild. Each item specifies a channel ID, its
     /// new position and optionally a new parent / lock_permissions flag.
     /// </summary>
     /// <param name="positions">The set of channel-position updates to apply.</param>
-    IRestAction ModifyChannelPositions(IEnumerable<ChannelPosition> positions);
+    IReasonedRestAction ModifyChannelPositions(IEnumerable<ChannelPosition> positions);
 
     /// <summary>
     /// Gets a REST action that lists this guild's integrations (Twitch / YouTube subs, Discord bots, etc.).
@@ -657,7 +653,7 @@ public interface IGuild
     /// Gets a REST action that suspends invites and/or DMs for this guild until the supplied
     /// timestamps. Pass <c>null</c> to clear either suspension.
     /// </summary>
-    IRestAction<IIncidentsData> ModifyIncidentActions(DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil);
+    IReasonedRestAction<IIncidentsData> ModifyIncidentActions(DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil);
 
     /// <summary>
     /// Gets a REST action that lists all webhooks attached to channels in this guild.

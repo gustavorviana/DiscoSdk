@@ -1,5 +1,6 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -10,6 +11,7 @@ internal sealed class ModifyMemberAction : RestAction<IMember>, IModifyMemberAct
     private readonly GuildWrapper _guild;
     private readonly Snowflake _userId;
     private readonly Dictionary<string, object?> _body = new();
+    private string? _reason;
 
     public ModifyMemberAction(DiscordClient client, GuildWrapper guild, Snowflake userId)
     {
@@ -67,9 +69,15 @@ internal sealed class ModifyMemberAction : RestAction<IMember>, IModifyMemberAct
         return this;
     }
 
+    public IModifyMemberAction WithReason(string reason)
+    {
+        _reason = AuditLogReason.Validate(reason);
+        return this;
+    }
+
     public override async Task<IMember> ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        var member = await _client.GuildClient.ModifyMemberAsync(_guild.Id, _userId, _body, cancellationToken);
+        var member = await _client.GuildClient.ModifyMemberAsync(_guild.Id, _userId, _body, _reason, cancellationToken);
         return new GuildMemberWrapper(_client, member, _guild);
     }
 }

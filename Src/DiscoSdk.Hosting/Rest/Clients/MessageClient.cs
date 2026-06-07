@@ -92,7 +92,7 @@ internal class MessageClient(IDiscordRestClient client)
     /// <param name="messageId">The ID of the message to delete.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public Task DeleteAsync(Snowflake channelId, Snowflake messageId, CancellationToken cancellationToken = default)
+    public Task DeleteAsync(Snowflake channelId, Snowflake messageId, string? auditLogReason = null, CancellationToken cancellationToken = default)
     {
         if (channelId == default)
             throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
@@ -101,7 +101,7 @@ internal class MessageClient(IDiscordRestClient client)
             throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
 
         var route = new DiscordRoute("channels/{channel_id}/messages/{message_id}", channelId, messageId);
-        return client.SendAsync(route, HttpMethod.Delete, null, cancellationToken);
+        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
     }
 
     /// <summary>

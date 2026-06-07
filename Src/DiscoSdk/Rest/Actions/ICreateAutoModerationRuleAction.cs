@@ -7,7 +7,7 @@ namespace DiscoSdk.Rest.Actions;
 /// A REST action that creates an auto-moderation rule. The name, event type and trigger type are
 /// provided up front; everything else is optional.
 /// </summary>
-public interface ICreateAutoModerationRuleAction : IRestAction<IAutoModerationRule>
+public interface ICreateAutoModerationRuleAction : IRestAction<IAutoModerationRule>, IRestActionWithReason<ICreateAutoModerationRuleAction>
 {
 	/// <summary>Sets the trigger metadata for the rule (required for KEYWORD, KEYWORD_PRESET, MENTION_SPAM and MEMBER_PROFILE triggers).</summary>
 	ICreateAutoModerationRuleAction SetTriggerMetadata(AutoModerationTriggerMetadata metadata);

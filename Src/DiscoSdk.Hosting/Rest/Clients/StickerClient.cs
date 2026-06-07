@@ -53,6 +53,7 @@ internal class StickerClient(IDiscordRestClient client)
 		string? description,
 		string tags,
 		MessageFile file,
+		string? auditLogReason = null,
 		CancellationToken cancellationToken = default)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -68,22 +69,22 @@ internal class StickerClient(IDiscordRestClient client)
 			fields["description"] = description;
 
 		var route = new DiscordRoute("guilds/{guild_id}/stickers", guildId);
-		return client.SendFormDataAsync<Sticker>(route, HttpMethod.Post, fields, "file", file, cancellationToken);
+		return client.SendFormDataAsync<Sticker>(route, HttpMethod.Post, fields, "file", file, auditLogReason, cancellationToken);
 	}
 
 	/// <summary>Modifies a guild sticker's metadata (name, description, tags).</summary>
-	public Task<Sticker> ModifyGuildStickerAsync(Snowflake guildId, Snowflake stickerId, object request, CancellationToken cancellationToken = default)
+	public Task<Sticker> ModifyGuildStickerAsync(Snowflake guildId, Snowflake stickerId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(request);
 
 		var route = new DiscordRoute("guilds/{guild_id}/stickers/{sticker_id}", guildId, stickerId);
-		return client.SendAsync<Sticker>(route, HttpMethod.Patch, request, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<Sticker>(route, HttpMethod.Patch, request, cancellationToken) : client.SendWithReasonAsync<Sticker>(route, HttpMethod.Patch, request, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>Deletes a guild sticker.</summary>
-	public Task DeleteGuildStickerAsync(Snowflake guildId, Snowflake stickerId, CancellationToken cancellationToken = default)
+	public Task DeleteGuildStickerAsync(Snowflake guildId, Snowflake stickerId, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		var route = new DiscordRoute("guilds/{guild_id}/stickers/{sticker_id}", guildId, stickerId);
-		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
 	}
 }

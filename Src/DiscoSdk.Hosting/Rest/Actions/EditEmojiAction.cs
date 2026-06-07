@@ -1,5 +1,6 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -14,6 +15,7 @@ internal class EditEmojiAction : RestAction<IEmoji>, IEditEmojiAction
 	private readonly Snowflake _emojiId;
 	private string? _name;
 	private Snowflake[]? _roles;
+	private string? _reason;
 
 	public EditEmojiAction(DiscordClient client, IGuild guild, Snowflake emojiId)
 	{
@@ -34,6 +36,12 @@ internal class EditEmojiAction : RestAction<IEmoji>, IEditEmojiAction
 		return this;
 	}
 
+	public IEditEmojiAction WithReason(string reason)
+	{
+		_reason = AuditLogReason.Validate(reason);
+		return this;
+	}
+
 	public override async Task<IEmoji> ExecuteAsync(CancellationToken cancellationToken = default)
 	{
 		var request = new Dictionary<string, object?>();
@@ -44,9 +52,8 @@ internal class EditEmojiAction : RestAction<IEmoji>, IEditEmojiAction
 		if (_roles != null)
 			request["roles"] = _roles.Select(r => r.ToString()).ToArray();
 
-		var emoji = await _client.GuildClient.EditEmojiAsync(_guild.Id, _emojiId, request, cancellationToken);
+		var emoji = await _client.GuildClient.EditEmojiAsync(_guild.Id, _emojiId, request, _reason, cancellationToken);
 
 		return new EmojiWrapper(_client, emoji, _guild);
 	}
 }
-

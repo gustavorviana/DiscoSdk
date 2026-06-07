@@ -1,6 +1,7 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -28,6 +29,14 @@ internal class RoleAction(DiscordClient client, IGuild guild, Snowflake? roleId 
 	private byte[]? _iconBytes;
 	private string? _iconHash;
 	private string? _unicodeEmoji;
+	private string? _reason;
+
+	/// <inheritdoc />
+	public IRoleAction WithReason(string reason)
+	{
+		_reason = AuditLogReason.Validate(reason);
+		return this;
+	}
 
 	/// <inheritdoc />
 	public IRoleAction SetName(string name)
@@ -151,12 +160,12 @@ internal class RoleAction(DiscordClient client, IGuild guild, Snowflake? roleId 
 		if (_roleId.HasValue)
 		{
 			// Editing existing role
-			role = await _client.RoleClient.EditAsync(guild.Id, _roleId.Value, request, cancellationToken);
+			role = await _client.RoleClient.EditAsync(guild.Id, _roleId.Value, request, _reason, cancellationToken);
 		}
 		else
 		{
 			// Creating new role
-			role = await _client.RoleClient.CreateAsync(guild.Id, request, cancellationToken);
+			role = await _client.RoleClient.CreateAsync(guild.Id, request, _reason, cancellationToken);
 		}
 
 		return new RoleWrapper(_client, role, guild);

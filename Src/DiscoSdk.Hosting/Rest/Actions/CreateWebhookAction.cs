@@ -1,5 +1,6 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -10,6 +11,7 @@ internal sealed class CreateWebhookAction : RestAction<IWebhook>, ICreateWebhook
     private readonly Snowflake _channelId;
     private string? _name;
     private string? _avatar;
+    private string? _reason;
 
     public CreateWebhookAction(DiscordClient client, Snowflake channelId)
     {
@@ -33,11 +35,17 @@ internal sealed class CreateWebhookAction : RestAction<IWebhook>, ICreateWebhook
         return this;
     }
 
+    public ICreateWebhookAction WithReason(string reason)
+    {
+        _reason = AuditLogReason.Validate(reason);
+        return this;
+    }
+
     public override async Task<IWebhook> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         if (_name is null)
             throw new InvalidOperationException("Webhook name is required. Call SetName(...) before executing.");
-        var webhook = await _client.WebhookClient.CreateAsync(_channelId, _name, _avatar, cancellationToken);
+        var webhook = await _client.WebhookClient.CreateAsync(_channelId, _name, _avatar, _reason, cancellationToken);
         return new WebhookWrapper(_client, webhook);
     }
 }

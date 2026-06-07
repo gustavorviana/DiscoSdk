@@ -7,7 +7,7 @@ namespace DiscoSdk.Rest.Actions;
 /// <summary>
 /// Represents a REST action for creating a Discord channel.
 /// </summary>
-public interface ICreateChannelAction : IRestAction<IGuildChannel>
+public interface ICreateChannelAction : IRestAction<IGuildChannel>, IRestActionWithReason<ICreateChannelAction>
 {
     /// <summary>
     /// Sets the channel's name.

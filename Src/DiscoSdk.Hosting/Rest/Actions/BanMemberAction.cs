@@ -1,10 +1,13 @@
 using DiscoSdk.Models;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
 
 /// <summary>
-/// Implementation of <see cref="IBanMemberAction"/> for banning Discord guild members.
+/// Implementation of <see cref="IBanMemberAction"/>. The reason supplied via
+/// <see cref="WithReason(string)"/> is forwarded as the <c>X-Audit-Log-Reason</c> header — Discord
+/// no longer reads a <c>reason</c> field from the request body.
 /// </summary>
 internal class BanMemberAction : RestAction, IBanMemberAction
 {
@@ -31,9 +34,9 @@ internal class BanMemberAction : RestAction, IBanMemberAction
 		return this;
 	}
 
-	public IBanMemberAction SetReason(string? reason)
+	public IBanMemberAction WithReason(string reason)
 	{
-		_reason = reason;
+		_reason = AuditLogReason.Validate(reason);
 		return this;
 	}
 
@@ -44,10 +47,6 @@ internal class BanMemberAction : RestAction, IBanMemberAction
 		if (_deleteMessageDays.HasValue)
 			request["delete_message_days"] = _deleteMessageDays.Value;
 
-		if (_reason != null)
-			request["reason"] = _reason;
-
-		await _client.GuildClient.BanMemberAsync(_guildId, _userId, request, cancellationToken);
+		await _client.GuildClient.BanMemberAsync(_guildId, _userId, request, _reason, cancellationToken);
 	}
 }
-

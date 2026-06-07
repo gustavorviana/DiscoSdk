@@ -29,6 +29,8 @@ internal sealed class AutoModerationRuleWrapper(DiscordClient client, AutoModera
 	public IModifyAutoModerationRuleAction Modify()
 		=> new ModifyAutoModerationRuleAction(_client, _model.GuildId, _model.Id);
 
-	public IRestAction Delete()
-		=> RestAction.Create(ct => _client.AutoModerationClient.DeleteRuleAsync(_model.GuildId, _model.Id, ct));
+	public IReasonedRestAction Delete()
+		=> new ReasonedRestAction((reason, ct) => _client.AutoModerationClient.DeleteRuleAsync(_model.GuildId, _model.Id, reason, ct));
+
+	IRestAction IDeletable.Delete() => Delete();
 }

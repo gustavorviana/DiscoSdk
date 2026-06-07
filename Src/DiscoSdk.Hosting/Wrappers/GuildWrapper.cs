@@ -110,12 +110,10 @@ internal class GuildWrapper : IGuild
         return new EditGuildAction(_client, this);
     }
 
-    public IRestAction Delete()
+    public IReasonedRestAction Delete()
     {
-        return RestAction.Create(async cancellationToken =>
-        {
-            await _client.GuildClient.DeleteAsync(_guild.Id, cancellationToken);
-        });
+        return new ReasonedRestAction((_, cancellationToken) =>
+            _client.GuildClient.DeleteAsync(_guild.Id, cancellationToken));
     }
 
     public IRestAction Leave()
@@ -146,20 +144,16 @@ internal class GuildWrapper : IGuild
         return new BanMemberAction(_client, _guild.Id, userId, deleteMessageDays);
     }
 
-    public IRestAction UnbanMember(Snowflake userId)
+    public IReasonedRestAction UnbanMember(Snowflake userId)
     {
-        return RestAction.Create(async cancellationToken =>
-        {
-            await _client.GuildClient.UnbanMemberAsync(_guild.Id, userId, cancellationToken);
-        });
+        return new ReasonedRestAction((reason, ct) =>
+            _client.GuildClient.UnbanMemberAsync(_guild.Id, userId, reason, ct));
     }
 
-    public IRestAction KickMember(Snowflake userId)
+    public IReasonedRestAction KickMember(Snowflake userId)
     {
-        return RestAction.Create(async cancellationToken =>
-        {
-            await _client.GuildClient.KickMemberAsync(_guild.Id, userId, cancellationToken);
-        });
+        return new ReasonedRestAction((reason, ct) =>
+            _client.GuildClient.KickMemberAsync(_guild.Id, userId, reason, ct));
     }
 
     public IMemberPaginationAction GetMembers()
@@ -328,12 +322,10 @@ internal class GuildWrapper : IGuild
         });
     }
 
-    public IRestAction<int> BeginPrune(int days, params Snowflake[] includeRoles)
+    public IReasonedRestAction<int> BeginPrune(int days, params Snowflake[] includeRoles)
     {
-        return RestAction<int>.Create(async cancellationToken =>
-        {
-            return await _client.GuildClient.BeginPruneAsync(_guild.Id, days, includeRoles, cancellationToken);
-        });
+        return new ReasonedRestAction<int>((reason, ct) =>
+            _client.GuildClient.BeginPruneAsync(_guild.Id, days, includeRoles, reason, ct));
     }
 
     public IRestAction<IReadOnlyList<IVoiceRegion>> GetVoiceRegions()
@@ -452,12 +444,12 @@ internal class GuildWrapper : IGuild
     public IBanPaginationAction GetBans()
         => new BanPaginationAction(_client, _guild.Id);
 
-    public IRestAction<IReadOnlyList<Snowflake>> BulkBan(IEnumerable<Snowflake> userIds, int? deleteMessageSeconds = null)
+    public IReasonedRestAction<IReadOnlyList<Snowflake>> BulkBan(IEnumerable<Snowflake> userIds, int? deleteMessageSeconds = null)
     {
         ArgumentNullException.ThrowIfNull(userIds);
-        return RestAction<IReadOnlyList<Snowflake>>.Create(async ct =>
+        return new ReasonedRestAction<IReadOnlyList<Snowflake>>(async (reason, ct) =>
         {
-            var response = await _client.GuildClient.BulkBanAsync(_guild.Id, userIds, deleteMessageSeconds, ct);
+            var response = await _client.GuildClient.BulkBanAsync(_guild.Id, userIds, deleteMessageSeconds, reason, ct);
             var banned = new List<Snowflake>();
             if (response.ValueKind == System.Text.Json.JsonValueKind.Object &&
                 response.TryGetProperty("banned_users", out var bannedArr) &&
@@ -492,11 +484,11 @@ internal class GuildWrapper : IGuild
     public IAddMemberAction AddMember(Snowflake userId, string accessToken)
         => new AddMemberAction(_client, this, userId, accessToken);
 
-    public IRestAction<IMember> ModifyCurrentMember(string? nick)
+    public IReasonedRestAction<IMember> ModifyCurrentMember(string? nick)
     {
-        return RestAction<IMember>.Create(async ct =>
+        return new ReasonedRestAction<IMember>(async (reason, ct) =>
         {
-            var member = await _client.GuildClient.ModifyCurrentMemberAsync(_guild.Id, nick, ct);
+            var member = await _client.GuildClient.ModifyCurrentMemberAsync(_guild.Id, nick, reason, ct);
             return new GuildMemberWrapper(_client, member, this);
         });
     }
@@ -504,19 +496,19 @@ internal class GuildWrapper : IGuild
     public IModifyMemberAction ModifyMember(Snowflake userId)
         => new ModifyMemberAction(_client, this, userId);
 
-    public IRestAction AddMemberRole(Snowflake userId, Snowflake roleId)
-        => RestAction.Create(ct => _client.GuildClient.AddMemberRoleAsync(_guild.Id, userId, roleId, ct));
+    public IReasonedRestAction AddMemberRole(Snowflake userId, Snowflake roleId)
+        => new ReasonedRestAction((reason, ct) => _client.GuildClient.AddMemberRoleAsync(_guild.Id, userId, roleId, reason, ct));
 
-    public IRestAction RemoveMemberRole(Snowflake userId, Snowflake roleId)
-        => RestAction.Create(ct => _client.GuildClient.RemoveMemberRoleAsync(_guild.Id, userId, roleId, ct));
+    public IReasonedRestAction RemoveMemberRole(Snowflake userId, Snowflake roleId)
+        => new ReasonedRestAction((reason, ct) => _client.GuildClient.RemoveMemberRoleAsync(_guild.Id, userId, roleId, reason, ct));
 
-    public IRestAction ModifyMfaLevel(MfaLevel level)
-        => RestAction.Create(ct => _client.GuildClient.ModifyMfaLevelAsync(_guild.Id, level, ct));
+    public IReasonedRestAction ModifyMfaLevel(MfaLevel level)
+        => new ReasonedRestAction((reason, ct) => _client.GuildClient.ModifyMfaLevelAsync(_guild.Id, level, reason, ct));
 
-    public IRestAction ModifyChannelPositions(IEnumerable<ChannelPosition> positions)
+    public IReasonedRestAction ModifyChannelPositions(IEnumerable<ChannelPosition> positions)
     {
         ArgumentNullException.ThrowIfNull(positions);
-        return RestAction.Create(ct =>
+        return new ReasonedRestAction((reason, ct) =>
         {
             var payload = positions.Select(p => new Dictionary<string, object?>
             {
@@ -525,7 +517,7 @@ internal class GuildWrapper : IGuild
                 ["lock_permissions"] = p.LockPermissions,
                 ["parent_id"] = p.ParentId.HasValue ? p.ParentId.Value.ToString() : null
             });
-            return _client.GuildClient.ModifyChannelPositionsAsync(_guild.Id, payload, ct);
+            return _client.GuildClient.ModifyChannelPositionsAsync(_guild.Id, payload, reason, ct);
         });
     }
 
@@ -536,8 +528,8 @@ internal class GuildWrapper : IGuild
             return integrations.Select(i => (IIntegration)new IntegrationWrapper(_client, _guild.Id, i)).ToList().AsReadOnly();
         });
 
-    public IRestAction<IIncidentsData> ModifyIncidentActions(DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil)
-        => RestAction<IIncidentsData>.Create(ct => _client.GuildClient.ModifyIncidentActionsAsync(_guild.Id, invitesDisabledUntil, dmsDisabledUntil, ct));
+    public IReasonedRestAction<IIncidentsData> ModifyIncidentActions(DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil)
+        => new ReasonedRestAction<IIncidentsData>((reason, ct) => _client.GuildClient.ModifyIncidentActionsAsync(_guild.Id, invitesDisabledUntil, dmsDisabledUntil, reason, ct));
 
     public IRestAction<IReadOnlyList<IWebhook>> GetWebhooks()
         => RestAction<IReadOnlyList<IWebhook>>.Create(async ct =>

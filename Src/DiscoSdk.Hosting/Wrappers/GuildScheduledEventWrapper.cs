@@ -50,8 +50,10 @@ internal sealed class GuildScheduledEventWrapper(DiscordClient client, GuildSche
 		=> new ModifyScheduledEventAction(client, model.GuildId, model.Id);
 
 	/// <inheritdoc />
-	public IRestAction Delete()
-		=> RestAction.Create(ct => client.GuildScheduledEventClient.DeleteAsync(model.GuildId, model.Id, ct));
+	public IReasonedRestAction Delete()
+		=> new ReasonedRestAction((reason, ct) => client.GuildScheduledEventClient.DeleteAsync(model.GuildId, model.Id, reason, ct));
+
+	IRestAction IDeletable.Delete() => Delete();
 
 	/// <inheritdoc />
 	public IRestAction<IReadOnlyList<IGuildScheduledEventUser>> GetUsers(

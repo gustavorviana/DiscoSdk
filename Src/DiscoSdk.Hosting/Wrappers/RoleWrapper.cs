@@ -133,7 +133,7 @@ internal class RoleWrapper(DiscordClient client, Role role, IGuild guild) : IRol
                 new { id = _role.Id.ToString(), position = position }
             };
 
-            await _client.RoleClient.ModifyPositionsAsync(_guild.Id, request, cancellationToken);
+            await _client.RoleClient.ModifyPositionsAsync(_guild.Id, request, cancellationToken: cancellationToken);
         });
     }
 
@@ -157,12 +157,14 @@ internal class RoleWrapper(DiscordClient client, Role role, IGuild guild) : IRol
     }
 
     /// <inheritdoc />
-    public IRestAction Delete()
+    public IReasonedRestAction Delete()
     {
         if (IsPublicRole)
             throw new InvalidOperationException("Cannot delete the @everyone role.");
 
-        return RestAction.Create(cancellationToken => _client.RoleClient.DeleteAsync(_guild.Id, _role.Id, cancellationToken));
+        return new ReasonedRestAction((reason, ct) => _client.RoleClient.DeleteAsync(_guild.Id, _role.Id, reason, ct));
     }
+
+    IRestAction IDeletable.Delete() => Delete();
 }
 

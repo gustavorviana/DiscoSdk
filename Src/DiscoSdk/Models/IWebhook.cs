@@ -6,7 +6,7 @@ namespace DiscoSdk.Models;
 /// <summary>
 /// Represents a Discord webhook attached to a guild channel, plus the operations available on it.
 /// </summary>
-public interface IWebhook : IWithSnowflake
+public interface IWebhook : IWithSnowflake, IReasonedDeletable
 {
 	/// <summary>The webhook type.</summary>
 	WebhookType Type { get; }
@@ -41,8 +41,4 @@ public interface IWebhook : IWithSnowflake
 	/// </summary>
 	IModifyWebhookAction Modify();
 
-	/// <summary>
-	/// Gets a REST action that deletes this webhook.
-	/// </summary>
-	IRestAction Delete();
 }

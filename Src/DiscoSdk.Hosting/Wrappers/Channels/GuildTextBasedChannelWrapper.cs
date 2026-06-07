@@ -30,6 +30,16 @@ internal abstract class GuildTextBasedChannelWrapper(DiscordClient client, Chann
         return new ChannelPermissionCalculator(guild, GetPermissionContainer()).GetPermission(member);
     }
 
+    /// <summary>
+    /// Audit-log-aware override: guild text/voice/stage/thread channel deletion is recorded in
+    /// the audit log, so this wrapper returns <see cref="IReasonedRestAction"/>. Base
+    /// <see cref="IDeletable.Delete"/> is satisfied via the explicit interface impl below.
+    /// </summary>
+    public new IReasonedRestAction Delete()
+        => new ReasonedRestAction((reason, ct) => _client.ChannelClient.DeleteAsync(_channel.Id, reason, ct));
+
+    IRestAction IDeletable.Delete() => Delete();
+
     public bool CanTalk(IMember member)
     {
         var permission = GetPermission(member);

@@ -6,7 +6,7 @@ namespace DiscoSdk.Rest.Actions;
 /// <summary>
 /// Represents a REST action for creating or updating a role.
 /// </summary>
-public interface IRoleAction : IRestAction<IRole>
+public interface IRoleAction : IRestAction<IRole>, IRestActionWithReason<IRoleAction>
 {
 	/// <summary>
 	/// Sets the name of the role.

@@ -1,5 +1,6 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -14,6 +15,7 @@ internal sealed class AddMemberAction : RestAction<IMember?>, IAddMemberAction
     private IEnumerable<Snowflake>? _roles;
     private bool? _mute;
     private bool? _deaf;
+    private string? _reason;
 
     public AddMemberAction(DiscordClient client, GuildWrapper guild, Snowflake userId, string accessToken)
     {
@@ -30,10 +32,16 @@ internal sealed class AddMemberAction : RestAction<IMember?>, IAddMemberAction
     public IAddMemberAction SetMuted(bool? muted) { _mute = muted; return this; }
     public IAddMemberAction SetDeafened(bool? deafened) { _deaf = deafened; return this; }
 
+    public IAddMemberAction WithReason(string reason)
+    {
+        _reason = AuditLogReason.Validate(reason);
+        return this;
+    }
+
     public override async Task<IMember?> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         var member = await _client.GuildClient.AddMemberAsync(
-            _guild.Id, _userId, _accessToken, _nick, _roles, _mute, _deaf, cancellationToken);
+            _guild.Id, _userId, _accessToken, _nick, _roles, _mute, _deaf, _reason, cancellationToken);
         return member is null ? null : new GuildMemberWrapper(_client, member, _guild);
     }
 }

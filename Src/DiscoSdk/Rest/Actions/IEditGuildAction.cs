@@ -6,7 +6,7 @@ namespace DiscoSdk.Rest.Actions;
 /// <summary>
 /// Represents a REST action for editing a Discord guild.
 /// </summary>
-public interface IEditGuildAction : IRestAction<IGuild>
+public interface IEditGuildAction : IRestAction<IGuild>, IRestActionWithReason<IEditGuildAction>
 {
 	/// <summary>
 	/// Sets the guild's name.

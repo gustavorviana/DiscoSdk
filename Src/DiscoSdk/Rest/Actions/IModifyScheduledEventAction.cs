@@ -7,7 +7,7 @@ namespace DiscoSdk.Rest.Actions;
 /// Fluent builder for <c>PATCH /guilds/{guild.id}/scheduled-events/{event.id}</c>. Every setter is
 /// optional — only the fields you touch are sent on the wire.
 /// </summary>
-public interface IModifyScheduledEventAction : IRestAction<IGuildScheduledEvent>
+public interface IModifyScheduledEventAction : IRestAction<IGuildScheduledEvent>, IRestActionWithReason<IModifyScheduledEventAction>
 {
 	/// <summary>Renames the event.</summary>
 	IModifyScheduledEventAction SetName(string name);

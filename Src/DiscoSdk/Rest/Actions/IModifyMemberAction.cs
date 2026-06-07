@@ -8,7 +8,7 @@ namespace DiscoSdk.Rest.Actions;
 /// <c>MANAGE_ROLES</c>, <c>MUTE_MEMBERS</c>, <c>MODERATE_MEMBERS</c>); calling the corresponding
 /// setter on a token without that permission will surface as a 403 at execute time.
 /// </summary>
-public interface IModifyMemberAction : IRestAction<IMember>
+public interface IModifyMemberAction : IRestAction<IMember>, IRestActionWithReason<IModifyMemberAction>
 {
     /// <summary>Sets a new nickname. Pass <c>null</c> to clear it.</summary>
     IModifyMemberAction SetNickname(string? nick);

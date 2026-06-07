@@ -6,7 +6,7 @@ namespace DiscoSdk.Models;
 /// <summary>
 /// Represents a Discord role.
 /// </summary>
-public interface IRole : IMentionable, IPermissionHolder, IComparable<IRole>, IDeletable
+public interface IRole : IMentionable, IPermissionHolder, IComparable<IRole>, IReasonedDeletable
 {
 	/// <summary>
 	/// The default color raw value (536870911).

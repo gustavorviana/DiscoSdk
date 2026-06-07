@@ -2,6 +2,7 @@ using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Hosting.Models.Requests.ScheduledEvents;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -27,6 +28,14 @@ internal sealed class CreateScheduledEventAction(
 	private DateTimeOffset? _scheduledEndTime;
 	private ScheduledEventEntityMetadata? _entityMetadata;
 	private string? _image;
+	private string? _reason;
+
+	/// <inheritdoc />
+	public ICreateScheduledEventAction WithReason(string reason)
+	{
+		_reason = AuditLogReason.Validate(reason);
+		return this;
+	}
 
 	/// <inheritdoc />
 	public ICreateScheduledEventAction SetPrivacyLevel(ScheduledEventPrivacyLevel privacyLevel)
@@ -86,7 +95,7 @@ internal sealed class CreateScheduledEventAction(
 			Image = _image,
 		};
 
-		var model = await _client.GuildScheduledEventClient.CreateAsync(_guildId, request, cancellationToken);
+		var model = await _client.GuildScheduledEventClient.CreateAsync(_guildId, request, _reason, cancellationToken);
 		return new GuildScheduledEventWrapper(_client, model);
 	}
 }

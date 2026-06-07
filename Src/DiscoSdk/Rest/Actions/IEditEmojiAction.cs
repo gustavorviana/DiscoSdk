@@ -5,7 +5,7 @@ namespace DiscoSdk.Rest.Actions;
 /// <summary>
 /// Represents a REST action for editing a Discord emoji.
 /// </summary>
-public interface IEditEmojiAction : IRestAction<IEmoji>
+public interface IEditEmojiAction : IRestAction<IEmoji>, IRestActionWithReason<IEditEmojiAction>
 {
 	/// <summary>
 	/// Sets the name of the emoji.

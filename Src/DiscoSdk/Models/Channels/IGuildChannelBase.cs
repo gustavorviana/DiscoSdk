@@ -5,7 +5,7 @@ namespace DiscoSdk.Models.Channels;
 /// <summary>
 /// Represents a Discord channel that belongs to a guild.
 /// </summary>
-public interface IGuildChannelBase : IChannel, IWithNsfw
+public interface IGuildChannelBase : IChannel, IWithNsfw, IReasonedDeletable
 {
 	/// <summary>
 	/// Gets the guild this channel belongs to.

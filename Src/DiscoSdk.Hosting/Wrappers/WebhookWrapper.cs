@@ -28,6 +28,8 @@ internal sealed class WebhookWrapper(DiscordClient client, Webhook model) : IWeb
 
 	public IModifyWebhookAction Modify() => new ModifyWebhookAction(_client, _model.Id);
 
-	public IRestAction Delete()
-		=> RestAction.Create(ct => _client.WebhookClient.DeleteAsync(_model.Id, ct));
+	public IReasonedRestAction Delete()
+		=> new ReasonedRestAction((reason, ct) => _client.WebhookClient.DeleteAsync(_model.Id, reason, ct));
+
+	IRestAction IDeletable.Delete() => Delete();
 }

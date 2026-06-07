@@ -3,6 +3,7 @@ using DiscoSdk.Hosting.Wrappers.Channels;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -33,6 +34,13 @@ internal class CreateChannelAction : RestAction<IGuildChannel>, ICreateChannelAc
 	private ForumLayoutType? _defaultForumLayout;
 	private ForumTag[]? _availableTags;
 	private ChannelFlags? _flags;
+	private string? _reason;
+
+	public ICreateChannelAction WithReason(string reason)
+	{
+		_reason = AuditLogReason.Validate(reason);
+		return this;
+	}
 
 	public CreateChannelAction(DiscordClient client, IGuild guild, string name, ChannelType type)
 	{
@@ -221,7 +229,7 @@ internal class CreateChannelAction : RestAction<IGuildChannel>, ICreateChannelAc
 		if (_flags.HasValue)
 			request["flags"] = (int)_flags.Value;
 
-		var channel = await _client.GuildClient.CreateChannelAsync(_guild.Id, request, cancellationToken);
+		var channel = await _client.GuildClient.CreateChannelAsync(_guild.Id, request, _reason, cancellationToken);
 
 		var guildChannel = ChannelWrapper.ToGuildChannel(channel, _guild, _client);
 		return (IGuildChannel)guildChannel;

@@ -98,8 +98,8 @@ internal class InviteWrapper(Invite invite, IGuildChannelBase channel, DiscordCl
     }
 
     /// <inheritdoc />
-    public IRestAction Delete()
-    {
-        return RestAction.Create(cancellationToken => _client.InviteClient.DeleteAsync(Code, cancellationToken));
-    }
+    public IReasonedRestAction Delete()
+        => new ReasonedRestAction((reason, ct) => _client.InviteClient.DeleteAsync(Code, reason, ct));
+
+    IRestAction IDeletable.Delete() => Delete();
 }

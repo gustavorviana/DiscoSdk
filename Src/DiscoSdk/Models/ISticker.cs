@@ -8,7 +8,7 @@ namespace DiscoSdk.Models;
 /// or a guild-uploaded one (<see cref="StickerType.Guild"/>). Modify / Delete actions only succeed
 /// on guild stickers.
 /// </summary>
-public interface ISticker : IWithSnowflake
+public interface ISticker : IWithSnowflake, IReasonedDeletable
 {
 	/// <summary>Sticker name (2-30 chars).</summary>
 	string Name { get; }
@@ -46,8 +46,4 @@ public interface ISticker : IWithSnowflake
 	/// </summary>
 	IModifyGuildStickerAction Modify();
 
-	/// <summary>
-	/// Deletes a guild sticker. Standard pack stickers cannot be deleted.
-	/// </summary>
-	IRestAction Delete();
 }

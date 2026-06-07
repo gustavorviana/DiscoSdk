@@ -139,10 +139,10 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     /// <returns>A task that represents the asynchronous operation. The result contains the deserialized response.</returns>
     /// <exception cref="DiscordApiException">Thrown when the API request fails.</exception>
     public Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
-        => SendAsync<T>(path, method, body, null, ct);
+        => SendAsync<T>(path, method, body, (AuthenticationHeaderValue?)null, ct);
 
     public Task SendAsync(DiscordRoute path, HttpMethod method, object? body, CancellationToken ct)
-        => SendAsync(path, method, body, null, ct);
+        => SendAsync(path, method, body, (AuthenticationHeaderValue?)null, ct);
 
     /// <inheritdoc />
     public async Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, object? body, AuthenticationHeaderValue? authOverride, CancellationToken ct)
@@ -235,16 +235,12 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         }
     }
 
-    /// <summary>
-    /// Internal entry point that lets concrete REST actions attach an <c>X-Audit-Log-Reason</c>
-    /// header to mutating requests (ban, kick, channel delete, etc.). Returns void; for
-    /// deserialised responses use the generic overload.
-    /// </summary>
-    internal Task SendWithReasonAsync(DiscordRoute path, HttpMethod method, object? body, string? auditLogReason, CancellationToken ct)
+    /// <inheritdoc />
+    public Task SendWithReasonAsync(DiscordRoute path, HttpMethod method, object? body, string auditLogReason, CancellationToken ct)
         => SendAuditableInternalAsync(path, method, body, auditLogReason, ct);
 
-    /// <summary>Generic counterpart of <see cref="SendWithReasonAsync"/>.</summary>
-    internal Task<T> SendWithReasonAsync<T>(DiscordRoute path, HttpMethod method, object? body, string? auditLogReason, CancellationToken ct)
+    /// <inheritdoc />
+    public Task<T> SendWithReasonAsync<T>(DiscordRoute path, HttpMethod method, object? body, string auditLogReason, CancellationToken ct)
         => SendAuditableInternalAsync<T>(path, method, body, auditLogReason, ct);
 
     private async Task SendAuditableInternalAsync(DiscordRoute path, HttpMethod method, object? body, string? auditLogReason, CancellationToken ct)

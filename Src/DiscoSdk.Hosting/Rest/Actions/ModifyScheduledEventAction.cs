@@ -2,6 +2,7 @@ using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Hosting.Models.Requests.ScheduledEvents;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -23,6 +24,14 @@ internal sealed class ModifyScheduledEventAction(DiscordClient client, Snowflake
 	private Snowflake? _channelId;
 	private ScheduledEventEntityMetadata? _entityMetadata;
 	private string? _image;
+	private string? _reason;
+
+	/// <inheritdoc />
+	public IModifyScheduledEventAction WithReason(string reason)
+	{
+		_reason = AuditLogReason.Validate(reason);
+		return this;
+	}
 
 	/// <inheritdoc />
 	public IModifyScheduledEventAction SetName(string name) { _name = name; return this; }
@@ -66,7 +75,7 @@ internal sealed class ModifyScheduledEventAction(DiscordClient client, Snowflake
 			Image = _image,
 		};
 
-		var model = await _client.GuildScheduledEventClient.ModifyAsync(_guildId, _eventId, request, cancellationToken);
+		var model = await _client.GuildScheduledEventClient.ModifyAsync(_guildId, _eventId, request, _reason, cancellationToken);
 		return new GuildScheduledEventWrapper(_client, model);
 	}
 }

@@ -81,12 +81,12 @@ internal class InviteClient(IDiscordRestClient client)
 	/// <param name="code">The invite code to delete.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task DeleteAsync(string code, CancellationToken cancellationToken = default)
+	public Task DeleteAsync(string code, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		if (string.IsNullOrWhiteSpace(code))
 			throw new ArgumentException("Invite code cannot be null or empty.", nameof(code));
 
 		var route = new DiscordRoute("invites/{code}", code);
-		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
 	}
 }

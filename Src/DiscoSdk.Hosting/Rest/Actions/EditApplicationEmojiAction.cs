@@ -1,6 +1,7 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Hosting.Models.Requests.Applications;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -28,6 +29,17 @@ internal sealed class EditApplicationEmojiAction(DiscordClient client, Snowflake
 	/// method stays on the interface to satisfy <see cref="IEditEmojiAction"/>, but does nothing here.
 	/// </summary>
 	public IEditEmojiAction SetRoles(params Snowflake[] roleIds) => this;
+
+	/// <summary>
+	/// Application emojis are not associated with a guild, so Discord ignores the audit-log reason
+	/// header on this endpoint. The setter is retained to satisfy <see cref="IEditEmojiAction"/>
+	/// but the value is validated only (not sent).
+	/// </summary>
+	public IEditEmojiAction WithReason(string reason)
+	{
+		AuditLogReason.Validate(reason);
+		return this;
+	}
 
 	public override async Task<IEmoji> ExecuteAsync(CancellationToken cancellationToken = default)
 	{

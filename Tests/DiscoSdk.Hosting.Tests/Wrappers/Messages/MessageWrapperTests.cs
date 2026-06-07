@@ -45,7 +45,7 @@ public class MessageWrapperTests : WrapperTestBase
 
 		await Http.Received(1).SendAsync(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/messages/300"),
-			HttpMethod.Delete, Arg.Any<object?>(), Arg.Any<CancellationToken>());
+			HttpMethod.Delete, Arg.Any<CancellationToken>());
 	}
 
 	[Fact]

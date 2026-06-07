@@ -76,7 +76,6 @@ public class MessageClientTests
 		await _http.Received(1).SendAsync(
 			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/messages/{_messageId}"),
 			HttpMethod.Delete,
-			Arg.Any<object?>(),
 			Arg.Any<CancellationToken>());
 	}
 

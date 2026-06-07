@@ -12,11 +12,7 @@ internal class RoleClient(IDiscordRestClient client)
 	/// <summary>
 	/// Creates a new role in the specified guild.
 	/// </summary>
-	/// <param name="guildId">The ID of the guild to create the role in.</param>
-	/// <param name="request">The role creation request.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>The created role.</returns>
-	public Task<Role> CreateAsync(Snowflake guildId, object request, CancellationToken cancellationToken = default)
+	public Task<Role> CreateAsync(Snowflake guildId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -24,18 +20,13 @@ internal class RoleClient(IDiscordRestClient client)
 		ArgumentNullException.ThrowIfNull(request);
 
 		var route = new DiscordRoute("guilds/{guild_id}/roles", guildId);
-		return client.SendAsync<Role>(route, HttpMethod.Post, request, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<Role>(route, HttpMethod.Post, request, cancellationToken) : client.SendWithReasonAsync<Role>(route, HttpMethod.Post, request, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>
 	/// Edits an existing role in the specified guild.
 	/// </summary>
-	/// <param name="guildId">The ID of the guild containing the role.</param>
-	/// <param name="roleId">The ID of the role to edit.</param>
-	/// <param name="request">The role edit request.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>The edited role.</returns>
-	public Task<Role> EditAsync(Snowflake guildId, Snowflake roleId, object request, CancellationToken cancellationToken = default)
+	public Task<Role> EditAsync(Snowflake guildId, Snowflake roleId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -46,17 +37,13 @@ internal class RoleClient(IDiscordRestClient client)
 		ArgumentNullException.ThrowIfNull(request);
 
 		var route = new DiscordRoute("guilds/{guild_id}/roles/{role_id}", guildId, roleId);
-		return client.SendAsync<Role>(route, HttpMethod.Patch, request, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<Role>(route, HttpMethod.Patch, request, cancellationToken) : client.SendWithReasonAsync<Role>(route, HttpMethod.Patch, request, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>
 	/// Deletes a role from the specified guild.
 	/// </summary>
-	/// <param name="guildId">The ID of the guild containing the role.</param>
-	/// <param name="roleId">The ID of the role to delete.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A task that represents the asynchronous operation.</returns>
-	public Task DeleteAsync(Snowflake guildId, Snowflake roleId, CancellationToken cancellationToken = default)
+	public Task DeleteAsync(Snowflake guildId, Snowflake roleId, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -65,17 +52,13 @@ internal class RoleClient(IDiscordRestClient client)
 			throw new ArgumentException("Role ID cannot be null or empty.", nameof(roleId));
 
 		var route = new DiscordRoute("guilds/{guild_id}/roles/{role_id}", guildId, roleId);
-		return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
 	}
 
 	/// <summary>
 	/// Modifies the positions of roles in the specified guild.
 	/// </summary>
-	/// <param name="guildId">The ID of the guild containing the roles.</param>
-	/// <param name="request">The role position modification request (array of {id, position}).</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>An array of roles with updated positions.</returns>
-	public Task<Role[]> ModifyPositionsAsync(Snowflake guildId, object request, CancellationToken cancellationToken = default)
+	public Task<Role[]> ModifyPositionsAsync(Snowflake guildId, object request, string? auditLogReason = null, CancellationToken cancellationToken = default)
 	{
 		if (guildId == default)
 			throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
@@ -83,7 +66,6 @@ internal class RoleClient(IDiscordRestClient client)
 		ArgumentNullException.ThrowIfNull(request);
 
 		var route = new DiscordRoute("guilds/{guild_id}/roles", guildId);
-		return client.SendAsync<Role[]>(route, HttpMethod.Patch, request, cancellationToken);
+		return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<Role[]>(route, HttpMethod.Patch, request, cancellationToken) : client.SendWithReasonAsync<Role[]>(route, HttpMethod.Patch, request, auditLogReason, cancellationToken));
 	}
 }
-

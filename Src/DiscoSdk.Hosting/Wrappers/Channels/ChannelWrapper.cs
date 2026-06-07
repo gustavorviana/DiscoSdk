@@ -36,7 +36,7 @@ internal class ChannelWrapper(DiscordClient client, Channel channel) : IChannel
     /// <inheritdoc />
     public virtual IRestAction Delete()
     {
-        return RestAction.Create(cancellationToken => _client.ChannelClient.DeleteAsync(_channel.Id, cancellationToken));
+        return RestAction.Create(cancellationToken => _client.ChannelClient.DeleteAsync(_channel.Id, cancellationToken: cancellationToken));
     }
 
     public IPermissionContainer GetPermissionContainer()

@@ -6,7 +6,7 @@ namespace DiscoSdk.Models.AutoModeration;
 /// <summary>
 /// A Discord auto-moderation rule, with the operations that can be performed on it.
 /// </summary>
-public interface IAutoModerationRule
+public interface IAutoModerationRule : IReasonedDeletable
 {
 	/// <summary>The ID of this rule.</summary>
 	Snowflake Id { get; }
@@ -44,6 +44,4 @@ public interface IAutoModerationRule
 	/// <summary>Creates a REST action that modifies this rule.</summary>
 	IModifyAutoModerationRuleAction Modify();
 
-	/// <summary>Creates a REST action that deletes this rule.</summary>
-	IRestAction Delete();
 }

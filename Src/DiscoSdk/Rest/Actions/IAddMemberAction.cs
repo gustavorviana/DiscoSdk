@@ -8,7 +8,7 @@ namespace DiscoSdk.Rest.Actions;
 /// <see cref="IRestAction{T}.ExecuteAsync"/>. The result is the newly-created member, or
 /// <c>null</c> if the user was already in the guild (Discord returns 204).
 /// </summary>
-public interface IAddMemberAction : IRestAction<IMember?>
+public interface IAddMemberAction : IRestAction<IMember?>, IRestActionWithReason<IAddMemberAction>
 {
     /// <summary>Sets the initial nickname for the member. Requires <c>MANAGE_NICKNAMES</c>.</summary>
     IAddMemberAction SetNickname(string? nick);

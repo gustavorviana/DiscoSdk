@@ -1,5 +1,6 @@
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -15,6 +16,7 @@ internal class CreateEmojiAction : RestAction<IEmoji>, ICreateEmojiAction
 	private string? _name;
 	private DiscordImageBuffer? _image;
 	private Snowflake[]? _roles;
+	private string? _reason;
 
 	public CreateEmojiAction(DiscordClient client, IGuild guild, string name, DiscordImageBuffer image)
 	{
@@ -25,7 +27,7 @@ internal class CreateEmojiAction : RestAction<IEmoji>, ICreateEmojiAction
 		_image = image ?? throw new ArgumentNullException(nameof(image));
 	}
 
-    public ICreateEmojiAction SetName(string name)
+	public ICreateEmojiAction SetName(string name)
 	{
 		_name = name ?? throw new ArgumentNullException(nameof(name));
 		return this;
@@ -40,6 +42,12 @@ internal class CreateEmojiAction : RestAction<IEmoji>, ICreateEmojiAction
 	public ICreateEmojiAction SetRoles(params Snowflake[] roleIds)
 	{
 		_roles = roleIds;
+		return this;
+	}
+
+	public ICreateEmojiAction WithReason(string reason)
+	{
+		_reason = AuditLogReason.Validate(reason);
 		return this;
 	}
 
@@ -63,7 +71,7 @@ internal class CreateEmojiAction : RestAction<IEmoji>, ICreateEmojiAction
 		if (_roles != null && _roles.Length > 0)
 			request["roles"] = _roles.Select(r => r.ToString()).ToArray();
 
-		var emoji = await _client.GuildClient.CreateEmojiAsync(_guildId, request, cancellationToken);
+		var emoji = await _client.GuildClient.CreateEmojiAsync(_guildId, request, _reason, cancellationToken);
 		return new EmojiWrapper(_client, emoji, _guild);
 	}
 }

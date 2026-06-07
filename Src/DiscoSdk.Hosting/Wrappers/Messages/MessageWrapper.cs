@@ -113,19 +113,21 @@ internal class MessageWrapper : MessageBaseWrapper, IMessage
 
     // Direct Operations
     /// <inheritdoc />
-    public IRestAction Delete()
+    public IReasonedRestAction Delete()
     {
         if (Message.Flags.HasFlag(MessageFlags.Ephemeral) && _interactionHandle == null)
             throw EphemeralMessageException.Operation("delete");
 
-        return RestAction.Create(cancellationToken =>
+        return new ReasonedRestAction((reason, ct) =>
         {
             if (_interactionHandle != null)
-                return new WebhookMessageClient(_client.HttpClient).DeleteOriginalResponseAsync(_interactionHandle.WithAppId(_client.ApplicationId), cancellationToken);
+                return new WebhookMessageClient(_client.HttpClient).DeleteOriginalResponseAsync(_interactionHandle.WithAppId(_client.ApplicationId), ct);
 
-            return _client.MessageClient.DeleteAsync(Message.ChannelId, Message.Id, cancellationToken);
+            return _client.MessageClient.DeleteAsync(Message.ChannelId, Message.Id, reason, ct);
         });
     }
+
+    IRestAction IDeletable.Delete() => Delete();
 
     public IRestAction<IMessage> Crosspost()
     {

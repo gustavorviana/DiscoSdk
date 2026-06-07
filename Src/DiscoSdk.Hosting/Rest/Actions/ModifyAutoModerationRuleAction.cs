@@ -2,6 +2,7 @@ using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.AutoModeration;
 using DiscoSdk.Models.Enums;
+using DiscoSdk.Rest;
 using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Hosting.Rest.Actions;
@@ -14,6 +15,7 @@ internal sealed class ModifyAutoModerationRuleAction(DiscordClient client, Snowf
 {
 	private readonly DiscordClient _client = client ?? throw new ArgumentNullException(nameof(client));
 	private readonly Dictionary<string, object?> _changes = [];
+	private string? _reason;
 
 	public IModifyAutoModerationRuleAction SetName(string name)
 	{
@@ -57,9 +59,15 @@ internal sealed class ModifyAutoModerationRuleAction(DiscordClient client, Snowf
 		return this;
 	}
 
+	public IModifyAutoModerationRuleAction WithReason(string reason)
+	{
+		_reason = AuditLogReason.Validate(reason);
+		return this;
+	}
+
 	public override async Task<IAutoModerationRule> ExecuteAsync(CancellationToken cancellationToken = default)
 	{
-		var rule = await _client.AutoModerationClient.ModifyRuleAsync(guildId, ruleId, _changes, cancellationToken);
+		var rule = await _client.AutoModerationClient.ModifyRuleAsync(guildId, ruleId, _changes, _reason, cancellationToken);
 		return new AutoModerationRuleWrapper(_client, rule);
 	}
 }

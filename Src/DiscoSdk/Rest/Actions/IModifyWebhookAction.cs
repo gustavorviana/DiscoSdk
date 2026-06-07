@@ -6,7 +6,7 @@ namespace DiscoSdk.Rest.Actions;
 /// Modifies an existing webhook. Each setter on the builder maps to a single Discord field;
 /// only the fields you set are sent.
 /// </summary>
-public interface IModifyWebhookAction : IRestAction<IWebhook>
+public interface IModifyWebhookAction : IRestAction<IWebhook>, IRestActionWithReason<IModifyWebhookAction>
 {
     /// <summary>Sets the default name (1–80 chars).</summary>
     IModifyWebhookAction SetName(string name);
