@@ -241,7 +241,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<Channel>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new Channel { Id = new Snowflake(500), Type = ChannelType.GuildText });
 
-		await _wrapper.CreateChannel("general", ChannelType.GuildText).ExecuteAsync();
+		await _wrapper.Channels.Create("general", ChannelType.GuildText).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<Channel>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/channels"),
@@ -256,7 +256,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<Role>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new Role());
 
-		await _wrapper.CreateRole().SetName("Admin").ExecuteAsync();
+		await _wrapper.Roles.Create().SetName("Admin").ExecuteAsync();
 
 		await Http.Received(1).SendAsync<Role>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/roles"),
@@ -271,7 +271,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<InternalEmoji>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new InternalEmoji { Id = new Snowflake(11), Name = "smile" });
 
-		await _wrapper.CreateEmoji("smile", new DiscordImageBuffer([1, 2, 3], "png")).ExecuteAsync();
+		await _wrapper.Emojis.Create("smile", new DiscordImageBuffer([1, 2, 3], "png")).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<InternalEmoji>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/emojis"),
@@ -285,7 +285,7 @@ public class GuildWrapperTests : WrapperTestBase
 	{
 		var positions = new[] { new ChannelPosition(new Snowflake(1), Position: 0) };
 
-		await _wrapper.ModifyChannelPositions(positions).ExecuteAsync();
+		await _wrapper.Channels.ModifyPositions(positions).ExecuteAsync();
 
 		await Http.Received(1).SendAsync(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/channels"),
@@ -298,7 +298,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<Role[]>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns([]);
 
-		await _wrapper.GetRoles().ExecuteAsync();
+		await _wrapper.Roles.GetAll().ExecuteAsync();
 
 		await Http.Received(1).SendAsync<Role[]>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/roles"),
@@ -339,7 +339,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<Dictionary<string, object>>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new Dictionary<string, object> { ["pruned"] = 5 });
 
-		await _wrapper.GetPruneCount(days: 7).ExecuteAsync();
+		await _wrapper.Prune.Count(days: 7).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<Dictionary<string, object>>(
 			Arg.Is<DiscordRoute>(r => r.ToString().StartsWith("guilds/100/prune") && r.ToString().Contains("days=7")),
@@ -352,7 +352,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<Dictionary<string, object>>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new Dictionary<string, object> { ["pruned"] = 5 });
 
-		await _wrapper.BeginPrune(days: 7).ExecuteAsync();
+		await _wrapper.Prune.Begin(days: 7).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<Dictionary<string, object>>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/prune"),
@@ -391,7 +391,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildWidget>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new GuildWidget());
 
-		await _wrapper.GetWidget().ExecuteAsync();
+		await _wrapper.Widget.Get().ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildWidget>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/widget.json"),
@@ -404,7 +404,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildWidget>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new GuildWidget());
 
-		await _wrapper.EditWidget().SetEnabled(true).ExecuteAsync();
+		await _wrapper.Widget.Edit().SetEnabled(true).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildWidget>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/widget"),
@@ -417,7 +417,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<WelcomeScreen>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new WelcomeScreen());
 
-		await _wrapper.GetWelcomeScreen().ExecuteAsync();
+		await _wrapper.WelcomeScreen.Get().ExecuteAsync();
 
 		await Http.Received(1).SendAsync<WelcomeScreen>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/welcome-screen"),
@@ -430,7 +430,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<WelcomeScreen>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new WelcomeScreen());
 
-		await _wrapper.EditWelcomeScreen().SetEnabled(true).ExecuteAsync();
+		await _wrapper.WelcomeScreen.Edit().SetEnabled(true).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<WelcomeScreen>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/welcome-screen"),
@@ -458,7 +458,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<AutoModerationRule[]>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns([]);
 
-		await _wrapper.GetAutoModerationRules().ExecuteAsync();
+		await _wrapper.AutoModeration.GetAll().ExecuteAsync();
 
 		await Http.Received(1).SendAsync<AutoModerationRule[]>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/auto-moderation/rules"),
@@ -471,7 +471,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<AutoModerationRule>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new AutoModerationRule { GuildId = _guildId, Actions = [], ExemptRoles = [], ExemptChannels = [] });
 
-		await _wrapper.GetAutoModerationRule(new Snowflake(99)).ExecuteAsync();
+		await _wrapper.AutoModeration.Get(new Snowflake(99)).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<AutoModerationRule>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/auto-moderation/rules/99"),
@@ -484,7 +484,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<AutoModerationRule>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new AutoModerationRule { GuildId = _guildId, Actions = [], ExemptRoles = [], ExemptChannels = [] });
 
-		await _wrapper.CreateAutoModerationRule("rule", AutoModerationEventType.MessageSend, AutoModerationTriggerType.Keyword)
+		await _wrapper.AutoModeration.Create("rule", AutoModerationEventType.MessageSend, AutoModerationTriggerType.Keyword)
 			.ExecuteAsync();
 
 		await Http.Received(1).SendAsync<AutoModerationRule>(
@@ -502,7 +502,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildOnboarding>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new GuildOnboarding { GuildId = _guildId });
 
-		await _wrapper.GetOnboarding().ExecuteAsync();
+		await _wrapper.Onboarding.Get().ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildOnboarding>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/onboarding"),
@@ -515,7 +515,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildTemplate[]>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns([]);
 
-		await _wrapper.GetTemplates().ExecuteAsync();
+		await _wrapper.Templates.GetAll().ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildTemplate[]>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/templates"),
@@ -528,7 +528,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildTemplate>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new GuildTemplate { Code = "x", Creator = new User() });
 
-		await _wrapper.CreateTemplate("tpl", "desc").ExecuteAsync();
+		await _wrapper.Templates.Create("tpl", "desc").ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildTemplate>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/templates"),

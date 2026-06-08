@@ -8,12 +8,12 @@ internal class ChannelPermissionCalculator
 {
     private readonly DiscordPermission _everyonePermissions;
     private readonly PermissionOverwrite[] _channelOverwrite;
-    private readonly IRole[] _guildRoles;
+    private readonly IReadOnlyList<IRole> _guildRoles;
 
     public ChannelPermissionCalculator(IGuild guild, IPermissionContainer permissionContainer)
     {
         _channelOverwrite = permissionContainer.PermissionOverwrites ?? [];
-        _guildRoles = guild.Roles ?? [];
+        _guildRoles = guild.Roles.GetCached();
 
         var everyoneRole = _guildRoles.FirstOrDefault(r => r.Id == guild.Id);
         _everyonePermissions = everyoneRole?.Permissions ?? DiscordPermission.None;

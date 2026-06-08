@@ -47,7 +47,7 @@ internal class InteractionDataWrapper(DiscordClient client, InteractionData data
                     members = [.. (await guild.Members.List().ExecuteAsync(cancellationToken)).Where(x => membersId.Contains(x.Id.ToString()))];
 
                 if (rolesId.Length > 0)
-                    roles = [.. (await guild.GetRoles().ExecuteAsync(cancellationToken)).Where(x => rolesId.Contains(x.Id.ToString()))];
+                    roles = [.. (await guild.Roles.GetAll().ExecuteAsync(cancellationToken)).Where(x => rolesId.Contains(x.Id.ToString()))];
             }
 
             var attachments = data.Resolved.Attachments is { } att ? att : new Dictionary<string, DiscoSdk.Models.Messages.Attachment>();

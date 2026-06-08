@@ -1,6 +1,4 @@
 ﻿using DiscoSdk.Caching;
-using DiscoSdk.Models.AutoModeration;
-using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
 
@@ -43,12 +41,14 @@ public interface IGuild
     /// <summary>
     /// Gets a value indicating whether the current user is the owner of this guild.
     /// </summary>
-    bool? Owner { get; }
+    bool Owner { get; }
 
     /// <summary>
-    /// Gets the ID of the owner of this guild.
+    /// ID of the owner of this guild. Always present in payloads Discord delivers; a default
+    /// <see cref="Snowflake"/> only surfaces when the wrapper is constructed from an incomplete
+    /// stub (e.g. a deleted/unavailable guild).
     /// </summary>
-    Snowflake? OwnerId { get; }
+    Snowflake OwnerId { get; }
 
     /// <summary>
     /// Gets the permissions for the current user in this guild.
@@ -60,80 +60,28 @@ public interface IGuild
     /// </summary>
     string? Region { get; }
 
-    /// <summary>
-    /// Gets the ID of the AFK channel, or null if no AFK channel is configured.
-    /// </summary>
-    Snowflake? AfkChannelId { get; }
+    /// <summary>Verification level required for this guild. Defaults to <see cref="VerificationLevel.None"/>.</summary>
+    VerificationLevel VerificationLevel { get; }
+
+    /// <summary>Default message-notification level. Defaults to <see cref="DefaultMessageNotificationLevel.AllMessages"/>.</summary>
+    DefaultMessageNotificationLevel DefaultMessageNotifications { get; }
+
+    /// <summary>Explicit-content filter level. Defaults to <see cref="ExplicitContentFilterLevel.Disabled"/>.</summary>
+    ExplicitContentFilterLevel ExplicitContentFilter { get; }
+
 
     /// <summary>
-    /// Gets the AFK timeout in seconds, or null if not set.
+    /// Enabled features of this guild. Empty when none are enabled.
     /// </summary>
-    int? AfkTimeout { get; }
+    string[] Features { get; }
 
-    /// <summary>
-    /// Gets a value indicating whether the guild widget is enabled.
-    /// </summary>
-    bool? WidgetEnabled { get; }
-
-    /// <summary>
-    /// Gets the ID of the channel used for the guild widget, or null if not set.
-    /// </summary>
-    Snowflake? WidgetChannelId { get; }
-
-    /// <summary>
-    /// Gets the verification level required for this guild.
-    /// </summary>
-    VerificationLevel? VerificationLevel { get; }
-
-    /// <summary>
-    /// Gets the default message notification level for this guild.
-    /// </summary>
-    DefaultMessageNotificationLevel? DefaultMessageNotifications { get; }
-
-    /// <summary>
-    /// Gets the explicit content filter level for this guild.
-    /// </summary>
-    ExplicitContentFilterLevel? ExplicitContentFilter { get; }
-
-    /// <summary>
-    /// Gets the roles in this guild, or null if not available.
-    /// </summary>
-    IRole[]? Roles { get; }
-
-    /// <summary>
-    /// Gets the emojis in this guild, or null if not available.
-    /// </summary>
-    IEmoji[]? Emojis { get; }
-
-    /// <summary>
-    /// Gets the enabled features of this guild, or null if not available.
-    /// </summary>
-    string[]? Features { get; }
-
-    /// <summary>
-    /// Gets the required MFA level for this guild.
-    /// </summary>
-    MfaLevel? MfaLevel { get; }
+    /// <summary>Required MFA level for moderation actions. Defaults to <see cref="MfaLevel.None"/>.</summary>
+    MfaLevel MfaLevel { get; }
 
     /// <summary>
     /// Gets the application ID of the guild creator if it is bot-created, or null otherwise.
     /// </summary>
     Snowflake? ApplicationId { get; }
-
-    /// <summary>
-    /// Gets the ID of the system channel where system messages are sent, or null if not configured.
-    /// </summary>
-    Snowflake? SystemChannelId { get; }
-
-    /// <summary>
-    /// Gets the system channel flags that control which system messages are sent to the system channel.
-    /// </summary>
-    SystemChannelFlags? SystemChannelFlags { get; }
-
-    /// <summary>
-    /// Gets the ID of the rules channel, or null if not configured.
-    /// </summary>
-    Snowflake? RulesChannelId { get; }
 
     /// <summary>
     /// Gets the maximum number of presences for this guild, or null if not set.
@@ -160,25 +108,16 @@ public interface IGuild
     /// </summary>
     DiscordImageUrl? Banner { get; }
 
-    /// <summary>
-    /// Gets the premium tier (boost level) of this guild.
-    /// </summary>
-    PremiumTier? PremiumTier { get; }
+    /// <summary>Premium (boost) tier of this guild. Defaults to <see cref="PremiumTier.None"/>.</summary>
+    PremiumTier PremiumTier { get; }
 
     /// <summary>
     /// Gets the number of boosters this guild currently has.
     /// </summary>
     int? PremiumSubscriptionCount { get; }
 
-    /// <summary>
-    /// Gets the preferred locale of this guild.
-    /// </summary>
-    string? PreferredLocale { get; }
-
-    /// <summary>
-    /// Gets the ID of the channel where guild notices are posted, or null if not configured.
-    /// </summary>
-    Snowflake? PublicUpdatesChannelId { get; }
+    /// <summary>Preferred locale of this guild. Defaults to <c>"en-US"</c> when Discord omits it.</summary>
+    string PreferredLocale { get; }
 
     /// <summary>
     /// Gets the maximum number of users in a video channel, or null if not set.
@@ -196,9 +135,9 @@ public interface IGuild
     int? ApproximatePresenceCount { get; }
 
     /// <summary>
-    /// Gets a value indicating whether this guild is unavailable (e.g., due to an outage).
+    /// Whether this guild is unavailable (e.g., due to an outage). Defaults to <c>false</c>.
     /// </summary>
-    bool? Unavailable { get; }
+    bool Unavailable { get; }
 
     /// <summary>
     /// Gets the hub type of this guild (Student Hub program), or null if this guild is not a hub.
@@ -235,35 +174,24 @@ public interface IGuild
     IRestAction Leave();
 
     /// <summary>
-    /// Creates a REST action to create a channel in this guild.
+    /// Channel surface for this guild — every operation on <c>/guilds/:id/channels</c>
+    /// (<c>Create</c>, <c>Get</c>, <c>GetAll</c>, <c>GetText</c>, <c>GetVoice</c>, <c>GetAfk</c>,
+    /// <c>GetSystem</c>, <c>GetRules</c>, <c>GetPublicUpdates</c>, <c>ModifyPositions</c>,
+    /// <c>ListActiveThreads</c>).
     /// </summary>
-    /// <param name="name">The name of the channel.</param>
-    /// <param name="type">The type of channel to create.</param>
-    /// <returns>A REST action that can be configured and executed to create the channel.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    ICreateChannelAction CreateChannel(string name, ChannelType type);
+    IGuildChannels Channels { get; }
 
     /// <summary>
-    /// Creates a REST action to create a role in this guild.
+    /// Role surface for this guild — every operation on <c>/guilds/:id/roles</c>
+    /// (<c>Create</c>, <c>Get</c>, <c>GetAll</c>, <c>ModifyPositions</c>).
     /// </summary>
-    /// <returns>A REST action that can be configured and executed to create the role.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRoleAction CreateRole();
+    IGuildRoles Roles { get; }
 
     /// <summary>
-    /// Creates a REST action to create an emoji in this guild.
+    /// Emoji surface for this guild — every operation on <c>/guilds/:id/emojis*</c>
+    /// (<c>Create</c>, <c>GetCached</c>, <c>GetCachedCount</c>).
     /// </summary>
-    /// <param name="name">The name of the emoji.</param>
-    /// <param name="image">The image data for the emoji.</param>
-    /// <returns>A REST action that can be configured and executed to create the emoji.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    ICreateEmojiAction CreateEmoji(string name, DiscordImageBuffer image);
+    IGuildEmojis Emojis { get; }
 
     /// <summary>
     /// Member surface for this guild — cache reads, REST builders, gateway Request Guild Members
@@ -280,294 +208,88 @@ public interface IGuild
     /// </summary>
     IGuildBans Bans { get; }
 
-    /// <summary>
-    /// Creates a REST action to get audit logs of this guild with pagination.
-    /// </summary>
-    /// <returns>A REST action that can be configured and executed to retrieve audit logs.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
+    /// <summary>Builds a deferred REST action that retrieves the audit logs of this guild.</summary>
     IAuditLogPaginationAction GetAuditLogs();
 
     /// <summary>
-    /// Gets a channel by its ID in this guild.
+    /// Scheduled event surface for this guild — every operation on
+    /// <c>/guilds/:id/scheduled-events*</c> (<c>Get</c>, <c>GetAll</c>, <c>Create</c>).
     /// </summary>
-    /// <param name="channelId">The ID of the channel to retrieve.</param>
-    /// <returns>The channel if found, or null if the channel does not exist in this guild.</returns>
-    IGuildChannelUnion? GetChannel(Snowflake channelId);
+    IGuildScheduledEvents ScheduledEvents { get; }
 
     /// <summary>
-    /// Gets the AFK channel of this guild.
+    /// Auto-moderation surface for this guild — every operation on
+    /// <c>/guilds/:id/auto-moderation/rules*</c> (<c>Get</c>, <c>GetAll</c>, <c>Create</c>).
     /// </summary>
-    /// <returns>The AFK channel if configured, or null if no AFK channel is set.</returns>
-    IGuildVoiceChannel? GetAfkChannel();
+    IGuildAutoModeration AutoModeration { get; }
 
     /// <summary>
-    /// Gets the system channel of this guild.
+    /// Widget surface for this guild — every operation on <c>/guilds/:id/widget*</c>
+    /// (<c>Get</c>, <c>Edit</c>, <c>GetImage</c>).
     /// </summary>
-    /// <returns>The system channel if configured, or null if no system channel is set.</returns>
-    IGuildTextChannel? GetSystemChannel();
+    IGuildWidgetSurface Widget { get; }
 
     /// <summary>
-    /// Gets the rules channel of this guild.
+    /// Welcome-screen surface for this guild — every operation on
+    /// <c>/guilds/:id/welcome-screen*</c> (<c>Get</c>, <c>Edit</c>).
     /// </summary>
-    /// <returns>The rules channel if configured, or null if no rules channel is set.</returns>
-    IGuildTextChannel? GetRulesChannel();
+    IGuildWelcomeScreen WelcomeScreen { get; }
 
     /// <summary>
-    /// Gets the public updates channel of this guild.
+    /// Onboarding surface for this guild — every operation on <c>/guilds/:id/onboarding*</c>
+    /// (<c>Get</c>, <c>Edit</c>).
     /// </summary>
-    /// <returns>The public updates channel if configured, or null if no public updates channel is set.</returns>
-    IGuildTextChannel? GetPublicUpdatesChannel();
+    IGuildOnboardingSurface Onboarding { get; }
 
     /// <summary>
-    /// Gets all channels in this guild.
+    /// Template surface for this guild — every operation on <c>/guilds/:id/templates*</c>
+    /// (<c>GetAll</c>, <c>Create</c>).
     /// </summary>
-    /// <returns>A read-only list of all channels in this guild.</returns>
-    IReadOnlyList<IGuildChannelUnion> GetChannels();
+    IGuildTemplates Templates { get; }
 
     /// <summary>
-    /// Gets all text channels in this guild.
+    /// Prune surface for this guild — every operation on <c>/guilds/:id/prune*</c>
+    /// (<c>Count</c>, <c>Begin</c>).
     /// </summary>
-    /// <returns>A read-only list of all text channels in this guild.</returns>
-    IReadOnlyList<IGuildTextChannel> GetTextChannels();
-
-    /// <summary>
-    /// Gets all voice channels in this guild.
-    /// </summary>
-    /// <returns>A read-only list of all voice channels in this guild.</returns>
-    IReadOnlyList<IGuildVoiceChannel> GetVoiceChannels();
-
-    /// <summary>
-    /// Gets a REST action to retrieve all roles in this guild.
-    /// </summary>
-    /// <returns>A REST action that can be executed to retrieve roles.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<IReadOnlyList<IRole>> GetRoles();
-
-    /// <summary>
-    /// Gets a REST action to retrieve a single role by id. Uses the dedicated
-    /// <c>GET /guilds/{guild.id}/roles/{role.id}</c> endpoint Discord introduced in 2024 — does
-    /// not pull the full role list and filter client-side. Returns <c>null</c> when the role
-    /// does not exist in this guild.
-    /// </summary>
-    /// <param name="roleId">The role ID.</param>
-    IRestAction<IRole?> GetRole(Snowflake roleId);
-
-    /// <summary>
-    /// Creates a builder for bulk-reordering roles in this guild via
-    /// <c>PATCH /guilds/{guild.id}/roles</c>. Call <c>Move(roleId, position)</c> for each role
-    /// you want to move; roles you omit keep their current position. Optional audit-log reason
-    /// via <c>WithReason</c>.
-    /// </summary>
-    IModifyRolePositionsAction ModifyRolePositions();
-
-    /// <summary>
-    /// Lists every active (non-archived) thread in this guild the bot has permission to view,
-    /// across every parent channel. Mirrors <c>GET /guilds/{guild.id}/threads/active</c>.
-    /// Membership state for the threads the bot is already in arrives via
-    /// <c>THREAD_MEMBER_UPDATE</c> / <c>THREAD_MEMBERS_UPDATE</c> events.
-    /// </summary>
-    IRestAction<IReadOnlyList<IGuildThreadChannel>> ListActiveThreads();
-
-    /// <summary>
-    /// Creates a builder for the onboarding write-side (<c>PUT /guilds/{guild.id}/onboarding</c>)
-    /// without first fetching the current state. Use <see cref="GetOnboarding"/> when you need
-    /// to read existing prompts before mutating them; use this when the new config is independent.
-    /// </summary>
-    IEditGuildOnboardingAction EditOnboarding();
-
-    /// <summary>
-    /// Gets a REST action to retrieve all invites in this guild.
-    /// </summary>
-    /// <returns>A REST action that can be executed to retrieve invites.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<IReadOnlyList<IInvite>> GetInvites();
-
-    /// <summary>
-    /// Creates a REST action to get the prune count for this guild.
-    /// </summary>
-    /// <param name="days">The number of days to count inactive members (1-30).</param>
-    /// <param name="includeRoles">The role IDs to include in the prune count.</param>
-    /// <returns>A REST action that can be executed to get the prune count.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<int> GetPruneCount(int days, params Snowflake[] includeRoles);
-
-    /// <summary>
-    /// Creates a REST action to begin a prune operation on this guild.
-    /// </summary>
-    /// <param name="days">The number of days to prune inactive members (1-30).</param>
-    /// <param name="includeRoles">The role IDs to include in the prune.</param>
-    /// <returns>A REST action that can be configured and executed to begin the prune.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IReasonedRestAction<int> BeginPrune(int days, params Snowflake[] includeRoles);
-
-    /// <summary>
-    /// Gets a REST action to retrieve voice regions available for this guild.
-    /// </summary>
-    /// <returns>A REST action that can be executed to retrieve voice regions.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<IReadOnlyList<IVoiceRegion>> GetVoiceRegions();
-
-    /// <summary>
-    /// Gets a REST action to retrieve the preview of this guild (for public guilds).
-    /// </summary>
-    /// <returns>A REST action that can be executed to retrieve the guild preview.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<GuildPreview> GetPreview();
-
-    /// <summary>
-    /// Gets a REST action to retrieve the widget of this guild.
-    /// </summary>
-    /// <returns>A REST action that can be executed to retrieve the widget.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<IGuildWidget> GetWidget();
-
-    /// <summary>
-    /// Creates a REST action to modify the widget of this guild.
-    /// </summary>
-    /// <returns>A REST action that can be configured and executed to modify the widget.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IEditGuildWidgetAction EditWidget();
-
-    /// <summary>
-    /// Gets a REST action to retrieve the welcome screen of this guild.
-    /// </summary>
-    /// <returns>A REST action that can be executed to retrieve the welcome screen.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<IWelcomeScreen> GetWelcomeScreen();
-
-    /// <summary>
-    /// Creates a REST action to modify the welcome screen of this guild.
-    /// </summary>
-    /// <returns>A REST action that can be configured and executed to modify the welcome screen.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IEditWelcomeScreenAction EditWelcomeScreen();
-
-    /// <summary>
-    /// Gets a REST action to retrieve the vanity URL of this guild.
-    /// </summary>
-    /// <returns>A REST action that can be executed to retrieve the vanity URL code.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<IVanityUrl?> GetVanityUrl();
-
-    /// <summary>
-    /// Gets a REST action to retrieve the widget image of this guild.
-    /// </summary>
-    /// <param name="style">The style of the widget image.</param>
-    /// <returns>A REST action that can be executed to retrieve the widget image as a stream.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IRestAction<Stream> GetWidgetImage(string? style = null);
-
-    /// <summary>
-    /// Gets a REST action that lists this guild's auto-moderation rules.
-    /// </summary>
-    IRestAction<IReadOnlyList<IAutoModerationRule>> GetAutoModerationRules();
-
-    /// <summary>
-    /// Gets a REST action that retrieves a single auto-moderation rule by ID.
-    /// </summary>
-    IRestAction<IAutoModerationRule> GetAutoModerationRule(Snowflake ruleId);
-
-    /// <summary>
-    /// Creates a REST action that adds a new auto-moderation rule to this guild. Configure the trigger
-    /// metadata, actions, etc. on the returned action before executing it.
-    /// </summary>
-    ICreateAutoModerationRuleAction CreateAutoModerationRule(string name, AutoModerationEventType eventType, AutoModerationTriggerType triggerType);
-
-    /// <summary>Lists this guild's scheduled events.</summary>
-    /// <param name="withUserCount">If true, each event includes its <c>UserCount</c>.</param>
-    IRestAction<IReadOnlyList<IGuildScheduledEvent>> GetScheduledEvents(bool? withUserCount = null);
-
-    /// <summary>Gets a single scheduled event by id.</summary>
-    IRestAction<IGuildScheduledEvent> GetScheduledEvent(Snowflake eventId, bool? withUserCount = null);
-
-    /// <summary>
-    /// Creates a scheduled event. Returns a fluent builder — for Stage/Voice events chain
-    /// <c>SetChannel(...)</c>; for External events chain <c>SetLocation(...).SetScheduledEndTime(...)</c>.
-    /// Finish with <c>ExecuteAsync</c>.
-    /// </summary>
-    /// <param name="name">Event name (1-100 chars).</param>
-    /// <param name="scheduledStartTime">When the event starts.</param>
-    /// <param name="entityType">Venue type (Stage / Voice / External).</param>
-    Rest.Actions.ICreateScheduledEventAction CreateScheduledEvent(
-        string name,
-        DateTimeOffset scheduledStartTime,
-        Enums.ScheduledEventEntityType entityType);
+    IGuildPrune Prune { get; }
 
     /// <summary>
     /// Sticker access scope bound to this guild. Read operations route through the SDK's
     /// in-memory sticker cache (when enabled via
     /// <c>DiscordClientBuilder.WithStickerCache</c>) and fall back to REST per
-    /// <see cref="DiscoSdk.Caching.StickerFetchMode"/>. The same scope is reachable from
-    /// <see cref="IDiscordClient.Stickers"/> via <c>OfGuild(...)</c>.
+    /// <see cref="DiscoSdk.Caching.StickerFetchMode"/>.
     /// </summary>
     DiscoSdk.Caching.IGuildStickers Stickers { get; }
 
-    /// <summary>
-    /// Gets a REST action that retrieves this guild's onboarding configuration.
-    /// </summary>
-    IRestAction<IGuildOnboarding> GetOnboarding();
+    /// <summary>Builds a deferred REST action that retrieves all invites in this guild.</summary>
+    IRestAction<IReadOnlyList<IInvite>> GetInvites();
+
+    /// <summary>Builds a deferred REST action that retrieves voice regions available for this guild.</summary>
+    IRestAction<IReadOnlyList<IVoiceRegion>> GetVoiceRegions();
+
+    /// <summary>Builds a deferred REST action that retrieves the public preview of this guild.</summary>
+    IRestAction<GuildPreview> GetPreview();
+
+    /// <summary>Builds a deferred REST action that retrieves the vanity URL of this guild.</summary>
+    IRestAction<IVanityUrl?> GetVanityUrl();
 
     /// <summary>
-    /// Gets a REST action that lists the templates owned by this guild.
-    /// </summary>
-    IRestAction<IReadOnlyList<IGuildTemplate>> GetTemplates();
-
-    /// <summary>
-    /// Gets a REST action that creates a template from this guild's current configuration.
-    /// </summary>
-    IRestAction<IGuildTemplate> CreateTemplate(string name, string? description = null);
-
-    /// <summary>
-    /// Gets a REST action that updates the required MFA level for this guild. The caller must be the guild owner.
+    /// Builds a deferred REST action that updates the required MFA level for this guild. The
+    /// caller must be the guild owner.
     /// </summary>
     IReasonedRestAction ModifyMfaLevel(MfaLevel level);
 
-    /// <summary>
-    /// Gets a REST action that reorders channels in this guild. Each item specifies a channel ID, its
-    /// new position and optionally a new parent / lock_permissions flag.
-    /// </summary>
-    /// <param name="positions">The set of channel-position updates to apply.</param>
-    IReasonedRestAction ModifyChannelPositions(IEnumerable<ChannelPosition> positions);
-
-    /// <summary>
-    /// Gets a REST action that lists this guild's integrations (Twitch / YouTube subs, Discord bots, etc.).
-    /// </summary>
+    /// <summary>Builds a deferred REST action that lists this guild's integrations.</summary>
     IRestAction<IReadOnlyList<IIntegration>> GetIntegrations();
 
     /// <summary>
-    /// Gets a REST action that suspends invites and/or DMs for this guild until the supplied
-    /// timestamps. Pass <c>null</c> to clear either suspension.
+    /// Builds a deferred REST action that suspends invites and/or DMs for this guild until the
+    /// supplied timestamps. Pass <c>null</c> to clear either suspension.
     /// </summary>
     IReasonedRestAction<IIncidentsData> ModifyIncidentActions(DateTimeOffset? invitesDisabledUntil, DateTimeOffset? dmsDisabledUntil);
 
     /// <summary>
-    /// Gets a REST action that lists all webhooks attached to channels in this guild.
+    /// Builds a deferred REST action that lists all webhooks attached to channels in this guild.
     /// </summary>
     IRestAction<IReadOnlyList<IWebhook>> GetWebhooks();
 

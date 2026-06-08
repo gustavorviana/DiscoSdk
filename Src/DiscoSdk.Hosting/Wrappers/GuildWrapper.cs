@@ -4,11 +4,9 @@ using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Surfaces;
 using DiscoSdk.Hosting.Wrappers.Channels;
 using DiscoSdk.Models;
-using DiscoSdk.Models.AutoModeration;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
-using DiscoSdk.Utils;
 using Channel = DiscoSdk.Models.Channels.Channel;
 
 namespace DiscoSdk.Hosting.Wrappers;
@@ -19,6 +17,13 @@ internal class GuildWrapper : IGuild
     private readonly object _updateLock = new();
     private readonly DiscordClient _client;
     private Guild _guild;
+
+    /// <summary>
+    /// Hosting-internal raw POCO. Surfaces (<c>GuildChannelsSurface</c>,
+    /// <c>GuildWidgetSurfaceImpl</c>, …) read fields straight off this rather than mirror every
+    /// property on the wrapper.
+    /// </summary>
+    internal Guild Data => _guild;
 
     public GuildWrapper(Guild guild, DiscordClient client)
     {
@@ -40,43 +45,28 @@ internal class GuildWrapper : IGuild
 
     public DiscordImageUrl? DiscoverySplash { get; private set; }
 
-    public bool? Owner => _guild.Owner;
+    public bool Owner => _guild.Owner ?? false;
 
-    public Snowflake? OwnerId => _guild.OwnerId;
+    public Snowflake OwnerId => _guild.OwnerId ?? default;
 
     public DiscordPermission Permissions => (DiscordPermission)(_guild.Permissions ?? 0);
 
     public string? Region => _guild.Region;
 
-    public Snowflake? AfkChannelId => _guild.AfkChannelId;
+    public VerificationLevel VerificationLevel => _guild.VerificationLevel ?? VerificationLevel.None;
 
-    public int? AfkTimeout => _guild.AfkTimeout;
+    public DefaultMessageNotificationLevel DefaultMessageNotifications => _guild.DefaultMessageNotifications ?? DefaultMessageNotificationLevel.AllMessages;
 
-    public bool? WidgetEnabled => _guild.WidgetEnabled;
+    public ExplicitContentFilterLevel ExplicitContentFilter => _guild.ExplicitContentFilter ?? ExplicitContentFilterLevel.Disabled;
 
-    public Snowflake? WidgetChannelId => _guild.WidgetChannelId;
+    internal IRole[] CachedRolesSnapshot { get; private set; } = [];
+    internal IEmoji[] CachedEmojisSnapshot { get; private set; } = [];
 
-    public VerificationLevel? VerificationLevel => _guild.VerificationLevel;
+    public string[] Features => _guild.Features ?? [];
 
-    public DefaultMessageNotificationLevel? DefaultMessageNotifications => _guild.DefaultMessageNotifications;
-
-    public ExplicitContentFilterLevel? ExplicitContentFilter => _guild.ExplicitContentFilter;
-
-    public IRole[] Roles { get; private set; } = [];
-
-    public IEmoji[]? Emojis { get; private set; } = [];
-
-    public string[]? Features => _guild.Features;
-
-    public MfaLevel? MfaLevel => _guild.MfaLevel;
+    public MfaLevel MfaLevel => _guild.MfaLevel ?? MfaLevel.None;
 
     public Snowflake? ApplicationId => _guild.ApplicationId;
-
-    public Snowflake? SystemChannelId => _guild.SystemChannelId;
-
-    public SystemChannelFlags? SystemChannelFlags => _guild.SystemChannelFlags;
-
-    public Snowflake? RulesChannelId => _guild.RulesChannelId;
 
     public int? MaxPresences => _guild.MaxPresences;
 
@@ -88,13 +78,11 @@ internal class GuildWrapper : IGuild
 
     public DiscordImageUrl? Banner { get; private set; }
 
-    public PremiumTier? PremiumTier => _guild.PremiumTier;
+    public PremiumTier PremiumTier => _guild.PremiumTier ?? PremiumTier.None;
 
     public int? PremiumSubscriptionCount => _guild.PremiumSubscriptionCount;
 
-    public string? PreferredLocale => _guild.PreferredLocale;
-
-    public Snowflake? PublicUpdatesChannelId => _guild.PublicUpdatesChannelId;
+    public string PreferredLocale => _guild.PreferredLocale ?? "en-US";
 
     public int? MaxVideoChannelUsers => _guild.MaxVideoChannelUsers;
 
@@ -104,7 +92,7 @@ internal class GuildWrapper : IGuild
 
     public int? ApproximatePresenceCount => _guild.ApproximatePresenceCount;
 
-    public bool? Unavailable => _guild.Unavailable;
+    public bool Unavailable => _guild.Unavailable ?? false;
 
     public IEditGuildAction Edit()
     {
@@ -125,67 +113,9 @@ internal class GuildWrapper : IGuild
         });
     }
 
-    public ICreateChannelAction CreateChannel(string name, ChannelType type)
-    {
-        return new CreateChannelAction(_client, this, name, type);
-    }
-
-    public IRoleAction CreateRole()
-    {
-        return new RoleAction(_client, this);
-    }
-
-    public ICreateEmojiAction CreateEmoji(string name, DiscordImageBuffer image)
-    {
-        return new CreateEmojiAction(_client, this, name, image);
-    }
-
     public IAuditLogPaginationAction GetAuditLogs()
     {
         return new AuditLogPaginationAction(_client, this);
-    }
-
-    public IGuildChannelUnion? GetChannel(Snowflake channelId)
-    {
-        if (!_channels.TryGetValue(new Channel { Id = Id }, out var channel))
-            return null;
-
-        return new GuildChannelUnionWrapper(_client, channel, this);
-    }
-
-    public IGuildVoiceChannel? GetAfkChannel()
-    {
-        if (!AfkChannelId.HasValue || GetRawChannelById(AfkChannelId.Value) is not { } channel)
-            return null;
-
-        return new GuildVoiceChannelWrapper(_client, channel, this);
-    }
-
-    public IGuildTextChannel? GetSystemChannel()
-    {
-        return GetTextChannel(SystemChannelId);
-    }
-
-    public IGuildTextChannel? GetRulesChannel()
-    {
-        return GetTextChannel(RulesChannelId);
-    }
-
-    public IGuildTextChannel? GetPublicUpdatesChannel()
-    {
-        return GetTextChannel(PublicUpdatesChannelId);
-    }
-
-    private IGuildTextChannel? GetTextChannel(Snowflake? channelId)
-    {
-        var channel = GetRawChannelById(channelId);
-        if (channel == null)
-            return null;
-
-        if (!ChannelTypeUtils.IsText(channel.Type))
-            throw new InvalidCastException();
-
-        return new GuildTextChannelWrapper(_client, channel, this);
     }
 
     private Channel? GetRawChannelById(Snowflake? channelId)
@@ -202,78 +132,10 @@ internal class GuildWrapper : IGuild
         }
     }
 
-    public IReadOnlyList<IGuildChannelUnion> GetChannels()
+    internal Channel? RawChannelById(Snowflake? channelId) => GetRawChannelById(channelId);
+    internal IReadOnlyList<Channel> ChannelsSnapshot()
     {
-        lock (_updateLock)
-        {
-            return [.. _guild
-                .Channels
-                .Select(ch => new GuildChannelUnionWrapper(_client, ch, this))];
-        }
-    }
-
-    public IReadOnlyList<IGuildTextChannel> GetTextChannels()
-    {
-        lock (_updateLock)
-        {
-            return [.._guild
-                .Channels
-                .Where(x => ChannelTypeUtils.IsText(x.Type))
-                .Select(ch => ChannelWrapper.ToSpecificType(_client, ch, this))
-                .OfType<IGuildTextChannel>()];
-        }
-    }
-
-    public IReadOnlyList<IGuildVoiceChannel> GetVoiceChannels()
-    {
-        lock (_updateLock)
-        {
-            return [.._guild
-                .Channels
-                .Where(x => ChannelTypeUtils.IsVoice(x.Type))
-                .Select(ch => new GuildVoiceChannelWrapper(_client, ch, this))];
-        }
-    }
-
-    public IRestAction<IReadOnlyList<IRole>> GetRoles()
-    {
-        return RestAction<IReadOnlyList<IRole>>.Create(async cancellationToken =>
-        {
-            var roles = await _client.GuildClient.GetRolesAsync(_guild.Id, cancellationToken);
-            return roles
-                .Select(r => new RoleWrapper(_client, r, this))
-                .Cast<IRole>()
-                .ToList()
-                .AsReadOnly();
-        });
-    }
-
-    public IRestAction<IRole?> GetRole(Snowflake roleId)
-    {
-        if (roleId == default)
-            throw new ArgumentException("Role ID cannot be null or empty.", nameof(roleId));
-
-        return RestAction<IRole?>.Create(async cancellationToken =>
-        {
-            var role = await _client.RoleClient.GetAsync(_guild.Id, roleId, cancellationToken);
-            return role is null ? null : new RoleWrapper(_client, role, this);
-        });
-    }
-
-    public IModifyRolePositionsAction ModifyRolePositions()
-        => new ModifyRolePositionsAction(_client, this);
-
-    public IRestAction<IReadOnlyList<IGuildThreadChannel>> ListActiveThreads()
-    {
-        return RestAction<IReadOnlyList<IGuildThreadChannel>>.Create(async cancellationToken =>
-        {
-            var threads = await _client.GuildClient.ListActiveThreadsAsync(_guild.Id, cancellationToken);
-            return threads
-                .Select(c => Channels.ChannelWrapper.ToSpecificType(_client, c, this))
-                .OfType<IGuildThreadChannel>()
-                .ToList()
-                .AsReadOnly();
-        });
+        lock (_updateLock) return [.. _guild.Channels];
     }
 
     public IRestAction<IReadOnlyList<IInvite>> GetInvites()
@@ -288,27 +150,13 @@ internal class GuildWrapper : IGuild
                 if (invite.Channel?.Id == null)
                     continue;
 
-                var channel = GetChannel(invite.Channel.Id);
+                var channel = Channels.Get(invite.Channel.Id);
                 if (channel is IGuildChannelBase guildChannel)
                     result.Add(new InviteWrapper(invite, guildChannel, _client));
             }
 
             return [.. result];
         });
-    }
-
-    public IRestAction<int> GetPruneCount(int days, params Snowflake[] includeRoles)
-    {
-        return RestAction<int>.Create(async cancellationToken =>
-        {
-            return await _client.GuildClient.GetPruneCountAsync(_guild.Id, days, includeRoles, cancellationToken);
-        });
-    }
-
-    public IReasonedRestAction<int> BeginPrune(int days, params Snowflake[] includeRoles)
-    {
-        return new ReasonedRestAction<int>((reason, ct) =>
-            _client.GuildClient.BeginPruneAsync(_guild.Id, days, includeRoles, reason, ct));
     }
 
     public IRestAction<IReadOnlyList<IVoiceRegion>> GetVoiceRegions()
@@ -328,32 +176,6 @@ internal class GuildWrapper : IGuild
         });
     }
 
-    public IRestAction<IGuildWidget> GetWidget()
-    {
-        return RestAction<IGuildWidget>.Create(async cancellationToken =>
-        {
-            return await _client.GuildClient.GetWidgetAsync(_guild.Id, cancellationToken);
-        });
-    }
-
-    public IEditGuildWidgetAction EditWidget()
-    {
-        return new EditGuildWidgetAction(_client, this);
-    }
-
-    public IRestAction<IWelcomeScreen> GetWelcomeScreen()
-    {
-        return RestAction<IWelcomeScreen>.Create(async cancellationToken =>
-        {
-            return await _client.GuildClient.GetWelcomeScreenAsync(_guild.Id, cancellationToken);
-        });
-    }
-
-    public IEditWelcomeScreenAction EditWelcomeScreen()
-    {
-        return new EditWelcomeScreenAction(_client, this);
-    }
-
     public IRestAction<IVanityUrl?> GetVanityUrl()
     {
         return RestAction<IVanityUrl?>.Create(async token =>
@@ -362,72 +184,9 @@ internal class GuildWrapper : IGuild
         });
     }
 
-    public IRestAction<Stream> GetWidgetImage(string? style = null) => throw new NotSupportedException();
-
-    public IRestAction<IReadOnlyList<IAutoModerationRule>> GetAutoModerationRules()
-        => RestAction<IReadOnlyList<IAutoModerationRule>>.Create(async ct =>
-        {
-            var rules = await _client.AutoModerationClient.ListRulesAsync(_guild.Id, ct);
-            return rules.Select(r => (IAutoModerationRule)new AutoModerationRuleWrapper(_client, r)).ToList().AsReadOnly();
-        });
-
-    public IRestAction<IAutoModerationRule> GetAutoModerationRule(Snowflake ruleId)
-        => RestAction<IAutoModerationRule>.Create(async ct => new AutoModerationRuleWrapper(_client, await _client.AutoModerationClient.GetRuleAsync(_guild.Id, ruleId, ct)));
-
-    public ICreateAutoModerationRuleAction CreateAutoModerationRule(string name, AutoModerationEventType eventType, AutoModerationTriggerType triggerType)
-        => new CreateAutoModerationRuleAction(_client, _guild.Id, name, eventType, triggerType);
-
-    public IRestAction<IReadOnlyList<IGuildScheduledEvent>> GetScheduledEvents(bool? withUserCount = null)
-        => RestAction<IReadOnlyList<IGuildScheduledEvent>>.Create(async ct =>
-        {
-            var events = await _client.GuildScheduledEventClient.ListAsync(_guild.Id, withUserCount, ct);
-            return events.Select(e => (IGuildScheduledEvent)new GuildScheduledEventWrapper(_client, e)).ToList().AsReadOnly();
-        });
-
-    public IRestAction<IGuildScheduledEvent> GetScheduledEvent(Snowflake eventId, bool? withUserCount = null)
-        => RestAction<IGuildScheduledEvent>.Create(async ct =>
-            new GuildScheduledEventWrapper(_client, await _client.GuildScheduledEventClient.GetAsync(_guild.Id, eventId, withUserCount, ct)));
-
-    public ICreateScheduledEventAction CreateScheduledEvent(
-        string name,
-        DateTimeOffset scheduledStartTime,
-        ScheduledEventEntityType entityType)
-        => new CreateScheduledEventAction(_client, _guild.Id, name, scheduledStartTime, entityType);
-
-    public IRestAction<IGuildOnboarding> GetOnboarding()
-        => RestAction<IGuildOnboarding>.Create(async ct => new GuildOnboardingWrapper(_client, await _client.GuildTemplateClient.GetOnboardingAsync(_guild.Id, ct)));
-
-    public IEditGuildOnboardingAction EditOnboarding()
-        => new EditGuildOnboardingAction(_client, _guild.Id);
-
-    public IRestAction<IReadOnlyList<IGuildTemplate>> GetTemplates()
-        => RestAction<IReadOnlyList<IGuildTemplate>>.Create(async ct =>
-        {
-            var templates = await _client.GuildTemplateClient.GetGuildTemplatesAsync(_guild.Id, ct);
-            return templates.Select(t => (IGuildTemplate)new GuildTemplateWrapper(_client, t)).ToList().AsReadOnly();
-        });
-
-    public IRestAction<IGuildTemplate> CreateTemplate(string name, string? description = null)
-        => RestAction<IGuildTemplate>.Create(async ct => new GuildTemplateWrapper(_client, await _client.GuildTemplateClient.CreateGuildTemplateAsync(_guild.Id, name, description, ct)));
 
     public IReasonedRestAction ModifyMfaLevel(MfaLevel level)
         => new ReasonedRestAction((reason, ct) => _client.GuildClient.ModifyMfaLevelAsync(_guild.Id, level, reason, ct));
-
-    public IReasonedRestAction ModifyChannelPositions(IEnumerable<ChannelPosition> positions)
-    {
-        ArgumentNullException.ThrowIfNull(positions);
-        return new ReasonedRestAction((reason, ct) =>
-        {
-            var payload = positions.Select(p => new Dictionary<string, object?>
-            {
-                ["id"] = p.Id.ToString(),
-                ["position"] = p.Position,
-                ["lock_permissions"] = p.LockPermissions,
-                ["parent_id"] = p.ParentId.HasValue ? p.ParentId.Value.ToString() : null
-            });
-            return _client.GuildClient.ModifyChannelPositionsAsync(_guild.Id, payload, reason, ct);
-        });
-    }
 
     public IRestAction<IReadOnlyList<IIntegration>> GetIntegrations()
         => RestAction<IReadOnlyList<IIntegration>>.Create(async ct =>
@@ -455,6 +214,36 @@ internal class GuildWrapper : IGuild
     public IGuildBans Bans => _bans ??= new GuildBansSurface(_client, _guild.Id);
     private IGuildBans? _bans;
 
+    public IGuildChannels Channels => _channelsSurface ??= new GuildChannelsSurface(_client, this);
+    private IGuildChannels? _channelsSurface;
+
+    public IGuildRoles Roles => _rolesSurface ??= new GuildRolesSurface(_client, this);
+    private IGuildRoles? _rolesSurface;
+
+    public IGuildScheduledEvents ScheduledEvents => _scheduledEvents ??= new GuildScheduledEventsSurface(_client, _guild.Id);
+    private IGuildScheduledEvents? _scheduledEvents;
+
+    public IGuildAutoModeration AutoModeration => _autoMod ??= new GuildAutoModerationSurface(_client, _guild.Id);
+    private IGuildAutoModeration? _autoMod;
+
+    public IGuildWidgetSurface Widget => _widget ??= new GuildWidgetSurfaceImpl(_client, this);
+    private IGuildWidgetSurface? _widget;
+
+    public IGuildWelcomeScreen WelcomeScreen => _welcomeScreen ??= new GuildWelcomeScreenSurface(_client, this);
+    private IGuildWelcomeScreen? _welcomeScreen;
+
+    public IGuildOnboardingSurface Onboarding => _onboarding ??= new GuildOnboardingSurfaceImpl(_client, _guild.Id);
+    private IGuildOnboardingSurface? _onboarding;
+
+    public IGuildTemplates Templates => _templates ??= new GuildTemplatesSurface(_client, _guild.Id);
+    private IGuildTemplates? _templates;
+
+    public IGuildPrune Prune => _prune ??= new GuildPruneSurface(_client, _guild.Id);
+    private IGuildPrune? _prune;
+
+    public IGuildEmojis Emojis => _emojisSurface ??= new GuildEmojisSurface(_client, this);
+    private IGuildEmojis? _emojisSurface;
+
     public IGuildStickers Stickers => _stickerScope ??= _client.Stickers.OfGuild(_guild.Id);
     private IGuildStickers? _stickerScope;
 
@@ -462,9 +251,11 @@ internal class GuildWrapper : IGuild
     {
         lock (_updateLock)
         {
+            // Channel snapshot lives on the wrapper, not on the GUILD_UPDATE payload — Discord
+            // never re-sends the channel list on update, so carry it over.
             guild.Channels = _guild.Channels;
             _guild = guild;
-            LoadImages();
+            RefreshProperties();
         }
     }
 
@@ -498,8 +289,8 @@ internal class GuildWrapper : IGuild
 
     private void RefreshProperties()
     {
-        Emojis = _guild.Emojis?.Select(x => new EmojiWrapper(_client, x, this))?.ToArray() ?? [];
-        Roles = _guild.Roles?.Select(x => new RoleWrapper(_client, x, this))?.ToArray() ?? [];
+        CachedEmojisSnapshot = _guild.Emojis?.Select(x => new EmojiWrapper(_client, x, this))?.ToArray() ?? [];
+        CachedRolesSnapshot = _guild.Roles?.Select(x => new RoleWrapper(_client, x, this))?.ToArray() ?? [];
         LoadImages();
     }
 

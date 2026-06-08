@@ -169,19 +169,19 @@ internal class GuildMemberWrapper(DiscordClient client, GuildMember member, IGui
             if (_roles == null)
             {
                 var roleList = new List<IRole>();
-                if (_guild.Roles != null && _member.Roles != null)
+                if (_member.Roles != null)
                 {
+                    var cached = _guild.Roles.GetCached();
                     foreach (var roleIdStr in _member.Roles)
                     {
                         if (Snowflake.TryParse(roleIdStr, out var roleId))
                         {
-                            var role = _guild.Roles.FirstOrDefault(r => r.Id == roleId);
+                            var role = cached.FirstOrDefault(r => r.Id == roleId);
                             if (role != null)
                                 roleList.Add(role);
                         }
                     }
                 }
-                // Sort by position (highest first)
                 _roles = roleList.OrderByDescending(r => r.Position).ToImmutableList();
             }
             return _roles;
@@ -196,13 +196,14 @@ internal class GuildMemberWrapper(DiscordClient client, GuildMember member, IGui
             if (_unsortedRoles == null)
             {
                 var roleSet = new HashSet<IRole>();
-                if (_guild.Roles != null && _member.Roles != null)
+                if (_member.Roles != null)
                 {
+                    var cached = _guild.Roles.GetCached();
                     foreach (var roleIdStr in _member.Roles)
                     {
                         if (Snowflake.TryParse(roleIdStr, out var roleId))
                         {
-                            var role = _guild.Roles.FirstOrDefault(r => r.Id == roleId);
+                            var role = cached.FirstOrDefault(r => r.Id == roleId);
                             if (role != null)
                                 roleSet.Add(role);
                         }
