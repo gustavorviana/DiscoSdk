@@ -35,7 +35,7 @@ public class CommandRegistryBuilderTests
 
         var info = new AutocompleteName("any", "x", null, null);
         Assert.Throws<InvalidOperationException>(() =>
-            builder.AddAutocomplete(info, null!));
+            builder.AddAutoComplete(info, null!));
     }
 
     [Fact]

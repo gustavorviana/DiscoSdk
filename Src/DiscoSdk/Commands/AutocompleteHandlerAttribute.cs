@@ -1,14 +1,14 @@
 namespace DiscoSdk.Commands;
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-public sealed class AutocompleteHandlerAttribute : Attribute
+public sealed class AutoCompleteHandlerAttribute : Attribute
 {
     public string OptionName { get; }
     public string CommandName { get; }
     public string? Subcommand { get; set; }
     public string? SubcommandGroup { get; set; }
 
-    public AutocompleteHandlerAttribute(string commandName, string optionName)
+    public AutoCompleteHandlerAttribute(string commandName, string optionName)
     {
         if (string.IsNullOrWhiteSpace(commandName))
             throw new ArgumentException("Command name cannot be null, empty, or whitespace.", nameof(commandName));

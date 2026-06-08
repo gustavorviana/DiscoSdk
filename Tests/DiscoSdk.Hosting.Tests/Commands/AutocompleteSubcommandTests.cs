@@ -208,7 +208,7 @@ public class AutocompleteSubcommandTests
         [SlashOption(SlashCommandOptionType.String, name: "query", description: "Search query")]
         protected Task ExecuteAsync(ICommandContext context) => Task.CompletedTask;
 
-        [AutocompleteHandler("ac-flat", "query")]
+        [AutoCompleteHandler("ac-flat", "query")]
         protected Task AutocompleteAsync(IAutocompleteContext context)
         {
             _lastInvokedMethod = "FlatAutocompleteHandler.Autocomplete";
@@ -223,7 +223,7 @@ public class AutocompleteSubcommandTests
         [SlashOption(SlashCommandOptionType.String, name: "song", description: "Song name")]
         protected Task ExecuteAsync(ICommandContext context) => Task.CompletedTask;
 
-        [AutocompleteHandler("ac-grouped", "song", Subcommand = "play")]
+        [AutoCompleteHandler("ac-grouped", "song", Subcommand = "play")]
         protected Task AutocompleteAsync(IAutocompleteContext context)
         {
             _lastInvokedMethod = "SubcmdAutocompleteHandler.Autocomplete";
@@ -239,7 +239,7 @@ public class AutocompleteSubcommandTests
         [SlashOption(SlashCommandOptionType.String, name: "song", description: "Song name")]
         protected Task ExecuteAsync(ICommandContext context) => Task.CompletedTask;
 
-        [AutocompleteHandler("ac-grouped", "song", Subcommand = "add", SubcommandGroup = "queue")]
+        [AutoCompleteHandler("ac-grouped", "song", Subcommand = "add", SubcommandGroup = "queue")]
         protected Task AutocompleteAsync(IAutocompleteContext context)
         {
             _lastInvokedMethod = "GroupedAutocompleteHandler.Autocomplete";

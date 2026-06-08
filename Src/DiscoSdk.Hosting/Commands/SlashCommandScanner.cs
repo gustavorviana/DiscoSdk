@@ -36,7 +36,7 @@ internal sealed class SlashCommandScanner : ICommandScanner
         var flatByName = new Dictionary<string, CommandInfo>(StringComparer.OrdinalIgnoreCase);
         var groupsByName = new Dictionary<string, SlashGroupInfo>(StringComparer.OrdinalIgnoreCase);
         var groupOnDemandByName = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-        var pendingAutocompletes = new List<(AutocompleteName Name, AutocompleteInfo Info)>();
+        var pendingAutocompletes = new List<(AutocompleteName Name, AutoCompleteInfo Info)>();
 
         foreach (var type in _handlerTypes)
         {
@@ -73,7 +73,7 @@ internal sealed class SlashCommandScanner : ICommandScanner
                 }
             }
 
-            foreach (var (name, autocomplete) in AutocompleteInfo.GetAll(type))
+            foreach (var (name, autocomplete) in AutoCompleteInfo.GetAll(type))
                 pendingAutocompletes.Add((name, autocomplete));
 
             services.AddScoped(type);
@@ -81,7 +81,7 @@ internal sealed class SlashCommandScanner : ICommandScanner
 
         // Autocompletes first — the `HasAutocomplete` callback is used while building the commands.
         foreach (var (name, info) in pendingAutocompletes)
-            builder.AddAutocomplete(name, info);
+            builder.AddAutoComplete(name, info);
 
         foreach (var command in flatByName.Values)
         {

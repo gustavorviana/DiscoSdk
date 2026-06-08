@@ -42,12 +42,12 @@ internal class CommandInfo : SlashCommandHandlerCaller
         IsOnDemand = isOnDemand;
     }
 
-    public AutocompleteInfo[] GetAutocompletes()
+    public AutoCompleteInfo[] GetAutocompletes()
     {
         if (_methodOptions != null)
         {
             return _methodOptions
-                .Select(o => AutocompleteInfo.GetOfOption(o, Info.Name, o.Name!))
+                .Select(o => AutoCompleteInfo.GetOfOption(o, Info.Name, o.Name!))
                 .Where(a => a != null)
                 .ToArray()!;
         }
@@ -93,7 +93,7 @@ internal class CommandInfo : SlashCommandHandlerCaller
 
                 options.Add(new SlashCommandOption
                 {
-                    Autocomplete = option.AutocompleteType != null || hasAutocomplete(new AutocompleteName(Info.Name, option.Name, SubCommand?.Name, SubCommandGroup?.Name)),
+                    Autocomplete = option.AutoCompleteType != null || hasAutocomplete(new AutocompleteName(Info.Name, option.Name, SubCommand?.Name, SubCommandGroup?.Name)),
                     Name = option.Name,
                     ChannelTypes = option.ChannelTypes,
                     Choices = [.. SlashOptionTypeUtils.GetChoices(_method.Method, option.Name).Select(x => x.ToCommandChoice())],

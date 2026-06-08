@@ -18,7 +18,7 @@ internal sealed class CommandRegistryBuilder
 {
     private readonly Dictionary<string, SlashEntry> _slash = new(StringComparer.OrdinalIgnoreCase);
 
-    private readonly Dictionary<AutocompleteName, AutocompleteInfo> _autocompletes = [];
+    private readonly Dictionary<AutocompleteName, AutoCompleteInfo> _autoCompletes = [];
 
     private readonly Dictionary<(string Name, ApplicationCommandType Type), ContextMenuEntry> _contextMenu = new(ContextMenuKeyComparer.Instance);
 
@@ -28,7 +28,7 @@ internal sealed class CommandRegistryBuilder
 
     private CommandRegistry? _built;
 
-    public bool HasAutocomplete(AutocompleteName name) => _autocompletes.ContainsKey(name);
+    public bool HasAutocomplete(AutocompleteName name) => _autoCompletes.ContainsKey(name);
 
     public void AddSlashFlat(
         CommandInfo info,
@@ -93,11 +93,11 @@ internal sealed class CommandRegistryBuilder
             _onDemandContextMenu.Add(key);
     }
 
-    public void AddAutocomplete(AutocompleteName name, AutocompleteInfo info)
+    public void AddAutoComplete(AutocompleteName name, AutoCompleteInfo info)
     {
         EnsureNotBuilt();
         ArgumentNullException.ThrowIfNull(info);
-        if (!_autocompletes.TryAdd(name, info))
+        if (!_autoCompletes.TryAdd(name, info))
             throw new InvalidOperationException(
                 $"Duplicate autocomplete handler for command '{info.CommandName}', option '{info.OptionName}'.");
     }
@@ -114,7 +114,7 @@ internal sealed class CommandRegistryBuilder
 
         _built = new CommandRegistry(
             _slash.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase),
-            _autocompletes.ToFrozenDictionary(),
+            _autoCompletes.ToFrozenDictionary(),
             _contextMenu.ToFrozenDictionary(ContextMenuKeyComparer.Instance),
             _onDemandSlash.ToFrozenSet(StringComparer.OrdinalIgnoreCase),
             _onDemandContextMenu.ToFrozenSet(ContextMenuKeyComparer.Instance));
@@ -122,7 +122,7 @@ internal sealed class CommandRegistryBuilder
         // Builder cumpriu o papel: o frozen registry agora detém tudo. Libera os buckets dos
         // dicts/sets mutáveis pro GC — o builder vira casca vazia.
         _slash.Clear();
-        _autocompletes.Clear();
+        _autoCompletes.Clear();
         _contextMenu.Clear();
         _onDemandSlash.Clear();
         _onDemandContextMenu.Clear();

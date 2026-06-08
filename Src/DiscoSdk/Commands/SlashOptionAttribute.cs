@@ -38,7 +38,7 @@ public sealed class SlashOptionAttribute(
     public object? MinValue { get; set; }
     public object? MaxValue { get; set; }
 
-    public Type? AutocompleteType { get; set; }
+    public Type? AutoCompleteType { get; set; }
 
     public ChannelType[]? ChannelTypes { get; set; }
 

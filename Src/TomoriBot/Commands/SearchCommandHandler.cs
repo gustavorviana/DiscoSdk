@@ -21,7 +21,7 @@ public class SearchCommandHandler : SlashCommandHandler
             .ExecuteAsync();
     }
 
-    [AutocompleteHandler("search", "query")]
+    [AutoCompleteHandler("search", "query")]
     protected Task QueryAutocompleteAsync(IAutocompleteContext context)
     {
         return context.ReplyWithChoices([

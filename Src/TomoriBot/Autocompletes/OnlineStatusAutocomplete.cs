@@ -6,6 +6,11 @@ namespace TomoriBot.Autocompletes;
 
 public class OnlineStatusAutocomplete : IAutocomplete
 {
+    public OnlineStatusAutocomplete()
+    {
+
+    }
+
     public Task ExecuteAsync(IAutocompleteContext context)
     {
         var value = context.FocusedOption.Value?.ToString() ?? "";

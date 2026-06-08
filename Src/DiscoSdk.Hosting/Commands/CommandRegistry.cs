@@ -16,7 +16,7 @@ namespace DiscoSdk.Hosting.Commands;
 internal sealed class CommandRegistry : ICommandRegistry
 {
     private readonly FrozenDictionary<string, SlashEntry> _slash;
-    private readonly FrozenDictionary<AutocompleteName, AutocompleteInfo> _autocompletes;
+    private readonly FrozenDictionary<AutocompleteName, AutoCompleteInfo> _autocompletes;
     private readonly FrozenDictionary<(string Name, ApplicationCommandType Type), ContextMenuEntry> _contextMenu;
     private readonly FrozenSet<string> _onDemandSlash;
     private readonly FrozenSet<(string Name, ApplicationCommandType Type)> _onDemandContextMenu;
@@ -31,7 +31,7 @@ internal sealed class CommandRegistry : ICommandRegistry
 
     internal CommandRegistry(
         FrozenDictionary<string, SlashEntry> slash,
-        FrozenDictionary<AutocompleteName, AutocompleteInfo> autocompletes,
+        FrozenDictionary<AutocompleteName, AutoCompleteInfo> autocompletes,
         FrozenDictionary<(string Name, ApplicationCommandType Type), ContextMenuEntry> contextMenu,
         FrozenSet<string> onDemandSlash,
         FrozenSet<(string Name, ApplicationCommandType Type)> onDemandContextMenu)
@@ -138,7 +138,7 @@ internal sealed class CommandRegistry : ICommandRegistry
             ? null
             : _slash.TryGetValue(name, out var entry) ? entry : null;
 
-    internal AutocompleteInfo? FindAutocomplete(AutocompleteName name)
+    internal AutoCompleteInfo? FindAutocomplete(AutocompleteName name)
         => _autocompletes.TryGetValue(name, out var info) ? info : null;
 
     internal ContextMenuEntry? FindContextMenu(string name, ApplicationCommandType type)
