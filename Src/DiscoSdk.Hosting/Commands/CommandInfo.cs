@@ -2,9 +2,12 @@ using DiscoSdk.Commands;
 using DiscoSdk.Contexts.Interactions;
 using DiscoSdk.Hosting.Commands.Callers.Parameters;
 using DiscoSdk.Hosting.Commands.Callers.Results;
+using DiscoSdk.Hosting.Gateway.Events;
 using DiscoSdk.Models.Commands;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Utils;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Reflection;
 
 namespace DiscoSdk.Hosting.Commands;
@@ -18,6 +21,7 @@ internal class CommandInfo : SlashCommandHandlerCaller
     public SubCommandAttribute? SubCommand { get; }
     public SubCommandGroupAttribute? SubCommandGroup { get; }
     public bool IsOnDemand { get; }
+    public bool IsFireAndForget => FireAndForgetCache.IsFireAndForget(_method.Method);
     public override Type Type => _method.Method.DeclaringType!;
 
     private CommandInfo(
@@ -179,11 +183,36 @@ internal class CommandInfo : SlashCommandHandlerCaller
             hasMethodOptions ? methodOptions : null, subCommand, subCommandGroup, isOnDemand);
     }
 
-    public async Task ExecuteAsync(ICommandContext context, IServiceProvider services, CancellationToken token)
+    public Task ExecuteAsync(ICommandContext context, IServiceProvider services, CancellationToken token)
+    {
+        // [FireAndForget] opt-in.
+        if (!FireAndForgetCache.IsFireAndForget(_method.Method))
+            return ExecuteAwaitedAsync(context, services, token);
+
+        var handler = GetHandler(services);
+        var args = _parameters.CreateInstances(services, context, token);
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _method.ExecuteAsync(handler, args, token);
+            }
+            catch (Exception ex)
+            {
+                services.GetService<ILogger<CommandInfo>>()?.Log(
+                    LogLevel.Error, ex,
+                    "Error in fire-and-forget slash command {Command} (exception cannot propagate)",
+                    Info.Name);
+            }
+        }, token);
+        return Task.CompletedTask;
+    }
+
+    private async Task ExecuteAwaitedAsync(ICommandContext context, IServiceProvider services, CancellationToken token)
     {
         var handler = GetHandler(services);
         var args = _parameters.CreateInstances(services, context, token);
-
+        
         await _method.ExecuteAsync(handler, args, token);
     }
 }

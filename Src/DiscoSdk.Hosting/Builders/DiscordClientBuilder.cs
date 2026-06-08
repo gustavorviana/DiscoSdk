@@ -35,7 +35,6 @@ public class DiscordClientBuilder
     private readonly string _token;
     private DiscordIntent? _intents;
     private int? _totalShards;
-    private int _eventProcessorMaxConcurrency = 0;
     private int _eventProcessorQueueCapacity = 100;
     private ILogger? _logger;
     private JsonSerializerOptions? _jsonOptions;
@@ -298,22 +297,9 @@ public class DiscordClientBuilder
     }
 
     /// <summary>
-    /// Sets the maximum number of concurrent event processing operations.
-    /// Uses the managed .NET ThreadPool (similar to ASP.NET Core MaxConcurrency).
-    /// If 0 or negative, defaults to ProcessorCount * 2.
-    /// </summary>
-    /// <param name="maxConcurrency">The maximum number of concurrent operations. Use 0 or negative to use default.</param>
-    /// <returns>The current <see cref="DiscordClientBuilder"/> instance.</returns>
-    public DiscordClientBuilder WithEventProcessorMaxConcurrency(int maxConcurrency)
-    {
-        _eventProcessorMaxConcurrency = maxConcurrency;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the capacity of the bounded event processing queue.
-    /// When the queue is full, producers will wait (backpressure) to prevent memory growth.
-    /// Default is 100. Must be at least 1.
+    /// Sets the bounded capacity of every shard's per-shard dispatch queue. When a shard's queue
+    /// is full the receive loop awaits — backpressure flows back through the WebSocket. Applies
+    /// per shard, not globally. Default is 100; must be at least 1.
     /// </summary>
     /// <param name="capacity">The queue capacity. Must be at least 1.</param>
     /// <returns>The current <see cref="DiscordClientBuilder"/> instance.</returns>
@@ -542,7 +528,6 @@ public class DiscordClientBuilder
             Token = _token,
             Intents = _intents.Value,
             TotalShards = _totalShards,
-            EventProcessorMaxConcurrency = _eventProcessorMaxConcurrency,
             EventProcessorQueueCapacity = _eventProcessorQueueCapacity,
             ReconnectDelay = _reconnectDelay ?? TimeSpan.FromSeconds(5),
             AutoReconnect = _autoReconnect,

@@ -57,7 +57,10 @@ namespace DiscoSdk.Hosting
         public event GatewayDisconnectedEventHandler? GatewayDisconnected;
         public event GatewayReconnectingEventHandler? GatewayReconnecting;
 
-        private EventProcessorPool<ReceivedGatewayMessage> _eventProcessorPool = null!;
+        // Per-shard dispatch replaces the legacy global EventProcessorPool. Each shard owns its
+        // own queue + worker, so events from the same shard — and therefore from the same guild —
+        // are processed serially. Heartbeat stays on its own timer. See
+        // <c>Gateway.Events.ShardEventDispatcher</c>.
         private readonly DiscordEventDispatcher _eventDispatcher;
         private readonly DiscordClientConfig _config;
         private readonly ShardPool _shardPool;
@@ -205,16 +208,10 @@ namespace DiscoSdk.Hosting
         internal void InternalInit(IReadOnlyList<IDiscoModule> modules, IReadOnlyList<IDiscordEventHandler> eventHandlers)
         {
             Modules = modules;
-            var maxConcurrency = _config.EventProcessorMaxConcurrency > 0
-                ? _config.EventProcessorMaxConcurrency
-                : Environment.ProcessorCount * 2;
 
             _eventDispatcher
                 .AddAll(modules.OfType<IDiscordEventHandler>())
                 .AddAll(eventHandlers);
-
-            var queueCapacity = Math.Max(1, _config.EventProcessorQueueCapacity);
-            _eventProcessorPool = new EventProcessorPool<ReceivedGatewayMessage>(maxConcurrency, _eventDispatcher.ProcessEventAsync, Logger, queueCapacity);
         }
 
         /// <summary>
@@ -236,8 +233,6 @@ namespace DiscoSdk.Hosting
                     _eventDispatcher.Add(handler);
             }
 
-            // Start event processor pool
-            _eventProcessorPool.Start();
             _shardPool.SetGateway(gatewayInfo);
             await _shardPool.InitShardsAsync();
         }
@@ -289,7 +284,6 @@ namespace DiscoSdk.Hosting
                 foreach (var item in Modules.OfType<ILifetimeDiscoModule>())
                     try { await item.OnShutdownAsync(this); } catch { }
 
-                await _eventProcessorPool.StopAsync();
                 await _shardPool.ClearShardsAsync();
                 _shardPool.Dispose();
                 Interlocked.Exchange(ref _isInitialized, 0);
@@ -563,7 +557,11 @@ namespace DiscoSdk.Hosting
 
             Logger.Log(LogLevel.Trace, "Received {EventType} event from shard {ShardId}", message.EventType, shard.Id);
 
-            await _eventProcessorPool.EnqueueAsync(message);
+            // This callback runs on the shard's serial dispatch worker (see Shard._dispatcher).
+            // Calling ProcessEventAsync directly preserves per-shard ordering. No global queue,
+            // no cross-shard reordering — every guild lives in exactly one shard, so its events
+            // never race against each other.
+            await _eventDispatcher.ProcessEventAsync(message);
         }
 
         async Task IShardEventListener.OnReadyAsync(Shard shard, ReadyPayload payload)

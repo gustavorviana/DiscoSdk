@@ -1243,11 +1243,29 @@ internal class DiscordEventDispatcher
                 await SafeRunHandlerAsync(handler, context);
     }
 
-    private async Task SafeRunHandlerAsync<THandler, TContext>(THandler handler, TContext context)
+    private Task SafeRunHandlerAsync<THandler, TContext>(THandler handler, TContext context)
         where THandler : IDiscordEventHandler<TContext>
         where TContext : IContext
     {
-        var handlerType = handler.GetType().FullName ?? typeof(THandler).Name;
+        var handlerClass = handler.GetType();
+
+        // [FireAndForget] opt-in.
+        if (!FireAndForgetCache.IsFireAndForget(handlerClass))
+            return InvokeHandlerCoreAsync(handler, context, handlerClass, fireAndForget: false);
+
+        _ = Task.Run(() => InvokeHandlerCoreAsync(handler, context, handlerClass, fireAndForget: true));
+        return Task.CompletedTask;
+    }
+
+    private async Task InvokeHandlerCoreAsync<THandler, TContext>(
+        THandler handler,
+        TContext context,
+        Type handlerClass,
+        bool fireAndForget)
+        where THandler : IDiscordEventHandler<TContext>
+        where TContext : IContext
+    {
+        var handlerType = handlerClass.FullName ?? typeof(THandler).Name;
         var eventType = typeof(TContext).Name;
 
         using var activity = DiscoSdkDiagnostics.ActivitySource.StartActivity(
@@ -1255,6 +1273,8 @@ internal class DiscordEventDispatcher
             System.Diagnostics.ActivityKind.Internal);
         activity?.SetTag(DiagnosticTags.HandlerType, handlerType);
         activity?.SetTag(DiagnosticTags.EventType, eventType);
+        if (fireAndForget)
+            activity?.SetTag("discosdk.handler.fire_and_forget", true);
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         var outcome = DiagnosticTags.OutcomeOk;
@@ -1271,7 +1291,11 @@ internal class DiscordEventDispatcher
             outcome = DiagnosticTags.OutcomeError;
             exceptionType = ex.GetType().FullName;
             activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex.Message);
-            _discordClient.Logger.Log(LogLevel.Error, ex, "Error in {HandlerType}", typeof(THandler).Name);
+            _discordClient.Logger.Log(LogLevel.Error, ex,
+                fireAndForget
+                    ? "Error in fire-and-forget handler {HandlerType} (exception cannot propagate)"
+                    : "Error in {HandlerType}",
+                typeof(THandler).Name);
         }
         finally
         {

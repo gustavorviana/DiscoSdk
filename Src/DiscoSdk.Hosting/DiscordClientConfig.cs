@@ -34,16 +34,9 @@ public class DiscordClientConfig
     public required DiscordIntent Intents { get; set; }
 
     /// <summary>
-    /// Gets or sets the maximum number of concurrent event processing operations.
-    /// Uses the managed .NET ThreadPool (similar to ASP.NET Core MaxConcurrency).
-    /// If 0 or negative, defaults to ProcessorCount * 2.
-    /// </summary>
-    public int EventProcessorMaxConcurrency { get; set; } = 0;
-
-    /// <summary>
-    /// Gets or sets the capacity of the bounded event processing queue.
-    /// When the queue is full, producers will wait (backpressure) to prevent memory growth.
-    /// Default is 100. Must be at least 1.
+    /// Gets or sets the bounded capacity of each shard's per-shard dispatch queue. When a shard's
+    /// queue is full the receive loop awaits — backpressure flows back through the WebSocket. Set
+    /// per-shard, not global. Default is 100; must be at least 1.
     /// </summary>
     public int EventProcessorQueueCapacity { get; set; } = 100;
 

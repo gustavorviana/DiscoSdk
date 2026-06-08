@@ -14,7 +14,6 @@ using var loggerFactory = LoggerFactory.Create(builder => builder
 
 var dsc = DiscordClientBuilder.Create(token)
     .WithIntents(DiscordIntent.All)
-    .WithEventProcessorMaxConcurrency(100)
     .WithLogger(loggerFactory.CreateLogger("DiscoSdk"))
     .WithSlashCommands(Assembly.GetExecutingAssembly())
     .WithContextMenuCommands(Assembly.GetExecutingAssembly())

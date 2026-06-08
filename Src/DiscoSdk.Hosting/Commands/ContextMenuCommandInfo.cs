@@ -1,5 +1,8 @@
 using DiscoSdk.Commands;
 using DiscoSdk.Hosting.Commands.Callers.Results;
+using DiscoSdk.Hosting.Gateway.Events;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Reflection;
 
 namespace DiscoSdk.Hosting.Commands;
@@ -14,9 +17,30 @@ internal class ContextMenuCommandInfo(ContextMenuType type, string name, string[
 
     public bool IsGuildCommand() => GuildIds is { Length: > 0 };
 
-    public async Task ExecuteAsync(object handler, object context, CancellationToken token)
+    public Task ExecuteAsync(object handler, object context, CancellationToken token)
+        => ExecuteAsync(handler, context, services: null, token);
+
+    public Task ExecuteAsync(object handler, object context, IServiceProvider? services, CancellationToken token)
     {
-        await method!.ExecuteAsync(handler, [context], token);
+        // [FireAndForget] opt-in.
+        if (!FireAndForgetCache.IsFireAndForget(method.Method))
+            return method.ExecuteAsync(handler, [context], token);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await method.ExecuteAsync(handler, [context], token);
+            }
+            catch (Exception ex)
+            {
+                services?.GetService<ILogger<ContextMenuCommandInfo>>()?.Log(
+                    LogLevel.Error, ex,
+                    "Error in fire-and-forget context-menu command {Name} (exception cannot propagate)",
+                    name);
+            }
+        }, token);
+        return Task.CompletedTask;
     }
 
     public static IEnumerable<ContextMenuCommandInfo> GetCommands(Type handlerType)

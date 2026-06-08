@@ -69,6 +69,17 @@ public static class DiscoSdkDiagnostics
         unit: "ms",
         description: "Round-trip latency between heartbeat send and HEARTBEAT_ACK per shard.");
 
+    /// <summary>
+    /// Histogram recording how long each handler chain took to process one gateway dispatch
+    /// event on its shard worker. Tagged with <see cref="DiagnosticTags.ShardId"/> and
+    /// <see cref="DiagnosticTags.EventType"/>. Sustained high values point at a slow handler
+    /// blocking the shard's serial dispatcher.
+    /// </summary>
+    internal static readonly Histogram<double> GatewayEventDispatchDuration = Meter.CreateHistogram<double>(
+        "discosdk.gateway.event.dispatch_duration",
+        unit: "ms",
+        description: "Per-event handler dispatch duration on the shard's serial worker.");
+
     // ---- REST instruments --------------------------------------------------------------------
 
     /// <summary>

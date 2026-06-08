@@ -1,6 +1,6 @@
-﻿using DiscoSdk.Hosting.Gateway.Payloads;
+﻿using DiscoSdk.Hosting.Gateway.Events;
+using DiscoSdk.Hosting.Gateway.Payloads;
 using DiscoSdk.Hosting.Observability;
-using System.Net.Http;
 using System.Net.WebSockets;
 
 namespace DiscoSdk.Hosting.Gateway.Shards;
@@ -8,9 +8,24 @@ namespace DiscoSdk.Hosting.Gateway.Shards;
 /// <summary>
 /// Represents a single shard connection to the Discord Gateway.
 /// </summary>
-internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool pool) : IShard, IDisposable
+internal sealed class Shard : IShard, IDisposable
 {
-    private readonly IGatewaySocket _socket = pool.SocketFactory.Create();
+    private readonly int _shardId;
+    private readonly DiscordClientConfig _config;
+    private readonly IShardPool _pool;
+    private readonly IGatewaySocket _socket;
+
+    public Shard(int shardId, DiscordClientConfig config, IShardPool pool)
+    {
+        _shardId = shardId;
+        _config = config ?? throw new ArgumentNullException(nameof(config));
+        _pool = pool ?? throw new ArgumentNullException(nameof(pool));
+        _socket = pool.SocketFactory.Create();
+        _dispatcher = new ShardEventDispatcher(
+            shardId,
+            Math.Max(1, config.EventProcessorQueueCapacity),
+            message => pool.OnReceiveMessageAsync(this, message));
+    }
     private CancellationTokenRegistration _tokenRegistration;
     private ShardStatus _status = ShardStatus.Disconnected;
     private CancellationTokenSource? _heartbeatCts;
@@ -44,9 +59,17 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
     // whether to send RESUME (true) or IDENTIFY (false). Discord requires either payload to be
     // sent in response to Hello, not before.
     private bool _resumeOnNextHello;
+    // Per-shard event dispatcher. The receive loop only writes here; a dedicated worker task
+    // drains the channel and forwards to the pool/listener serially, so two events from the same
+    // shard (and therefore from the same guild) never race against each other. The receive loop
+    // never blocks on a handler — when the queue fills, the writer awaits and backpressure flows
+    // back through the WebSocket consumer naturally. Heartbeat is on its own timer and unaffected.
+    // Cannot use a field initializer because the dispatcher's processor captures `this`; the
+    // constructor below assigns it instead.
+    private readonly ShardEventDispatcher _dispatcher;
 
     /// <inheritdoc />
-    public int Id => shardId;
+    public int Id => _shardId;
 
     /// <inheritdoc />
     public ShardStatus Status => _status;
@@ -73,7 +96,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
         }
 
         _tokenRegistration.Dispose();
-        _tokenRegistration = pool.CancellationToken.Register(static s => ((Shard)s!)._shardCts.Cancel(), this);
+        _tokenRegistration = _pool.CancellationToken.Register(static s => ((Shard)s!)._shardCts.Cancel(), this);
 
         _status = ShardStatus.Connecting;
         await ConnectInitialWithRetryAsync().ConfigureAwait(false);
@@ -93,7 +116,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
         {
             try
             {
-                await _socket.ConnectAsync(pool.GatewayUri.ToUri(), _shardCts.Token).ConfigureAwait(false);
+                await _socket.ConnectAsync(_pool.GatewayUri.ToUri(), _shardCts.Token).ConfigureAwait(false);
                 return;
             }
             catch (OperationCanceledException) when (_shardCts.IsCancellationRequested)
@@ -106,7 +129,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
             {
                 attempt++;
 
-                if (config.MaxReconnectAttempts > 0 && attempt >= config.MaxReconnectAttempts)
+                if (_config.MaxReconnectAttempts > 0 && attempt >= _config.MaxReconnectAttempts)
                 {
                     // Propagate the last failure so Pool.InitShardsAsync — and therefore
                     // DiscordClient.StartAsync — fail with the cause instead of looping forever.
@@ -115,8 +138,8 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
                 }
 
                 var delay = ComputeBackoffDelay(attempt);
-                await pool.OnReconnectingAsync(this, attempt, delay, isResume: false).ConfigureAwait(false);
-                await Task.Delay(delay, pool.TimeProvider, _shardCts.Token).ConfigureAwait(false);
+                await _pool.OnReconnectingAsync(this, attempt, delay, isResume: false).ConfigureAwait(false);
+                await Task.Delay(delay, _pool.TimeProvider, _shardCts.Token).ConfigureAwait(false);
             }
         }
     }
@@ -170,16 +193,16 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
                 Interlocked.Exchange(ref _pendingTransportFault, null);
 
                 SignalConnectionLost();
-                await pool.OnConnectionLostAsync(this, ex);
+                await _pool.OnConnectionLostAsync(this, ex);
 
                 if (!GatewayExceptions.IsRecoverableTransport(ex))
                 {
                     _status = ShardStatus.Fatal;
-                    await pool.OnFatalAsync(this, ex);
+                    await _pool.OnFatalAsync(this, ex);
                     return;
                 }
 
-                if (!config.AutoReconnect)
+                if (!_config.AutoReconnect)
                 {
                     // Stays Disconnected until the client is rebuilt via StopAsync + StartAsync,
                     // or a global IDiscordClient.ReconnectAsync tears the pool down and brings
@@ -223,10 +246,10 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
                 var delay = ComputeBackoffDelay(attempt);
 
                 // Observational hook — bot authors log / alert / emit metrics.
-                await pool.OnReconnectingAsync(this, attempt + 1, delay, _preferResume).ConfigureAwait(false);
+                await _pool.OnReconnectingAsync(this, attempt + 1, delay, _preferResume).ConfigureAwait(false);
 
                 if (delay > TimeSpan.Zero)
-                    await Task.Delay(delay, pool.TimeProvider, token).ConfigureAwait(false);
+                    await Task.Delay(delay, _pool.TimeProvider, token).ConfigureAwait(false);
 
                 if (_preferResume)
                 {
@@ -252,15 +275,15 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
 
                 if (!GatewayExceptions.IsRecoverableTransport(ex))
                 {
-                    await pool.OnFatalAsync(this, ex).ConfigureAwait(false);
+                    await _pool.OnFatalAsync(this, ex).ConfigureAwait(false);
                     return false;
                 }
 
-                if (config.MaxReconnectAttempts > 0 && attempt >= config.MaxReconnectAttempts)
+                if (_config.MaxReconnectAttempts > 0 && attempt >= _config.MaxReconnectAttempts)
                 {
                     // Gave up — promote the last transient failure to fatal so WaitShutdownAsync
                     // surfaces the cause instead of returning as if everything was fine.
-                    await pool.OnFatalAsync(this, ex).ConfigureAwait(false);
+                    await _pool.OnFatalAsync(this, ex).ConfigureAwait(false);
                     return false;
                 }
                 // Transient — loop, escalate the backoff.
@@ -278,12 +301,12 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
     private TimeSpan ComputeBackoffDelay(int attempt)
     {
         const double MaxBackoffSeconds = 900.0;
-        var baseSeconds = Math.Max(1.0, config.ReconnectDelay.TotalSeconds);
+        var baseSeconds = Math.Max(1.0, _config.ReconnectDelay.TotalSeconds);
         var seconds = Math.Min(MaxBackoffSeconds, baseSeconds * Math.Pow(2, attempt));
 
         // Jitter ±(fraction*100)% breaks fleet-wide phase synchronisation: 1000 bots hitting the
         // same outage do not all retry at exactly t+5s, t+10s, t+20s.
-        var jitterFraction = Math.Clamp(config.ReconnectBackoffJitter, 0.0, 1.0);
+        var jitterFraction = Math.Clamp(_config.ReconnectBackoffJitter, 0.0, 1.0);
         if (jitterFraction > 0)
         {
             var delta = (Random.Shared.NextDouble() - 0.5) * 2.0 * jitterFraction;
@@ -299,7 +322,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
 
         var readToken = _shardCts.Token;
         CancellationTokenSource? helloTimeoutCts = null;
-        var enforcingHelloTimeout = _status == ShardStatus.Connecting && config.HelloTimeout > TimeSpan.Zero;
+        var enforcingHelloTimeout = _status == ShardStatus.Connecting && _config.HelloTimeout > TimeSpan.Zero;
 
         try
         {
@@ -309,7 +332,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
                 // cannot stall the shard indefinitely. The retry loop in RunLoopAsync's catch
                 // takes over once we surface this as a transport failure.
                 helloTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(_shardCts.Token);
-                helloTimeoutCts.CancelAfter(config.HelloTimeout);
+                helloTimeoutCts.CancelAfter(_config.HelloTimeout);
                 readToken = helloTimeoutCts.Token;
             }
 
@@ -364,7 +387,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
                 {
                     _resumeOnNextHello = false;
                     _status = ShardStatus.Identifying;
-                    await _socket.ResumeAsync(config.Token, _sessionId!, _shardCts.Token);
+                    await _socket.ResumeAsync(_config.Token, _sessionId!, _shardCts.Token);
                 }
                 else
                 {
@@ -416,7 +439,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
             return;
 
         _status = ShardStatus.Ready;
-        pool.Gate.Release();
+        _pool.Gate.Release();
     }
 
     private void RecordLifecycle(string phase)
@@ -435,7 +458,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
         // pending-count decrement that no-ops at zero), but we only release on the path where
         // the permit is still actually held.
         if (_status is ShardStatus.Identifying or ShardStatus.Ready)
-            pool.Gate.Release();
+            _pool.Gate.Release();
 
         _status = ShardStatus.Disconnected;
         RecordLifecycle(DiagnosticTags.PhaseDisconnect);
@@ -453,7 +476,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
         // a stale event id against a brand new session.
         _socket.ResetSequence();
         _status = ShardStatus.Connecting;
-        await _socket.ConnectAsync(pool.GatewayUri.ToUri(), _shardCts.Token);
+        await _socket.ConnectAsync(_pool.GatewayUri.ToUri(), _shardCts.Token);
         // The Hello handler in OnProcessSystemMessagesAsync runs SetupIdentifyAsync once HELLO
         // arrives. Sending IDENTIFY before HELLO violates the Discord protocol — the server may
         // respond with 4001 (unknown opcode) and close the link.
@@ -483,7 +506,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
 
             SetReady();
             RecordLifecycle(DiagnosticTags.PhaseReady);
-            await pool.OnReadyAsync(this, obj);
+            await _pool.OnReadyAsync(this, obj);
             return;
         }
 
@@ -491,16 +514,16 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
         {
             SetReady();
             RecordLifecycle(DiagnosticTags.PhaseResume);
-            await pool.OnResumeAsync(this);
+            await _pool.OnResumeAsync(this);
             return;
         }
 
-        await pool.OnReceiveMessageAsync(this, message);
+        await _dispatcher.EnqueueAsync(message);
     }
 
     private async Task SetupIdentifyAsync()
     {
-        await pool.Gate.WaitAsync();
+        await _pool.Gate.WaitAsync();
         _status = ShardStatus.Identifying;
         await SendIdentifyAsync();
     }
@@ -523,17 +546,17 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
             // Discord spec: the first heartbeat after HELLO must be delayed by a random fraction
             // of the heartbeat interval. Prevents a thundering-herd flood when a gateway node
             // restarts and every reconnecting bot would otherwise heartbeat at the same instant.
-            var jitterFraction = Math.Clamp(config.HeartbeatJitter, 0.0, 1.0);
+            var jitterFraction = Math.Clamp(_config.HeartbeatJitter, 0.0, 1.0);
             var jitterMs = (int)(Random.Shared.NextDouble() * jitterFraction * _heartbeatIntervalMs);
             if (jitterMs > 0)
-                await Task.Delay(TimeSpan.FromMilliseconds(jitterMs), pool.TimeProvider, token);
+                await Task.Delay(TimeSpan.FromMilliseconds(jitterMs), _pool.TimeProvider, token);
 
             MarkHeartbeatSent();
             await _socket.SendHeartbeatAsync(token);
 
             while (!token.IsCancellationRequested)
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(_heartbeatIntervalMs), pool.TimeProvider, token);
+                await Task.Delay(TimeSpan.FromMilliseconds(_heartbeatIntervalMs), _pool.TimeProvider, token);
 
                 if (!Volatile.Read(ref _heartbeatAck))
                 {
@@ -583,21 +606,21 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
         // Discord requires `shard: [shard_id, num_shards]` whenever the bot has more than one
         // shard. Omitting it makes the gateway treat every shard as a stand-alone connection,
         // which routes events to the wrong shard at best and breaks IDENTIFY at worst.
-        var payload = pool.TotalShards > 1
+        var payload = _pool.TotalShards > 1
             ? (object)new
             {
-                token = config.Token,
-                intents = (int)config.Intents,
+                token = _config.Token,
+                intents = (int)_config.Intents,
                 properties = DeviceInfo.CreateDefault(),
-                large_threshold = config.LargeThreshold,
-                shard = new[] { shardId, pool.TotalShards }
+                large_threshold = _config.LargeThreshold,
+                shard = new[] { _shardId, _pool.TotalShards }
             }
             : new
             {
-                token = config.Token,
-                intents = (int)config.Intents,
+                token = _config.Token,
+                intents = (int)_config.Intents,
                 properties = DeviceInfo.CreateDefault(),
-                large_threshold = config.LargeThreshold
+                large_threshold = _config.LargeThreshold
             };
 
         return _socket.SendAsync(OpCodes.Identify, payload, _shardCts.Token);
@@ -613,7 +636,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
     /// on the corresponding HEARTBEAT_ACK to publish the round-trip onto
     /// <c>discosdk.gateway.heartbeat.latency</c>.
     /// </summary>
-    private void MarkHeartbeatSent() => Volatile.Write(ref _heartbeatSentTimestamp, pool.TimeProvider.GetTimestamp());
+    private void MarkHeartbeatSent() => Volatile.Write(ref _heartbeatSentTimestamp, _pool.TimeProvider.GetTimestamp());
 
     /// <summary>
     /// Records the heartbeat round-trip on the SDK's metrics surface. Called from the HEARTBEAT_ACK
@@ -626,10 +649,10 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
         if (sentAt < 0)
             return;
 
-        var elapsedMs = pool.TimeProvider.GetElapsedTime(sentAt).TotalMilliseconds;
+        var elapsedMs = _pool.TimeProvider.GetElapsedTime(sentAt).TotalMilliseconds;
         DiscoSdkDiagnostics.GatewayHeartbeatLatency.Record(
             elapsedMs,
-            new KeyValuePair<string, object?>(DiagnosticTags.ShardId, shardId));
+            new KeyValuePair<string, object?>(DiagnosticTags.ShardId, _shardId));
     }
 
     public void Dispose()
@@ -638,6 +661,9 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
         try { _shardCts.Cancel(); } catch (ObjectDisposedException) { }
         try { _shardCts.Dispose(); } catch { }
         try { _heartbeatCts?.Dispose(); } catch { }
+        // Complete the per-shard dispatcher channel and let the worker drain any backlog before
+        // exiting. DisposeAsync swallows errors, so calling it synchronously here is safe.
+        try { _dispatcher.DisposeAsync().AsTask().GetAwaiter().GetResult(); } catch { }
         if (_socket is IDisposable disposableSocket)
             try { disposableSocket.Dispose(); } catch { }
     }

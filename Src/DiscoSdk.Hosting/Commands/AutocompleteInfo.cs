@@ -2,6 +2,9 @@
 using DiscoSdk.Contexts.Interactions;
 using DiscoSdk.Hosting.Commands.Callers.Parameters;
 using DiscoSdk.Hosting.Commands.Callers.Results;
+using DiscoSdk.Hosting.Gateway.Events;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Reflection;
 
 namespace DiscoSdk.Hosting.Commands;
@@ -12,6 +15,7 @@ internal class AutocompleteInfo(Type type, MethodInfo method, string commandName
     private readonly MethodCaller _method = MethodCaller.From(method);
     public string CommandName { get; } = commandName;
     public string OptionName { get; } = optionName;
+    public bool IsFireAndForget => FireAndForgetCache.IsFireAndForget(_method.Method);
 
     public override Type Type { get; } = type;
 
@@ -19,7 +23,26 @@ internal class AutocompleteInfo(Type type, MethodInfo method, string commandName
     {
         var instance = GetHandler(service);
         var parameters = _parameters.CreateInstances(service, context, token);
-        return _method.ExecuteAsync(instance, parameters, token);
+
+        // [FireAndForget] opt-in.
+        if (!FireAndForgetCache.IsFireAndForget(_method.Method))
+            return _method.ExecuteAsync(instance, parameters, token);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _method.ExecuteAsync(instance, parameters, token);
+            }
+            catch (Exception ex)
+            {
+                service.GetService<ILogger<AutocompleteInfo>>()?.Log(
+                    LogLevel.Error, ex,
+                    "Error in fire-and-forget autocomplete {Command}/{Option} (exception cannot propagate)",
+                    CommandName, OptionName);
+            }
+        }, token);
+        return Task.CompletedTask;
     }
 
     public static IReadOnlyDictionary<AutocompleteName, AutocompleteInfo> GetAll(Type commandClassType)
