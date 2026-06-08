@@ -261,6 +261,13 @@ public interface IGuild
     /// </summary>
     DiscoSdk.Caching.IGuildStickers Stickers { get; }
 
+    /// <summary>
+    /// Soundboard surface for this guild — every operation on <c>/guilds/:id/soundboard-sounds*</c>
+    /// (<c>GetAll</c>, <c>Get</c>, <c>Create</c>). Per-sound <c>Modify</c> / <c>Delete</c> live on
+    /// the returned <see cref="ISoundboardSound"/> wrapper.
+    /// </summary>
+    IGuildSoundboard Soundboard { get; }
+
     /// <summary>Builds a deferred REST action that retrieves all invites in this guild.</summary>
     IRestAction<IReadOnlyList<IInvite>> GetInvites();
 

@@ -244,6 +244,9 @@ internal class GuildWrapper : IGuild
     public IGuildEmojis Emojis => _emojisSurface ??= new GuildEmojisSurface(_client, this);
     private IGuildEmojis? _emojisSurface;
 
+    public IGuildSoundboard Soundboard => _soundboard ??= new GuildSoundboardSurface(_client, _guild.Id);
+    private IGuildSoundboard? _soundboard;
+
     public IGuildStickers Stickers => _stickerScope ??= _client.Stickers.OfGuild(_guild.Id);
     private IGuildStickers? _stickerScope;
 

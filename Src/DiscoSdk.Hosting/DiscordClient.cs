@@ -110,6 +110,7 @@ namespace DiscoSdk.Hosting
         internal StageInstanceClient StageInstanceClient { get; }
         internal GuildScheduledEventClient GuildScheduledEventClient { get; }
         internal StickerClient StickerClient { get; }
+        internal SoundboardSoundClient SoundboardSoundClient { get; }
         internal OAuth2Client OAuth2Client { get; }
         internal ApplicationCommandClient ApplicationCommandClient { get; }
         internal UserRepository Users { get; }
@@ -178,6 +179,7 @@ namespace DiscoSdk.Hosting
             StageInstanceClient = new StageInstanceClient(HttpClient);
             GuildScheduledEventClient = new GuildScheduledEventClient(HttpClient);
             StickerClient = new StickerClient(HttpClient);
+            SoundboardSoundClient = new SoundboardSoundClient(HttpClient);
             OAuth2Client = new OAuth2Client(HttpClient);
             ApplicationCommandClient = new ApplicationCommandClient(HttpClient);
             OAuth2 = new OAuth2Surface(this);

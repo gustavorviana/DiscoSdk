@@ -589,4 +589,50 @@ public class GuildWrapperTests : WrapperTestBase
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/webhooks"),
 			HttpMethod.Get, Arg.Any<object?>(), Arg.Any<CancellationToken>());
 	}
+
+	// ---- Soundboard sounds ----
+
+	[Fact]
+	public async Task GetSoundboardSounds_GetsListEnvelopeAsync()
+	{
+		Http.SendAsync<SoundboardSoundListResponse>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new SoundboardSoundListResponse { Items = [new SoundboardSound { SoundId = new Snowflake(7) }] });
+
+		var result = await _wrapper.Soundboard.GetAll().ExecuteAsync();
+
+		Assert.Single(result);
+		await Http.Received(1).SendAsync<SoundboardSoundListResponse>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/soundboard-sounds"),
+			HttpMethod.Get, Arg.Any<object?>(), Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task GetSoundboardSound_GetsByIdAsync()
+	{
+		Http.SendAsync<SoundboardSound>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new SoundboardSound { SoundId = new Snowflake(7), GuildId = _guildId });
+
+		await _wrapper.Soundboard.Get(new Snowflake(7)).ExecuteAsync();
+
+		await Http.Received(1).SendAsync<SoundboardSound>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/soundboard-sounds/7"),
+			HttpMethod.Get, Arg.Any<object?>(), Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task CreateSoundboardSound_PostsAgainstGuildAsync()
+	{
+		Http.SendAsync<SoundboardSound>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new SoundboardSound { SoundId = new Snowflake(7), GuildId = _guildId });
+
+		// OGG container magic header so DiscordSoundBuffer auto-detects the MIME.
+		var buf = new DiscordSoundBuffer([0x4F, 0x67, 0x67, 0x53, 0x00]);
+		await _wrapper.Soundboard.Create("horn", buf).ExecuteAsync();
+
+		await Http.Received(1).SendAsync<SoundboardSound>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/soundboard-sounds"),
+			HttpMethod.Post,
+			Arg.Is<object?>(b => BodyContains(b, "name", "horn") && BodyHasKey(b, "sound")),
+			Arg.Any<CancellationToken>());
+	}
 }
