@@ -271,7 +271,7 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
     /// <param name="required">Whether the option must be provided by the user.</param>
     /// <param name="minLength">Minimum length for the string value.</param>
     /// <param name="maxLength">Maximum length for the string value.</param>
-    /// <param name="autocomplete">Whether autocomplete is enabled for this option.</param>
+    /// <param name="AutoComplete">Whether AutoComplete is enabled for this option.</param>
     /// <param name="choices">Static choices available for this option.</param>
     /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
     public SlashCommandBuilder AddStringOption(
@@ -280,14 +280,14 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
         bool required = false,
         int? minLength = null,
         int? maxLength = null,
-        bool? autocomplete = null,
+        bool? AutoComplete = null,
         params SlashCommandOptionChoice[] choices)
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
         ValidateStringLengthBounds(minLength, maxLength);
         ValidateChoices(choices, SlashCommandOptionType.String);
-        ValidateAutocompleteAndChoices(autocomplete, choices);
+        ValidateAutoCompleteAndChoices(AutoComplete, choices);
 
         return AddOption(new SlashCommandOption
         {
@@ -298,7 +298,7 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
             Choices = choices.Length > 0 ? choices : null,
             MinLength = minLength,
             MaxLength = maxLength,
-            Autocomplete = autocomplete,
+            AutoComplete = AutoComplete,
         });
     }
 
@@ -310,7 +310,7 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
     /// <param name="required">Whether the option must be provided by the user.</param>
     /// <param name="minValue">Minimum numeric value.</param>
     /// <param name="maxValue">Maximum numeric value.</param>
-    /// <param name="autocomplete">Whether autocomplete is enabled for this option.</param>
+    /// <param name="AutoComplete">Whether AutoComplete is enabled for this option.</param>
     /// <param name="choices">Static choices available for this option.</param>
     /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
     public SlashCommandBuilder AddIntegerOption(
@@ -319,14 +319,14 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
         bool required = false,
         object? minValue = null,
         object? maxValue = null,
-        bool? autocomplete = null,
+        bool? AutoComplete = null,
         params SlashCommandOptionChoice[] choices)
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
         ValidateNumericBounds(minValue, maxValue, SlashCommandOptionType.Integer);
         ValidateChoices(choices, SlashCommandOptionType.Integer);
-        ValidateAutocompleteAndChoices(autocomplete, choices);
+        ValidateAutoCompleteAndChoices(AutoComplete, choices);
 
         return AddOption(new SlashCommandOption
         {
@@ -337,7 +337,7 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
             Choices = choices.Length > 0 ? choices : null,
             MinValue = minValue,
             MaxValue = maxValue,
-            Autocomplete = autocomplete,
+            AutoComplete = AutoComplete,
         });
     }
 
@@ -467,7 +467,7 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
     /// <param name="required">Whether the option must be provided by the user.</param>
     /// <param name="minValue">Minimum numeric value.</param>
     /// <param name="maxValue">Maximum numeric value.</param>
-    /// <param name="autocomplete">Whether autocomplete is enabled for this option.</param>
+    /// <param name="AutoComplete">Whether AutoComplete is enabled for this option.</param>
     /// <param name="choices">Static choices available for this option.</param>
     /// <returns>The current <see cref="SlashCommandBuilder"/> instance.</returns>
     public SlashCommandBuilder AddNumberOption(
@@ -476,14 +476,14 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
         bool required = false,
         object? minValue = null,
         object? maxValue = null,
-        bool? autocomplete = null,
+        bool? AutoComplete = null,
         params SlashCommandOptionChoice[] choices)
     {
         ValidateOptionName(name);
         ValidateOptionDescription(description);
         ValidateNumericBounds(minValue, maxValue, SlashCommandOptionType.Number);
         ValidateChoices(choices, SlashCommandOptionType.Number);
-        ValidateAutocompleteAndChoices(autocomplete, choices);
+        ValidateAutoCompleteAndChoices(AutoComplete, choices);
 
         return AddOption(new SlashCommandOption
         {
@@ -494,7 +494,7 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
             Choices = choices.Length > 0 ? choices : null,
             MinValue = minValue,
             MaxValue = maxValue,
-            Autocomplete = autocomplete,
+            AutoComplete = AutoComplete,
         });
     }
 
@@ -838,10 +838,10 @@ public class SlashCommandBuilder() : ISlashCommandOptionContainer
         }
     }
 
-    internal static void ValidateAutocompleteAndChoices(bool? autocomplete, SlashCommandOptionChoice[] choices)
+    internal static void ValidateAutoCompleteAndChoices(bool? AutoComplete, SlashCommandOptionChoice[] choices)
     {
-        if (autocomplete == true && choices.Length > 0)
-            throw new ArgumentException("Cannot use autocomplete and choices at the same time. Choose one option.", nameof(autocomplete));
+        if (AutoComplete == true && choices.Length > 0)
+            throw new ArgumentException("Cannot use AutoComplete and choices at the same time. Choose one option.", nameof(AutoComplete));
     }
 
     private static void ValidateNestedOptions(SlashCommandOption[] options, SlashCommandOptionType parentType)

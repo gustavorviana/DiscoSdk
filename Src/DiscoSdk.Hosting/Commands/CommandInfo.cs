@@ -42,7 +42,7 @@ internal class CommandInfo : SlashCommandHandlerCaller
         IsOnDemand = isOnDemand;
     }
 
-    public AutoCompleteInfo[] GetAutocompletes()
+    public AutoCompleteInfo[] GetAutoCompletes()
     {
         if (_methodOptions != null)
         {
@@ -54,12 +54,12 @@ internal class CommandInfo : SlashCommandHandlerCaller
 
         return _parameters
             .OfType<SlashParamInfo>()
-            .Where(x => x.Autocomplete != null)
-            .Select(x => x.Autocomplete)
+            .Where(x => x.AutoComplete != null)
+            .Select(x => x.AutoComplete)
             .ToArray()!;
     }
 
-    public SlashCommandBuilder GetCommandBuilder(Func<AutocompleteName, bool> hasAutocomplete)
+    public SlashCommandBuilder GetCommandBuilder(Func<AutoCompleteName, bool> hasAutoComplete)
     {
         var builder = new SlashCommandBuilder();
 
@@ -73,13 +73,13 @@ internal class CommandInfo : SlashCommandHandlerCaller
         if (Info.Contexts is { Length: > 0 })
             builder.WithContexts(Info.Contexts);
 
-        foreach (var option in BuildLeafOptions(hasAutocomplete))
+        foreach (var option in BuildLeafOptions(hasAutoComplete))
             builder.AddOption(option);
 
         return builder;
     }
 
-    internal SlashCommandOption[] BuildLeafOptions(Func<AutocompleteName, bool> hasAutocomplete)
+    internal SlashCommandOption[] BuildLeafOptions(Func<AutoCompleteName, bool> hasAutoComplete)
     {
         var options = new List<SlashCommandOption>();
 
@@ -93,7 +93,7 @@ internal class CommandInfo : SlashCommandHandlerCaller
 
                 options.Add(new SlashCommandOption
                 {
-                    Autocomplete = option.AutoCompleteType != null || hasAutocomplete(new AutocompleteName(Info.Name, option.Name, SubCommand?.Name, SubCommandGroup?.Name)),
+                    AutoComplete = option.AutoCompleteType != null || hasAutoComplete(new AutoCompleteName(Info.Name, option.Name, SubCommand?.Name, SubCommandGroup?.Name)),
                     Name = option.Name,
                     ChannelTypes = option.ChannelTypes,
                     Choices = [.. SlashOptionTypeUtils.GetChoices(_method.Method, option.Name).Select(x => x.ToCommandChoice())],
@@ -116,7 +116,7 @@ internal class CommandInfo : SlashCommandHandlerCaller
 
                 options.Add(new SlashCommandOption
                 {
-                    Autocomplete = parameter.Autocomplete != null || hasAutocomplete(new AutocompleteName(Info.Name, parameter.Name, SubCommand?.Name, SubCommandGroup?.Name)),
+                    AutoComplete = parameter.AutoComplete != null || hasAutoComplete(new AutoCompleteName(Info.Name, parameter.Name, SubCommand?.Name, SubCommandGroup?.Name)),
                     Name = parameter.Name,
                     ChannelTypes = parameter.Option?.ChannelTypes,
                     Choices = [.. parameter.GetChoices().Select(x => x.ToCommandChoice())],

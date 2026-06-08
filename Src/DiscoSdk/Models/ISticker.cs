@@ -16,7 +16,7 @@ public interface ISticker : IWithSnowflake, IReasonedDeletable
 	/// <summary>Sticker description (2-100 chars).</summary>
 	string? Description { get; }
 
-	/// <summary>Autocomplete/suggestion tag string (max 200 chars).</summary>
+	/// <summary>AutoComplete/suggestion tag string (max 200 chars).</summary>
 	string? Tags { get; }
 
 	/// <summary>Whether this is a standard (Nitro) or guild-uploaded sticker.</summary>

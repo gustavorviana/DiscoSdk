@@ -1,9 +1,9 @@
 namespace DiscoSdk.Contexts.Interactions;
 
 /// <summary>
-/// Represents a single option name/value pair in an autocomplete context (non-focused options already filled by the user).
+/// Represents a single option name/value pair in an AutoComplete context (non-focused options already filled by the user).
 /// </summary>
-public interface IAutocompleteOptionValue
+public interface IAutoCompleteOptionValue
 {
 	/// <summary>
 	/// Gets the option name.

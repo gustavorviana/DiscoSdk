@@ -216,24 +216,24 @@ public class FluentSlashCommandBuilderTests
     }
 
     [Fact]
-    public void Autocomplete_AfterChoice_Throws()
+    public void AutoComplete_AfterChoice_Throws()
     {
         Assert.Throws<InvalidOperationException>(() =>
         {
             var b = BaseBuilder();
             var opt = b.StringOption("x", "x");
             opt.ThenChoice("a", "a");
-            opt.WithAutocomplete();
+            opt.WithAutoComplete();
         });
     }
 
     [Fact]
-    public void Choice_AfterAutocomplete_Throws()
+    public void Choice_AfterAutoComplete_Throws()
     {
         Assert.Throws<InvalidOperationException>(() =>
         {
             var b = BaseBuilder();
-            var opt = b.StringOption("x", "x").WithAutocomplete();
+            var opt = b.StringOption("x", "x").WithAutoComplete();
             opt.ThenChoice("a", "a");
         });
     }

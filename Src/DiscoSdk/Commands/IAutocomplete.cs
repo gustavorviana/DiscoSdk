@@ -2,7 +2,7 @@
 
 namespace DiscoSdk.Commands;
 
-public interface IAutocomplete
+public interface IAutoComplete
 {
-    Task ExecuteAsync(IAutocompleteContext context);
+    Task ExecuteAsync(IAutoCompleteContext context);
 }

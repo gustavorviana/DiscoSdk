@@ -124,7 +124,7 @@ public class DispatchByCommandTypeTests
     }
 
     [Fact]
-    public void GetInteractionContext_Autocomplete_ReturnsAutocompleteContext()
+    public void GetInteractionContext_AutoComplete_ReturnsAutoCompleteContext()
     {
         var data = new InteractionData
         {
@@ -145,13 +145,13 @@ public class DispatchByCommandTypeTests
         var channel = CreateMockChannel();
 
         var wrapper = CreateWrapper(
-            InteractionType.ApplicationCommandAutocomplete,
+            InteractionType.ApplicationCommandAutoComplete,
             data,
             channel);
 
         var context = Dispatcher.GetInteractionContext(wrapper);
 
-        Assert.IsType<AutocompleteContext>(context);
+        Assert.IsType<AutoCompleteContext>(context);
     }
 
     [Fact]

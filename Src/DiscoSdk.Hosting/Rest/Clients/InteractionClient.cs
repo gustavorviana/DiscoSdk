@@ -95,21 +95,21 @@ internal class InteractionClient(IDiscordClient discordClient)
         await Client.SendAsync(route, HttpMethod.Post, request, cancellationToken);
     }
 
-    public async Task RespondWithAutocompleteAsync(InteractionHandle interaction,
+    public async Task RespondWithAutoCompleteAsync(InteractionHandle interaction,
         IReadOnlyList<SlashCommandOptionChoice> choices,
         CancellationToken cancellationToken = default)
     {
         if (choices.Count > 25)
-            throw new ArgumentOutOfRangeException(nameof(choices), "Autocomplete response allows at most 25 choices.");
+            throw new ArgumentOutOfRangeException(nameof(choices), "AutoComplete response allows at most 25 choices.");
 
-        var data = new AutocompleteCallbackData
+        var data = new AutoCompleteCallbackData
         {
             Choices = choices is SlashCommandOptionChoice[] arr ? arr : choices.ToArray()
         };
 
         try
         {
-            await SendCallbackAsync(interaction, data, InteractionCallbackType.ApplicationCommandAutocompleteResult, cancellationToken);
+            await SendCallbackAsync(interaction, data, InteractionCallbackType.ApplicationCommandAutoCompleteResult, cancellationToken);
             interaction.Responded = true;
         }
         catch (DiscordApiException ex) when (ex.DiscordCode == AlreadyAcknowledgedCode)

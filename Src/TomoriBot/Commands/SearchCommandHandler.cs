@@ -22,7 +22,7 @@ public class SearchCommandHandler : SlashCommandHandler
     }
 
     [AutoCompleteHandler("search", "query")]
-    protected Task QueryAutocompleteAsync(IAutocompleteContext context)
+    protected Task QueryAutoCompleteAsync(IAutoCompleteContext context)
     {
         return context.ReplyWithChoices([
             new SlashCommandOptionChoice{

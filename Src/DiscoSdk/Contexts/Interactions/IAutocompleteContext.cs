@@ -4,12 +4,12 @@ using DiscoSdk.Rest.Actions;
 namespace DiscoSdk.Contexts.Interactions;
 
 /// <summary>
-/// Context provided to autocomplete handlers when the user is typing in an option with autocomplete enabled.
+/// Context provided to AutoComplete handlers when the user is typing in an option with AutoComplete enabled.
 /// </summary>
-public interface IAutocompleteContext : IInteractionContext
+public interface IAutoCompleteContext : IInteractionContext
 {
 	/// <summary>
-	/// Gets the name of the command being autocompleted.
+	/// Gets the name of the command being AutoCompleted.
 	/// </summary>
 	string CommandName { get; }
 
@@ -24,19 +24,19 @@ public interface IAutocompleteContext : IInteractionContext
 	string? SubcommandGroup { get; }
 
 	/// <summary>
-	/// Gets the option that is currently focused (the field being autocompleted).
+	/// Gets the option that is currently focused (the field being AutoCompleted).
 	/// </summary>
-	IAutocompleteFocusedOption FocusedOption { get; }
+	IAutoCompleteFocusedOption FocusedOption { get; }
 
 	/// <summary>
 	/// Gets the other options already filled by the user, for context when generating suggestions.
 	/// </summary>
-	IReadOnlyCollection<IAutocompleteOptionValue> Options { get; }
+	IReadOnlyCollection<IAutoCompleteOptionValue> Options { get; }
 
 	/// <summary>
-	/// Returns an action that responds to the autocomplete interaction with the given choices (max 25).
+	/// Returns an action that responds to the AutoComplete interaction with the given choices (max 25).
 	/// </summary>
 	/// <param name="choices">The suggestions to display. Maximum 25 choices; can be empty.</param>
-	/// <returns>An <see cref="IRestAction"/> that sends the autocomplete response when executed.</returns>
+	/// <returns>An <see cref="IRestAction"/> that sends the AutoComplete response when executed.</returns>
 	IRestAction ReplyWithChoices(IEnumerable<SlashCommandOptionChoice> choices);
 }

@@ -89,10 +89,10 @@ public class SlashCommandOption : IEquatable<SlashCommandOption?>
     public int? MaxLength { get; set; }
 
     /// <summary>
-    /// Gets or sets whether autocomplete is enabled.
+    /// Gets or sets whether AutoComplete is enabled.
     /// </summary>
-    [JsonPropertyName("autocomplete")]
-    public bool? Autocomplete { get; set; }
+    [JsonPropertyName("AutoComplete")]
+    public bool? AutoComplete { get; set; }
 
     public override bool Equals(object? obj)
     {
@@ -115,7 +115,7 @@ public class SlashCommandOption : IEquatable<SlashCommandOption?>
                ValueUtils.ValueEquals(MaxValue, other.MaxValue) &&
                MinLength == other.MinLength &&
                MaxLength == other.MaxLength &&
-               Autocomplete == other.Autocomplete;
+               AutoComplete == other.AutoComplete;
     }
 
 
@@ -135,7 +135,7 @@ public class SlashCommandOption : IEquatable<SlashCommandOption?>
         hash.Add(MaxValue);
         hash.Add(MinLength);
         hash.Add(MaxLength);
-        hash.Add(Autocomplete);
+        hash.Add(AutoComplete);
         return hash.ToHashCode();
     }
 
@@ -157,7 +157,7 @@ public class SlashCommandOption : IEquatable<SlashCommandOption?>
         sb.Append('<').Append(Name).Append(": ").Append(Type);
 
         if (Required == true) sb.Append(", required");
-        if (Autocomplete == true) sb.Append(", autocomplete");
+        if (AutoComplete == true) sb.Append(", AutoComplete");
 
         sb.Append('>');
 

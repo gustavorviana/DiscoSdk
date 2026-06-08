@@ -31,9 +31,9 @@ public enum InteractionCallbackType
     UpdateMessage = 7,
 
     /// <summary>
-    /// Respond to an autocomplete interaction with suggested choices.
+    /// Respond to an AutoComplete interaction with suggested choices.
     /// </summary>
-    ApplicationCommandAutocompleteResult = 8,
+    ApplicationCommandAutoCompleteResult = 8,
 
     /// <summary>
     /// Respond to an interaction with a popup modal.

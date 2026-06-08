@@ -56,7 +56,7 @@ public class SlashCommandLocalizerTests
                 name: "reason",
                 description: "Reason",
                 required: false,
-                minLength: null, maxLength: null, autocomplete: null,
+                minLength: null, maxLength: null, AutoComplete: null,
                 new SlashCommandOptionChoice { Name = "spam", Value = "spam" },
                 new SlashCommandOptionChoice { Name = "raid", Value = "raid" })
             .Build();
@@ -264,7 +264,7 @@ public class SlashCommandLocalizerTests
             .WithType(ApplicationCommandType.ChatInput)
             .AddStringOption(
                 "reason", "Reason", required: false,
-                minLength: null, maxLength: null, autocomplete: null,
+                minLength: null, maxLength: null, AutoComplete: null,
                 new SlashCommandOptionChoice { Name = "spam", Value = "spam" })
             .Build();
 

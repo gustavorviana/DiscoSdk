@@ -5,9 +5,9 @@ using DiscoSdk.Models.Commands;
 namespace TomoriBot;
 
 /// <summary>
-/// Handles autocomplete for application commands. Only called when the user is typing in an option with autocomplete enabled.
+/// Handles AutoComplete for application commands. Only called when the user is typing in an option with AutoComplete enabled.
 /// </summary>
-internal class AutocompleteHandler : IAutocompleteHandler
+internal class AutoCompleteHandler : IAutoCompleteHandler
 {
 	private static readonly string[] FruitSuggestions =
 	[
@@ -16,9 +16,9 @@ internal class AutocompleteHandler : IAutocompleteHandler
 		"Pear", "Pineapple", "Plum", "Raspberry", "Strawberry", "Watermelon"
 	];
 
-	public async Task HandleAsync(IAutocompleteContext context, IServiceProvider services)
+	public async Task HandleAsync(IAutoCompleteContext context, IServiceProvider services)
 	{
-		// Example: autocomplete for "search" command, option "query"
+		// Example: AutoComplete for "search" command, option "query"
 		if (context.CommandName != "search")
 			return;
 

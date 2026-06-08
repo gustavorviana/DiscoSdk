@@ -147,10 +147,10 @@ public interface IComponentInteractionHandler : IDiscordEventHandler<IInteractio
 }
 
 /// <summary>
-/// Interface for handling application command autocomplete interactions.
-/// This handler is only called when interaction.Type == InteractionType.ApplicationCommandAutocomplete.
+/// Interface for handling application command AutoComplete interactions.
+/// This handler is only called when interaction.Type == InteractionType.ApplicationCommandAutoComplete.
 /// </summary>
-public interface IAutocompleteHandler : IDiscordEventHandler<IAutocompleteContext>
+public interface IAutoCompleteHandler : IDiscordEventHandler<IAutoCompleteContext>
 {
 }
 

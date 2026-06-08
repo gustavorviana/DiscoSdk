@@ -9,14 +9,14 @@ namespace DiscoSdk.Hosting.Commands;
 /// <summary>
 /// Immutable read-side of the command storage produced by <see cref="CommandRegistryBuilder"/>.
 /// Holds frozen collections for the three lookup buckets (slash flat/group, context menu,
-/// autocomplete) plus the two on-demand HashSets. Per-type snapshots for <see cref="GetAll"/>
+/// AutoComplete) plus the two on-demand HashSets. Per-type snapshots for <see cref="GetAll"/>
 /// and <see cref="GetOnDemand"/> are pre-computed at construction so callers pay zero allocation
 /// to enumerate.
 /// </summary>
 internal sealed class CommandRegistry : ICommandRegistry
 {
     private readonly FrozenDictionary<string, SlashEntry> _slash;
-    private readonly FrozenDictionary<AutocompleteName, AutoCompleteInfo> _autocompletes;
+    private readonly FrozenDictionary<AutoCompleteName, AutoCompleteInfo> _AutoCompletes;
     private readonly FrozenDictionary<(string Name, ApplicationCommandType Type), ContextMenuEntry> _contextMenu;
     private readonly FrozenSet<string> _onDemandSlash;
     private readonly FrozenSet<(string Name, ApplicationCommandType Type)> _onDemandContextMenu;
@@ -31,13 +31,13 @@ internal sealed class CommandRegistry : ICommandRegistry
 
     internal CommandRegistry(
         FrozenDictionary<string, SlashEntry> slash,
-        FrozenDictionary<AutocompleteName, AutoCompleteInfo> autocompletes,
+        FrozenDictionary<AutoCompleteName, AutoCompleteInfo> AutoCompletes,
         FrozenDictionary<(string Name, ApplicationCommandType Type), ContextMenuEntry> contextMenu,
         FrozenSet<string> onDemandSlash,
         FrozenSet<(string Name, ApplicationCommandType Type)> onDemandContextMenu)
     {
         _slash = slash;
-        _autocompletes = autocompletes;
+        _AutoCompletes = AutoCompletes;
         _contextMenu = contextMenu;
         _onDemandSlash = onDemandSlash;
         _onDemandContextMenu = onDemandContextMenu;
@@ -138,8 +138,8 @@ internal sealed class CommandRegistry : ICommandRegistry
             ? null
             : _slash.TryGetValue(name, out var entry) ? entry : null;
 
-    internal AutoCompleteInfo? FindAutocomplete(AutocompleteName name)
-        => _autocompletes.TryGetValue(name, out var info) ? info : null;
+    internal AutoCompleteInfo? FindAutoComplete(AutoCompleteName name)
+        => _AutoCompletes.TryGetValue(name, out var info) ? info : null;
 
     internal ContextMenuEntry? FindContextMenu(string name, ApplicationCommandType type)
         => string.IsNullOrEmpty(name)

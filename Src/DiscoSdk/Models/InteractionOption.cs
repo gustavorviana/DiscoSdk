@@ -41,7 +41,7 @@ public class InteractionOption
     public InteractionOption[]? Options { get; set; }
 
     /// <summary>
-    /// Gets or sets whether this option is the currently focused option for autocomplete.
+    /// Gets or sets whether this option is the currently focused option for AutoComplete.
     /// </summary>
     [JsonPropertyName("focused")]
     public bool? Focused { get; set; }

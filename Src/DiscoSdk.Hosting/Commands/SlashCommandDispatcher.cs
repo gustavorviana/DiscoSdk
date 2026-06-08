@@ -4,13 +4,13 @@ using DiscoSdk.Events;
 namespace DiscoSdk.Hosting.Commands;
 
 /// <summary>
-/// Long-lived event handler for slash commands and autocompletes. Resolved from DI with a
+/// Long-lived event handler for slash commands and AutoCompletes. Resolved from DI with a
 /// frozen <see cref="CommandRegistry"/>. Holds no mutable state — every dispatch is a lookup
 /// in the registry.
 /// </summary>
 internal sealed class SlashCommandDispatcher
     : IApplicationCommandHandler,
-    IAutocompleteHandler
+    IAutoCompleteHandler
 {
     private readonly CommandRegistry _registry;
 
@@ -38,13 +38,13 @@ internal sealed class SlashCommandDispatcher
         await command.ExecuteAsync(context, services, default);
     }
 
-    async Task IDiscordEventHandler<IAutocompleteContext>.HandleAsync(IAutocompleteContext context, IServiceProvider services)
+    async Task IDiscordEventHandler<IAutoCompleteContext>.HandleAsync(IAutoCompleteContext context, IServiceProvider services)
     {
-        var name = AutocompleteName.FromContext(context);
-        var autocomplete = _registry.FindAutocomplete(name);
-        if (autocomplete is null)
+        var name = AutoCompleteName.FromContext(context);
+        var AutoComplete = _registry.FindAutoComplete(name);
+        if (AutoComplete is null)
             return;
 
-        await autocomplete.ExecuteAsync(services, context, default);
+        await AutoComplete.ExecuteAsync(services, context, default);
     }
 }

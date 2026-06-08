@@ -3,7 +3,7 @@ using DiscoSdk.Models.Enums;
 
 namespace DiscoSdk.Hosting.Contexts.Models;
 
-internal class AutocompleteFocusedOption(string name, SlashCommandOptionType type, object? value) : IAutocompleteFocusedOption
+internal class AutoCompleteFocusedOption(string name, SlashCommandOptionType type, object? value) : IAutoCompleteFocusedOption
 {
 	public string Name => name;
 	public SlashCommandOptionType Type => type;

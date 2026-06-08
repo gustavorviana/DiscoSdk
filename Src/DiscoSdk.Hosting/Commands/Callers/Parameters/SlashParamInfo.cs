@@ -9,7 +9,7 @@ namespace DiscoSdk.Hosting.Commands.Callers.Parameters;
 internal abstract class SlashParamInfo : ParamInfo
 {
     public SlashOptionAttribute? Option { get; }
-    public AutoCompleteInfo? Autocomplete { get; }
+    public AutoCompleteInfo? AutoComplete { get; }
     public string Name => Option?.Name ?? Parameter.Name!;
     public abstract SlashCommandOptionType? Type { get; }
     public virtual bool Required => Option?.Required ?? false;
@@ -21,7 +21,7 @@ internal abstract class SlashParamInfo : ParamInfo
     public SlashParamInfo(ParameterInfo parameter, string commandName) : base(parameter)
     {
         Option = parameter.GetCustomAttribute<SlashOptionAttribute>();
-        Autocomplete = AutoCompleteInfo.GetOfOption(Option, commandName, Name);
+        AutoComplete = AutoCompleteInfo.GetOfOption(Option, commandName, Name);
     }
 
     public ChoiceAttribute[] GetChoices() => SlashOptionTypeUtils.GetChoices(Parameter);

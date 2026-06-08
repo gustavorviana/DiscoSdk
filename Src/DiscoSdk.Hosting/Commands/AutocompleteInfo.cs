@@ -19,7 +19,7 @@ internal class AutoCompleteInfo(Type type, MethodInfo method, string commandName
 
     public override Type Type { get; } = type;
 
-    public Task ExecuteAsync(IServiceProvider service, IAutocompleteContext context, CancellationToken token)
+    public Task ExecuteAsync(IServiceProvider service, IAutoCompleteContext context, CancellationToken token)
     {
         var instance = GetHandler(service);
         var parameters = _parameters.CreateInstances(service, context, token);
@@ -38,25 +38,25 @@ internal class AutoCompleteInfo(Type type, MethodInfo method, string commandName
             {
                 service.GetService<ILogger<AutoCompleteInfo>>()?.Log(
                     LogLevel.Error, ex,
-                    "Error in fire-and-forget autocomplete {Command}/{Option} (exception cannot propagate)",
+                    "Error in fire-and-forget AutoComplete {Command}/{Option} (exception cannot propagate)",
                     CommandName, OptionName);
             }
         }, token);
         return Task.CompletedTask;
     }
 
-    public static IReadOnlyDictionary<AutocompleteName, AutoCompleteInfo> GetAll(Type commandClassType)
+    public static IReadOnlyDictionary<AutoCompleteName, AutoCompleteInfo> GetAll(Type commandClassType)
     {
-        var items = new Dictionary<AutocompleteName, AutoCompleteInfo>();
+        var items = new Dictionary<AutoCompleteName, AutoCompleteInfo>();
         GetAllOfAutoCompleteHandlerAttribute(items, commandClassType);
         GetAllOfSlashOptionAttribute(items, commandClassType);
 
         return items;
     }
 
-    private static void GetAllOfAutoCompleteHandlerAttribute(Dictionary<AutocompleteName, AutoCompleteInfo> items, Type commandClassType)
+    private static void GetAllOfAutoCompleteHandlerAttribute(Dictionary<AutoCompleteName, AutoCompleteInfo> items, Type commandClassType)
     {
-        var contextType = typeof(IAutocompleteContext);
+        var contextType = typeof(IAutoCompleteContext);
         foreach (var method in commandClassType.GetMethods(CommandReflection.Flags))
         {
             var attribute = method.GetCustomAttribute<AutoCompleteHandlerAttribute>();
@@ -67,7 +67,7 @@ internal class AutoCompleteInfo(Type type, MethodInfo method, string commandName
             if (methodParams.Length != 1 || methodParams.First().ParameterType != contextType)
                 continue;
 
-            var name = new AutocompleteName(attribute.CommandName, attribute.OptionName, attribute.Subcommand, attribute.SubcommandGroup);
+            var name = new AutoCompleteName(attribute.CommandName, attribute.OptionName, attribute.Subcommand, attribute.SubcommandGroup);
 
             if (items.ContainsKey(name))
                 throw new InvalidOperationException($"AutoComplete \"{name}\" already exists.");
@@ -76,7 +76,7 @@ internal class AutoCompleteInfo(Type type, MethodInfo method, string commandName
         }
     }
 
-    private static void GetAllOfSlashOptionAttribute(Dictionary<AutocompleteName, AutoCompleteInfo> items, Type commandClassType)
+    private static void GetAllOfSlashOptionAttribute(Dictionary<AutoCompleteName, AutoCompleteInfo> items, Type commandClassType)
     {
         foreach (var method in commandClassType.GetMethods(CommandReflection.Flags))
         {
@@ -85,7 +85,7 @@ internal class AutoCompleteInfo(Type type, MethodInfo method, string commandName
                 continue;
 
             // Sub-command / sub-command-group routing lives on the slash command method itself,
-            // not on SlashOptionAttribute. Read it here so the AutocompleteName covers the full
+            // not on SlashOptionAttribute. Read it here so the AutoCompleteName covers the full
             // tree-path of the option.
             var subCommand = method.GetCustomAttribute<SubCommandAttribute>()?.Name;
             var subCommandGroup = method.GetCustomAttribute<SubCommandGroupAttribute>()?.Name;
@@ -108,7 +108,7 @@ internal class AutoCompleteInfo(Type type, MethodInfo method, string commandName
     }
 
     private static void TryRegister(
-        Dictionary<AutocompleteName, AutoCompleteInfo> items,
+        Dictionary<AutoCompleteName, AutoCompleteInfo> items,
         SlashOptionAttribute attribute,
         string commandName,
         string? optionName,
@@ -122,9 +122,9 @@ internal class AutoCompleteInfo(Type type, MethodInfo method, string commandName
         if (info is null)
             return;
 
-        var name = new AutocompleteName(commandName, optionName, subCommand, subCommandGroup);
+        var name = new AutoCompleteName(commandName, optionName, subCommand, subCommandGroup);
         if (items.ContainsKey(name))
-            throw new InvalidOperationException($"Autocomplete \"{name}\" already exists.");
+            throw new InvalidOperationException($"AutoComplete \"{name}\" already exists.");
 
         items[name] = info;
     }
@@ -134,16 +134,16 @@ internal class AutoCompleteInfo(Type type, MethodInfo method, string commandName
         if (option?.AutoCompleteType == null)
             return null;
 
-        var autoCompleteType = option.AutoCompleteType;
-        var isSlashCommandHandler = typeof(SlashCommandHandler).IsAssignableFrom(autoCompleteType);
-        var isAutocomplete = typeof(IAutocomplete).IsAssignableFrom(autoCompleteType);
+        var AutoCompleteType = option.AutoCompleteType;
+        var isSlashCommandHandler = typeof(SlashCommandHandler).IsAssignableFrom(AutoCompleteType);
+        var isAutoComplete = typeof(IAutoComplete).IsAssignableFrom(AutoCompleteType);
 
-        if (!isSlashCommandHandler && !isAutocomplete)
+        if (!isSlashCommandHandler && !isAutoComplete)
             throw new InvalidOperationException(
-                $"Type '{autoCompleteType.FullName}' must inherit '{typeof(SlashCommandHandler).FullName}' or implement '{typeof(IAutocomplete).FullName}'.");
+                $"Type '{AutoCompleteType.FullName}' must inherit '{typeof(SlashCommandHandler).FullName}' or implement '{typeof(IAutoComplete).FullName}'.");
 
-        return new AutoCompleteInfo(autoCompleteType,
-            ReflectionUtils.FindInterfaceMethod(autoCompleteType, typeof(IAutocomplete), nameof(IAutocomplete.ExecuteAsync))!,
+        return new AutoCompleteInfo(AutoCompleteType,
+            ReflectionUtils.FindInterfaceMethod(AutoCompleteType, typeof(IAutoComplete), nameof(IAutoComplete.ExecuteAsync))!,
             commandName,
             optionName
         );

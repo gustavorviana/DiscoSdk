@@ -328,7 +328,7 @@ internal static class DispatchFrames
 	{
 		// User/Message context-menu commands require a target_id + a matching entry in
 		// resolved.users / resolved.messages — the context constructors throw otherwise.
-		// Autocomplete requires at least one option (focused, ideally).
+		// AutoComplete requires at least one option (focused, ideally).
 		var data = type switch
 		{
 			2 when commandType == 2 =>

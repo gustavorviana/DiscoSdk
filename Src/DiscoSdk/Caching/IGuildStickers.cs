@@ -49,7 +49,7 @@ public interface IGuildStickers
     /// <c>SetDescription(...)</c> for an optional description, then <c>ExecuteAsync</c>.
     /// </summary>
     /// <param name="name">Sticker name (2-30 chars).</param>
-    /// <param name="tags">Suggestion / autocomplete tag string (max 200 chars).</param>
+    /// <param name="tags">Suggestion / AutoComplete tag string (max 200 chars).</param>
     /// <param name="file">Sticker image file (PNG/APNG/GIF/Lottie, max 512 KiB).</param>
     ICreateGuildStickerAction Create(string name, string tags, MessageFile file);
 }

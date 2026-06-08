@@ -2,16 +2,16 @@
 using DiscoSdk.Contexts.Interactions;
 using DiscoSdk.Models.Enums;
 
-namespace TomoriBot.Autocompletes;
+namespace TomoriBot.AutoCompletes;
 
-public class OnlineStatusAutocomplete : IAutocomplete
+public class OnlineStatusAutoComplete : IAutoComplete
 {
-    public OnlineStatusAutocomplete()
+    public OnlineStatusAutoComplete()
     {
 
     }
 
-    public Task ExecuteAsync(IAutocompleteContext context)
+    public Task ExecuteAsync(IAutoCompleteContext context)
     {
         var value = context.FocusedOption.Value?.ToString() ?? "";
         var enums = Enum.GetNames(typeof(OnlineStatus)).Where(x => x.Contains(value, StringComparison.OrdinalIgnoreCase));

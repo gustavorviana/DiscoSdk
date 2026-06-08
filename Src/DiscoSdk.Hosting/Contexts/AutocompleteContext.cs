@@ -9,11 +9,11 @@ using InteractionOptionModel = DiscoSdk.Models.InteractionOption;
 
 namespace DiscoSdk.Hosting.Contexts;
 
-internal class AutocompleteContext : InteractionContextWrapper, IAutocompleteContext
+internal class AutoCompleteContext : InteractionContextWrapper, IAutoCompleteContext
 {
-	private const int MaxAutocompleteChoices = 25;
+	private const int MaxAutoCompleteChoices = 25;
 
-	public AutocompleteContext(DiscordClient client, InteractionWrapper interaction)
+	public AutoCompleteContext(DiscordClient client, InteractionWrapper interaction)
 		: base(client, interaction)
 	{
         var options = interaction.Data?.Options;
@@ -31,29 +31,29 @@ internal class AutocompleteContext : InteractionContextWrapper, IAutocompleteCon
             }
             else
             {
-                throw new InvalidOperationException("Autocomplete interaction has no focused option or options.");
+                throw new InvalidOperationException("AutoComplete interaction has no focused option or options.");
             }
         }
 
-        FocusedOption = new AutocompleteFocusedOption(focused.Name, focused.Type, focused.Value);
+        FocusedOption = new AutoCompleteFocusedOption(focused.Name, focused.Type, focused.Value);
         Options = CollectOtherOptions(options, focused);
 	}
 
 	public string CommandName { get; }
 	public string? Subcommand { get; }
 	public string? SubcommandGroup { get; }
-	public IAutocompleteFocusedOption FocusedOption { get; }
-	public IReadOnlyCollection<IAutocompleteOptionValue> Options { get; }
+	public IAutoCompleteFocusedOption FocusedOption { get; }
+	public IReadOnlyCollection<IAutoCompleteOptionValue> Options { get; }
 
 	public IRestAction ReplyWithChoices(IEnumerable<SlashCommandOptionChoice> choices)
 	{
-		var list = choices?.Take(MaxAutocompleteChoices + 1).ToList() ?? [];
-		if (list.Count > MaxAutocompleteChoices)
-			throw new ArgumentOutOfRangeException(nameof(choices), $"Autocomplete allows at most {MaxAutocompleteChoices} choices.");
+		var list = choices?.Take(MaxAutoCompleteChoices + 1).ToList() ?? [];
+		if (list.Count > MaxAutoCompleteChoices)
+			throw new ArgumentOutOfRangeException(nameof(choices), $"AutoComplete allows at most {MaxAutoCompleteChoices} choices.");
 
 		return RestAction.Create(async cancellationToken =>
 		{
-			await Client.InteractionClient.RespondWithAutocompleteAsync(
+			await Client.InteractionClient.RespondWithAutoCompleteAsync(
 				Interaction.Handle,
                 list,
 				cancellationToken);
@@ -101,11 +101,11 @@ internal class AutocompleteContext : InteractionContextWrapper, IAutocompleteCon
 		}
 	}
 
-	private static IReadOnlyCollection<IAutocompleteOptionValue> CollectOtherOptions(
+	private static IReadOnlyCollection<IAutoCompleteOptionValue> CollectOtherOptions(
 		InteractionOptionModel[]? options,
 		InteractionOptionModel? excludeFocused)
 	{
-		var list = new List<IAutocompleteOptionValue>();
+		var list = new List<IAutoCompleteOptionValue>();
 		CollectOtherOptionsCore(options, excludeFocused, list);
 		return list;
 	}
@@ -113,7 +113,7 @@ internal class AutocompleteContext : InteractionContextWrapper, IAutocompleteCon
 	private static void CollectOtherOptionsCore(
 		InteractionOptionModel[]? options,
 		InteractionOptionModel? excludeFocused,
-		List<IAutocompleteOptionValue> list)
+		List<IAutoCompleteOptionValue> list)
 	{
 		if (options is null)
 			return;
@@ -131,7 +131,7 @@ internal class AutocompleteContext : InteractionContextWrapper, IAutocompleteCon
 			}
 
 			if (opt.Value is not null)
-				list.Add(new AutocompleteOptionValue(opt.Name, opt.Value));
+				list.Add(new AutoCompleteOptionValue(opt.Name, opt.Value));
 		}
 	}
 }

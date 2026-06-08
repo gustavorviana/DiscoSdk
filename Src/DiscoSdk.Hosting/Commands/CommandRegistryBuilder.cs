@@ -18,7 +18,7 @@ internal sealed class CommandRegistryBuilder
 {
     private readonly Dictionary<string, SlashEntry> _slash = new(StringComparer.OrdinalIgnoreCase);
 
-    private readonly Dictionary<AutocompleteName, AutoCompleteInfo> _autoCompletes = [];
+    private readonly Dictionary<AutoCompleteName, AutoCompleteInfo> _AutoCompletes = [];
 
     private readonly Dictionary<(string Name, ApplicationCommandType Type), ContextMenuEntry> _contextMenu = new(ContextMenuKeyComparer.Instance);
 
@@ -28,7 +28,7 @@ internal sealed class CommandRegistryBuilder
 
     private CommandRegistry? _built;
 
-    public bool HasAutocomplete(AutocompleteName name) => _autoCompletes.ContainsKey(name);
+    public bool HasAutoComplete(AutoCompleteName name) => _AutoCompletes.ContainsKey(name);
 
     public void AddSlashFlat(
         CommandInfo info,
@@ -93,13 +93,13 @@ internal sealed class CommandRegistryBuilder
             _onDemandContextMenu.Add(key);
     }
 
-    public void AddAutoComplete(AutocompleteName name, AutoCompleteInfo info)
+    public void AddAutoComplete(AutoCompleteName name, AutoCompleteInfo info)
     {
         EnsureNotBuilt();
         ArgumentNullException.ThrowIfNull(info);
-        if (!_autoCompletes.TryAdd(name, info))
+        if (!_AutoCompletes.TryAdd(name, info))
             throw new InvalidOperationException(
-                $"Duplicate autocomplete handler for command '{info.CommandName}', option '{info.OptionName}'.");
+                $"Duplicate AutoComplete handler for command '{info.CommandName}', option '{info.OptionName}'.");
     }
 
     /// <summary>
@@ -114,7 +114,7 @@ internal sealed class CommandRegistryBuilder
 
         _built = new CommandRegistry(
             _slash.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase),
-            _autoCompletes.ToFrozenDictionary(),
+            _AutoCompletes.ToFrozenDictionary(),
             _contextMenu.ToFrozenDictionary(ContextMenuKeyComparer.Instance),
             _onDemandSlash.ToFrozenSet(StringComparer.OrdinalIgnoreCase),
             _onDemandContextMenu.ToFrozenSet(ContextMenuKeyComparer.Instance));
@@ -122,7 +122,7 @@ internal sealed class CommandRegistryBuilder
         // Builder cumpriu o papel: o frozen registry agora detém tudo. Libera os buckets dos
         // dicts/sets mutáveis pro GC — o builder vira casca vazia.
         _slash.Clear();
-        _autoCompletes.Clear();
+        _AutoCompletes.Clear();
         _contextMenu.Clear();
         _onDemandSlash.Clear();
         _onDemandContextMenu.Clear();

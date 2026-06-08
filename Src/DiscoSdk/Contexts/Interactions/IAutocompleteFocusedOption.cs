@@ -3,9 +3,9 @@ using DiscoSdk.Models.Enums;
 namespace DiscoSdk.Contexts.Interactions;
 
 /// <summary>
-/// Represents the option that is currently focused (being typed) in an autocomplete interaction.
+/// Represents the option that is currently focused (being typed) in an AutoComplete interaction.
 /// </summary>
-public interface IAutocompleteFocusedOption
+public interface IAutoCompleteFocusedOption
 {
 	/// <summary>
 	/// Gets the name of the option.

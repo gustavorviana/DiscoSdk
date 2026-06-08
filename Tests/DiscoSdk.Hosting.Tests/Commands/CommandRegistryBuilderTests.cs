@@ -33,7 +33,7 @@ public class CommandRegistryBuilderTests
         var builder = PopulatedSlashBuilder();
         _ = builder.Build();
 
-        var info = new AutocompleteName("any", "x", null, null);
+        var info = new AutoCompleteName("any", "x", null, null);
         Assert.Throws<InvalidOperationException>(() =>
             builder.AddAutoComplete(info, null!));
     }

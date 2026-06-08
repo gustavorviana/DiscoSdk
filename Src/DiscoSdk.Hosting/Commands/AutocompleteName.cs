@@ -2,13 +2,13 @@ using DiscoSdk.Contexts.Interactions;
 
 namespace DiscoSdk.Hosting.Commands;
 
-internal readonly struct AutocompleteName(string commandName, string optionName, string? subcommand = null, string? subcommandGroup = null) : IEquatable<AutocompleteName>
+internal readonly struct AutoCompleteName(string commandName, string optionName, string? subcommand = null, string? subcommandGroup = null) : IEquatable<AutoCompleteName>
 {
     public string Name { get; } = BuildName(commandName, optionName, subcommand, subcommandGroup);
 
-    public static AutocompleteName FromContext(IAutocompleteContext context)
+    public static AutoCompleteName FromContext(IAutoCompleteContext context)
     {
-        return new AutocompleteName(context.CommandName, context.FocusedOption.Name, context.Subcommand, context.SubcommandGroup);
+        return new AutoCompleteName(context.CommandName, context.FocusedOption.Name, context.Subcommand, context.SubcommandGroup);
     }
 
     private static string BuildName(string commandName, string optionName, string? subcommand, string? subcommandGroup)
@@ -22,10 +22,10 @@ internal readonly struct AutocompleteName(string commandName, string optionName,
 
     public override bool Equals(object? obj)
     {
-        return obj is AutocompleteName name && Equals(name);
+        return obj is AutoCompleteName name && Equals(name);
     }
 
-    public bool Equals(AutocompleteName other)
+    public bool Equals(AutoCompleteName other)
     {
         return string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase);
     }
@@ -35,12 +35,12 @@ internal readonly struct AutocompleteName(string commandName, string optionName,
         return StringComparer.OrdinalIgnoreCase.GetHashCode(Name);
     }
 
-    public static bool operator ==(AutocompleteName left, AutocompleteName right)
+    public static bool operator ==(AutoCompleteName left, AutoCompleteName right)
     {
         return left.Equals(right);
     }
 
-    public static bool operator !=(AutocompleteName left, AutocompleteName right)
+    public static bool operator !=(AutoCompleteName left, AutoCompleteName right)
     {
         return !(left == right);
     }

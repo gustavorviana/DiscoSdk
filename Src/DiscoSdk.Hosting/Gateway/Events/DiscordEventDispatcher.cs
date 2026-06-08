@@ -1149,11 +1149,11 @@ internal class DiscordEventDispatcher
                 using var scoped = _discordClient.Services.CreateAsyncScope();
                 await ConfigureScopeAsync(scoped.ServiceProvider, interactionContext);
 
-                if (interaction.Type == InteractionType.ApplicationCommandAutocomplete)
-                    await HandleAllAsync<IAutocompleteHandler, IAutocompleteContext>(
+                if (interaction.Type == InteractionType.ApplicationCommandAutoComplete)
+                    await HandleAllAsync<IAutoCompleteHandler, IAutoCompleteContext>(
                         interactionWrapper.Handle,
                         scoped.ServiceProvider,
-                        (IAutocompleteContext)interactionContext);
+                        (IAutoCompleteContext)interactionContext);
 
                 if (interaction.Type == InteractionType.ApplicationCommand)
                 {
@@ -1204,8 +1204,8 @@ internal class DiscordEventDispatcher
 
     internal InteractionContextWrapper GetInteractionContext(InteractionWrapper interactionWrapper)
     {
-        if (interactionWrapper.Type == InteractionType.ApplicationCommandAutocomplete)
-            return new AutocompleteContext(_discordClient, interactionWrapper);
+        if (interactionWrapper.Type == InteractionType.ApplicationCommandAutoComplete)
+            return new AutoCompleteContext(_discordClient, interactionWrapper);
 
         if (interactionWrapper.Type == InteractionType.ApplicationCommand)
         {

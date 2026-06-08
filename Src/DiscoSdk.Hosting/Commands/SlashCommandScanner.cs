@@ -7,7 +7,7 @@ namespace DiscoSdk.Hosting.Commands;
 
 /// <summary>
 /// Reflection-only scanner for slash command handler types. Discovers <see cref="CommandInfo"/>,
-/// groups (<see cref="SlashGroupInfo"/>) and autocompletes, then writes them to a
+/// groups (<see cref="SlashGroupInfo"/>) and AutoCompletes, then writes them to a
 /// <see cref="CommandRegistryBuilder"/> via <see cref="ApplyTo"/>. After <see cref="ApplyTo"/>
 /// returns the scanner is no longer needed.
 /// </summary>
@@ -36,7 +36,7 @@ internal sealed class SlashCommandScanner : ICommandScanner
         var flatByName = new Dictionary<string, CommandInfo>(StringComparer.OrdinalIgnoreCase);
         var groupsByName = new Dictionary<string, SlashGroupInfo>(StringComparer.OrdinalIgnoreCase);
         var groupOnDemandByName = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-        var pendingAutocompletes = new List<(AutocompleteName Name, AutoCompleteInfo Info)>();
+        var pendingAutoCompletes = new List<(AutoCompleteName Name, AutoCompleteInfo Info)>();
 
         foreach (var type in _handlerTypes)
         {
@@ -73,26 +73,26 @@ internal sealed class SlashCommandScanner : ICommandScanner
                 }
             }
 
-            foreach (var (name, autocomplete) in AutoCompleteInfo.GetAll(type))
-                pendingAutocompletes.Add((name, autocomplete));
+            foreach (var (name, AutoComplete) in AutoCompleteInfo.GetAll(type))
+                pendingAutoCompletes.Add((name, AutoComplete));
 
             services.AddScoped(type);
         }
 
-        // Autocompletes first — the `HasAutocomplete` callback is used while building the commands.
-        foreach (var (name, info) in pendingAutocompletes)
+        // AutoCompletes first — the `HasAutoComplete` callback is used while building the commands.
+        foreach (var (name, info) in pendingAutoCompletes)
             builder.AddAutoComplete(name, info);
 
         foreach (var command in flatByName.Values)
         {
-            var built = command.GetCommandBuilder(builder.HasAutocomplete).Build();
+            var built = command.GetCommandBuilder(builder.HasAutoComplete).Build();
             var guildIds = ParseGuildIds(command.Info.GuildIds);
             builder.AddSlashFlat(command, built, guildIds, command.IsOnDemand);
         }
 
         foreach (var group in groupsByName.Values)
         {
-            var built = group.GetCommandBuilder(builder.HasAutocomplete).Build();
+            var built = group.GetCommandBuilder(builder.HasAutoComplete).Build();
             var guildIds = ParseGuildIds(group.ParentInfo.GuildIds);
             builder.AddSlashGroup(group, built, guildIds, groupOnDemandByName[group.ParentInfo.Name]);
         }

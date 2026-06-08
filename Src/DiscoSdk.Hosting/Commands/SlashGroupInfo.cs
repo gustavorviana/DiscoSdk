@@ -40,7 +40,7 @@ internal class SlashGroupInfo
             string.Equals(c.SubCommandGroup?.Name, subcommandGroup, StringComparison.OrdinalIgnoreCase));
     }
 
-    public SlashCommandBuilder GetCommandBuilder(Func<AutocompleteName, bool> hasAutocomplete)
+    public SlashCommandBuilder GetCommandBuilder(Func<AutoCompleteName, bool> hasAutoComplete)
     {
         var builder = new SlashCommandBuilder();
         builder.WithName(ParentInfo.Name);
@@ -63,7 +63,7 @@ internal class SlashGroupInfo
             builder.AddSubCommandOption(
                 cmd.SubCommand!.Name,
                 cmd.SubCommand.Description,
-                cmd.BuildLeafOptions(hasAutocomplete));
+                cmd.BuildLeafOptions(hasAutoComplete));
         }
 
         foreach (var group in withGroup)
@@ -71,7 +71,7 @@ internal class SlashGroupInfo
             var groupAttr = group.First().SubCommandGroup!;
             var subcommandOptions = group.Select(cmd =>
             {
-                var leafOptions = cmd.BuildLeafOptions(hasAutocomplete);
+                var leafOptions = cmd.BuildLeafOptions(hasAutoComplete);
                 return new SlashCommandOption
                 {
                     Name = cmd.SubCommand!.Name.ToLowerInvariant(),

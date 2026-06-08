@@ -10,44 +10,44 @@ using NSubstitute;
 
 namespace DiscoSdk.Hosting.Tests.Commands;
 
-public class AutocompleteSubcommandTests
+public class AutoCompleteSubcommandTests
 {
     // ── Key generation tests ──
 
     [Fact]
-    public void AutocompleteName_FlatCommand_GeneratesCorrectKey()
+    public void AutoCompleteName_FlatCommand_GeneratesCorrectKey()
     {
-        var name = new AutocompleteName("search", "query");
+        var name = new AutoCompleteName("search", "query");
         Assert.Equal("search::query", name.Name);
     }
 
     [Fact]
-    public void AutocompleteName_WithSubcommand_GeneratesCorrectKey()
+    public void AutoCompleteName_WithSubcommand_GeneratesCorrectKey()
     {
-        var name = new AutocompleteName("music", "song", subcommand: "play");
+        var name = new AutoCompleteName("music", "song", subcommand: "play");
         Assert.Equal("music::play::song", name.Name);
     }
 
     [Fact]
-    public void AutocompleteName_WithGroupAndSubcommand_GeneratesCorrectKey()
+    public void AutoCompleteName_WithGroupAndSubcommand_GeneratesCorrectKey()
     {
-        var name = new AutocompleteName("music", "song", subcommand: "add", subcommandGroup: "queue");
+        var name = new AutoCompleteName("music", "song", subcommand: "add", subcommandGroup: "queue");
         Assert.Equal("music::queue::add::song", name.Name);
     }
 
     [Fact]
-    public void AutocompleteName_FlatAndSubcommand_AreNotEqual()
+    public void AutoCompleteName_FlatAndSubcommand_AreNotEqual()
     {
-        var flat = new AutocompleteName("cmd", "opt");
-        var sub = new AutocompleteName("cmd", "opt", subcommand: "sub");
+        var flat = new AutoCompleteName("cmd", "opt");
+        var sub = new AutoCompleteName("cmd", "opt", subcommand: "sub");
         Assert.NotEqual(flat, sub);
     }
 
     [Fact]
-    public void AutocompleteName_CaseInsensitiveEquality()
+    public void AutoCompleteName_CaseInsensitiveEquality()
     {
-        var a = new AutocompleteName("Music", "Song", subcommand: "Play");
-        var b = new AutocompleteName("music", "song", subcommand: "play");
+        var a = new AutoCompleteName("Music", "Song", subcommand: "Play");
+        var b = new AutoCompleteName("music", "song", subcommand: "play");
         Assert.Equal(a, b);
     }
 
@@ -56,34 +56,34 @@ public class AutocompleteSubcommandTests
     [Fact]
     public void FromContext_FlatCommand_MatchesFlatKey()
     {
-        var context = CreateMockAutocompleteContext("search", "query");
-        var fromContext = AutocompleteName.FromContext(context);
-        var expected = new AutocompleteName("search", "query");
+        var context = CreateMockAutoCompleteContext("search", "query");
+        var fromContext = AutoCompleteName.FromContext(context);
+        var expected = new AutoCompleteName("search", "query");
         Assert.Equal(expected, fromContext);
     }
 
     [Fact]
     public void FromContext_WithSubcommand_MatchesSubcommandKey()
     {
-        var context = CreateMockAutocompleteContext("music", "song", subcommand: "play");
-        var fromContext = AutocompleteName.FromContext(context);
-        var expected = new AutocompleteName("music", "song", subcommand: "play");
+        var context = CreateMockAutoCompleteContext("music", "song", subcommand: "play");
+        var fromContext = AutoCompleteName.FromContext(context);
+        var expected = new AutoCompleteName("music", "song", subcommand: "play");
         Assert.Equal(expected, fromContext);
     }
 
     [Fact]
     public void FromContext_WithGroupAndSubcommand_MatchesGroupKey()
     {
-        var context = CreateMockAutocompleteContext("music", "song", subcommand: "add", subcommandGroup: "queue");
-        var fromContext = AutocompleteName.FromContext(context);
-        var expected = new AutocompleteName("music", "song", subcommand: "add", subcommandGroup: "queue");
+        var context = CreateMockAutoCompleteContext("music", "song", subcommand: "add", subcommandGroup: "queue");
+        var fromContext = AutoCompleteName.FromContext(context);
+        var expected = new AutoCompleteName("music", "song", subcommand: "add", subcommandGroup: "queue");
         Assert.Equal(expected, fromContext);
     }
 
     // ── Registry lookup tests ──
 
-    private static readonly Type[] AutocompleteHandlerTypes =
-        [typeof(FlatAutocompleteHandler), typeof(SubcmdAutocompleteHandler), typeof(GroupedAutocompleteHandler)];
+    private static readonly Type[] AutoCompleteHandlerTypes =
+        [typeof(FlatAutoCompleteHandler), typeof(SubcmdAutoCompleteHandler), typeof(GroupedAutoCompleteHandler)];
 
     private static string? _lastInvokedMethod;
     private static void ResetTracker() => _lastInvokedMethod = null;
@@ -92,7 +92,7 @@ public class AutocompleteSubcommandTests
     {
         var services = new ServiceCollection();
         var builder = new CommandRegistryBuilder();
-        new SlashCommandScanner((IEnumerable<Type>)AutocompleteHandlerTypes).ApplyTo(builder, services);
+        new SlashCommandScanner((IEnumerable<Type>)AutoCompleteHandlerTypes).ApplyTo(builder, services);
         var registry = builder.Build();
 
         var contextProvider = Substitute.For<ISdkContextProvider>();
@@ -104,52 +104,52 @@ public class AutocompleteSubcommandTests
     }
 
     [Fact]
-    public async Task HandleAutocompleteAsync_FlatCommand_RoutesToFlatHandlerAsync()
+    public async Task HandleAutoCompleteAsync_FlatCommand_RoutesToFlatHandlerAsync()
     {
         ResetTracker();
         var (dispatcher, _, sp) = BuildHarness();
-        var context = CreateMockAutocompleteContext("ac-flat", "query");
-        var handler = (IDiscordEventHandler<IAutocompleteContext>)dispatcher;
+        var context = CreateMockAutoCompleteContext("ac-flat", "query");
+        var handler = (IDiscordEventHandler<IAutoCompleteContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
-        Assert.Equal("FlatAutocompleteHandler.Autocomplete", _lastInvokedMethod);
+        Assert.Equal("FlatAutoCompleteHandler.AutoComplete", _lastInvokedMethod);
     }
 
     [Fact]
-    public async Task HandleAutocompleteAsync_SubcommandOption_RoutesToSubcommandHandlerAsync()
+    public async Task HandleAutoCompleteAsync_SubcommandOption_RoutesToSubcommandHandlerAsync()
     {
         ResetTracker();
         var (dispatcher, _, sp) = BuildHarness();
-        var context = CreateMockAutocompleteContext("ac-grouped", "song", subcommand: "play");
-        var handler = (IDiscordEventHandler<IAutocompleteContext>)dispatcher;
+        var context = CreateMockAutoCompleteContext("ac-grouped", "song", subcommand: "play");
+        var handler = (IDiscordEventHandler<IAutoCompleteContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
-        Assert.Equal("SubcmdAutocompleteHandler.Autocomplete", _lastInvokedMethod);
+        Assert.Equal("SubcmdAutoCompleteHandler.AutoComplete", _lastInvokedMethod);
     }
 
     [Fact]
-    public async Task HandleAutocompleteAsync_GroupedSubcommandOption_RoutesToGroupedHandlerAsync()
+    public async Task HandleAutoCompleteAsync_GroupedSubcommandOption_RoutesToGroupedHandlerAsync()
     {
         ResetTracker();
         var (dispatcher, _, sp) = BuildHarness();
-        var context = CreateMockAutocompleteContext("ac-grouped", "song", subcommand: "add", subcommandGroup: "queue");
-        var handler = (IDiscordEventHandler<IAutocompleteContext>)dispatcher;
+        var context = CreateMockAutoCompleteContext("ac-grouped", "song", subcommand: "add", subcommandGroup: "queue");
+        var handler = (IDiscordEventHandler<IAutoCompleteContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
-        Assert.Equal("GroupedAutocompleteHandler.Autocomplete", _lastInvokedMethod);
+        Assert.Equal("GroupedAutoCompleteHandler.AutoComplete", _lastInvokedMethod);
     }
 
     [Fact]
-    public async Task HandleAutocompleteAsync_WrongSubcommand_DoesNotRouteAsync()
+    public async Task HandleAutoCompleteAsync_WrongSubcommand_DoesNotRouteAsync()
     {
         ResetTracker();
         var (dispatcher, _, sp) = BuildHarness();
         // "song" option only exists on subcommand "play", not on a flat lookup
-        var context = CreateMockAutocompleteContext("ac-grouped", "song");
-        var handler = (IDiscordEventHandler<IAutocompleteContext>)dispatcher;
+        var context = CreateMockAutoCompleteContext("ac-grouped", "song");
+        var handler = (IDiscordEventHandler<IAutoCompleteContext>)dispatcher;
 
         await handler.HandleAsync(context, sp);
 
@@ -157,7 +157,7 @@ public class AutocompleteSubcommandTests
     }
 
     [Fact]
-    public async Task CommandBuilder_SubcommandWithAutocomplete_SetsAutocompleteFlagAsync()
+    public async Task CommandBuilder_SubcommandWithAutoComplete_SetsAutoCompleteFlagAsync()
     {
         var (_, module, _) = BuildHarness();
         var factory = new CapturingCommandUpdateFactory();
@@ -165,7 +165,7 @@ public class AutocompleteSubcommandTests
 
         await module.OnCommandsUpdateWindowOpenedAsync(client, factory);
 
-        // The grouped command should have subcommands with autocomplete-flagged options
+        // The grouped command should have subcommands with AutoComplete-flagged options
         var groupedCommand = factory.GlobalCommands.FirstOrDefault(c => c.Name == "ac-grouped");
         Assert.NotNull(groupedCommand);
 
@@ -173,50 +173,50 @@ public class AutocompleteSubcommandTests
         var playSub = groupedCommand.Options?.FirstOrDefault(o => o.Name == "play" && o.Type == SlashCommandOptionType.SubCommand);
         Assert.NotNull(playSub);
 
-        // The "song" leaf option within "play" should have Autocomplete = true
+        // The "song" leaf option within "play" should have AutoComplete = true
         var songOption = playSub!.Options?.FirstOrDefault(o => o.Name == "song");
         Assert.NotNull(songOption);
-        Assert.True(songOption!.Autocomplete);
+        Assert.True(songOption!.AutoComplete);
     }
 
     // ── Helpers ──
 
-    private static IAutocompleteContext CreateMockAutocompleteContext(
+    private static IAutoCompleteContext CreateMockAutoCompleteContext(
         string commandName, string focusedOptionName,
         string? subcommand = null, string? subcommandGroup = null)
     {
-        var context = Substitute.For<IAutocompleteContext>();
+        var context = Substitute.For<IAutoCompleteContext>();
         context.CommandName.Returns(commandName);
         context.Subcommand.Returns(subcommand);
         context.SubcommandGroup.Returns(subcommandGroup);
 
-        var focusedOption = Substitute.For<IAutocompleteFocusedOption>();
+        var focusedOption = Substitute.For<IAutoCompleteFocusedOption>();
         focusedOption.Name.Returns(focusedOptionName);
         focusedOption.Type.Returns(SlashCommandOptionType.String);
         focusedOption.Value.Returns("partial");
         context.FocusedOption.Returns(focusedOption);
 
-        context.Options.Returns(Array.Empty<IAutocompleteOptionValue>());
+        context.Options.Returns(Array.Empty<IAutoCompleteOptionValue>());
         return context;
     }
 
     // ── Test handler classes ──
 
-    public class FlatAutocompleteHandler : SlashCommandHandler
+    public class FlatAutoCompleteHandler : SlashCommandHandler
     {
-        [SlashCommand("ac-flat", "A flat command with autocomplete")]
+        [SlashCommand("ac-flat", "A flat command with AutoComplete")]
         [SlashOption(SlashCommandOptionType.String, name: "query", description: "Search query")]
         protected Task ExecuteAsync(ICommandContext context) => Task.CompletedTask;
 
         [AutoCompleteHandler("ac-flat", "query")]
-        protected Task AutocompleteAsync(IAutocompleteContext context)
+        protected Task AutoCompleteAsync(IAutoCompleteContext context)
         {
-            _lastInvokedMethod = "FlatAutocompleteHandler.Autocomplete";
+            _lastInvokedMethod = "FlatAutoCompleteHandler.AutoComplete";
             return Task.CompletedTask;
         }
     }
 
-    public class SubcmdAutocompleteHandler : SlashCommandHandler
+    public class SubcmdAutoCompleteHandler : SlashCommandHandler
     {
         [SlashCommand("ac-grouped", "A grouped command")]
         [SubCommand("play", "Play a song")]
@@ -224,14 +224,14 @@ public class AutocompleteSubcommandTests
         protected Task ExecuteAsync(ICommandContext context) => Task.CompletedTask;
 
         [AutoCompleteHandler("ac-grouped", "song", Subcommand = "play")]
-        protected Task AutocompleteAsync(IAutocompleteContext context)
+        protected Task AutoCompleteAsync(IAutoCompleteContext context)
         {
-            _lastInvokedMethod = "SubcmdAutocompleteHandler.Autocomplete";
+            _lastInvokedMethod = "SubcmdAutoCompleteHandler.AutoComplete";
             return Task.CompletedTask;
         }
     }
 
-    public class GroupedAutocompleteHandler : SlashCommandHandler
+    public class GroupedAutoCompleteHandler : SlashCommandHandler
     {
         [SlashCommand("ac-grouped", "A grouped command")]
         [SubCommandGroup("queue", "Queue management")]
@@ -240,9 +240,9 @@ public class AutocompleteSubcommandTests
         protected Task ExecuteAsync(ICommandContext context) => Task.CompletedTask;
 
         [AutoCompleteHandler("ac-grouped", "song", Subcommand = "add", SubcommandGroup = "queue")]
-        protected Task AutocompleteAsync(IAutocompleteContext context)
+        protected Task AutoCompleteAsync(IAutoCompleteContext context)
         {
-            _lastInvokedMethod = "GroupedAutocompleteHandler.Autocomplete";
+            _lastInvokedMethod = "GroupedAutoCompleteHandler.AutoComplete";
             return Task.CompletedTask;
         }
     }

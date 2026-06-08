@@ -16,7 +16,7 @@ internal class ModifyGuildStickerRequest
 	[JsonPropertyName("description")]
 	public string? Description { get; set; }
 
-	/// <summary>New autocomplete/suggestion tags (max 200 chars).</summary>
+	/// <summary>New AutoComplete/suggestion tags (max 200 chars).</summary>
 	[JsonPropertyName("tags")]
 	public string? Tags { get; set; }
 }

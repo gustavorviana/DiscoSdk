@@ -76,17 +76,17 @@ public class InteractionDispatchTests : DispatcherTestBase
 	}
 
 	[Fact]
-	public async Task InteractionCreate_Autocomplete_InvokesAutocompleteHandlerAsync()
+	public async Task InteractionCreate_AutoComplete_InvokesAutoCompleteHandlerAsync()
 	{
-		var autoHandler = Substitute.For<IAutocompleteHandler>();
+		var autoHandler = Substitute.For<IAutoCompleteHandler>();
 		AddHandler(autoHandler);
-		// AutocompleteContext reads options through InteractionWrapper.Data, which is null unless
+		// AutoCompleteContext reads options through InteractionWrapper.Data, which is null unless
 		// the wrapper sees a non-null channel — seed the REST resolution so it succeeds.
 		SeedTextChannel(channelId: 200, guildId: 100);
 
 		await DispatchAsync(DispatchFrames.InteractionCreate(type: 4, channelId: 200));
 
-		await autoHandler.Received(1).HandleAsync(Arg.Any<IAutocompleteContext>(), Arg.Any<IServiceProvider>());
+		await autoHandler.Received(1).HandleAsync(Arg.Any<IAutoCompleteContext>(), Arg.Any<IServiceProvider>());
 	}
 
 	[Fact]
@@ -108,7 +108,7 @@ public class InteractionDispatchTests : DispatcherTestBase
 	{
 		var commandHandler = Substitute.For<IApplicationCommandHandler>();
 		var modalHandler = Substitute.For<IModalSubmitHandler>();
-		var autoHandler = Substitute.For<IAutocompleteHandler>();
+		var autoHandler = Substitute.For<IAutoCompleteHandler>();
 		var componentHandler = Substitute.For<IComponentInteractionHandler>();
 		AddHandler(commandHandler);
 		AddHandler(modalHandler);
@@ -120,7 +120,7 @@ public class InteractionDispatchTests : DispatcherTestBase
 
 		await commandHandler.DidNotReceive().HandleAsync(Arg.Any<ICommandContext>(), Arg.Any<IServiceProvider>());
 		await modalHandler.DidNotReceive().HandleAsync(Arg.Any<IModalContext>(), Arg.Any<IServiceProvider>());
-		await autoHandler.DidNotReceive().HandleAsync(Arg.Any<IAutocompleteContext>(), Arg.Any<IServiceProvider>());
+		await autoHandler.DidNotReceive().HandleAsync(Arg.Any<IAutoCompleteContext>(), Arg.Any<IServiceProvider>());
 		await componentHandler.Received(1).HandleAsync(Arg.Any<IInteractionContext>(), Arg.Any<IServiceProvider>());
 	}
 }

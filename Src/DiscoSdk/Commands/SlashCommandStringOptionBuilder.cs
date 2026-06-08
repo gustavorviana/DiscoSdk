@@ -5,7 +5,7 @@ namespace DiscoSdk.Commands;
 
 /// <summary>
 /// Focused builder for a <see cref="SlashCommandOptionType.String"/> option. Adds string-specific
-/// constraints (min/max length, autocomplete) and a fluent <c>ThenChoice</c> chain for choices.
+/// constraints (min/max length, AutoComplete) and a fluent <c>ThenChoice</c> chain for choices.
 /// </summary>
 public sealed class SlashCommandStringOptionBuilder : SlashCommandOptionNode
 {
@@ -40,13 +40,13 @@ public sealed class SlashCommandStringOptionBuilder : SlashCommandOptionNode
         return this;
     }
 
-    /// <summary>Enables autocomplete. Mutually exclusive with choices.</summary>
-    public SlashCommandStringOptionBuilder WithAutocomplete(bool autocomplete = true)
+    /// <summary>Enables AutoComplete. Mutually exclusive with choices.</summary>
+    public SlashCommandStringOptionBuilder WithAutoComplete(bool AutoComplete = true)
     {
-        if (autocomplete && Option.Choices is { Length: > 0 })
-            throw new InvalidOperationException("Cannot enable autocomplete on an option that already has choices.");
+        if (AutoComplete && Option.Choices is { Length: > 0 })
+            throw new InvalidOperationException("Cannot enable AutoComplete on an option that already has choices.");
 
-        Option.Autocomplete = autocomplete;
+        Option.AutoComplete = AutoComplete;
         return this;
     }
 
@@ -73,8 +73,8 @@ public sealed class SlashCommandStringOptionBuilder : SlashCommandOptionNode
     /// </summary>
     public SlashCommandChoiceBuilder<string> ThenChoice(string name, string value)
     {
-        if (Option.Autocomplete == true)
-            throw new InvalidOperationException("Cannot add choices to an option that has autocomplete enabled.");
+        if (Option.AutoComplete == true)
+            throw new InvalidOperationException("Cannot add choices to an option that has AutoComplete enabled.");
 
         var choice = new SlashCommandOptionChoice { Name = name, Value = value };
         var choices = AppendChoice(choice);

@@ -26,11 +26,11 @@ public class InteractionClientTests
     }
 
     [Fact]
-    public async Task RespondWithAutocompleteAsync_MarksInteractionRespondedAsync()
+    public async Task RespondWithAutoCompleteAsync_MarksInteractionRespondedAsync()
     {
         Assert.False(_handle.Responded);
 
-        await _client.RespondWithAutocompleteAsync(_handle, new[]
+        await _client.RespondWithAutoCompleteAsync(_handle, new[]
         {
             new SlashCommandOptionChoice { Name = "Apple", Value = "Apple" },
         });
@@ -39,7 +39,7 @@ public class InteractionClientTests
     }
 
     [Fact]
-    public async Task RespondWithAutocompleteAsync_DiscordCode40060_MarksRespondedAsync()
+    public async Task RespondWithAutoCompleteAsync_DiscordCode40060_MarksRespondedAsync()
     {
         // Discord returns "Interaction has already been acknowledged" (JSON code 40060). The
         // interaction is done on Discord's side, so the handle must be flagged to prevent
@@ -53,13 +53,13 @@ public class InteractionClientTests
             .Throws(alreadyAcked);
 
         await Assert.ThrowsAsync<DiscordApiException>(() =>
-            _client.RespondWithAutocompleteAsync(_handle, Array.Empty<SlashCommandOptionChoice>()));
+            _client.RespondWithAutoCompleteAsync(_handle, Array.Empty<SlashCommandOptionChoice>()));
 
         Assert.True(_handle.Responded);
     }
 
     [Fact]
-    public async Task RespondWithAutocompleteAsync_GenericException_LeavesHandlePendingAsync()
+    public async Task RespondWithAutoCompleteAsync_GenericException_LeavesHandlePendingAsync()
     {
         // Transient / non-API failures must NOT flag Responded — the caller may want to retry
         // or fall back to a different callback type.
@@ -68,13 +68,13 @@ public class InteractionClientTests
             .Throws(new InvalidOperationException("simulated transient failure"));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _client.RespondWithAutocompleteAsync(_handle, Array.Empty<SlashCommandOptionChoice>()));
+            _client.RespondWithAutoCompleteAsync(_handle, Array.Empty<SlashCommandOptionChoice>()));
 
         Assert.False(_handle.Responded);
     }
 
     [Fact]
-    public async Task RespondWithAutocompleteAsync_NonAckDiscordError_LeavesHandlePendingAsync()
+    public async Task RespondWithAutoCompleteAsync_NonAckDiscordError_LeavesHandlePendingAsync()
     {
         // 403 Missing Permissions / 400 validation / etc. must NOT flag Responded.
         var permError = new DiscordApiException(
@@ -86,15 +86,15 @@ public class InteractionClientTests
             .Throws(permError);
 
         await Assert.ThrowsAsync<DiscordApiException>(() =>
-            _client.RespondWithAutocompleteAsync(_handle, Array.Empty<SlashCommandOptionChoice>()));
+            _client.RespondWithAutoCompleteAsync(_handle, Array.Empty<SlashCommandOptionChoice>()));
 
         Assert.False(_handle.Responded);
     }
 
     [Fact]
-    public async Task RespondWithAutocompleteAsync_PostsToCallbackRouteAsync()
+    public async Task RespondWithAutoCompleteAsync_PostsToCallbackRouteAsync()
     {
-        await _client.RespondWithAutocompleteAsync(_handle, Array.Empty<SlashCommandOptionChoice>());
+        await _client.RespondWithAutoCompleteAsync(_handle, Array.Empty<SlashCommandOptionChoice>());
 
         await _http.Received(1).SendAsync(
             Arg.Is<DiscordRoute>(r => r.ToString() == $"interactions/{_handle.Id}/{_handle.Token}/callback"),
@@ -104,14 +104,14 @@ public class InteractionClientTests
     }
 
     [Fact]
-    public async Task RespondWithAutocompleteAsync_RejectsMoreThan25ChoicesAsync()
+    public async Task RespondWithAutoCompleteAsync_RejectsMoreThan25ChoicesAsync()
     {
         var choices = Enumerable.Range(0, 26)
             .Select(i => new SlashCommandOptionChoice { Name = $"c{i}", Value = $"c{i}" })
             .ToArray();
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
-            _client.RespondWithAutocompleteAsync(_handle, choices));
+            _client.RespondWithAutoCompleteAsync(_handle, choices));
 
         // No HTTP call should be made when validation fails up front.
         await _http.DidNotReceive().SendAsync(
