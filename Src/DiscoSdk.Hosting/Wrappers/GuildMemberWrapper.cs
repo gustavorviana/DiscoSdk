@@ -1,3 +1,4 @@
+using DiscoSdk.Hosting.Managers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Activities;
 using DiscoSdk.Models.Channels;
@@ -96,16 +97,47 @@ internal class GuildMemberWrapper(DiscordClient client, GuildMember member, IGui
     public IGuildVoiceState? VoiceState => null;
 
     /// <inheritdoc />
-    public Activity[] Activities => [];
+    public IActivity[] Activities
+        => client.Presences.TryGet(_guild.Id, Id)?.Activities ?? [];
 
     /// <inheritdoc />
-    public OnlineStatus OnlineStatus => OnlineStatus.Offline;
+    public OnlineStatus OnlineStatus
+        => PresenceManager.MapStatus(client.Presences.TryGet(_guild.Id, Id)?.Status) ?? OnlineStatus.Offline;
 
     /// <inheritdoc />
-    public OnlineStatus GetOnlineStatus(ClientType clientType) => OnlineStatus.Offline;
+    public OnlineStatus? GetOnlineStatus(ClientType clientType)
+    {
+        var clientStatus = client.Presences.TryGetClientStatus(_guild.Id, Id);
+        if (clientStatus is null)
+            return null;
+
+        var raw = clientType switch
+        {
+            ClientType.Desktop => clientStatus.Desktop,
+            ClientType.Mobile => clientStatus.Mobile,
+            ClientType.Web => clientStatus.Web,
+            _ => null
+        };
+
+        return PresenceManager.MapStatus(raw);
+    }
 
     /// <inheritdoc />
-    public ImmutableHashSet<ClientType> ActiveClients => ImmutableHashSet<ClientType>.Empty;
+    public ImmutableHashSet<ClientType> ActiveClients
+    {
+        get
+        {
+            var clientStatus = client.Presences.TryGetClientStatus(_guild.Id, Id);
+            if (clientStatus is null)
+                return ImmutableHashSet<ClientType>.Empty;
+
+            var builder = ImmutableHashSet.CreateBuilder<ClientType>();
+            if (!string.IsNullOrEmpty(clientStatus.Desktop)) builder.Add(ClientType.Desktop);
+            if (!string.IsNullOrEmpty(clientStatus.Mobile)) builder.Add(ClientType.Mobile);
+            if (!string.IsNullOrEmpty(clientStatus.Web)) builder.Add(ClientType.Web);
+            return builder.ToImmutable();
+        }
+    }
 
     /// <inheritdoc />
     public string? Nickname => _member.Nick;

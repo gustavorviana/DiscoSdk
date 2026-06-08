@@ -44,7 +44,7 @@ internal class UpdatePresenceAction(DiscordClient client) : RestAction, IUpdateP
         return this;
     }
 
-    public IUpdatePresenceAction AddActivity(IActivity activity)
+    public IUpdatePresenceAction AddActivity(IActivityBuilder activity)
     {
         return AddActivity(activity.Build());
     }

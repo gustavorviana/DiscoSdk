@@ -97,6 +97,7 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
             var wrappedGuild = new GuildWrapper(guild, client);
 
             _guildCache[guild.Id] = wrappedGuild;
+            client.Presences.OnGuildPresencesSeed(guild.Presences, guild.Id);
 
             if (_pendingGuilds.Remove(guild.Id))
             {
@@ -126,6 +127,7 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
         // Fire-and-forget: drops every cached member belonging to this guild from the member
         // cache + secondary index. Failures are swallowed by the member manager's logging.
         _ = client.MembersInternal.OnGuildRemoveAsync(guildId);
+        client.Presences.OnGuildRemove(guildId);
     }
 
     internal void HandleChannelCreate(Channel channel)

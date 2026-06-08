@@ -66,9 +66,10 @@ public interface IMember : IPermissionHolder
 	IGuildVoiceState? VoiceState { get; }
 
     /// <summary>
-    /// Gets the activities of this member.
+    /// Gets the activities currently broadcast by this member as read-only
+    /// <see cref="IActivity"/> entries. The array is empty when no presence has been observed.
     /// </summary>
-    Activity[] Activities { get; }
+    IActivity[] Activities { get; }
 
 	/// <summary>
 	/// Gets the online status of this member.
@@ -76,11 +77,13 @@ public interface IMember : IPermissionHolder
 	OnlineStatus OnlineStatus { get; }
 
 	/// <summary>
-	/// Gets the online status of this member for the specified client type.
+	/// Gets the online status reported by the supplied client type for this member, or <c>null</c>
+	/// when no presence has been received for that device (the member is not signed in there, the
+	/// gateway has not delivered a <c>PRESENCE_UPDATE</c> yet, or the client type is unsupported).
 	/// </summary>
 	/// <param name="clientType">The client type to get the status for.</param>
-	/// <returns>The online status for the specified client type.</returns>
-	OnlineStatus GetOnlineStatus(ClientType clientType);
+	/// <returns>The online status reported by the device, or <c>null</c> when not available.</returns>
+	OnlineStatus? GetOnlineStatus(ClientType clientType);
 
 	/// <summary>
 	/// Gets the active client types of this member.

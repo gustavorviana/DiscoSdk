@@ -1,6 +1,7 @@
 ﻿using DiscoSdk.Caching;
 using DiscoSdk.Events;
 using DiscoSdk.Exceptions;
+using DiscoSdk.Hosting.Caching;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Events;
 using DiscoSdk.Hosting.Gateway.Payloads;
@@ -43,6 +44,8 @@ namespace DiscoSdk.Hosting
         public IMemberManager Members => MembersInternal;
 
         internal MemberManager MembersInternal { get; }
+
+        internal PresenceManager Presences { get; }
 
         public event Func<IDiscordClient, ICommandUpdateSession, Task>? CommandsUpdateWindowOpened;
         public event EventHandler<UnhandledErrorEventArgs>? UnhandledError;
@@ -182,6 +185,9 @@ namespace DiscoSdk.Hosting
             Channels = new ChannelManager(this);
             var memberPolicy = services.GetService<IMemberCachePolicy>();
             MembersInternal = new MemberManager(this, memberPolicy, Logger);
+            var presenceFlags = services.GetService<PresenceCacheConfiguration>()?.Flags
+                ?? PresenceManager.DefaultFlags;
+            Presences = new PresenceManager(presenceFlags);
             DmRepository = new DmChannelRepository(this);
             ObjectConverter = objectConverter;
         }

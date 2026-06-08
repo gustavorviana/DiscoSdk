@@ -997,6 +997,9 @@ internal class DiscordEventDispatcher
         if (presence is null) return;
 
         var guildId = new JsonElementParser(payload).GetSnowflake("guild_id");
+        if (guildId is not null)
+            _discordClient.Presences.OnPresenceUpdate(presence, guildId.Value);
+
         var guild = _discordClient.Guilds.GetWrapped(guildId);
 
         var eventData = new PresenceUpdateContextWrapper(_discordClient, presence, guild);

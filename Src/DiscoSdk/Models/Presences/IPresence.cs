@@ -23,11 +23,11 @@ public interface IPresence
 	long ProcessedAtTimestamp { get; }
 
 	/// <summary>The user's primary activity (typically the game they're playing), or <c>null</c>.</summary>
-	Activity? Game { get; }
+	IActivity? Game { get; }
 
 	/// <summary>Per-platform status (desktop / mobile / web), or <c>null</c> if absent.</summary>
 	IClientStatus? ClientStatus { get; }
 
-	/// <summary>All current activities for the user.</summary>
-	Activity[] Activities { get; }
+	/// <summary>All current activities for the user, exposed as read-only <see cref="IActivity"/>.</summary>
+	IActivity[] Activities { get; }
 }

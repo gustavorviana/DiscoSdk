@@ -3,7 +3,7 @@ using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Models.Activities;
 
-public class CustomStatusActivity(string? state) : IActivity
+public class CustomStatusActivity(string? state) : IActivityBuilder
 {
 	private string? _emojiName;
 	private Snowflake? _emojiId;

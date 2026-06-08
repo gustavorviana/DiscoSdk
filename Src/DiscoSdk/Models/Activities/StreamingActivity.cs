@@ -3,7 +3,7 @@ using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Models.Activities;
 
-public class StreamingActivity(string name, string url) : IActivity
+public class StreamingActivity(string name, string url) : IActivityBuilder
 {
 	private string? _details;
 	private string? _state;

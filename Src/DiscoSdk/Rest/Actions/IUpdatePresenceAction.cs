@@ -41,7 +41,7 @@ public interface IUpdatePresenceAction : IRestAction
 	/// </summary>
 	/// <param name="activity">The activity builder.</param>
 	/// <returns>The current <see cref="IUpdatePresenceAction"/> instance.</returns>
-	IUpdatePresenceAction AddActivity(IActivity activity);
+	IUpdatePresenceAction AddActivity(IActivityBuilder activity);
 
 	/// <summary>
 	/// Sets whether the bot is AFK.

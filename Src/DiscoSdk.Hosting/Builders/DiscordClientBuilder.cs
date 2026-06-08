@@ -188,6 +188,25 @@ public class DiscordClientBuilder
     }
 
     /// <summary>
+    /// Configures which fields of every <c>PRESENCE_UPDATE</c> payload the SDK stores in its
+    /// in-memory presence cache. The supplied bitfield controls what
+    /// <see cref="DiscoSdk.Models.IMember.OnlineStatus"/>,
+    /// <see cref="DiscoSdk.Models.IMember.GetOnlineStatus"/>,
+    /// <see cref="DiscoSdk.Models.IMember.ActiveClients"/>, and
+    /// <see cref="DiscoSdk.Models.IMember.Activities"/> can surface — fields excluded from the
+    /// flag set are dropped before storage and read back as their defaults. This only affects
+    /// in-process caching; the <see cref="DiscoSdk.Models.Enums.DiscordIntent.GuildPresences"/>
+    /// intent still controls whether the gateway delivers presence events at all.
+    /// </summary>
+    /// <param name="flags">The subset of presence fields to cache.</param>
+    /// <returns>The current <see cref="DiscordClientBuilder"/> instance.</returns>
+    public DiscordClientBuilder WithPresenceCache(PresenceCacheFlag flags)
+    {
+        _services.AddSingleton(new PresenceCacheConfiguration(flags));
+        return this;
+    }
+
+    /// <summary>
     /// Sets the member cache policy from a preset.
     /// </summary>
     /// <param name="preset">The preset to apply.</param>

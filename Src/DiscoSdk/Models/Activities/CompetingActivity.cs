@@ -3,7 +3,7 @@ using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Models.Activities;
 
-public class CompetingActivity(string name) : IActivity
+public class CompetingActivity(string name) : IActivityBuilder
 {
 	private string? _details;
 	private string? _state;
