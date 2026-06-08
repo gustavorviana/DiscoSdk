@@ -9,9 +9,10 @@ namespace DiscoSdk.Hosting.Contexts.Messages;
 internal class MessageUpdateContextWrapper(DiscordClient client,
     IGuild? guild,
     IUser author,
+    Snowflake memberId,
     IMember? member,
     IMessage message,
-    ITextBasedChannel channel) : MemberContextWrapper(client, guild, author, member), IMessageUpdateContext
+    ITextBasedChannel channel) : MemberContextWrapper(client, guild, author, memberId, member), IMessageUpdateContext
 {
     public IMessage Message => message;
 

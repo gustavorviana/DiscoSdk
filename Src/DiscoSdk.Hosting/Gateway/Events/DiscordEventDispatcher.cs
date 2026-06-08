@@ -406,7 +406,7 @@ internal class DiscordEventDispatcher
         var wrappedMessage = new MessageWrapper(_discordClient, channel!, message, null);
         var author = new UserWrapper(_discordClient, message.Author);
 
-        var eventData = new MessageUpdateContextWrapper(_discordClient, guild, author, member, wrappedMessage, channel);
+        var eventData = new MessageUpdateContextWrapper(_discordClient, guild, author, message.Author.UserId, member, wrappedMessage, channel);
         await HandleAllAsync<IMessageUpdateHandler, IMessageUpdateContext>(eventData);
     }
 
@@ -511,6 +511,7 @@ internal class DiscordEventDispatcher
             guild,
             user,
             messageId,
+            userId,
             wrappedMember,
             emoji);
 
@@ -546,9 +547,9 @@ internal class DiscordEventDispatcher
         var guild = _discordClient.Guilds.GetWrapped(payload.GetSnowflake("guild_id"));
         var channel = _discordClient.Channels.GetWrappedTextChannel(payload.GetSnowflake("channel_id")!.Value);
         var user = await GetUserAsync(member, userId);
-        var wrappedMember = member is not null ? new GuildMemberWrapper(_discordClient, member, guild) : null;
+        var wrappedMember = member is not null ? new GuildMemberWrapper(_discordClient, member, guild!) : null;
 
-        var eventData = new TypingContextWrapper(_discordClient, startedAt, channel!, guild, user, wrappedMember);
+        var eventData = new TypingContextWrapper(_discordClient, startedAt, channel!, guild, user!, userId, wrappedMember);
 
         await HandleAllAsync<ITypingStartHandler, ITypingContext>(eventData);
     }

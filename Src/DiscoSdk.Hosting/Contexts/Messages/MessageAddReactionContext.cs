@@ -13,6 +13,7 @@ namespace DiscoSdk.Hosting.Contexts.Messages
     IGuild? guild,
     IUser user,
     Snowflake messageId,
+    Snowflake memberId,
     IMember? member,
     Emoji emoji) : ContextWrapper(client), IMessageAddReactionContext
     {
@@ -21,6 +22,8 @@ namespace DiscoSdk.Hosting.Contexts.Messages
         public IGuild? Guild => guild;
 
         public Snowflake MessageId => messageId;
+
+        public Snowflake MemberId => memberId;
 
         public Emoji Emoji => emoji;
 

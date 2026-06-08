@@ -9,7 +9,8 @@ internal class TypingContextWrapper(DiscordClient client,
     ITextBasedChannel channel,
     IGuild? guild,
     IUser user,
-    IMember? member) : MemberContextWrapper(client, guild, user, member), ITypingContext
+    Snowflake memberId,
+    IMember? member) : MemberContextWrapper(client, guild, user, memberId, member), ITypingContext
 {
     public DateTimeOffset StartedAt => startedAt;
 

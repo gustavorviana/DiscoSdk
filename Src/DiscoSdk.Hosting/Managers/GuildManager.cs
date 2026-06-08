@@ -97,10 +97,15 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
             var wrappedGuild = new GuildWrapper(guild, client);
 
             _guildCache[guild.Id] = wrappedGuild;
+            // Presences must seed first — member-cache policies (OnlinePolicy etc.) consult the
+            // presence cache when deciding whether to keep a member.
             client.Presences.OnGuildPresencesSeed(guild.Presences, guild.Id);
+            client.MembersInternal.OnGuildMembersSeed(guild.Members, guild.Id);
             client.StickersInternal.OnGuildStickersSeed(guild.Stickers, guild.Id);
-            // Drop the stickers off the cached Guild POCO so the StickerManager partition stays
-            // the single source of truth for sticker data.
+            // Drop the per-entity payloads off the cached Guild POCO so the managers stay the
+            // single source of truth for member / sticker data (presences are already only
+            // consumed via the PresenceManager, no POCO duplication to drop).
+            guild.Members = [];
             guild.Stickers = [];
 
             if (_pendingGuilds.Remove(guild.Id))

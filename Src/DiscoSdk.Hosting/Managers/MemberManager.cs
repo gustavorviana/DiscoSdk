@@ -121,6 +121,35 @@ internal sealed class MemberManager : IMemberManager
     }
 
     /// <summary>
+    /// Seeds the cache from the <c>GUILD_CREATE</c> member snapshot. Every entry is evaluated
+    /// against the configured policy individually; entries the policy rejects are skipped. Runs
+    /// synchronously so <see cref="GuildManager.HandleGuildCreate"/> can populate the cache
+    /// before its lock releases.
+    /// </summary>
+    internal void OnGuildMembersSeed(IReadOnlyList<GuildMember>? members, Snowflake guildId)
+    {
+        if (members is null || members.Count == 0 || guildId.Empty)
+            return;
+
+        foreach (var member in members)
+        {
+            if (member is null)
+                continue;
+
+            var userId = member.User?.UserId ?? default;
+            if (userId.Empty)
+                continue;
+
+            var wrapped = Wrap(member, guildId);
+            if (wrapped is null)
+                continue;
+
+            if (_policy.ShouldCache(wrapped))
+                GetOrAddGuildCache(guildId)[userId] = member;
+        }
+    }
+
+    /// <summary>
     /// Called by the gateway dispatcher on <c>GUILD_MEMBERS_CHUNK</c>. Each entry is processed
     /// through the policy individually.
     /// </summary>

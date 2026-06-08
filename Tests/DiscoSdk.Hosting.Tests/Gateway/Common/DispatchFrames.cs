@@ -15,6 +15,15 @@ internal static class DispatchFrames
 		Dispatch("GUILD_CREATE",
 			$"{{\"id\":\"{id}\",\"name\":\"{name}\",\"unavailable\":false,\"channels\":[],\"roles\":[],\"emojis\":[],\"features\":[],\"members\":[]}}");
 
+	public static ReceivedGatewayMessage GuildCreateWithMembers(ulong id, params (ulong userId, string username)[] members)
+	{
+		var membersJson = string.Join(",", members.Select(m =>
+			$"{{\"user\":{{\"id\":\"{m.userId}\",\"username\":\"{m.username}\",\"discriminator\":\"0001\"}},"
+			+ "\"roles\":[],\"joined_at\":\"2024-01-01T00:00:00+00:00\"}"));
+		return Dispatch("GUILD_CREATE",
+			$"{{\"id\":\"{id}\",\"name\":\"TestGuild\",\"unavailable\":false,\"channels\":[],\"roles\":[],\"emojis\":[],\"features\":[],\"members\":[{membersJson}]}}");
+	}
+
 	public static ReceivedGatewayMessage GuildUpdate(ulong id = 100, string name = "UpdatedGuild") =>
 		Dispatch("GUILD_UPDATE",
 			$"{{\"id\":\"{id}\",\"name\":\"{name}\",\"unavailable\":false,\"channels\":[],\"roles\":[],\"emojis\":[],\"features\":[],\"members\":[]}}");
