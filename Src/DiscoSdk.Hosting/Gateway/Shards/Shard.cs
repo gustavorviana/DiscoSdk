@@ -419,6 +419,12 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
         pool.Gate.Release();
     }
 
+    private void RecordLifecycle(string phase)
+        => DiscoSdkDiagnostics.GatewayLifecycle.Add(
+            1,
+            new KeyValuePair<string, object?>(DiagnosticTags.ShardId, Id),
+            new KeyValuePair<string, object?>(DiagnosticTags.GatewayPhase, phase));
+
     private void SignalConnectionLost()
     {
         // The IdentifyGate permit is acquired in SetupIdentifyAsync (status flips to Identifying).
@@ -432,10 +438,15 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
             pool.Gate.Release();
 
         _status = ShardStatus.Disconnected;
+        RecordLifecycle(DiagnosticTags.PhaseDisconnect);
     }
 
     private async Task ReconnectAsync()
     {
+        DiscoSdkDiagnostics.GatewayReconnects.Add(
+            1,
+            new KeyValuePair<string, object?>(DiagnosticTags.ShardId, Id));
+
         _sessionId = null;
         _resumeGatewayUrl = null;
         // Fresh identify — wipe sequence so HEARTBEAT and any subsequent RESUME do not replay
@@ -450,6 +461,10 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
 
     private async Task ReconnectViaResumeAsync()
     {
+        DiscoSdkDiagnostics.GatewayReconnects.Add(
+            1,
+            new KeyValuePair<string, object?>(DiagnosticTags.ShardId, Id));
+
         // Sequence preserved — Discord expects the RESUME payload to carry the last seq received.
         // The actual RESUME is sent from the Hello handler once Discord greets the new connection.
         _resumeOnNextHello = true;
@@ -467,6 +482,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
             _resumeGatewayUrl = obj.ResumeGatewayUrl;
 
             SetReady();
+            RecordLifecycle(DiagnosticTags.PhaseReady);
             await pool.OnReadyAsync(this, obj);
             return;
         }
@@ -474,6 +490,7 @@ internal sealed class Shard(int shardId, DiscordClientConfig config, IShardPool 
         if (string.Equals(message.EventType, "RESUMED", StringComparison.Ordinal))
         {
             SetReady();
+            RecordLifecycle(DiagnosticTags.PhaseResume);
             await pool.OnResumeAsync(this);
             return;
         }

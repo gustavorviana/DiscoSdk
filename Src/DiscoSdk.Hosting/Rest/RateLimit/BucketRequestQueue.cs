@@ -131,6 +131,11 @@ internal sealed class BucketRequestQueue : IDisposable
 
     private async Task<HttpResponseMessage> SendWithRetriesAsync(Func<HttpRequestMessage> requestFactory, CancellationToken token)
     {
+        using var activity = DiscoSdkDiagnostics.ActivitySource.StartActivity(
+            "discosdk.rest.request",
+            System.Diagnostics.ActivityKind.Client);
+        activity?.SetTag(DiagnosticTags.Route, _bucket);
+
         // Wait out the local bucket window if the last response said it was exhausted. Bound to the
         // local clock via X-RateLimit-Reset-After (not the absolute X-RateLimit-Reset) so fleet
         // clock skew never affects the delay.

@@ -102,4 +102,71 @@ public static class DiscoSdkDiagnostics
         "discosdk.rest.rate_limited",
         unit: "{response}",
         description: "Discord 429 responses observed, tagged by route and X-RateLimit-Scope.");
+
+    // ---- Cache instruments (Phase 3) ---------------------------------------------------------
+
+    /// <summary>
+    /// Counter incremented once per cache lookup. Tagged with
+    /// <see cref="DiagnosticTags.CacheEntity"/> (<c>member</c>/<c>sticker</c>/<c>presence</c>) and
+    /// <see cref="DiagnosticTags.CacheResult"/> (<c>hit</c>/<c>miss</c>/<c>rest</c>). The
+    /// <c>rest</c> result row indicates a cache miss that was resolved by a REST fallback.
+    /// </summary>
+    internal static readonly Counter<long> CacheLookups = Meter.CreateCounter<long>(
+        "discosdk.cache.lookups",
+        unit: "{lookup}",
+        description: "Cache lookups, tagged by entity and result (hit / miss / rest).");
+
+    /// <summary>
+    /// Counter of cache entries actively evicted by the SDK — for example a member whose
+    /// updated state no longer satisfies the configured policy. Tagged with
+    /// <see cref="DiagnosticTags.CacheEntity"/>.
+    /// </summary>
+    internal static readonly Counter<long> CacheEvictions = Meter.CreateCounter<long>(
+        "discosdk.cache.evictions",
+        unit: "{entry}",
+        description: "Cache entries evicted by policy decisions, tagged by entity.");
+
+    // ---- Event-handler instruments (Phase 4) -------------------------------------------------
+
+    /// <summary>
+    /// Counter incremented once per event handler invocation. Tagged with
+    /// <see cref="DiagnosticTags.HandlerType"/>, <see cref="DiagnosticTags.EventType"/>, and
+    /// <see cref="DiagnosticTags.HandlerOutcome"/> (<c>ok</c>/<c>error</c>). Error rows also
+    /// carry <see cref="DiagnosticTags.ExceptionType"/>.
+    /// </summary>
+    internal static readonly Counter<long> HandlerInvocations = Meter.CreateCounter<long>(
+        "discosdk.handler.invocations",
+        unit: "{invocation}",
+        description: "Event-handler invocations, tagged by handler type, event type, and outcome.");
+
+    /// <summary>
+    /// Histogram of handler runtime in milliseconds. Tagged with
+    /// <see cref="DiagnosticTags.HandlerType"/> and <see cref="DiagnosticTags.EventType"/>.
+    /// Use to detect slow handlers backing up the dispatcher.
+    /// </summary>
+    internal static readonly Histogram<double> HandlerLatency = Meter.CreateHistogram<double>(
+        "discosdk.handler.latency",
+        unit: "ms",
+        description: "Event-handler execution time, tagged by handler type and event type.");
+
+    // ---- Gateway lifecycle instruments (Phase 5) ---------------------------------------------
+
+    /// <summary>
+    /// Counter that records every gateway lifecycle transition the SDK observes. Tagged with
+    /// <see cref="DiagnosticTags.ShardId"/> and <see cref="DiagnosticTags.GatewayPhase"/>.
+    /// Use to chart shard health (READY counts, reconnect cadence, invalidate spikes).
+    /// </summary>
+    internal static readonly Counter<long> GatewayLifecycle = Meter.CreateCounter<long>(
+        "discosdk.gateway.lifecycle",
+        unit: "{transition}",
+        description: "Gateway lifecycle transitions, tagged by shard and phase.");
+
+    /// <summary>
+    /// Counter incremented every time a shard begins a reconnect attempt. Tagged with
+    /// <see cref="DiagnosticTags.ShardId"/>.
+    /// </summary>
+    internal static readonly Counter<long> GatewayReconnects = Meter.CreateCounter<long>(
+        "discosdk.gateway.reconnects",
+        unit: "{attempt}",
+        description: "Reconnect attempts per shard.");
 }

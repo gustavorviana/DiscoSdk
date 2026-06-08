@@ -66,4 +66,60 @@ internal static class DiagnosticTags
         >= 500 and < 600 => Status5xx,
         _ => statusCode.ToString(),
     };
+
+    // ---- Cache + handler + lifecycle tags (Phase 2+) -----------------------------------------
+
+    /// <summary>Entity the cache instrument applies to (<c>string</c>): <c>member</c>, <c>sticker</c>, <c>presence</c>.</summary>
+    public const string CacheEntity = "discosdk.cache.entity";
+
+    /// <summary>Cache-entity constant for the member cache.</summary>
+    public const string CacheEntityMember = "member";
+
+    /// <summary>Cache-entity constant for the sticker cache.</summary>
+    public const string CacheEntitySticker = "sticker";
+
+    /// <summary>Cache-entity constant for the presence cache.</summary>
+    public const string CacheEntityPresence = "presence";
+
+    /// <summary>Cache-fetch result (<c>string</c>): <c>hit</c>, <c>miss</c>, <c>rest</c> (cache miss + REST fallback).</summary>
+    public const string CacheResult = "discosdk.cache.result";
+
+    /// <summary>Event-handler concrete type (<c>string</c>) — produced once per registered handler.</summary>
+    public const string HandlerType = "discosdk.handler.type";
+
+    /// <summary>
+    /// Event-handler outcome (<c>string</c>): <c>ok</c>, <c>error</c>. <c>error</c> rows are
+    /// also tagged with <see cref="ExceptionType"/>.
+    /// </summary>
+    public const string HandlerOutcome = "discosdk.handler.outcome";
+
+    /// <summary>Outcome constant for handler invocations that completed cleanly.</summary>
+    public const string OutcomeOk = "ok";
+
+    /// <summary>Outcome constant for handler invocations that threw.</summary>
+    public const string OutcomeError = "error";
+
+    /// <summary>Fully qualified exception type (<c>string</c>) emitted on error rows.</summary>
+    public const string ExceptionType = "exception.type";
+
+    /// <summary>Gateway lifecycle phase (<c>string</c>): <c>connect</c>, <c>identify</c>, <c>resume</c>, <c>ready</c>, <c>disconnect</c>, <c>invalidate</c>.</summary>
+    public const string GatewayPhase = "discord.gateway.phase";
+
+    /// <summary>Gateway-phase constant for the initial transport handshake.</summary>
+    public const string PhaseConnect = "connect";
+
+    /// <summary>Gateway-phase constant for an IDENTIFY exchange.</summary>
+    public const string PhaseIdentify = "identify";
+
+    /// <summary>Gateway-phase constant for a RESUME exchange.</summary>
+    public const string PhaseResume = "resume";
+
+    /// <summary>Gateway-phase constant for the READY event.</summary>
+    public const string PhaseReady = "ready";
+
+    /// <summary>Gateway-phase constant for an observed disconnect (close handshake or abort).</summary>
+    public const string PhaseDisconnect = "disconnect";
+
+    /// <summary>Gateway-phase constant for an INVALID_SESSION dispatch.</summary>
+    public const string PhaseInvalidate = "invalidate";
 }

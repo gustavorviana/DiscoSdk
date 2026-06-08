@@ -1,5 +1,6 @@
 using DiscoSdk.Caching;
 using DiscoSdk.Hosting.Caching.Policies;
+using DiscoSdk.Hosting.Observability;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using Microsoft.Extensions.Logging;
@@ -46,11 +47,15 @@ internal sealed class MemberManager : IMemberManager
             && _byGuild.TryGetValue(guildId, out var guildCache)
             && guildCache.TryGetValue(userId, out var cached))
         {
+            RecordCacheLookup("hit");
             return Wrap(cached, guildId);
         }
 
         if (mode == MemberFetchMode.CacheOnly)
+        {
+            RecordCacheLookup("miss");
             return null;
+        }
 
         GuildMember? fresh;
         try
@@ -64,14 +69,24 @@ internal sealed class MemberManager : IMemberManager
         }
 
         if (fresh is null)
+        {
+            RecordCacheLookup("miss");
             return null;
+        }
 
         var wrapped = Wrap(fresh, guildId);
         if (wrapped is not null && _policy.ShouldCache(wrapped))
             GetOrAddGuildCache(guildId)[userId] = fresh;
 
+        RecordCacheLookup("rest");
         return wrapped;
     }
+
+    private static void RecordCacheLookup(string result)
+        => DiscoSdkDiagnostics.CacheLookups.Add(
+            1,
+            new KeyValuePair<string, object?>(DiagnosticTags.CacheEntity, DiagnosticTags.CacheEntityMember),
+            new KeyValuePair<string, object?>(DiagnosticTags.CacheResult, result));
 
     /// <inheritdoc />
     public IGuildMemberScope OfGuild(Snowflake guildId) => new GuildMemberScope(this, guildId);

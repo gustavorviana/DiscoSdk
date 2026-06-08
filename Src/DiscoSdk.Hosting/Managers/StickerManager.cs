@@ -1,4 +1,5 @@
 using DiscoSdk.Caching;
+using DiscoSdk.Hosting.Observability;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Messages;
@@ -51,11 +52,15 @@ internal sealed class StickerManager : IStickerManager
             && _byGuild.TryGetValue(guildId, out var guildCache)
             && guildCache.TryGetValue(stickerId, out var cached))
         {
+            RecordCacheLookup("hit");
             return new StickerWrapper(_client, cached);
         }
 
         if (mode == StickerFetchMode.CacheOnly)
+        {
+            RecordCacheLookup("miss");
             return null;
+        }
 
         Sticker? fresh;
         try
@@ -69,13 +74,23 @@ internal sealed class StickerManager : IStickerManager
         }
 
         if (fresh is null)
+        {
+            RecordCacheLookup("miss");
             return null;
+        }
 
         if (_flags == StickerCacheFlag.Guild)
             GetOrAddGuildCache(guildId)[stickerId] = fresh;
 
+        RecordCacheLookup("rest");
         return new StickerWrapper(_client, fresh);
     }
+
+    private static void RecordCacheLookup(string result)
+        => DiscoSdkDiagnostics.CacheLookups.Add(
+            1,
+            new KeyValuePair<string, object?>(DiagnosticTags.CacheEntity, DiagnosticTags.CacheEntitySticker),
+            new KeyValuePair<string, object?>(DiagnosticTags.CacheResult, result));
 
     /// <inheritdoc />
     public IGuildStickerScope OfGuild(Snowflake guildId) => new GuildStickerScope(this, guildId);

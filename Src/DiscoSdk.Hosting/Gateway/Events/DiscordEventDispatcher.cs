@@ -1,4 +1,5 @@
 using DiscoSdk.Contexts;
+using DiscoSdk.Hosting.Observability;
 using DiscoSdk.Contexts.Channels;
 using DiscoSdk.Contexts.Guilds;
 using DiscoSdk.Contexts.Interactions;
@@ -110,6 +111,11 @@ internal class DiscordEventDispatcher
 
         using var doc = message.ToJsonDocument();
         var payload = doc.RootElement;
+
+        using var activity = DiscoSdkDiagnostics.ActivitySource.StartActivity(
+            "discosdk.gateway.dispatch",
+            System.Diagnostics.ActivityKind.Consumer);
+        activity?.SetTag(DiagnosticTags.EventType, message.EventType);
 
         try
         {
@@ -1241,6 +1247,19 @@ internal class DiscordEventDispatcher
         where THandler : IDiscordEventHandler<TContext>
         where TContext : IContext
     {
+        var handlerType = handler.GetType().FullName ?? typeof(THandler).Name;
+        var eventType = typeof(TContext).Name;
+
+        using var activity = DiscoSdkDiagnostics.ActivitySource.StartActivity(
+            "discosdk.handler.invoke",
+            System.Diagnostics.ActivityKind.Internal);
+        activity?.SetTag(DiagnosticTags.HandlerType, handlerType);
+        activity?.SetTag(DiagnosticTags.EventType, eventType);
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var outcome = DiagnosticTags.OutcomeOk;
+        string? exceptionType = null;
+
         try
         {
             using var scoped = _discordClient.Services.CreateAsyncScope();
@@ -1249,7 +1268,37 @@ internal class DiscordEventDispatcher
         }
         catch (Exception ex)
         {
+            outcome = DiagnosticTags.OutcomeError;
+            exceptionType = ex.GetType().FullName;
+            activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex.Message);
             _discordClient.Logger.Log(LogLevel.Error, ex, "Error in {HandlerType}", typeof(THandler).Name);
+        }
+        finally
+        {
+            stopwatch.Stop();
+
+            DiscoSdkDiagnostics.HandlerLatency.Record(
+                stopwatch.Elapsed.TotalMilliseconds,
+                new KeyValuePair<string, object?>(DiagnosticTags.HandlerType, handlerType),
+                new KeyValuePair<string, object?>(DiagnosticTags.EventType, eventType));
+
+            if (exceptionType is null)
+            {
+                DiscoSdkDiagnostics.HandlerInvocations.Add(
+                    1,
+                    new KeyValuePair<string, object?>(DiagnosticTags.HandlerType, handlerType),
+                    new KeyValuePair<string, object?>(DiagnosticTags.EventType, eventType),
+                    new KeyValuePair<string, object?>(DiagnosticTags.HandlerOutcome, outcome));
+            }
+            else
+            {
+                DiscoSdkDiagnostics.HandlerInvocations.Add(
+                    1,
+                    new KeyValuePair<string, object?>(DiagnosticTags.HandlerType, handlerType),
+                    new KeyValuePair<string, object?>(DiagnosticTags.EventType, eventType),
+                    new KeyValuePair<string, object?>(DiagnosticTags.HandlerOutcome, outcome),
+                    new KeyValuePair<string, object?>(DiagnosticTags.ExceptionType, exceptionType));
+            }
         }
     }
 
