@@ -1,3 +1,4 @@
+using DiscoSdk.Caching;
 using DiscoSdk.Hosting.EqualityComparers;
 using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Surfaces;
@@ -571,6 +572,9 @@ internal class GuildWrapper : IGuild
 
     public IGuildCommands Commands => _commands ??= new GuildCommandsSurface(_client, _guild.Id);
     private IGuildCommands? _commands;
+
+    public IGuildMemberScope Members => _members ??= _client.Members.OfGuild(_guild.Id);
+    private IGuildMemberScope? _members;
 
     internal void OnUpdate(Guild guild)
     {

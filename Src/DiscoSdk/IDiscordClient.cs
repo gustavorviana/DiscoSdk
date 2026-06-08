@@ -1,3 +1,4 @@
+using DiscoSdk.Caching;
 using DiscoSdk.Commands;
 using DiscoSdk.Events;
 using DiscoSdk.Models;
@@ -44,6 +45,12 @@ public interface IDiscordClient
 
     /// <summary>Application-owned (global) emoji operations.</summary>
     IApplicationEmojis ApplicationEmojis { get; }
+
+    /// <summary>
+    /// Cross-guild member access — cache lookup, REST fallback, and per-guild scoping
+    /// (<see cref="IMemberManager.OfGuild"/>) for iteration over cached members.
+    /// </summary>
+    IMemberManager Members { get; }
 
     event Func<IDiscordClient, ICommandUpdateSession, Task>? CommandsUpdateWindowOpened;
     event EventHandler<UnhandledErrorEventArgs>? UnhandledError;

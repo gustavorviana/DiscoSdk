@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Events;
+﻿using DiscoSdk.Caching;
+using DiscoSdk.Events;
 using DiscoSdk.Exceptions;
 using DiscoSdk.Hosting.Gateway;
 using DiscoSdk.Hosting.Gateway.Events;
@@ -37,6 +38,11 @@ namespace DiscoSdk.Hosting
         public IDiscordRestClient HttpClient { get; }
         internal ChannelManager Channels { get; }
         public GuildManager Guilds { get; }
+
+        /// <inheritdoc />
+        public IMemberManager Members => MembersInternal;
+
+        internal MemberManager MembersInternal { get; }
 
         public event Func<IDiscordClient, ICommandUpdateSession, Task>? CommandsUpdateWindowOpened;
         public event EventHandler<UnhandledErrorEventArgs>? UnhandledError;
@@ -174,6 +180,8 @@ namespace DiscoSdk.Hosting
             Users = new UserRepository(this);
             Guilds = new GuildManager(this, Logger);
             Channels = new ChannelManager(this);
+            var memberPolicy = services.GetService<IMemberCachePolicy>();
+            MembersInternal = new MemberManager(this, memberPolicy, Logger);
             DmRepository = new DmChannelRepository(this);
             ObjectConverter = objectConverter;
         }

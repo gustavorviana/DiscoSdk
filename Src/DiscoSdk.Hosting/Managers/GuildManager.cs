@@ -123,6 +123,9 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
     internal void HandleGuildDelete(Snowflake guildId)
     {
         _guildCache.Remove(guildId, out _);
+        // Fire-and-forget: drops every cached member belonging to this guild from the member
+        // cache + secondary index. Failures are swallowed by the member manager's logging.
+        _ = client.MembersInternal.OnGuildRemoveAsync(guildId);
     }
 
     internal void HandleChannelCreate(Channel channel)

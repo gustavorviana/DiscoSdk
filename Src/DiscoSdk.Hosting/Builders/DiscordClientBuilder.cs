@@ -1,7 +1,9 @@
+using DiscoSdk.Caching;
 using DiscoSdk.Commands;
 using DiscoSdk.Commands.Localization;
 using DiscoSdk.Contexts;
 using DiscoSdk.Events;
+using DiscoSdk.Hosting.Caching;
 using DiscoSdk.Hosting.Commands;
 using DiscoSdk.Hosting.Commands.Providers;
 using DiscoSdk.Hosting.Contexts;
@@ -183,6 +185,67 @@ public class DiscordClientBuilder
     {
         _intents = intents;
         return this;
+    }
+
+    /// <summary>
+    /// Sets the member cache policy from a preset.
+    /// </summary>
+    /// <param name="preset">The preset to apply.</param>
+    /// <returns>The current <see cref="DiscordClientBuilder"/> instance.</returns>
+    public DiscordClientBuilder WithMemberCachePolicy(MemberCachePolicy preset)
+        => WithMemberCachePolicy(preset.ToPolicy());
+
+    /// <summary>
+    /// Sets the member cache policy from a pre-built <see cref="IMemberCachePolicy"/>.
+    /// </summary>
+    /// <param name="policy">The policy to apply.</param>
+    /// <returns>The current <see cref="DiscordClientBuilder"/> instance.</returns>
+    public DiscordClientBuilder WithMemberCachePolicy(IMemberCachePolicy policy)
+    {
+        ArgumentNullException.ThrowIfNull(policy);
+        _services.AddSingleton(policy);
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the member cache policy from a factory resolved against the SDK service provider.
+    /// Use this overload when the policy needs to inject other registered services (loggers,
+    /// configuration, custom collaborators) before being constructed.
+    /// </summary>
+    /// <param name="factory">A factory that builds the policy from the resolved service provider.</param>
+    /// <returns>The current <see cref="DiscordClientBuilder"/> instance.</returns>
+    public DiscordClientBuilder WithMemberCachePolicy(Func<IServiceProvider, IMemberCachePolicy> factory)
+    {
+        ArgumentNullException.ThrowIfNull(factory);
+        _services.AddSingleton(factory);
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the member cache policy by finalizing the supplied
+    /// <see cref="MemberCachePolicyBuilder"/>.
+    /// </summary>
+    /// <param name="builder">The builder to finalize.</param>
+    /// <returns>The current <see cref="DiscordClientBuilder"/> instance.</returns>
+    public DiscordClientBuilder WithMemberCachePolicy(MemberCachePolicyBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        return WithMemberCachePolicy(builder.Build());
+    }
+
+    /// <summary>
+    /// Sets the member cache policy by configuring a new
+    /// <see cref="MemberCachePolicyBuilder"/> inline.
+    /// </summary>
+    /// <param name="mode">The combinator mode applied to the configured criteria.</param>
+    /// <param name="configure">Configuration action for the builder.</param>
+    /// <returns>The current <see cref="DiscordClientBuilder"/> instance.</returns>
+    public DiscordClientBuilder WithMemberCachePolicy(PolicyMode mode, Action<MemberCachePolicyBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        var builder = new MemberCachePolicyBuilder(mode);
+        configure(builder);
+        return WithMemberCachePolicy(builder);
     }
 
     /// <summary>

@@ -20,6 +20,12 @@ internal class GuildMemberWrapper(DiscordClient client, GuildMember member, IGui
 {
     private readonly GuildMember _member = member ?? throw new ArgumentNullException(nameof(member));
     private readonly IGuild _guild = guild ?? throw new ArgumentNullException(nameof(guild));
+
+    /// <summary>
+    /// Underlying POCO model. Accessed by the SDK cache layer to persist the member without
+    /// exposing the wrapper.
+    /// </summary>
+    internal GuildMember Model => _member;
     private IUser? _user;
     private ImmutableList<IRole>? _roles;
     private ImmutableHashSet<IRole>? _unsortedRoles;

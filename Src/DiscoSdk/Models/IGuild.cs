@@ -1,4 +1,5 @@
-﻿using DiscoSdk.Models.AutoModeration;
+﻿using DiscoSdk.Caching;
+using DiscoSdk.Models.AutoModeration;
 using DiscoSdk.Models.Channels;
 using DiscoSdk.Models.Enums;
 using DiscoSdk.Rest.Actions;
@@ -319,6 +320,14 @@ public interface IGuild
     /// Returns null if the user is not a member of this guild.
     /// </remarks>
     IRestAction<IMember?> GetMember(Snowflake userId);
+
+    /// <summary>
+    /// Cache-backed member access scoped to this guild. Wraps the cross-guild
+    /// <see cref="IDiscordClient.Members"/> manager and pre-binds the guild id, so callers can
+    /// look up cached members, iterate the cache snapshot, or trigger a REST fallback without
+    /// repeating the guild id on every call.
+    /// </summary>
+    IGuildMemberScope Members { get; }
 
     /// <summary>
     /// Gets a REST action to retrieve a ban by user ID in this guild.

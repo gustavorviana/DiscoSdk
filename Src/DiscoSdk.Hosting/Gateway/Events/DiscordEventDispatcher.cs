@@ -571,6 +571,7 @@ internal class DiscordEventDispatcher
         if (guild is null) return;
 
         var wrappedMember = new GuildMemberWrapper(_discordClient, member, guild);
+        await _discordClient.MembersInternal.OnMemberAddOrUpdateAsync(member, guild.Id).ConfigureAwait(false);
         var eventData = new GuildMemberAddContextWrapper(_discordClient, wrappedMember, guild);
         await HandleAllAsync<IGuildMemberAddHandler, IGuildMemberAddContext>(eventData);
     }
@@ -585,6 +586,7 @@ internal class DiscordEventDispatcher
         var user = parser.Deserialize<User>("user", _discordClient.SerializerOptions);
         if (user is null) return;
 
+        await _discordClient.MembersInternal.OnMemberRemoveAsync(guild.Id, user.UserId).ConfigureAwait(false);
         var wrappedUser = new UserWrapper(_discordClient, user);
         var eventData = new GuildMemberRemoveContextWrapper(_discordClient, wrappedUser, guild);
         await HandleAllAsync<IGuildMemberRemoveHandler, IGuildMemberRemoveContext>(eventData);
@@ -600,6 +602,7 @@ internal class DiscordEventDispatcher
         if (guild is null) return;
 
         var wrappedMember = new GuildMemberWrapper(_discordClient, member, guild);
+        await _discordClient.MembersInternal.OnMemberAddOrUpdateAsync(member, guild.Id).ConfigureAwait(false);
         var eventData = new GuildMemberUpdateContextWrapper(_discordClient, wrappedMember, guild);
         await HandleAllAsync<IGuildMemberUpdateHandler, IGuildMemberUpdateContext>(eventData);
     }
@@ -1035,13 +1038,19 @@ internal class DiscordEventDispatcher
 
         var membersEl = payload.Get("members");
         var members = ImmutableArray.CreateBuilder<IMember>();
+        var pocos = new List<GuildMember>();
         if (membersEl is not null)
             foreach (var item in membersEl.Value.EnumerateArray())
             {
                 var member = item.Deserialize<GuildMember>(_discordClient.SerializerOptions);
                 if (member is not null)
+                {
+                    pocos.Add(member);
                     members.Add(new GuildMemberWrapper(_discordClient, member, guild));
+                }
             }
+
+        await _discordClient.MembersInternal.OnMembersChunkAsync(pocos, guild.Id).ConfigureAwait(false);
 
         var chunkIndex = payload.Get("chunk_index")?.GetInt32() ?? 0;
         var chunkCount = payload.Get("chunk_count")?.GetInt32() ?? 1;
