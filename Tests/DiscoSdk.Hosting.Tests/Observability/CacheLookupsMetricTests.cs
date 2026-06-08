@@ -17,7 +17,7 @@ public class CacheLookupsMetricTests : DispatcherTestBase
 		await DispatchAsync(DispatchFrames.GuildMemberAdd(guildId: 100, userId: 42));
 
 		var member = await Client.Members.OfGuild(new Snowflake(100))
-			.GetAsync(new Snowflake(42), MemberFetchMode.CacheOnly);
+			.Get(new Snowflake(42), MemberFetchMode.CacheOnly).ExecuteAsync();
 
 		Assert.NotNull(member);
 		var rows = capture.LongFor("discosdk.cache.lookups").ToList();
@@ -33,7 +33,7 @@ public class CacheLookupsMetricTests : DispatcherTestBase
 		await DispatchAsync(DispatchFrames.GuildCreate(id: 100));
 
 		var member = await Client.Members.OfGuild(new Snowflake(100))
-			.GetAsync(new Snowflake(404), MemberFetchMode.CacheOnly);
+			.Get(new Snowflake(404), MemberFetchMode.CacheOnly).ExecuteAsync();
 
 		Assert.Null(member);
 		var rows = capture.LongFor("discosdk.cache.lookups").ToList();

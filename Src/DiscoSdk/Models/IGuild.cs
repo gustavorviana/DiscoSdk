@@ -293,41 +293,12 @@ public interface IGuild
     IReasonedRestAction KickMember(Snowflake userId);
 
     /// <summary>
-    /// Creates a REST action to get members of this guild with pagination.
+    /// Member surface for this guild — cache-aware reads (<c>GetAsync</c>, <c>GetCachedAsync</c>),
+    /// REST builders (<c>Get</c>, <c>List</c>), and the gateway Request Guild Members (op 8) flow
+    /// (<c>Request</c>). Pre-bound to this guild id; wraps the cross-guild
+    /// <see cref="IDiscordClient.Members"/> manager.
     /// </summary>
-    /// <returns>A REST action that can be configured and executed to retrieve members.</returns>
-    /// <remarks>
-    /// Requires the privileged <see cref="DiscordIntent.GuildMembers"/> intent — Discord's
-    /// <c>List Guild Members</c> endpoint refuses to return data without it. Executing the
-    /// returned action throws <see cref="DiscoSdk.Exceptions.MissingIntentException"/> when
-    /// the intent isn't enabled on the client.
-    /// <para>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// </para>
-    /// </remarks>
-    /// <exception cref="DiscoSdk.Exceptions.MissingIntentException">
-    /// Thrown when <see cref="DiscordIntent.GuildMembers"/> is not enabled on the client.
-    /// </exception>
-    IMemberPaginationAction GetMembers();
-
-    /// <summary>
-    /// Gets a REST action to retrieve a member by their user ID in this guild.
-    /// </summary>
-    /// <param name="userId">The ID of the user to retrieve.</param>
-    /// <returns>A REST action that can be executed to retrieve the member.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// Returns null if the user is not a member of this guild.
-    /// </remarks>
-    IRestAction<IMember?> GetMember(Snowflake userId);
-
-    /// <summary>
-    /// Cache-backed member access scoped to this guild. Wraps the cross-guild
-    /// <see cref="IDiscordClient.Members"/> manager and pre-binds the guild id, so callers can
-    /// look up cached members, iterate the cache snapshot, or trigger a REST fallback without
-    /// repeating the guild id on every call.
-    /// </summary>
-    IGuildMemberScope Members { get; }
+    IGuildMembers Members { get; }
 
     /// <summary>
     /// Gets a REST action to retrieve a ban by user ID in this guild.
@@ -597,19 +568,6 @@ public interface IGuild
     /// <param name="file">Sticker image file (PNG/APNG/GIF/Lottie, max 512 KiB).</param>
     Rest.Actions.ICreateGuildStickerAction CreateSticker(string name, string tags, DiscoSdk.Models.Messages.MessageFile file);
 
-    /// <summary>Builds a Request Guild Members gateway action.</summary>
-    /// <remarks>
-    /// Intent requirements depend on how the action is configured at terminal time:
-    /// <list type="bullet">
-    /// <item>Empty query (full member list) requires <see cref="DiscordIntent.GuildMembers"/>.</item>
-    /// <item><see cref="Rest.Actions.IRequestGuildMembersAction.SetPresences(bool)"/> with <c>true</c> requires <see cref="DiscordIntent.GuildPresences"/>.</item>
-    /// <item>A non-empty <see cref="Rest.Actions.IRequestGuildMembersAction.SetQuery(string)"/> or explicit <see cref="Rest.Actions.IRequestGuildMembersAction.SetUserIds(Snowflake[])"/> require no extra intent.</item>
-    /// </list>
-    /// Missing intents throw <see cref="DiscoSdk.Exceptions.MissingIntentException"/> when the
-    /// terminal <c>GetAsync</c> or <c>StreamAsync</c> is invoked, before any payload is sent.
-    /// </remarks>
-    Rest.Actions.IRequestGuildMembersAction RequestMembers();
-
     /// <summary>
     /// Gets a REST action that retrieves this guild's onboarding configuration.
     /// </summary>
@@ -637,13 +595,6 @@ public interface IGuild
     /// <param name="userIds">The users to ban.</param>
     /// <param name="deleteMessageSeconds">If set, the number of seconds of recent message history to wipe (0 to 604 800 / 7 days).</param>
     IReasonedRestAction<IReadOnlyList<Snowflake>> BulkBan(IEnumerable<Snowflake> userIds, int? deleteMessageSeconds = null);
-
-    /// <summary>
-    /// Gets a REST action that searches the guild's member list by username/nickname prefix.
-    /// </summary>
-    /// <param name="query">The username/nickname prefix to match.</param>
-    /// <param name="limit">Maximum number of members to return (1–1000). Defaults to 1.</param>
-    IRestAction<IReadOnlyList<IMember>> SearchMembers(string query, int? limit = null);
 
     /// <summary>
     /// Builds a REST action that adds a user to this guild using an OAuth2 access token granted with

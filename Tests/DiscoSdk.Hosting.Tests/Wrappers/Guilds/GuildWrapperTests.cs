@@ -97,7 +97,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildMember>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new GuildMember { User = new User { UserId = new Snowflake(42), Username = "u" } });
 
-		await _wrapper.GetMember(new Snowflake(42)).ExecuteAsync();
+		await _wrapper.Members.Get(new Snowflake(42)).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildMember>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/members/42"),
@@ -123,7 +123,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildMember[]>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns([]);
 
-		await _wrapper.GetMembers().ExecuteAsync();
+		await _wrapper.Members.List().ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildMember[]>(
 			Arg.Is<DiscordRoute>(r => r.ToString().StartsWith("guilds/100/members")),
@@ -162,7 +162,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildMember[]>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns([]);
 
-		await _wrapper.SearchMembers("alice", limit: 10).ExecuteAsync();
+		await _wrapper.Members.Search("alice", limit: 10).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildMember[]>(
 			Arg.Is<DiscordRoute>(r =>

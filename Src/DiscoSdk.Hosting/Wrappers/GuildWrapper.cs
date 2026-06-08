@@ -157,23 +157,6 @@ internal class GuildWrapper : IGuild
             _client.GuildClient.KickMemberAsync(_guild.Id, userId, reason, ct));
     }
 
-    public IMemberPaginationAction GetMembers()
-    {
-        return new MemberPaginationAction(_client, this);
-    }
-
-    public IRestAction<IMember?> GetMember(Snowflake userId)
-    {
-        return RestAction<IMember?>.Create(async cancellationToken =>
-        {
-            var member = await _client.GuildClient.GetMemberAsync(_guild.Id, userId, cancellationToken);
-            if (member == null)
-                return null;
-
-            return new GuildMemberWrapper(_client, member, this);
-        });
-    }
-
     public IRestAction<IBan?> GetBan(Snowflake userId)
     {
         return RestAction<IBan?>.Create(async cancellationToken =>
@@ -443,9 +426,6 @@ internal class GuildWrapper : IGuild
     public ICreateGuildStickerAction CreateSticker(string name, string tags, DiscoSdk.Models.Messages.MessageFile file)
         => new CreateGuildStickerAction(_client, _guild.Id, name, tags, file);
 
-    public IRequestGuildMembersAction RequestMembers()
-        => new RequestGuildMembersAction(_client, _guild.Id);
-
     public IRestAction<IGuildOnboarding> GetOnboarding()
         => RestAction<IGuildOnboarding>.Create(async ct => new GuildOnboardingWrapper(_client, await _client.GuildTemplateClient.GetOnboardingAsync(_guild.Id, ct)));
 
@@ -484,21 +464,6 @@ internal class GuildWrapper : IGuild
                 }
             }
             return banned.AsReadOnly();
-        });
-    }
-
-    public IRestAction<IReadOnlyList<IMember>> SearchMembers(string query, int? limit = null)
-    {
-        if (string.IsNullOrWhiteSpace(query))
-            throw new ArgumentException("Query cannot be null or empty.", nameof(query));
-        return RestAction<IReadOnlyList<IMember>>.Create(async ct =>
-        {
-            var members = await _client.GuildClient.SearchMembersAsync(_guild.Id, query, limit, ct);
-            return members
-                .Where(m => m.User != null)
-                .Select(m => (IMember)new GuildMemberWrapper(_client, m, this))
-                .ToList()
-                .AsReadOnly();
         });
     }
 
@@ -562,8 +527,8 @@ internal class GuildWrapper : IGuild
     public IGuildCommands Commands => _commands ??= new GuildCommandsSurface(_client, _guild.Id);
     private IGuildCommands? _commands;
 
-    public IGuildMemberScope Members => _members ??= _client.Members.OfGuild(_guild.Id);
-    private IGuildMemberScope? _members;
+    public IGuildMembers Members => _members ??= _client.MembersInternal.OfGuild(_guild.Id, this);
+    private IGuildMembers? _members;
 
     public IGuildStickerScope Stickers => _stickerScope ??= _client.Stickers.OfGuild(_guild.Id);
     private IGuildStickerScope? _stickerScope;

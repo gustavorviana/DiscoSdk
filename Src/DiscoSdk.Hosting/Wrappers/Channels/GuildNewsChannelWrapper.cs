@@ -44,7 +44,7 @@ internal class GuildNewsChannelWrapper(DiscordClient client, Channel channel, IG
 
         return RestAction<IFollowedChannel>.Create(async cancellationToken =>
         {
-            var selfMember = await Guild.GetMember(Snowflake.Parse(_client.BotUser.Id)).ExecuteAsync(cancellationToken)
+            var selfMember = await Guild.Members.Get(Snowflake.Parse(_client.BotUser.Id)).ExecuteAsync(cancellationToken)
             ?? throw new InvalidOperationException("Cannot get self member from guild.");
 
             var permission = targetChannel.GetPermission(selfMember);

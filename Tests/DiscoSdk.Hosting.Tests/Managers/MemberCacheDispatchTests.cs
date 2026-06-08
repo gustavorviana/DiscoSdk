@@ -20,9 +20,9 @@ public class MemberCacheDispatchTests : DispatcherTestBase
 		await DispatchAsync(DispatchFrames.GuildMemberAdd(guildId: 100, userId: 42));
 
 		var scope = Client.Members.OfGuild(new Snowflake(100));
-		Assert.Equal(1, await scope.GetCachedCountAsync());
+		Assert.Equal(1, scope.GetCachedCount());
 
-		var fetched = await scope.GetAsync(new Snowflake(42), MemberFetchMode.CacheOnly);
+		var fetched = await scope.Get(new Snowflake(42), MemberFetchMode.CacheOnly).ExecuteAsync();
 		Assert.NotNull(fetched);
 		Assert.Equal(new Snowflake(42), fetched!.User.Id);
 	}
@@ -36,8 +36,8 @@ public class MemberCacheDispatchTests : DispatcherTestBase
 		await DispatchAsync(DispatchFrames.GuildMemberRemove(guildId: 100, userId: 42));
 
 		var scope = Client.Members.OfGuild(new Snowflake(100));
-		Assert.Equal(0, await scope.GetCachedCountAsync());
-		Assert.Null(await scope.GetAsync(new Snowflake(42), MemberFetchMode.CacheOnly));
+		Assert.Equal(0, scope.GetCachedCount());
+		Assert.Null(await scope.Get(new Snowflake(42), MemberFetchMode.CacheOnly).ExecuteAsync());
 	}
 
 	[Fact]
@@ -47,7 +47,7 @@ public class MemberCacheDispatchTests : DispatcherTestBase
 
 		await DispatchAsync(DispatchFrames.GuildMemberUpdate(guildId: 100, userId: 42, nickname: "renamed"));
 
-		var member = await Client.Members.OfGuild(new Snowflake(100)).GetAsync(new Snowflake(42), MemberFetchMode.CacheOnly);
+		var member = await Client.Members.OfGuild(new Snowflake(100)).Get(new Snowflake(42), MemberFetchMode.CacheOnly).ExecuteAsync();
 		Assert.NotNull(member);
 		Assert.Equal("renamed", member!.Nickname);
 	}
@@ -65,7 +65,7 @@ public class MemberCacheDispatchTests : DispatcherTestBase
 		var viaGuild = guild!.Members;
 
 		Assert.Equal(viaTopLevel.GuildId, viaGuild.GuildId);
-		Assert.Equal(await viaTopLevel.GetCachedCountAsync(), await viaGuild.GetCachedCountAsync());
+		Assert.Equal(viaTopLevel.GetCachedCount(), viaGuild.GetCachedCount());
 	}
 
 	[Fact]
@@ -77,7 +77,7 @@ public class MemberCacheDispatchTests : DispatcherTestBase
 		await DispatchAsync(DispatchFrames.GuildMemberAdd(guildId: 100, userId: 3));
 
 		var seen = new HashSet<Snowflake>();
-		await foreach (var member in Client.Members.OfGuild(new Snowflake(100)).GetCachedAsync())
+		foreach (var member in Client.Members.OfGuild(new Snowflake(100)).GetCached())
 			seen.Add(member.User.Id);
 
 		Assert.Equal(new[] { new Snowflake(1), new Snowflake(2), new Snowflake(3) }, seen.OrderBy(x => x.Value));

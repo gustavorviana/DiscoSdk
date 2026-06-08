@@ -30,7 +30,7 @@ internal class UserMentionWrapper(DiscordClient? client, MessageMentionUser user
         if (guild == null)
             return RestAction<IMember>.Empty;
 
-        return guild.GetMember(UserId);
+        return guild.Members.Get(UserId);
     }
 
     public IRestAction<IUser> ResolveUserAsync()

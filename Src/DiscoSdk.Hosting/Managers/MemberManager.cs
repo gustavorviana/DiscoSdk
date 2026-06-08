@@ -1,12 +1,13 @@
 using DiscoSdk.Caching;
 using DiscoSdk.Hosting.Caching.Policies;
 using DiscoSdk.Hosting.Observability;
+using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
+using DiscoSdk.Rest.Actions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 
 namespace DiscoSdk.Hosting.Managers;
 
@@ -89,7 +90,15 @@ internal sealed class MemberManager : IMemberManager
             new KeyValuePair<string, object?>(DiagnosticTags.CacheResult, result));
 
     /// <inheritdoc />
-    public IGuildMemberScope OfGuild(Snowflake guildId) => new GuildMemberScope(this, guildId);
+    public IGuildMembers OfGuild(Snowflake guildId) => new GuildMembersImpl(this, guildId, null);
+
+    /// <summary>
+    /// Hosting-internal overload that pre-binds an <see cref="IGuild"/> context, avoiding a cache
+    /// lookup when the caller already has the wrapper in hand. Used by <c>GuildWrapper</c> so
+    /// member REST builders work even before the guild is materialized in <c>GuildManager</c>.
+    /// </summary>
+    internal IGuildMembers OfGuild(Snowflake guildId, IGuild guildContext)
+        => new GuildMembersImpl(this, guildId, guildContext);
 
     /// <summary>
     /// Called by the gateway dispatcher on <c>GUILD_MEMBER_ADD</c> and <c>GUILD_MEMBER_UPDATE</c>.
@@ -191,27 +200,21 @@ internal sealed class MemberManager : IMemberManager
         return ValueTask.CompletedTask;
     }
 
-    internal async IAsyncEnumerable<IMember> EnumerateGuildAsync(
-        Snowflake guildId,
-        [EnumeratorCancellation] CancellationToken ct = default)
+    internal IEnumerable<IMember> EnumerateGuild(Snowflake guildId)
     {
         if (!_byGuild.TryGetValue(guildId, out var guildCache))
             yield break;
 
         foreach (var pair in guildCache)
         {
-            ct.ThrowIfCancellationRequested();
             var wrapped = Wrap(pair.Value, guildId);
             if (wrapped is not null)
                 yield return wrapped;
-            await Task.Yield();
         }
     }
 
-    internal ValueTask<int> CountGuildAsync(Snowflake guildId, CancellationToken ct = default)
-        => _byGuild.TryGetValue(guildId, out var guildCache)
-            ? new ValueTask<int>(guildCache.Count)
-            : new ValueTask<int>(0);
+    internal int CountGuild(Snowflake guildId)
+        => _byGuild.TryGetValue(guildId, out var guildCache) ? guildCache.Count : 0;
 
     private ConcurrentDictionary<Snowflake, GuildMember> GetOrAddGuildCache(Snowflake guildId)
         => _byGuild.GetOrAdd(guildId, static _ => new ConcurrentDictionary<Snowflake, GuildMember>());
@@ -225,20 +228,50 @@ internal sealed class MemberManager : IMemberManager
         return new GuildMemberWrapper(_client, poco, guild);
     }
 
-    private sealed class GuildMemberScope(MemberManager manager, Snowflake guildId) : IGuildMemberScope
+    private sealed class GuildMembersImpl(MemberManager manager, Snowflake guildId, IGuild? guildContext) : IGuildMembers
     {
         public Snowflake GuildId => guildId;
 
-        public ValueTask<IMember?> GetAsync(
-            Snowflake userId,
-            MemberFetchMode mode = MemberFetchMode.CacheThenRest,
-            CancellationToken ct = default)
-            => manager.GetAsync(guildId, userId, mode, ct);
+        public IRestAction<IMember?> Get(Snowflake userId, MemberFetchMode mode = MemberFetchMode.CacheThenRest)
+        {
+            var gid = guildId;
+            return RestAction<IMember?>.Create(async ct =>
+                await manager.GetAsync(gid, userId, mode, ct).ConfigureAwait(false));
+        }
 
-        public IAsyncEnumerable<IMember> GetCachedAsync(CancellationToken ct = default)
-            => manager.EnumerateGuildAsync(guildId, ct);
+        public IEnumerable<IMember> GetCached() => manager.EnumerateGuild(guildId);
 
-        public ValueTask<int> GetCachedCountAsync(CancellationToken ct = default)
-            => manager.CountGuildAsync(guildId, ct);
+        public int GetCachedCount() => manager.CountGuild(guildId);
+
+        public IMemberPaginationAction List()
+            => new MemberPaginationAction(manager._client, ResolveGuild());
+
+        public IRestAction<IReadOnlyList<IMember>> Search(string query, int? limit = null)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                throw new ArgumentException("Query cannot be null or empty.", nameof(query));
+
+            var client = manager._client;
+            var gid = guildId;
+            return RestAction<IReadOnlyList<IMember>>.Create(async ct =>
+            {
+                var members = await client.GuildClient.SearchMembersAsync(gid, query, limit, ct).ConfigureAwait(false);
+                var guild = ResolveGuild();
+                return members
+                    .Where(m => m.User != null)
+                    .Select(m => (IMember)new GuildMemberWrapper(client, m, guild))
+                    .ToList()
+                    .AsReadOnly();
+            });
+        }
+
+        public IRequestGuildMembersAction Request()
+            => new RequestGuildMembersAction(manager._client, guildId);
+
+        private IGuild ResolveGuild()
+            => guildContext
+               ?? manager._client.Guilds.GetWrapped(guildId)
+               ?? throw new InvalidOperationException(
+                   $"Guild {guildId} is not in the cache. The bot must have received GUILD_CREATE for this guild before its member REST surface can be used.");
     }
 }

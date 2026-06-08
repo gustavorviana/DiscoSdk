@@ -23,11 +23,11 @@ public class MemberManagerSeedTests : DispatcherTestBase
 			(3UL, "carol")));
 
 		var scope = Client.Members.OfGuild(new Snowflake(200));
-		Assert.Equal(3, await scope.GetCachedCountAsync());
+		Assert.Equal(3, scope.GetCachedCount());
 
-		Assert.NotNull(await scope.GetAsync(new Snowflake(1), MemberFetchMode.CacheOnly));
-		Assert.NotNull(await scope.GetAsync(new Snowflake(2), MemberFetchMode.CacheOnly));
-		Assert.NotNull(await scope.GetAsync(new Snowflake(3), MemberFetchMode.CacheOnly));
+		Assert.NotNull(await scope.Get(new Snowflake(1), MemberFetchMode.CacheOnly).ExecuteAsync());
+		Assert.NotNull(await scope.Get(new Snowflake(2), MemberFetchMode.CacheOnly).ExecuteAsync());
+		Assert.NotNull(await scope.Get(new Snowflake(3), MemberFetchMode.CacheOnly).ExecuteAsync());
 	}
 
 	[Fact]

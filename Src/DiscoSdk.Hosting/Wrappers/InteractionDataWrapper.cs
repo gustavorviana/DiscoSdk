@@ -44,7 +44,7 @@ internal class InteractionDataWrapper(DiscordClient client, InteractionData data
             if (guild is not null)
             {
                 if (membersId.Length > 0)
-                    members = [.. (await guild.GetMembers().ExecuteAsync(cancellationToken)).Where(x => membersId.Contains(x.Id.ToString()))];
+                    members = [.. (await guild.Members.List().ExecuteAsync(cancellationToken)).Where(x => membersId.Contains(x.Id.ToString()))];
 
                 if (rolesId.Length > 0)
                     roles = [.. (await guild.GetRoles().ExecuteAsync(cancellationToken)).Where(x => rolesId.Contains(x.Id.ToString()))];

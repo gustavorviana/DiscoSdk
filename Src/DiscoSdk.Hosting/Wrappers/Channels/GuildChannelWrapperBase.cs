@@ -21,7 +21,7 @@ internal abstract class GuildChannelWrapperBase(DiscordClient client, Channel ch
     {
         return RestAction<IMember[]>.Create(async cancellationToken =>
         {
-            var guildMembers = await Guild.GetMembers().ExecuteAsync(cancellationToken);
+            var guildMembers = await Guild.Members.List().ExecuteAsync(cancellationToken);
             var permissionContainer = GetPermissionContainer();
             
             return [.. guildMembers.Where(x => GetPermission(x).HasFlag(DiscordPermission.ViewChannel))];

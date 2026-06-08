@@ -24,8 +24,9 @@ public interface IMemberManager
         CancellationToken ct = default);
 
     /// <summary>
-    /// Returns a scope that exposes cache-only operations bound to the supplied guild.
+    /// Returns a per-guild member surface that combines cache-aware reads, REST builders, and the
+    /// gateway Request Guild Members (op 8) flow, all pre-bound to <paramref name="guildId"/>.
     /// </summary>
     /// <param name="guildId">The guild to scope to.</param>
-    IGuildMemberScope OfGuild(Snowflake guildId);
+    IGuildMembers OfGuild(Snowflake guildId);
 }
