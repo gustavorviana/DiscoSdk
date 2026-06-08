@@ -302,13 +302,13 @@ internal class GuildMemberWrapper(DiscordClient client, GuildMember member, IGui
     /// <inheritdoc />
     public Task BanAsync(int deletionTimeframe, CancellationToken cancellationToken = default)
     {
-        return _guild.BanMember(Id, deletionTimeframe).ExecuteAsync(cancellationToken);
+        return _guild.Bans.Ban(Id, deletionTimeframe).ExecuteAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public Task KickAsync(CancellationToken cancellationToken = default)
     {
-        return _guild.KickMember(Id).ExecuteAsync(cancellationToken);
+        return _guild.Members.Kick(Id).ExecuteAsync(cancellationToken);
     }
 
     /// <inheritdoc />

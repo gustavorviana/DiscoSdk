@@ -65,7 +65,7 @@ public class GuildWrapperTests : WrapperTestBase
 	[Fact]
 	public async Task UnbanMember_DeletesBanAsync()
 	{
-		await _wrapper.UnbanMember(new Snowflake(42)).ExecuteAsync();
+		await _wrapper.Bans.Unban(new Snowflake(42)).ExecuteAsync();
 		await Http.Received(1).SendAsync(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/bans/42"),
 			HttpMethod.Delete, Arg.Any<CancellationToken>());
@@ -74,7 +74,7 @@ public class GuildWrapperTests : WrapperTestBase
 	[Fact]
 	public async Task KickMember_DeletesMemberAsync()
 	{
-		await _wrapper.KickMember(new Snowflake(42)).ExecuteAsync();
+		await _wrapper.Members.Kick(new Snowflake(42)).ExecuteAsync();
 		await Http.Received(1).SendAsync(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/members/42"),
 			HttpMethod.Delete, Arg.Any<CancellationToken>());
@@ -83,7 +83,7 @@ public class GuildWrapperTests : WrapperTestBase
 	[Fact]
 	public async Task BanMember_PutsBanRouteWithDeleteDaysAsync()
 	{
-		await _wrapper.BanMember(new Snowflake(42), deleteMessageDays: 3).ExecuteAsync();
+		await _wrapper.Bans.Ban(new Snowflake(42), deleteMessageDays: 3).ExecuteAsync();
 		await Http.Received(1).SendAsync(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/bans/42"),
 			HttpMethod.Put,
@@ -110,7 +110,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<Ban>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new Ban { User = new User { UserId = new Snowflake(42), Username = "u" } });
 
-		await _wrapper.GetBan(new Snowflake(42)).ExecuteAsync();
+		await _wrapper.Bans.Get(new Snowflake(42)).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<Ban>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/bans/42"),
@@ -136,7 +136,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<Ban[]>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns([]);
 
-		await _wrapper.GetBans().ExecuteAsync();
+		await _wrapper.Bans.List().ExecuteAsync();
 
 		await Http.Received(1).SendAsync<Ban[]>(
 			Arg.Is<DiscordRoute>(r => r.ToString().StartsWith("guilds/100/bans")),
@@ -149,7 +149,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<JsonElement>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(JsonDocument.Parse("""{"banned_users":["1","2"]}""").RootElement);
 
-		await _wrapper.BulkBan([new Snowflake(1), new Snowflake(2)], deleteMessageSeconds: 60).ExecuteAsync();
+		await _wrapper.Bans.BulkBan([new Snowflake(1), new Snowflake(2)], deleteMessageSeconds: 60).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<JsonElement>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/bulk-ban"),
@@ -178,7 +178,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildMember>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new GuildMember { User = new User { UserId = new Snowflake(42), Username = "u" } });
 
-		await _wrapper.AddMember(new Snowflake(42), "tok").SetNickname("Bob").ExecuteAsync();
+		await _wrapper.Members.Add(new Snowflake(42), "tok").SetNickname("Bob").ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildMember>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/members/42"),
@@ -193,7 +193,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildMember>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new GuildMember { User = new User { UserId = new Snowflake(1), Username = "bot" } });
 
-		await _wrapper.ModifyCurrentMember("new-nick").ExecuteAsync();
+		await _wrapper.Members.ModifyCurrent("new-nick").ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildMember>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/members/@me"),
@@ -206,7 +206,7 @@ public class GuildWrapperTests : WrapperTestBase
 		Http.SendAsync<GuildMember>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
 			.Returns(new GuildMember { User = new User { UserId = new Snowflake(42), Username = "u" } });
 
-		await _wrapper.ModifyMember(new Snowflake(42)).SetNickname("new").SetMuted(true).ExecuteAsync();
+		await _wrapper.Members.Modify(new Snowflake(42)).SetNickname("new").SetMuted(true).ExecuteAsync();
 
 		await Http.Received(1).SendAsync<GuildMember>(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/members/42"),
@@ -218,7 +218,7 @@ public class GuildWrapperTests : WrapperTestBase
 	[Fact]
 	public async Task AddMemberRole_PutsMemberRoleAsync()
 	{
-		await _wrapper.AddMemberRole(new Snowflake(42), new Snowflake(7)).ExecuteAsync();
+		await _wrapper.Members.AddRole(new Snowflake(42), new Snowflake(7)).ExecuteAsync();
 		await Http.Received(1).SendAsync(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/members/42/roles/7"),
 			HttpMethod.Put, Arg.Is<object?>(b => b == null), Arg.Any<CancellationToken>());
@@ -227,7 +227,7 @@ public class GuildWrapperTests : WrapperTestBase
 	[Fact]
 	public async Task RemoveMemberRole_DeletesMemberRoleAsync()
 	{
-		await _wrapper.RemoveMemberRole(new Snowflake(42), new Snowflake(7)).ExecuteAsync();
+		await _wrapper.Members.RemoveRole(new Snowflake(42), new Snowflake(7)).ExecuteAsync();
 		await Http.Received(1).SendAsync(
 			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/members/42/roles/7"),
 			HttpMethod.Delete, Arg.Any<CancellationToken>());

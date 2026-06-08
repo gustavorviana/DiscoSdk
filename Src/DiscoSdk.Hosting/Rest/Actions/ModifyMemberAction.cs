@@ -8,12 +8,12 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 internal sealed class ModifyMemberAction : RestAction<IMember>, IModifyMemberAction
 {
     private readonly DiscordClient _client;
-    private readonly GuildWrapper _guild;
+    private readonly IGuild _guild;
     private readonly Snowflake _userId;
     private readonly Dictionary<string, object?> _body = new();
     private string? _reason;
 
-    public ModifyMemberAction(DiscordClient client, GuildWrapper guild, Snowflake userId)
+    public ModifyMemberAction(DiscordClient client, IGuild guild, Snowflake userId)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _guild = guild ?? throw new ArgumentNullException(nameof(guild));

@@ -64,7 +64,6 @@ public class MemberCacheDispatchTests : DispatcherTestBase
 		var viaTopLevel = Client.Members.OfGuild(new Snowflake(100));
 		var viaGuild = guild!.Members;
 
-		Assert.Equal(viaTopLevel.GuildId, viaGuild.GuildId);
 		Assert.Equal(viaTopLevel.GetCachedCount(), viaGuild.GetCachedCount());
 	}
 
@@ -88,10 +87,10 @@ public class MemberCacheDispatchTests : DispatcherTestBase
 	{
 		await DispatchAsync(DispatchFrames.GuildCreate(id: 100));
 
-		var member = await Client.Members.GetAsync(
+		var member = await Client.Members.Get(
 			new Snowflake(100),
 			new Snowflake(404),
-			MemberFetchMode.CacheOnly);
+			MemberFetchMode.CacheOnly).ExecuteAsync();
 
 		Assert.Null(member);
 	}

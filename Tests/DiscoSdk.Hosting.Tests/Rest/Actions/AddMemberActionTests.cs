@@ -23,7 +23,7 @@ public class AddMemberActionTests : WrapperTestBase
     [Fact]
     public async Task ExecuteAsync_PutsAllSetFieldsAsync()
     {
-        await _guild.AddMember(_userId, "tok-abc")
+        await _guild.Members.Add(_userId, "tok-abc")
             .SetNickname("Bob")
             .SetMuted(false)
             .SetDeafened(true)
@@ -43,12 +43,12 @@ public class AddMemberActionTests : WrapperTestBase
 
     [Fact]
     public void Construct_EmptyAccessToken_Throws()
-        => Assert.ThrowsAny<ArgumentException>(() => _guild.AddMember(_userId, "  "));
+        => Assert.ThrowsAny<ArgumentException>(() => _guild.Members.Add(_userId, "  "));
 
     [Fact]
     public async Task ExecuteAsync_NoOptionalKnobs_OnlySendsAccessTokenAsync()
     {
-        await _guild.AddMember(_userId, "tok").ExecuteAsync();
+        await _guild.Members.Add(_userId, "tok").ExecuteAsync();
 
         await Http.Received(1).SendAsync<GuildMember>(
             Arg.Any<DiscordRoute>(), HttpMethod.Put,

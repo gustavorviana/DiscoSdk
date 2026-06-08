@@ -266,50 +266,19 @@ public interface IGuild
     ICreateEmojiAction CreateEmoji(string name, DiscordImageBuffer image);
 
     /// <summary>
-    /// Creates a REST action to ban a member from this guild.
-    /// </summary>
-    /// <param name="userId">The ID of the user to ban.</param>
-    /// <param name="deleteMessageDays">The number of days of messages to delete (0-7).</param>
-    /// <returns>A REST action that can be configured and executed to ban the member.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IBanMemberAction BanMember(Snowflake userId, int deleteMessageDays = 0);
-
-    /// <summary>
-    /// Creates a REST action to unban a user from this guild.
-    /// </summary>
-    /// <param name="userId">The ID of the user to unban.</param>
-    /// <returns>A REST action that can be executed to unban the user. Chain
-    /// <see cref="IRestActionWithReason{TSelf}.WithReason"/> to attach an audit-log reason.</returns>
-    IReasonedRestAction UnbanMember(Snowflake userId);
-
-    /// <summary>
-    /// Creates a REST action to kick a member from this guild.
-    /// </summary>
-    /// <param name="userId">The ID of the user to kick.</param>
-    /// <returns>A REST action that can be executed to kick the member. Chain
-    /// <see cref="IRestActionWithReason{TSelf}.WithReason"/> to attach an audit-log reason.</returns>
-    IReasonedRestAction KickMember(Snowflake userId);
-
-    /// <summary>
-    /// Member surface for this guild — cache-aware reads (<c>GetAsync</c>, <c>GetCachedAsync</c>),
-    /// REST builders (<c>Get</c>, <c>List</c>), and the gateway Request Guild Members (op 8) flow
-    /// (<c>Request</c>). Pre-bound to this guild id; wraps the cross-guild
-    /// <see cref="IDiscordClient.Members"/> manager.
+    /// Member surface for this guild — cache reads, REST builders, gateway Request Guild Members
+    /// (op 8), and the member-resource mutations (<c>Add</c>, <c>Modify</c>, <c>ModifyCurrent</c>,
+    /// <c>AddRole</c>, <c>RemoveRole</c>, <c>Kick</c>). Pre-bound to this guild id; wraps the
+    /// cross-guild <see cref="IDiscordClient.Members"/> manager. For banning use
+    /// <see cref="Bans"/>.
     /// </summary>
     IGuildMembers Members { get; }
 
     /// <summary>
-    /// Gets a REST action to retrieve a ban by user ID in this guild.
+    /// Ban surface for this guild — every operation on <c>/guilds/:id/bans/*</c>
+    /// (<c>Get</c>, <c>List</c>, <c>Ban</c>, <c>Unban</c>, <c>BulkBan</c>).
     /// </summary>
-    /// <param name="userId">The ID of the user to retrieve the ban for.</param>
-    /// <returns>A REST action that can be executed to retrieve the ban.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction{T}.ExecuteAsync"/> to execute it.
-    /// Returns null if the user is not banned from this guild.
-    /// </remarks>
-    IRestAction<IBan?> GetBan(Snowflake userId);
+    IGuildBans Bans { get; }
 
     /// <summary>
     /// Creates a REST action to get audit logs of this guild with pagination.
@@ -557,16 +526,7 @@ public interface IGuild
     /// <see cref="DiscoSdk.Caching.StickerFetchMode"/>. The same scope is reachable from
     /// <see cref="IDiscordClient.Stickers"/> via <c>OfGuild(...)</c>.
     /// </summary>
-    DiscoSdk.Caching.IGuildStickerScope Stickers { get; }
-
-    /// <summary>
-    /// Uploads a new sticker to this guild. Returns a fluent builder — chain
-    /// <c>SetDescription(...)</c> if you want a description, then <c>ExecuteAsync</c>.
-    /// </summary>
-    /// <param name="name">Sticker name (2-30 chars).</param>
-    /// <param name="tags">Suggestion / autocomplete tag string (max 200 chars).</param>
-    /// <param name="file">Sticker image file (PNG/APNG/GIF/Lottie, max 512 KiB).</param>
-    Rest.Actions.ICreateGuildStickerAction CreateSticker(string name, string tags, DiscoSdk.Models.Messages.MessageFile file);
+    DiscoSdk.Caching.IGuildStickers Stickers { get; }
 
     /// <summary>
     /// Gets a REST action that retrieves this guild's onboarding configuration.
@@ -582,50 +542,6 @@ public interface IGuild
     /// Gets a REST action that creates a template from this guild's current configuration.
     /// </summary>
     IRestAction<IGuildTemplate> CreateTemplate(string name, string? description = null);
-
-    /// <summary>
-    /// Gets a paginated REST action that lists this guild's bans.
-    /// </summary>
-    IBanPaginationAction GetBans();
-
-    /// <summary>
-    /// Gets a REST action that bans multiple users at once (up to 200 in a single call). Returns the
-    /// IDs of users that were successfully banned.
-    /// </summary>
-    /// <param name="userIds">The users to ban.</param>
-    /// <param name="deleteMessageSeconds">If set, the number of seconds of recent message history to wipe (0 to 604 800 / 7 days).</param>
-    IReasonedRestAction<IReadOnlyList<Snowflake>> BulkBan(IEnumerable<Snowflake> userIds, int? deleteMessageSeconds = null);
-
-    /// <summary>
-    /// Builds a REST action that adds a user to this guild using an OAuth2 access token granted with
-    /// the <c>guilds.join</c> scope. Configure optional fields (nickname, roles, mute, deaf) on the
-    /// returned builder, then call <see cref="IRestAction{T}.ExecuteAsync"/>. Returns <c>null</c> if
-    /// the user was already in the guild.
-    /// </summary>
-    IAddMemberAction AddMember(Snowflake userId, string accessToken);
-
-    /// <summary>
-    /// Gets a REST action that updates the bot's own nickname in this guild. Pass <c>null</c> to clear it.
-    /// </summary>
-    IReasonedRestAction<IMember> ModifyCurrentMember(string? nick);
-
-    /// <summary>
-    /// Builds a REST action that modifies a guild member. Each setter on the builder corresponds to
-    /// one Discord field — only the fields you set are sent. Use <see cref="IModifyMemberAction.Timeout"/>
-    /// / <see cref="IModifyMemberAction.ClearTimeout"/> instead of passing a sentinel timestamp.
-    /// </summary>
-    /// <param name="userId">The member to modify.</param>
-    IModifyMemberAction ModifyMember(Snowflake userId);
-
-    /// <summary>
-    /// Gets a REST action that adds a role to a guild member.
-    /// </summary>
-    IReasonedRestAction AddMemberRole(Snowflake userId, Snowflake roleId);
-
-    /// <summary>
-    /// Gets a REST action that removes a role from a guild member.
-    /// </summary>
-    IReasonedRestAction RemoveMemberRole(Snowflake userId, Snowflake roleId);
 
     /// <summary>
     /// Gets a REST action that updates the required MFA level for this guild. The caller must be the guild owner.

@@ -12,9 +12,6 @@ namespace DiscoSdk.Caching;
 /// </summary>
 public interface IGuildMembers
 {
-    /// <summary>The guild this scope is bound to.</summary>
-    Snowflake GuildId { get; }
-
     /// <summary>
     /// Builds a deferred action that resolves a member by user id. Defaults to
     /// <see cref="MemberFetchMode.CacheThenRest"/> — cache first, REST on miss, write-back when the
@@ -54,6 +51,49 @@ public interface IGuildMembers
     /// <param name="query">The username/nickname prefix to match. Required, non-blank.</param>
     /// <param name="limit">Maximum number of members to return (1–1000). Defaults server-side to 1.</param>
     IRestAction<IReadOnlyList<IMember>> Search(string query, int? limit = null);
+
+    /// <summary>
+    /// Builds a deferred REST action that adds a user to this guild using an OAuth2 access token
+    /// granted with the <c>guilds.join</c> scope. Configure optional fields (nickname, roles, mute,
+    /// deaf) on the returned builder, then call <see cref="IRestAction{T}.ExecuteAsync"/>. Returns
+    /// <c>null</c> if the user was already in the guild.
+    /// </summary>
+    IAddMemberAction Add(Snowflake userId, string accessToken);
+
+    /// <summary>
+    /// Builds a deferred REST action that modifies a guild member. Each setter on the builder
+    /// corresponds to one Discord field — only the fields you set are sent.
+    /// Use <see cref="IModifyMemberAction.Timeout"/> / <see cref="IModifyMemberAction.ClearTimeout"/>
+    /// instead of passing a sentinel timestamp.
+    /// </summary>
+    /// <param name="userId">The member to modify.</param>
+    IModifyMemberAction Modify(Snowflake userId);
+
+    /// <summary>
+    /// Builds a deferred REST action that updates the bot's own nickname in this guild. Pass
+    /// <c>null</c> to clear it.
+    /// </summary>
+    IReasonedRestAction<IMember> ModifyCurrent(string? nick);
+
+    /// <summary>
+    /// Builds a deferred REST action that adds a role to a guild member. Chain
+    /// <see cref="IRestActionWithReason{TSelf}.WithReason"/> to attach an audit-log reason.
+    /// </summary>
+    IReasonedRestAction AddRole(Snowflake userId, Snowflake roleId);
+
+    /// <summary>
+    /// Builds a deferred REST action that removes a role from a guild member. Chain
+    /// <see cref="IRestActionWithReason{TSelf}.WithReason"/> to attach an audit-log reason.
+    /// </summary>
+    IReasonedRestAction RemoveRole(Snowflake userId, Snowflake roleId);
+
+    /// <summary>
+    /// Builds a deferred REST action that kicks a member from this guild. Chain
+    /// <see cref="IRestActionWithReason{TSelf}.WithReason"/> to attach an audit-log reason.
+    /// Kicking removes the member from the guild without creating a ban — for permanent removal
+    /// use <see cref="DiscoSdk.Models.IGuildBans.Ban"/> instead.
+    /// </summary>
+    IReasonedRestAction Kick(Snowflake userId);
 
     /// <summary>
     /// Builds a deferred Request Guild Members gateway action (op 8).

@@ -1,8 +1,10 @@
 using DiscoSdk.Caching;
 using DiscoSdk.Hosting.Observability;
+using DiscoSdk.Hosting.Rest.Actions;
 using DiscoSdk.Hosting.Wrappers;
 using DiscoSdk.Models;
 using DiscoSdk.Models.Messages;
+using DiscoSdk.Rest.Actions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Concurrent;
@@ -39,11 +41,17 @@ internal sealed class StickerManager : IStickerManager
     internal StickerCacheFlag Flags => _flags;
 
     /// <inheritdoc />
-    public async ValueTask<ISticker?> GetAsync(
+    public IRestAction<ISticker?> Get(
         Snowflake guildId,
         Snowflake stickerId,
-        StickerFetchMode mode = StickerFetchMode.CacheThenRest,
-        CancellationToken ct = default)
+        StickerFetchMode mode = StickerFetchMode.CacheThenRest)
+        => RestAction<ISticker?>.Create(ct => GetCoreAsync(guildId, stickerId, mode, ct));
+
+    private async Task<ISticker?> GetCoreAsync(
+        Snowflake guildId,
+        Snowflake stickerId,
+        StickerFetchMode mode,
+        CancellationToken ct)
     {
         if (guildId.Empty || stickerId.Empty)
             return null;
@@ -93,7 +101,7 @@ internal sealed class StickerManager : IStickerManager
             new KeyValuePair<string, object?>(DiagnosticTags.CacheResult, result));
 
     /// <inheritdoc />
-    public IGuildStickerScope OfGuild(Snowflake guildId) => new GuildStickerScope(this, guildId);
+    public IGuildStickers OfGuild(Snowflake guildId) => new GuildStickersImpl(this, guildId);
 
     /// <summary>
     /// Seeds the cache from the <c>GUILD_CREATE</c> sticker snapshot. The supplied list is
@@ -137,6 +145,9 @@ internal sealed class StickerManager : IStickerManager
 
         return builder.ToImmutable();
     }
+
+    internal int CountGuild(Snowflake guildId)
+        => !guildId.Empty && _byGuild.TryGetValue(guildId, out var guildCache) ? guildCache.Count : 0;
 
     internal async ValueTask<IReadOnlyList<ISticker>> GetAllAsync(
         Snowflake guildId,
@@ -195,21 +206,23 @@ internal sealed class StickerManager : IStickerManager
         _byGuild[guildId] = fresh;
     }
 
-    private sealed class GuildStickerScope(StickerManager manager, Snowflake guildId) : IGuildStickerScope
+    private sealed class GuildStickersImpl(StickerManager manager, Snowflake guildId) : IGuildStickers
     {
-        public Snowflake GuildId => guildId;
+        public IRestAction<ISticker?> Get(Snowflake stickerId, StickerFetchMode mode = StickerFetchMode.CacheThenRest)
+            => manager.Get(guildId, stickerId, mode);
 
-        public ValueTask<ISticker?> GetAsync(
-            Snowflake stickerId,
-            StickerFetchMode mode = StickerFetchMode.CacheThenRest,
-            CancellationToken ct = default)
-            => manager.GetAsync(guildId, stickerId, mode, ct);
-
-        public ValueTask<IReadOnlyList<ISticker>> GetAllAsync(
-            StickerFetchMode mode = StickerFetchMode.CacheThenRest,
-            CancellationToken ct = default)
-            => manager.GetAllAsync(guildId, mode, ct);
+        public IRestAction<IReadOnlyList<ISticker>> GetAll(StickerFetchMode mode = StickerFetchMode.CacheThenRest)
+        {
+            var gid = guildId;
+            return RestAction<IReadOnlyList<ISticker>>.Create(async ct =>
+                await manager.GetAllAsync(gid, mode, ct).ConfigureAwait(false));
+        }
 
         public IReadOnlyList<ISticker> GetCached() => manager.GetCached(guildId);
+
+        public int GetCachedCount() => manager.CountGuild(guildId);
+
+        public ICreateGuildStickerAction Create(string name, string tags, MessageFile file)
+            => new CreateGuildStickerAction(manager._client, guildId, name, tags, file);
     }
 }

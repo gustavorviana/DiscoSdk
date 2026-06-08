@@ -35,11 +35,17 @@ internal sealed class MemberManager : IMemberManager
     }
 
     /// <inheritdoc />
-    public async ValueTask<IMember?> GetAsync(
+    public IRestAction<IMember?> Get(
         Snowflake guildId,
         Snowflake userId,
-        MemberFetchMode mode = MemberFetchMode.CacheThenRest,
-        CancellationToken ct = default)
+        MemberFetchMode mode = MemberFetchMode.CacheThenRest)
+        => RestAction<IMember?>.Create(ct => GetCoreAsync(guildId, userId, mode, ct));
+
+    private async Task<IMember?> GetCoreAsync(
+        Snowflake guildId,
+        Snowflake userId,
+        MemberFetchMode mode,
+        CancellationToken ct)
     {
         if (guildId.Empty || userId.Empty)
             return null;
@@ -230,14 +236,8 @@ internal sealed class MemberManager : IMemberManager
 
     private sealed class GuildMembersImpl(MemberManager manager, Snowflake guildId, IGuild? guildContext) : IGuildMembers
     {
-        public Snowflake GuildId => guildId;
-
         public IRestAction<IMember?> Get(Snowflake userId, MemberFetchMode mode = MemberFetchMode.CacheThenRest)
-        {
-            var gid = guildId;
-            return RestAction<IMember?>.Create(async ct =>
-                await manager.GetAsync(gid, userId, mode, ct).ConfigureAwait(false));
-        }
+            => manager.Get(guildId, userId, mode);
 
         public IEnumerable<IMember> GetCached() => manager.EnumerateGuild(guildId);
 
@@ -267,6 +267,47 @@ internal sealed class MemberManager : IMemberManager
 
         public IRequestGuildMembersAction Request()
             => new RequestGuildMembersAction(manager._client, guildId);
+
+        public IAddMemberAction Add(Snowflake userId, string accessToken)
+            => new AddMemberAction(manager._client, ResolveGuild(), userId, accessToken);
+
+        public IModifyMemberAction Modify(Snowflake userId)
+            => new ModifyMemberAction(manager._client, ResolveGuild(), userId);
+
+        public IReasonedRestAction<IMember> ModifyCurrent(string? nick)
+        {
+            var client = manager._client;
+            var gid = guildId;
+            return new ReasonedRestAction<IMember>(async (reason, ct) =>
+            {
+                var member = await client.GuildClient.ModifyCurrentMemberAsync(gid, nick, reason, ct).ConfigureAwait(false);
+                return new GuildMemberWrapper(client, member, ResolveGuild());
+            });
+        }
+
+        public IReasonedRestAction AddRole(Snowflake userId, Snowflake roleId)
+        {
+            var client = manager._client;
+            var gid = guildId;
+            return new ReasonedRestAction((reason, ct) =>
+                client.GuildClient.AddMemberRoleAsync(gid, userId, roleId, reason, ct));
+        }
+
+        public IReasonedRestAction RemoveRole(Snowflake userId, Snowflake roleId)
+        {
+            var client = manager._client;
+            var gid = guildId;
+            return new ReasonedRestAction((reason, ct) =>
+                client.GuildClient.RemoveMemberRoleAsync(gid, userId, roleId, reason, ct));
+        }
+
+        public IReasonedRestAction Kick(Snowflake userId)
+        {
+            var client = manager._client;
+            var gid = guildId;
+            return new ReasonedRestAction((reason, ct) =>
+                client.GuildClient.KickMemberAsync(gid, userId, reason, ct));
+        }
 
         private IGuild ResolveGuild()
             => guildContext

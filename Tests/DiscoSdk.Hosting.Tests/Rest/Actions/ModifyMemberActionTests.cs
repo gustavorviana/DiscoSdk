@@ -23,7 +23,7 @@ public class ModifyMemberActionTests : WrapperTestBase
     [Fact]
     public async Task ExecuteAsync_EmitsOnlySetFieldsAsync()
     {
-        await _guild.ModifyMember(_userId).SetNickname("new").SetMuted(true).ExecuteAsync();
+        await _guild.Members.Modify(_userId).SetNickname("new").SetMuted(true).ExecuteAsync();
 
         await Http.Received(1).SendAsync<GuildMember>(
             Arg.Is<DiscordRoute>(r => r.ToString() == $"guilds/{_guildId}/members/{_userId}"),
@@ -41,7 +41,7 @@ public class ModifyMemberActionTests : WrapperTestBase
     {
         var until = DateTimeOffset.UtcNow.AddMinutes(10);
 
-        await _guild.ModifyMember(_userId).Timeout(until).ExecuteAsync();
+        await _guild.Members.Modify(_userId).Timeout(until).ExecuteAsync();
 
         await Http.Received(1).SendAsync<GuildMember>(
             Arg.Any<DiscordRoute>(), HttpMethod.Patch,
@@ -52,7 +52,7 @@ public class ModifyMemberActionTests : WrapperTestBase
     [Fact]
     public async Task ClearTimeout_SetsCommunicationDisabledUntilToNullAsync()
     {
-        await _guild.ModifyMember(_userId).ClearTimeout().ExecuteAsync();
+        await _guild.Members.Modify(_userId).ClearTimeout().ExecuteAsync();
 
         await Http.Received(1).SendAsync<GuildMember>(
             Arg.Any<DiscordRoute>(), HttpMethod.Patch,
@@ -65,7 +65,7 @@ public class ModifyMemberActionTests : WrapperTestBase
     [Fact]
     public async Task MoveToVoiceChannel_Null_DisconnectsAsync()
     {
-        await _guild.ModifyMember(_userId).MoveToVoiceChannel(null).ExecuteAsync();
+        await _guild.Members.Modify(_userId).MoveToVoiceChannel(null).ExecuteAsync();
 
         await Http.Received(1).SendAsync<GuildMember>(
             Arg.Any<DiscordRoute>(), HttpMethod.Patch,
@@ -84,7 +84,7 @@ public class ModifyMemberActionTests : WrapperTestBase
                 return new GuildMember { User = new User { UserId = _userId, Username = "u" } };
             });
 
-        await _guild.ModifyMember(_userId).SetRoles([new Snowflake(7), new Snowflake(8)]).ExecuteAsync();
+        await _guild.Members.Modify(_userId).SetRoles([new Snowflake(7), new Snowflake(8)]).ExecuteAsync();
 
         var dict = Assert.IsAssignableFrom<IDictionary<string, object?>>(captured!);
         var arr = Assert.IsType<string[]>(dict["roles"]);
@@ -93,5 +93,5 @@ public class ModifyMemberActionTests : WrapperTestBase
 
     [Fact]
     public void SetRoles_NullThrows()
-        => Assert.Throws<ArgumentNullException>(() => _guild.ModifyMember(_userId).SetRoles(null!));
+        => Assert.Throws<ArgumentNullException>(() => _guild.Members.Modify(_userId).SetRoles(null!));
 }

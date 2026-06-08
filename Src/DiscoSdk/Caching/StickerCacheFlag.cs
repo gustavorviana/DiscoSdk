@@ -8,7 +8,7 @@ namespace DiscoSdk.Caching;
 /// </summary>
 public enum StickerCacheFlag
 {
-    /// <summary>No stickers are cached. <see cref="IGuildStickerScope.GetCached"/> is always empty.</summary>
+    /// <summary>No stickers are cached. <see cref="IGuildStickers.GetCached"/> is always empty.</summary>
     None = 0,
 
     /// <summary>

@@ -1,4 +1,5 @@
 using DiscoSdk.Models;
+using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Caching;
 
@@ -10,23 +11,20 @@ namespace DiscoSdk.Caching;
 public interface IStickerManager
 {
     /// <summary>
-    /// Looks up a single guild sticker by composite identity. See
+    /// Builds a deferred action that resolves a single guild sticker by composite identity. See
     /// <see cref="StickerFetchMode"/> for traversal semantics.
     /// </summary>
     /// <param name="guildId">The guild that owns the sticker.</param>
     /// <param name="stickerId">The sticker id.</param>
     /// <param name="mode">Controls the cache / REST traversal.</param>
-    /// <param name="ct">A cancellation token.</param>
-    /// <returns>The sticker when found; <c>null</c> when it does not exist or is unavailable.</returns>
-    ValueTask<ISticker?> GetAsync(
+    IRestAction<ISticker?> Get(
         Snowflake guildId,
         Snowflake stickerId,
-        StickerFetchMode mode = StickerFetchMode.CacheThenRest,
-        CancellationToken ct = default);
+        StickerFetchMode mode = StickerFetchMode.CacheThenRest);
 
     /// <summary>
-    /// Returns a scope bound to the supplied guild. The scope reuses this manager and the same
-    /// underlying cache, just pre-bound so callers don't repeat the guild id.
+    /// Returns a per-guild sticker surface combining cache reads, REST builders, and the
+    /// <c>Create</c> upload action, all pre-bound to <paramref name="guildId"/>.
     /// </summary>
-    IGuildStickerScope OfGuild(Snowflake guildId);
+    IGuildStickers OfGuild(Snowflake guildId);
 }

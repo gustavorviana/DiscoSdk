@@ -1,4 +1,5 @@
 using DiscoSdk.Models;
+using DiscoSdk.Rest.Actions;
 
 namespace DiscoSdk.Caching;
 
@@ -9,19 +10,17 @@ namespace DiscoSdk.Caching;
 public interface IMemberManager
 {
     /// <summary>
-    /// Looks up a single member by composite identity. The default fetch mode hits the cache first
-    /// and falls back to REST on miss, populating the cache when the policy accepts the result.
+    /// Builds a deferred action that resolves a single member by composite identity. The default
+    /// fetch mode hits the cache first and falls back to REST on miss, populating the cache when
+    /// the policy accepts the result.
     /// </summary>
     /// <param name="guildId">The guild the member belongs to.</param>
     /// <param name="userId">The user identifying the member.</param>
     /// <param name="mode">Controls the cache/REST traversal.</param>
-    /// <param name="ct">A cancellation token.</param>
-    /// <returns>The member when found; <c>null</c> when the member does not exist or is unavailable.</returns>
-    ValueTask<IMember?> GetAsync(
+    IRestAction<IMember?> Get(
         Snowflake guildId,
         Snowflake userId,
-        MemberFetchMode mode = MemberFetchMode.CacheThenRest,
-        CancellationToken ct = default);
+        MemberFetchMode mode = MemberFetchMode.CacheThenRest);
 
     /// <summary>
     /// Returns a per-guild member surface that combines cache-aware reads, REST builders, and the

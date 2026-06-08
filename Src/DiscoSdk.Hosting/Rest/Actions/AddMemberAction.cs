@@ -8,7 +8,7 @@ namespace DiscoSdk.Hosting.Rest.Actions;
 internal sealed class AddMemberAction : RestAction<IMember?>, IAddMemberAction
 {
     private readonly DiscordClient _client;
-    private readonly GuildWrapper _guild;
+    private readonly IGuild _guild;
     private readonly Snowflake _userId;
     private readonly string _accessToken;
     private string? _nick;
@@ -17,7 +17,7 @@ internal sealed class AddMemberAction : RestAction<IMember?>, IAddMemberAction
     private bool? _deaf;
     private string? _reason;
 
-    public AddMemberAction(DiscordClient client, GuildWrapper guild, Snowflake userId, string accessToken)
+    public AddMemberAction(DiscordClient client, IGuild guild, Snowflake userId, string accessToken)
     {
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new ArgumentException("Access token cannot be null or empty.", nameof(accessToken));
