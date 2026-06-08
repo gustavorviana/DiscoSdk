@@ -47,6 +47,11 @@ namespace DiscoSdk.Hosting
 
         internal PresenceManager Presences { get; }
 
+        /// <inheritdoc />
+        public IStickerManager Stickers => StickersInternal;
+
+        internal StickerManager StickersInternal { get; }
+
         public event Func<IDiscordClient, ICommandUpdateSession, Task>? CommandsUpdateWindowOpened;
         public event EventHandler<UnhandledErrorEventArgs>? UnhandledError;
         public event GatewayDisconnectedEventHandler? GatewayDisconnected;
@@ -188,6 +193,9 @@ namespace DiscoSdk.Hosting
             var presenceFlags = services.GetService<PresenceCacheConfiguration>()?.Flags
                 ?? PresenceManager.DefaultFlags;
             Presences = new PresenceManager(presenceFlags);
+            var stickerFlags = services.GetService<StickerCacheConfiguration>()?.Flags
+                ?? StickerManager.DefaultFlags;
+            StickersInternal = new StickerManager(this, stickerFlags, Logger);
             DmRepository = new DmChannelRepository(this);
             ObjectConverter = objectConverter;
         }

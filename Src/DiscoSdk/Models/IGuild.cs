@@ -579,11 +579,14 @@ public interface IGuild
         DateTimeOffset scheduledStartTime,
         Enums.ScheduledEventEntityType entityType);
 
-    /// <summary>Lists every sticker owned by this guild.</summary>
-    IRestAction<IReadOnlyList<ISticker>> GetStickers();
-
-    /// <summary>Gets a single guild-owned sticker by id.</summary>
-    IRestAction<ISticker> GetSticker(Snowflake stickerId);
+    /// <summary>
+    /// Sticker access scope bound to this guild. Read operations route through the SDK's
+    /// in-memory sticker cache (when enabled via
+    /// <c>DiscordClientBuilder.WithStickerCache</c>) and fall back to REST per
+    /// <see cref="DiscoSdk.Caching.StickerFetchMode"/>. The same scope is reachable from
+    /// <see cref="IDiscordClient.Stickers"/> via <c>OfGuild(...)</c>.
+    /// </summary>
+    DiscoSdk.Caching.IGuildStickerScope Stickers { get; }
 
     /// <summary>
     /// Uploads a new sticker to this guild. Returns a fluent builder — chain

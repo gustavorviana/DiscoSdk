@@ -98,6 +98,10 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
 
             _guildCache[guild.Id] = wrappedGuild;
             client.Presences.OnGuildPresencesSeed(guild.Presences, guild.Id);
+            client.StickersInternal.OnGuildStickersSeed(guild.Stickers, guild.Id);
+            // Drop the stickers off the cached Guild POCO so the StickerManager partition stays
+            // the single source of truth for sticker data.
+            guild.Stickers = [];
 
             if (_pendingGuilds.Remove(guild.Id))
             {
@@ -128,6 +132,7 @@ public class GuildManager(DiscordClient client, ILogger? logger = null)
         // cache + secondary index. Failures are swallowed by the member manager's logging.
         _ = client.MembersInternal.OnGuildRemoveAsync(guildId);
         client.Presences.OnGuildRemove(guildId);
+        client.StickersInternal.OnGuildRemove(guildId);
     }
 
     internal void HandleChannelCreate(Channel channel)

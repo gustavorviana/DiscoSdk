@@ -978,7 +978,10 @@ internal class DiscordEventDispatcher
                 if (sticker is not null) stickers.Add(sticker);
             }
 
-        var eventData = new GuildStickersUpdateContextWrapper(_discordClient, guild, stickers.ToImmutable());
+        var stickerSnapshot = stickers.ToImmutable();
+        _discordClient.StickersInternal.OnGuildStickersUpdate(stickerSnapshot, guild.Id);
+
+        var eventData = new GuildStickersUpdateContextWrapper(_discordClient, guild, stickerSnapshot);
         await HandleAllAsync<IGuildStickersUpdateHandler, IGuildStickersUpdateContext>(eventData);
     }
 

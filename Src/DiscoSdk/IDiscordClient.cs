@@ -52,6 +52,12 @@ public interface IDiscordClient
     /// </summary>
     IMemberManager Members { get; }
 
+    /// <summary>
+    /// Cross-guild sticker access — cache lookup, REST fallback, and per-guild scoping
+    /// (<see cref="IStickerManager.OfGuild"/>) for iteration over cached guild stickers.
+    /// </summary>
+    IStickerManager Stickers { get; }
+
     event Func<IDiscordClient, ICommandUpdateSession, Task>? CommandsUpdateWindowOpened;
     event EventHandler<UnhandledErrorEventArgs>? UnhandledError;
     event EventHandler? OnConnectionLost;

@@ -207,6 +207,21 @@ public class DiscordClientBuilder
     }
 
     /// <summary>
+    /// Configures whether the SDK keeps an in-memory copy of every guild's uploaded stickers.
+    /// Defaults to <see cref="StickerCacheFlag.None"/> — stickers are not cached unless the host
+    /// opts in. When the flag is enabled the cache is seeded from <c>GUILD_CREATE</c> and
+    /// refreshed wholesale on every <c>GUILD_STICKERS_UPDATE</c> event; standard Nitro pack
+    /// stickers stay REST-only regardless of this flag.
+    /// </summary>
+    /// <param name="flags">The sticker cache scope to enable.</param>
+    /// <returns>The current <see cref="DiscordClientBuilder"/> instance.</returns>
+    public DiscordClientBuilder WithStickerCache(StickerCacheFlag flags)
+    {
+        _services.AddSingleton(new StickerCacheConfiguration(flags));
+        return this;
+    }
+
+    /// <summary>
     /// Sets the member cache policy from a preset.
     /// </summary>
     /// <param name="preset">The preset to apply.</param>
