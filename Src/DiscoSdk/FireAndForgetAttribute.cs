@@ -9,4 +9,10 @@ namespace DiscoSdk;
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = true, AllowMultiple = false)]
 public sealed class FireAndForgetAttribute : Attribute
 {
+    /// <summary>
+    /// When <c>true</c>, the dispatcher breaks the current handler chain after invoking this
+    /// handler — any handler that comes after in the same chain is skipped. Default is <c>false</c>.
+    /// Scoped to the current chain only.
+    /// </summary>
+    public bool SkipNextExecutions { get; set; }
 }

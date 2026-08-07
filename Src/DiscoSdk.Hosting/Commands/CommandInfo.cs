@@ -185,9 +185,16 @@ internal class CommandInfo : SlashCommandHandlerCaller
 
     public Task ExecuteAsync(ICommandContext context, IServiceProvider services, CancellationToken token)
     {
+        var attribute = FireAndForgetCache.GetAttribute(_method.Method);
+
         // [FireAndForget] opt-in.
-        if (!FireAndForgetCache.IsFireAndForget(_method.Method))
+        if (attribute is null)
             return ExecuteAwaitedAsync(context, services, token);
+
+        // Chain-break propagates synchronously through the interaction handle so the surrounding
+        // HandleAllAsync stops iterating before the next IApplicationCommandHandler runs.
+        if (attribute.SkipNextExecutions && context is Contexts.InteractionContextWrapper wrapper)
+            wrapper.Interaction.Handle.SkipNextExecutions = true;
 
         var handler = GetHandler(services);
         var args = _parameters.CreateInstances(services, context, token);

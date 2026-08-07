@@ -22,9 +22,14 @@ internal class ContextMenuCommandInfo(ContextMenuType type, string name, string[
 
     public Task ExecuteAsync(object handler, object context, IServiceProvider? services, CancellationToken token)
     {
+        var attribute = FireAndForgetCache.GetAttribute(method.Method);
+
         // [FireAndForget] opt-in.
-        if (!FireAndForgetCache.IsFireAndForget(method.Method))
+        if (attribute is null)
             return method.ExecuteAsync(handler, [context], token);
+
+        if (attribute.SkipNextExecutions && context is Contexts.InteractionContextWrapper wrapper)
+            wrapper.Interaction.Handle.SkipNextExecutions = true;
 
         _ = Task.Run(async () =>
         {

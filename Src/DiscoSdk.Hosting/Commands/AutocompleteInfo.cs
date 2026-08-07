@@ -23,10 +23,14 @@ internal class AutoCompleteInfo(Type type, MethodInfo method, string commandName
     {
         var instance = GetHandler(service);
         var parameters = _parameters.CreateInstances(service, context, token);
+        var attribute = FireAndForgetCache.GetAttribute(_method.Method);
 
         // [FireAndForget] opt-in.
-        if (!FireAndForgetCache.IsFireAndForget(_method.Method))
+        if (attribute is null)
             return _method.ExecuteAsync(instance, parameters, token);
+
+        if (attribute.SkipNextExecutions && context is Contexts.InteractionContextWrapper wrapper)
+            wrapper.Interaction.Handle.SkipNextExecutions = true;
 
         _ = Task.Run(async () =>
         {

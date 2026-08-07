@@ -14,7 +14,7 @@ public class SlowQueryCommandHandler : SlashCommandHandler
 {
     [SlashCommand("slowquery", "Demo: long-running command (fire-and-forget).", GuildIds = ["773618860875579422"])]
     [SlashOption(SlashCommandOptionType.String, "topic", "Query topic.", required: true)]
-    [FireAndForget]
+    [FireAndForget(SkipNextExecutions = true)]
     protected async Task OnExecuteAsync(ICommandContext context)
     {
         var topic = context.GetOption<string>("topic") ?? "unknown";

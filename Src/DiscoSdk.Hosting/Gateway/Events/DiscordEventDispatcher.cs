@@ -1228,29 +1228,54 @@ internal class DiscordEventDispatcher
         where TContext : IContext
     {
         foreach (var handler in GetHandlersOfType<THandler>())
+        {
             await SafeRunHandlerAsync(handler, context);
+
+            // [FireAndForget(SkipNextExecutions = true)] at class level OR on the HandleAsync
+            // method that implements this specific IDiscordEventHandler<T>. The chain breaks
+            // locally — there's no InteractionHandle in this overload.
+            if (FireAndForgetCache.GetHandlerAttribute(handler.GetType(), typeof(IDiscordEventHandler<TContext>))?.SkipNextExecutions == true)
+                break;
+        }
     }
 
     private async Task HandleAllAsync<THandler, TContext>(InteractionHandle handle, IServiceProvider service, TContext context)
         where THandler : IDiscordEventHandler<TContext>
         where TContext : IContext
     {
+        // Reset chain-scoped flag at every chain entry. The Skip set by one handler family
+        // (e.g. IApplicationCommandHandler) must not leak into the next family
+        // (e.g. IInteractionCreateHandler) — they're separate concerns.
+        handle.SkipNextExecutions = false;
+
         if (handle.Responded)
             return;
 
         foreach (var handler in GetHandlersOfType<THandler>())
-            if (!handle.Responded)
-                await SafeRunHandlerAsync(handler, context);
+        {
+            if (handle.Responded || handle.SkipNextExecutions)
+                break;
+
+            await SafeRunHandlerAsync(handler, context, handle);
+        }
     }
 
-    private Task SafeRunHandlerAsync<THandler, TContext>(THandler handler, TContext context)
+    private Task SafeRunHandlerAsync<THandler, TContext>(THandler handler, TContext context, InteractionHandle? handle = null)
         where THandler : IDiscordEventHandler<TContext>
         where TContext : IContext
     {
         var handlerClass = handler.GetType();
+        // Resolution: class-level [FireAndForget] OR method-level on the HandleAsync that
+        // implements the specific IDiscordEventHandler<TContext> contract.
+        var attribute = FireAndForgetCache.GetHandlerAttribute(handlerClass, typeof(IDiscordEventHandler<TContext>));
 
-        // [FireAndForget] opt-in.
-        if (!FireAndForgetCache.IsFireAndForget(handlerClass))
+        // Signal chain break before handing control off so the surrounding foreach sees the flag
+        // right after this method returns (the fire-and-forget body itself runs detached and is
+        // no longer observable).
+        if (attribute is { SkipNextExecutions: true } && handle is not null)
+            handle.SkipNextExecutions = true;
+
+        if (attribute is null)
             return InvokeHandlerCoreAsync(handler, context, handlerClass, fireAndForget: false);
 
         _ = Task.Run(() => InvokeHandlerCoreAsync(handler, context, handlerClass, fireAndForget: true));
