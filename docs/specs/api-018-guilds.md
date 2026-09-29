@@ -28,7 +28,7 @@ The wire `Guild` maps the documented fields, including features, premium progres
 |---|---|
 | `GuildClient` | Guild get/edit, preview, channels, members (list, search, add, modify, modify current, roles, kick), bans (single, bulk), prune, regions, invites, integrations, widget, vanity, welcome screen, incident actions, active threads, and the removed delete/MFA routes. |
 | `RoleClient` | Role get/create/edit/delete/positions. |
-| Surfaces | Bind the guild id, validate input (for example the bulk-ban size of 1–200), return typed actions. |
+| Surfaces | Bind the guild id and return typed actions. The bulk-ban size (1–200) is documented, but Discord enforces it (400), not the SDK. |
 | `MemberManager`, `GuildManager` | Cache-first reads with REST fallback (SPEC-SDK-04). |
 
 ## 5. Public API
@@ -38,7 +38,7 @@ The wire `Guild` maps the documented fields, including features, premium progres
 45 documented routes, plus 2 removed routes still called (`DELETE /guilds/{id}`, `POST /guilds/{id}/mfa`). The member list needs the privileged `GUILD_MEMBERS` intent.
 
 ## 7. Flows
-Bulk ban: validate 1–200 ids → `POST /guilds/{id}/bulk-ban { user_ids, delete_message_seconds }` → the banned ids are returned.
+Bulk ban: `POST /guilds/{id}/bulk-ban { user_ids, delete_message_seconds }` → the banned ids are returned (more than 200 ids → Discord 400).
 
 ## 8. Concurrency and lifecycle
 Stateless request builders; wrappers are snapshots of the returned models.
@@ -46,7 +46,7 @@ Stateless request builders; wrappers are snapshots of the returned models.
 ## 9. Errors and edge cases
 | Situation | Expected behaviour |
 |---|---|
-| Member list without the `GUILD_MEMBERS` intent | `MissingIntentException` from `IntentGuard`, before any request. |
+| Member list or member request without the `GUILD_MEMBERS` intent | `MissingIntentException` from `IntentGuard.Require` (`MemberPaginationAction`, `RequestGuildMembersAction`), before any request. |
 | Role above the bot's highest role | Discord 403 → `InsufficientPermissionException`. |
 | `IGuild.Delete()` / `ModifyMfaLevel()` | Fail: the endpoints are not available to applications. |
 
