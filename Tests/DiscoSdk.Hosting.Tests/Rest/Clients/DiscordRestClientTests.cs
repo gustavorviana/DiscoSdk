@@ -243,4 +243,48 @@ public class DiscordRestClientTests
         // Assert
         Assert.Same(afterFirst, afterSecond);
     }
+
+    // ---------- Base URI and User-Agent ----------
+
+    private static HttpClient GetHttp(DiscordRestClient client)
+    {
+        var field = typeof(DiscordRestClient).GetField("_http",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        return (HttpClient)field!.GetValue(client)!;
+    }
+
+    [Theory]
+    [InlineData("https://discord.com/api/v10")]
+    [InlineData("https://discord.com/api/v10/")]
+    public void Constructor_KeepsApiVersionWhenResolvingRelativeRoutes(string apiUri)
+    {
+        // Arrange
+        using var client = new DiscordRestClient("test-token", new Uri(apiUri), _jsonOptions, _logger, _timeProvider);
+        var route = new DiscordRoute("channels/{channel_id}/messages", 123UL);
+
+        // Act
+        var resolved = new Uri(GetHttp(client).BaseAddress!, route.ToString());
+
+        // Assert
+        Assert.Equal("/api/v10/channels/123/messages", resolved.AbsolutePath);
+    }
+
+    [Fact]
+    public void DefaultApiUri_TargetsVersion10WithTrailingSlash()
+    {
+        Assert.Equal("https://discord.com/api/v10/", DiscordRestClient.DefaultApiUri);
+    }
+
+    [Fact]
+    public void Constructor_SendsDiscordCompliantUserAgent()
+    {
+        // Arrange
+        using var client = NewClient();
+
+        // Act
+        var userAgent = string.Join(" ", GetHttp(client).DefaultRequestHeaders.GetValues("User-Agent"));
+
+        // Assert
+        Assert.Matches(@"^DiscordBot \(https://github\.com/gustavorviana/DiscoSdk, \d+\.\d+\.\d+\)$", userAgent);
+    }
 }
