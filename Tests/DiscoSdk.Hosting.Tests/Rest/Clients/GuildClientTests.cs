@@ -114,17 +114,6 @@ public class GuildClientTests
 	}
 
 	[Fact]
-	public async Task DeleteAsync_UsesGuildRootAsync()
-	{
-		await _client.DeleteAsync(_guildId);
-
-		await _http.Received(1).SendAsync(
-			Arg.Is<DiscordRoute>(r => r.ToString() == $"guilds/{_guildId}"),
-			HttpMethod.Delete,
-			Arg.Any<CancellationToken>());
-	}
-
-	[Fact]
 	public async Task LeaveAsync_UsesUserGuildsRouteAsync()
 	{
 		await _client.LeaveAsync(_guildId);
@@ -257,18 +246,6 @@ public class GuildClientTests
 		await _http.Received(1).SendAsync(
 			Arg.Is<DiscordRoute>(r => r.ToString() == $"guilds/{_guildId}/members/{_userId}/roles/{roleId}"),
 			HttpMethod.Delete,
-			Arg.Any<CancellationToken>());
-	}
-
-	[Fact]
-	public async Task ModifyMfaLevelAsync_PostsMfaRouteWithIntLevelAsync()
-	{
-		await _client.ModifyMfaLevelAsync(_guildId, MfaLevel.Elevated);
-
-		await _http.Received(1).SendAsync(
-			Arg.Is<DiscordRoute>(r => r.ToString() == $"guilds/{_guildId}/mfa"),
-			HttpMethod.Post,
-			Arg.Is<object?>(body => body!.GetType().GetProperty("level")!.GetValue(body)!.Equals((int)MfaLevel.Elevated)),
 			Arg.Any<CancellationToken>());
 	}
 

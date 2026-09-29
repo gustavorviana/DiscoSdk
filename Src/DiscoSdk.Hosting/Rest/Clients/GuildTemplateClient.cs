@@ -21,17 +21,6 @@ internal class GuildTemplateClient(IDiscordRestClient client)
 		return client.SendAsync<GuildTemplate>(route, HttpMethod.Get, null, cancellationToken);
 	}
 
-	/// <summary>Creates a new guild from a template.</summary>
-	/// <param name="icon">Optional base64 128x128 image data URI for the guild icon.</param>
-	public Task<Guild> CreateGuildFromTemplateAsync(string code, string name, string? icon = null, CancellationToken cancellationToken = default)
-	{
-		ArgumentException.ThrowIfNullOrWhiteSpace(code);
-		ArgumentException.ThrowIfNullOrWhiteSpace(name);
-
-		var route = new DiscordRoute("guilds/templates/{code}", code);
-		return client.SendAsync<Guild>(route, HttpMethod.Post, new { name, icon }, cancellationToken);
-	}
-
 	/// <summary>Lists the templates owned by a guild.</summary>
 	public Task<GuildTemplate[]> GetGuildTemplatesAsync(Snowflake guildId, CancellationToken cancellationToken = default)
 	{

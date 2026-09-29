@@ -59,7 +59,10 @@ internal class ThreadChannelPaginationAction : RestAction<IGuildThreadChannel[]>
         }
         else
         {
-            threads = await _client.ChannelClient.GetActiveThreadsAsync(_channel.Id, cancellationToken);
+            // GET /channels/{id}/threads/active was decommissioned; Discord's replacement lists the
+            // guild's active threads, filtered here to this channel.
+            var guildThreads = await _client.GuildClient.ListActiveThreadsAsync(_channel.Guild.Id, cancellationToken);
+            threads = [.. guildThreads.Where(t => t.ParentId == _channel.Id)];
         }
 
         return [.. threads

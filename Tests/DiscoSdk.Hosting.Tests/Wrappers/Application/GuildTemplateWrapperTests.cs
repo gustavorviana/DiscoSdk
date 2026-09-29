@@ -18,22 +18,6 @@ public class GuildTemplateWrapperTests : WrapperTestBase
 	};
 
 	[Fact]
-	public async Task CreateGuild_PostsToTemplateCodeRouteAsync()
-	{
-		Http.SendAsync<Guild>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-			.Returns(new Guild());
-		var wrapper = new GuildTemplateWrapper(Client, Model());
-
-		await wrapper.CreateGuild("NewGuild").ExecuteAsync();
-
-		await Http.Received(1).SendAsync<Guild>(
-			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/templates/abc"),
-			HttpMethod.Post,
-			Arg.Is<object?>(b => BodyPropertyEquals(b, "name", "NewGuild")),
-			Arg.Any<CancellationToken>());
-	}
-
-	[Fact]
 	public async Task Sync_PutsTemplateCodeOnSourceGuildRouteAsync()
 	{
 		Http.SendAsync<GuildTemplate>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())

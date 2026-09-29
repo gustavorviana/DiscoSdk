@@ -122,7 +122,7 @@ public class MessageWrapperTests : WrapperTestBase
 		await wrapper.Pin().ExecuteAsync();
 
 		await Http.Received(1).SendAsync(
-			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/pins/300"),
+			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/messages/pins/300"),
 			HttpMethod.Put, Arg.Any<CancellationToken>());
 	}
 
@@ -134,7 +134,7 @@ public class MessageWrapperTests : WrapperTestBase
 		await wrapper.Unpin().ExecuteAsync();
 
 		await Http.Received(1).SendAsync(
-			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/pins/300"),
+			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/messages/pins/300"),
 			HttpMethod.Delete, Arg.Any<CancellationToken>());
 	}
 

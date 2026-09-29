@@ -99,12 +99,6 @@ internal class GuildWrapper : IGuild
         return new EditGuildAction(_client, this);
     }
 
-    public IReasonedRestAction Delete()
-    {
-        return new ReasonedRestAction((_, cancellationToken) =>
-            _client.GuildClient.DeleteAsync(_guild.Id, cancellationToken));
-    }
-
     public IRestAction Leave()
     {
         return RestAction.Create(async cancellationToken =>
@@ -184,9 +178,6 @@ internal class GuildWrapper : IGuild
         });
     }
 
-
-    public IReasonedRestAction ModifyMfaLevel(MfaLevel level)
-        => new ReasonedRestAction((reason, ct) => _client.GuildClient.ModifyMfaLevelAsync(_guild.Id, level, reason, ct));
 
     public IRestAction<IReadOnlyList<IIntegration>> GetIntegrations()
         => RestAction<IReadOnlyList<IIntegration>>.Create(async ct =>

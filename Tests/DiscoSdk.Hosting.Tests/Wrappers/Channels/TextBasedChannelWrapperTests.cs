@@ -117,7 +117,7 @@ public class TextBasedChannelWrapperTests : WrapperTestBase
 		await NewWrapper().PinMessageByIdAsync(new Snowflake(300)).ExecuteAsync();
 
 		await Http.Received(1).SendAsync(
-			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/pins/300"),
+			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/messages/pins/300"),
 			HttpMethod.Put, Arg.Any<CancellationToken>());
 	}
 
@@ -127,21 +127,37 @@ public class TextBasedChannelWrapperTests : WrapperTestBase
 		await NewWrapper().UnpinMessageByIdAsync(new Snowflake(300)).ExecuteAsync();
 
 		await Http.Received(1).SendAsync(
-			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/pins/300"),
+			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/messages/pins/300"),
 			HttpMethod.Delete, Arg.Any<CancellationToken>());
 	}
 
 	[Fact]
-	public async Task RetrievePinnedMessages_GetsPinsRouteAsync()
+	public async Task RetrievePinnedMessages_GetsMessagesPinsRouteAndWrapsItemsAsync()
 	{
-		Http.SendAsync<Message[]>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-			.Returns([]);
+		var pinnedAt = new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
+		Http.SendAsync<MessagePinsResponse>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new MessagePinsResponse
+			{
+				Items = [new MessagePin { PinnedAt = pinnedAt, Message = NewMessage() }],
+				HasMore = false,
+			});
 
-		await NewWrapper().RetrievePinnedMessages().ExecuteAsync();
+		var pins = await NewWrapper().RetrievePinnedMessages().Limit(5).ExecuteAsync();
 
-		await Http.Received(1).SendAsync<Message[]>(
-			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/pins"),
+		var pin = Assert.Single(pins);
+		Assert.Equal(pinnedAt, pin.PinnedAt);
+		Assert.Equal(new Snowflake(300), pin.Message.Id);
+		await Http.Received(1).SendAsync<MessagePinsResponse>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == "channels/200/messages/pins?limit=5"),
 			HttpMethod.Get, Arg.Any<object?>(), Arg.Any<CancellationToken>());
+	}
+
+	[Theory]
+	[InlineData(0)]
+	[InlineData(51)]
+	public void RetrievePinnedMessages_LimitOutOfRange_Throws(int limit)
+	{
+		Assert.Throws<ArgumentOutOfRangeException>(() => NewWrapper().RetrievePinnedMessages().Limit(limit));
 	}
 
 	[Fact]

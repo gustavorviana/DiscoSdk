@@ -32,22 +32,6 @@ public class GuildTemplateClientTests
 	}
 
 	[Fact]
-	public async Task CreateGuildFromTemplateAsync_PostsToTemplateCodeAsync()
-	{
-		_http.SendAsync<Guild>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-			.Returns(new Guild());
-
-		await _client.CreateGuildFromTemplateAsync("code", "MyGuild");
-
-		await _http.Received(1).SendAsync<Guild>(
-			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/templates/code"),
-			HttpMethod.Post,
-			Arg.Is<object?>(body =>
-				body!.GetType().GetProperty("name")!.GetValue(body)!.Equals("MyGuild")),
-			Arg.Any<CancellationToken>());
-	}
-
-	[Fact]
 	public async Task GetGuildTemplatesAsync_GetsGuildScopedListAsync()
 	{
 		_http.SendAsync<GuildTemplate[]>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())

@@ -156,15 +156,6 @@ public interface IGuild
     IEditGuildAction Edit();
 
     /// <summary>
-    /// Gets a REST action for deleting this guild.
-    /// </summary>
-    /// <returns>A REST action that can be executed to delete the guild.</returns>
-    /// <remarks>
-    /// The action is not executed immediately. Call <see cref="IRestAction.ExecuteAsync"/> to execute it.
-    /// </remarks>
-    IReasonedRestAction Delete();
-
-    /// <summary>
     /// Gets a REST action for leaving this guild.
     /// </summary>
     /// <returns>A REST action that can be executed to leave the guild.</returns>
@@ -279,12 +270,6 @@ public interface IGuild
 
     /// <summary>Builds a deferred REST action that retrieves the vanity URL of this guild.</summary>
     IRestAction<IVanityUrl?> GetVanityUrl();
-
-    /// <summary>
-    /// Builds a deferred REST action that updates the required MFA level for this guild. The
-    /// caller must be the guild owner.
-    /// </summary>
-    IReasonedRestAction ModifyMfaLevel(MfaLevel level);
 
     /// <summary>Builds a deferred REST action that lists this guild's integrations.</summary>
     IRestAction<IReadOnlyList<IIntegration>> GetIntegrations();

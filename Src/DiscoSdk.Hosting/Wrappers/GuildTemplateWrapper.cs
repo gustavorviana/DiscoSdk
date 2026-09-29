@@ -25,9 +25,6 @@ internal sealed class GuildTemplateWrapper(DiscordClient client, GuildTemplate m
 	public IGuild SerializedSourceGuild => new GuildWrapper(_model.SerializedSourceGuild, _client);
 	public bool? IsDirty => _model.IsDirty;
 
-	public IRestAction<IGuild> CreateGuild(string name, string? icon = null)
-		=> RestAction<IGuild>.Create(async ct => new GuildWrapper(await _client.GuildTemplateClient.CreateGuildFromTemplateAsync(_model.Code, name, icon, ct), _client));
-
 	public IRestAction<IGuildTemplate> Sync()
 		=> RestAction<IGuildTemplate>.Create(async ct => new GuildTemplateWrapper(_client, await _client.GuildTemplateClient.SyncGuildTemplateAsync(_model.SourceGuildId, _model.Code, ct)));
 

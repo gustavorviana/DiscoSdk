@@ -1,3 +1,4 @@
+using DiscoSdk.Hosting.Rest.Clients;
 using DiscoSdk.Hosting.Tests.Wrappers.Common;
 using DiscoSdk.Hosting.Wrappers.Channels;
 using DiscoSdk.Models;
@@ -20,6 +21,28 @@ public class GuildForumChannelWrapperTests : WrapperTestBase
 
 	private GuildForumChannelWrapper NewWrapper()
 		=> new(Client, new Channel { Id = new Snowflake(200), Type = ChannelType.GuildForum }, _guild);
+
+	[Fact]
+	public async Task GetThreadChannels_ListsGuildActiveThreadsFilteredToThisChannelAsync()
+	{
+		Http.SendAsync<GuildClient.ActiveThreadsResponse>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new GuildClient.ActiveThreadsResponse
+			{
+				Threads =
+				[
+					new Channel { Id = new Snowflake(301), Type = ChannelType.PublicThread, ParentId = new Snowflake(200) },
+					new Channel { Id = new Snowflake(302), Type = ChannelType.PublicThread, ParentId = new Snowflake(999) },
+				],
+			});
+
+		var threads = await NewWrapper().GetThreadChannels().ExecuteAsync();
+
+		var thread = Assert.Single(threads);
+		Assert.Equal(new Snowflake(301), thread.Id);
+		await Http.Received(1).SendAsync<GuildClient.ActiveThreadsResponse>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/threads/active"),
+			HttpMethod.Get, Arg.Any<object?>(), Arg.Any<CancellationToken>());
+	}
 
 	[Fact]
 	public async Task StartPost_PostsForumPostRouteAsync()
