@@ -236,13 +236,17 @@ def discord_inventory(docs: DiscordDocs, pages: list[str]) -> dict[str, DiscordI
     for page in pages:
         text = docs.page(page)
         heading = ""
-        for line in text.splitlines():
+        lines = text.splitlines()
+        for i, line in enumerate(lines):
             h = re.match(r"^#{1,3}\s+(.*)$", line)
             if h:
                 heading = strip_md(h.group(1))
             for m in re.finditer(r'<Route method="(\w+)">(.*?)</Route>', line):
                 key = f"{m.group(1).upper()} {normalize_path(m.group(2))}"
-                add(DiscordItem(key, "route", page, heading, "deprecated" in heading.lower()))
+                # Deprecation is stated either in the heading or in a Danger/Warning right below the route.
+                nearby = " ".join(lines[i + 1:i + 6]).lower()
+                deprecated = "deprecated" in heading.lower() or "deprecated in favor" in nearby or "has been disabled" in nearby
+                add(DiscordItem(key, "route", page, heading, deprecated))
 
     # OAuth2 URLs (token endpoints are plain URLs, not <Route> tags).
     for cells in parse_table(docs.page("topics/oauth2"), "OAuth2 URLs"):
@@ -531,6 +535,8 @@ def cmd_check(args) -> int:
                 if item is None:
                     errors.append(f"{where}: key '{key}' does not exist in Discord docs at {docs.baseline['sha'][:7]}")
                     continue
+                if item.deprecated and row.status not in ("Deprecated", "Excluded"):
+                    warnings.append(f"{where}: Discord marks {key} as deprecated/disabled; consider status Deprecated")
                 ev = sdk_evidence(item, sdk, bits)
                 if ev is None:
                     continue
