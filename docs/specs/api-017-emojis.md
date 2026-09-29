@@ -52,6 +52,8 @@ REST metrics only (SPEC-SDK-05).
 | `ApplicationEmojiClientTests`, `ApplicationEmojiWrapperTests` | EM-F06 – EM-F10 |
 | `GuildExtrasDispatchTests` | EM-F12 |
 
+Implemented or Partial requirements without a covering test: EM-F13, EM-N01.
+
 ## 12. History
 | Commit | Change |
 |---|---|

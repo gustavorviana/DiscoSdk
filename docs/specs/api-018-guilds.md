@@ -63,6 +63,8 @@ REST metrics only (SPEC-SDK-05).
 | `GuildOnboardingWrapperTests`, `OnboardingPromptBuilderTests` | GD-F43, GD-F44, GD-F49 |
 | `IntegrationWrapperTests` | GD-F34, GD-F35 |
 
+Implemented or Partial requirements without a covering test: GD-F50 – GD-F51, GD-N01.
+
 ## 12. History
 | Commit | Change |
 |---|---|

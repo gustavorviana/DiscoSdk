@@ -69,6 +69,8 @@ REST metrics only. Secrets are never logged.
 | `CurrentAuthorizationInfoWrapperTests` | OA-F14 |
 | `ApplicationWrapperTests` | TM-F01, TM-F02 |
 
+Implemented or Partial requirements without a covering test: OA-F11 – OA-F12, OA-N02.
+
 ## 12. History
 | Commit | Change |
 |---|---|

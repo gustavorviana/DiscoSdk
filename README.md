@@ -130,6 +130,17 @@ client.EventRegistry.Register<MessageCreateEvent>(async (e) =>
 await client.StartAsync();
 ```
 
+## Documentation
+
+Product and technical documentation lives in [`docs/`](docs/README.md):
+
+- **PRDs** (`docs/prd/`) map every capability Discord offers bots, area by area, with an implementation
+  status and SDK evidence, plus DiscoSdk's own framework features (bootstrap, dispatch, commands,
+  caching, observability).
+- **SPECs** (`docs/specs/`) describe how each area is implemented.
+- **Coverage check**: `python3 docs/tools/coverage.py check` validates the PRD tables against the pinned
+  Discord docs baseline and `Src/`, and `summary` regenerates the coverage table in `docs/README.md`.
+
 ## Design Principles
 
 This project serves as an **architectural study**, exploring:

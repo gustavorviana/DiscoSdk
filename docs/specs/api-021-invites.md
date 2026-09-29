@@ -51,6 +51,8 @@ REST metrics only (SPEC-SDK-05).
 | `InviteWrapperTests` | IV-F10 – IV-F13 |
 | `InviteDispatchTests` | invite events (PRD-API-004) |
 
+Implemented or Partial requirements without a covering test: IV-N01.
+
 ## 12. History
 | Commit | Change |
 |---|---|

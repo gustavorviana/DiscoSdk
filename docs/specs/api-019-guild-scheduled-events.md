@@ -51,6 +51,8 @@ REST metrics only (SPEC-SDK-05).
 | `GuildScheduledEventWrapperTests` | SE-F10, SE-F11 |
 | `GuildScheduledEventDispatchTests` | events (PRD-API-004) |
 
+Implemented or Partial requirements without a covering test: SE-F07 – SE-F09, SE-F13, SE-N01.
+
 ## 12. History
 | Commit | Change |
 |---|---|

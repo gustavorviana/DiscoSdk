@@ -132,7 +132,7 @@ are no command-specific tags such as the command name.
 | `ContextMenuCommandRegistryTests`, `ContextMenuContextTests`, `DispatchByCommandTypeTests` | CF-F04 |
 | `SlashCommandValidationTests`, `SlashCommandAttributeContextsTests` | CF-F06, CF-F07, CF-F14, CF-N02 |
 | `OnDemandRegistrationTests` | CF-F05 |
-| `AutocompleteSubcommandTests` | CF-F08 |
+| `AutoCompleteSubcommandTests` | CF-F08 |
 | `CommandContextExtractionTests`, `OptionValueConverterTests` | CF-F03, CF-F09, CF-F10, CF-F11 |
 | `SlashCommandLocalizerTests`, `ContextCommandLocalizerTests`, `InMemoryCommandLocalizationProviderTests`, `InMemoryContextCommandLocalizationProviderTests`, `CommandLocalizationBuilderTests` | CF-F12 |
 | `FluentSlashCommandBuilderTests`, `CommandUpdateScopeAddFromCatalogTests` | CF-F15 |

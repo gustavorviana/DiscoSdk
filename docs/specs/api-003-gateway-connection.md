@@ -106,6 +106,8 @@ backpressure point, and are consumed by `DiscordEventDispatcher` (SPEC-SDK-02).
 | `RequestGuildMembersActionTests`, `MemberChunkCoordinatorTests`, `BufferingMemberChunkSinkTests`, `StreamingMemberChunkSinkTests` | GW-F57 |
 | `EventHandlerIntentGuardTests`, `PrivilegedIntentReminderTests`, `IntentGuardTests` | GW-F19, GW-F20, GW-F29 – GW-F49 |
 
+Implemented or Partial requirements without a covering test: GW-F02, GW-F10, GW-F15, GW-F18, GW-F21 – GW-F22, GW-F25 – GW-F26, GW-F53 – GW-F54, GW-F59, GW-F61, GW-N02, GW-N05.
+
 ## 12. History
 | Commit | Change |
 |---|---|

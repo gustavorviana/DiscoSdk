@@ -87,6 +87,8 @@ REST metrics only.
 | `ClientMessageIntegrationTests`, `MessageExampleCommandTests` | MS-F04, MS-F58, MS-F63 – MS-F67 |
 | `MessageVariantsDispatchTests` | MS-F21 – MS-F57 (message types) |
 
+Implemented or Partial requirements without a covering test: MS-N01, MS-N03.
+
 ## 12. History
 | Commit | Change |
 |---|---|

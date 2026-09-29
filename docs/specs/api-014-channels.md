@@ -81,6 +81,8 @@ REST metrics; cache lookups (SPEC-SDK-04).
 | `ChannelPermissionContainerTests`, `OverridePermissionActionTests` | CH-F05, CH-F08 |
 | `CreateGroupDmActionTests`, `OpenedDmsTests` | CH-F11, CH-F12 |
 
+Implemented or Partial requirements without a covering test: CH-N01 – CH-N02.
+
 ## 12. History
 | Commit | Change |
 |---|---|

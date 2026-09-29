@@ -53,6 +53,8 @@ REST metrics only (SPEC-SDK-05).
 | `MessageClientTests` | PL-F01, PL-F02 |
 | `PollVoteDispatchTests` | vote events (PRD-API-004) |
 
+Implemented or Partial requirements without a covering test: PL-F05.
+
 ## 12. History
 | Commit | Change |
 |---|---|

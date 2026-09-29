@@ -61,6 +61,8 @@ REST metrics only.
 | `ApplicationClientTests` | AP-F01 – AP-F03, AP-F09, AP-F10, AP-F14, AP-F15 |
 | `ApplicationWrapperTests` | AP-F11, AP-F12 |
 
+Implemented or Partial requirements without a covering test: AP-F13, AP-N01.
+
 ## 12. History
 | Commit | Change |
 |---|---|

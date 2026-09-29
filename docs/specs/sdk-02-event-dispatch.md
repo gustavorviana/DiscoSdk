@@ -86,6 +86,8 @@ None directly (it consumes op 0 dispatches).
 | `EventHandlerIntentGuardTests`, `MessageContentExemptionTests` | ED-F09 |
 | `ClientMessageIntegrationTests` | ED-F02, ED-F03 |
 
+Implemented or Partial requirements without a covering test: ED-F04, ED-N02 – ED-N03.
+
 ## 12. History
 | Commit | Change |
 |---|---|

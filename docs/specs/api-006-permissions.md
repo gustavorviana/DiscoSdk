@@ -73,6 +73,8 @@ None specific.
 | `DiscordPermissionConverterTests` | PM-F11, PM-N02 |
 | `RoleWrapperTests` | PM-F07 – PM-F09 |
 
+Implemented or Partial requirements without a covering test: PM-F05 – PM-F06, PM-F10, PM-F12 – PM-F58, PM-N01.
+
 ## 12. History
 | Commit | Change |
 |---|---|

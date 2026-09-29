@@ -49,6 +49,8 @@ REST metrics only (SPEC-SDK-05).
 | `GuildTemplateClientTests` | GT-F01 – GT-F06, GT-F08 |
 | `GuildTemplateWrapperTests` | GT-F07 |
 
+Implemented or Partial requirements without a covering test: GT-N01.
+
 ## 12. History
 | Commit | Change |
 |---|---|

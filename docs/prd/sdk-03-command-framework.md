@@ -92,7 +92,7 @@ Precondition attributes would be additive. The recent rename `Autocomplete*` →
 ## 10. Acceptance criteria
 - [x] Scanning, grouping and routing (`SlashCommandRegistryTests`, `SlashCommandGroupingTests`, `SlashCommandRoutingTests`, `CommandRegistryTests`, `CommandRegistryBuilderTests`, `ContextMenuCommandRegistryTests`).
 - [x] Validation (`SlashCommandValidationTests`, `SlashCommandAttributeContextsTests`).
-- [x] Autocomplete with subcommands and dependency injection (`AutocompleteSubcommandTests`).
+- [x] Autocomplete with subcommands and dependency injection (`AutoCompleteSubcommandTests`).
 - [x] Parameter extraction (`CommandContextExtractionTests`, `ContextMenuContextTests`, `OptionValueConverterTests`).
 - [x] Localization (`SlashCommandLocalizerTests`, `ContextCommandLocalizerTests`, `InMemoryCommandLocalizationProviderTests`, `InMemoryContextCommandLocalizationProviderTests`, `CommandLocalizationBuilderTests`).
 - [ ] Preconditions (CF-F16).

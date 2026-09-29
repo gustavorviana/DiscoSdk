@@ -103,7 +103,7 @@ This document is the observability contract.
 | `HandlerInvocationsMetricTests` | OB-F04 |
 | `CacheLookupsMetricTests` | OB-F05 |
 
-No dedicated tests cover OB-F06 (spans), OB-F08, OB-N01, OB-N02 or OB-N03.
+Implemented or Partial requirements without a covering test: OB-F06, OB-F08, OB-N01 – OB-N03.
 
 ## 12. History
 | Commit | Change |

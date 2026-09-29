@@ -76,6 +76,8 @@ None.
 | `InteractionComponentConverterTests` | CP-F03, CP-F09, CP-N01 |
 | `ClientModalIntegrationTests`, `ModalExampleCommandTests`, `MessageExampleCommandTests` | CP-F08, CP-F09 |
 
+Implemented or Partial requirements without a covering test: CP-F07, CP-N02.
+
 ## 12. History
 | Commit | Change |
 |---|---|

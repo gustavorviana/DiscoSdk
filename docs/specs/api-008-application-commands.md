@@ -91,6 +91,8 @@ A missing id on an existing command is logged at `Warning`. REST calls are cover
 | `ApplicationCommandPermissionsClientTests`, `EditApplicationCommandPermissionsActionTests`, `ApplicationCommandPermissionsWrapperTests` | AC-F24 – AC-F26 |
 | `ApplicationCommandCountMapConverterTests`, `OptionValueConverterTests` | AC-F32 – AC-F42 |
 
+Implemented or Partial requirements without a covering test: AC-F28 – AC-F30.
+
 ## 12. History
 | Commit | Change |
 |---|---|

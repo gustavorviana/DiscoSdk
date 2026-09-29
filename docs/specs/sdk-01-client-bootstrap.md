@@ -93,6 +93,8 @@ See PRD §5 and §8. The events are `OnReady`, `UnhandledError`, `GatewayDisconn
 | `MemberCachePolicyBuilderTests`, `PolicyPresetsTests`, `PresenceManagerTests` | CB-F16 |
 | `ShardStopAsyncTests` | CB-N03 |
 
+Implemented or Partial requirements without a covering test: CB-F01, CB-F03 – CB-F05, CB-F07, CB-F10, CB-F13 – CB-F14, CB-N01 – CB-N02.
+
 ## 12. History
 | Commit | Change |
 |---|---|

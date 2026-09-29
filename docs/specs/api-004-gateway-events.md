@@ -93,6 +93,8 @@ There are 79 receive events at the baseline. Intent gating follows Discord's lis
 | `EventHandlerIntentGuardTests`, `MessageContentExemptionTests` | GE-N03 |
 | `ShardIdentifyFlowTests` | GE-F01, GE-F02 |
 
+Implemented or Partial requirements without a covering test: GE-N01 – GE-N02, GE-N04.
+
 ## 12. History
 | Commit | Change |
 |---|---|

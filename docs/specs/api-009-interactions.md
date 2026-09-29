@@ -85,6 +85,8 @@ Interaction dispatch spans and handler metrics (SPEC-SDK-05). The token is never
 | `InteractionComponentConverterTests` | IN-F21, IN-F23 |
 | `CommandContextExtractionTests`, `ContextMenuContextTests` | IN-F20, IN-F33 – IN-F35 |
 
+Implemented or Partial requirements without a covering test: IN-F09 – IN-F10, IN-F19, IN-F22, IN-F24, IN-N01 – IN-N02.
+
 ## 12. History
 | Commit | Change |
 |---|---|

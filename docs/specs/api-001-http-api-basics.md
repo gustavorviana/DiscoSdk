@@ -115,6 +115,8 @@ await guild.Edit().SetIcon(icon).ExecuteAsync();
 
 Gaps: no test asserts the absolute request URI (HB-F02), the REST User-Agent (HB-F03) or channel mention rendering (HB-F19).
 
+Implemented or Partial requirements without a covering test: HB-F08, HB-F13, HB-F16, HB-F39, HB-N01 – HB-N02.
+
 ## 12. History
 | Commit | Change |
 |---|---|

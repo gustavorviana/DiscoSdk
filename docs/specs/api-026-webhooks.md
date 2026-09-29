@@ -55,6 +55,8 @@ REST metrics only (SPEC-SDK-05).
 | `CreateWebhookActionTests`, `ModifyWebhookActionTests`, `WebhookWrapperTests` | WH-F01, WH-F06, WH-F12 – WH-F14, WH-F17 |
 | `WebhookMessageClientTests`, `WebhookMessageWrapperTests` | WH-F15, WH-F16 |
 
+Implemented or Partial requirements without a covering test: WH-N01 – WH-N02.
+
 ## 12. History
 | Commit | Change |
 |---|---|

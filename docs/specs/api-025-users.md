@@ -53,6 +53,8 @@ REST metrics only (SPEC-SDK-05).
 | `UserWrapperTests` | US-F12 |
 | `OpenedDmsTests`, `DmChannelWrapperTests`, `CreateGroupDmActionTests` | US-F07, US-F16 |
 
+Implemented or Partial requirements without a covering test: US-F14 – US-F15, US-N01.
+
 ## 12. History
 | Commit | Change |
 |---|---|

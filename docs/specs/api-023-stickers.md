@@ -51,6 +51,8 @@ REST metrics only (SPEC-SDK-05).
 | `StickerWrapperTests` | SK-F09 – SK-F14 |
 | `StickerCacheDispatchTests` | SK-F15 |
 
+Implemented or Partial requirements without a covering test: SK-N02.
+
 ## 12. History
 | Commit | Change |
 |---|---|

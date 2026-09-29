@@ -84,6 +84,8 @@ None. The behaviour is implicit for every `IRestAction`. The only knob is `Disco
 | `DiscordRouteTests` | RL-F01 (bucket path from major parameters) |
 | `DiscordRestClientTests` | RL-N02, RL-F08 |
 
+Implemented or Partial requirements without a covering test: RL-F06 – RL-F07, RL-N04.
+
 ## 12. History
 | Commit | Change |
 |---|---|

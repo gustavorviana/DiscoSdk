@@ -59,6 +59,8 @@ REST metrics only.
 | `GuildClientTests` | AL-F01, AL-F75 |
 | `AuditLogReasonTests`, `AuditLogReasonHeaderTests` | AL-F76, AL-N02 |
 
+Implemented or Partial requirements without a covering test: AL-F02 – AL-F49, AL-F53 – AL-F56, AL-F60 – AL-F61, AL-F71 – AL-F73, AL-N01.
+
 ## 12. History
 | Commit | Change |
 |---|---|

@@ -129,7 +129,7 @@ Wrap the member, then call `ShouldCache`. If it returns true, upsert the member;
 | `GuildCacheIntentGuardTests` | CA-F13 |
 | `TextChannelManagerWrapperTests` and the other channel manager wrapper tests | CA-F02 (channel edits) |
 
-No dedicated tests cover CA-F03 (user cache), CA-F08, CA-F15 – CA-F18, or CA-N01 (concurrency).
+Implemented or Partial requirements without a covering test: CA-F03, CA-F15, CA-N01.
 
 ## 12. History
 | Commit | Change |
