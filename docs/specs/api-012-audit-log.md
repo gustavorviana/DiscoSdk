@@ -9,9 +9,9 @@
 | **Last updated** | 2026-09-29 |
 
 ## 1. Summary
-`IGuild.GetAuditLogs()` returns an `IAuditLogPaginationAction`. Each page calls
-`GuildClient.GetAuditLogsAsync(guildId, limit, before, userId, actionType)` and yields `IAuditLogEntry`
-items. Writing reasons is cross-cutting: every mutating action implements `IRestActionWithReason<TSelf>`,
+`IGuild.GetAuditLogs()` returns an `IAuditLogPaginationAction`. Each `ExecuteAsync` fetches one page
+through `GuildClient.GetAuditLogsAsync(guildId, limit, before, userId, actionType)` and returns
+`IAuditLogEntry[]`. The caller pages by passing the last entry id to `Before`. Writing reasons is cross-cutting: every mutating action implements `IRestActionWithReason<TSelf>`,
 and the REST client adds `X-Audit-Log-Reason` through `SendWithReasonAsync` (SPEC-API-001).
 
 ## 2. Projects and dependencies
@@ -26,24 +26,23 @@ The wire `AuditLog` keeps only `audit_log_entries`. `users`, `webhooks`, `thread
 ## 4. Components
 | Type | Responsibility |
 |---|---|
-| Audit log pagination action | Uses `before` from the last entry of each page; filters `user_id` and `action_type`. |
+| `AuditLogPaginationAction` | Single-page request: `Limit` (1–100), `Before`, `SetUserId`, `SetActionType`. |
 | `AuditLogReason` | Header name and 512-character limit. |
 | `DiscordRestClient.BuildFactoryWithReason` | Truncate, then URL-encode, then add the header. |
 
 ## 5. Public API
-`IGuild.GetAuditLogs()` with `SetUserId`, `SetActionType` and `Before`, plus `WithReason(string)` on every
+`IGuild.GetAuditLogs()` with `Limit`, `SetUserId`, `SetActionType` and `Before`, plus `WithReason(string)` on every
 auditable action.
 
 ## 6. Discord surface
 `GET /guilds/{id}/audit-logs`. Requires `VIEW_AUDIT_LOG`.
 
 ## 7. Flows
-1. Page 1: `GET ?limit=100&user_id&action_type`.
-2. Page N: `before = last.Id`.
-3. Stop when a page has fewer entries than the limit.
+1. `ExecuteAsync` sends `GET ?limit&before&user_id&action_type` with whatever the builder set.
+2. To fetch older entries, the caller calls `Before(lastEntry.Id)` and executes again.
 
 ## 8. Concurrency and lifecycle
-Pagination is sequential and lazy.
+Stateless apart from the builder fields. There is no automatic iteration.
 
 ## 9. Errors and edge cases
 | Situation | Expected behaviour |

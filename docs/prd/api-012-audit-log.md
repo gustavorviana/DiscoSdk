@@ -118,7 +118,7 @@ await guild.Bans.Ban(userId).WithReason("Spam (invoker: @mod)").ExecuteAsync();
 ## 7. Non-functional requirements
 | ID | Requirement |
 |---|---|
-| AL-N01 | Pagination is lazy: one request per page, no pre-fetching. |
+| AL-N01 | One request per `ExecuteAsync`, with no pre-fetching. Iterating over several pages is left to the caller (`Before`). |
 | AL-N02 | Reasons are URL-encoded and truncated to 512 characters before sending. |
 
 ## 8. Configuration
@@ -129,7 +129,7 @@ Adding enum values and related-object collections is additive.
 
 ## 10. Acceptance criteria
 - [x] Reasons are encoded and truncated (`AuditLogReasonTests`, `AuditLogReasonHeaderTests`).
-- [x] Audit log pagination and filters (`GuildClientTests`).
+- [x] Audit log filters (`GuildClientTests`).
 - [ ] All 69 action types (AL-F50, AL-F51, AL-F52, AL-F57, AL-F58, AL-F59, AL-F62, AL-F63, AL-F64, AL-F65, AL-F66, AL-F67, AL-F68, AL-F69, AL-F70).
 - [ ] Related objects are exposed (AL-F74).
 
