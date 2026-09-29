@@ -28,7 +28,8 @@ SDK detection is automatic for REST routes (`new DiscordRoute("…")` paired wit
 same member), gateway events (`DiscordEventDispatcher` cases), locales (`DiscordLocales`) and the enums
 that mirror Discord tables (`OpCodes`, `DiscordIntent`, `DiscordPermission`, `ComponentType`,
 `InteractionType`, `InteractionCallbackType`, `InteractionContextType`, `ApplicationCommandType`,
-`SlashCommandOptionType`, `ChannelType`). Close codes, voice opcodes, webhook events, CDN endpoints,
+`SlashCommandOptionType`, `ChannelType`, `AuditLogActionType`, `MessageType`, the auto-moderation trigger,
+event and action enums, `StickerFormatType`, `WebhookType`, `InviteTargetType`, `ScheduledEventEntityType`). Close codes, voice opcodes, webhook events, CDN endpoints,
 message formats and OAuth2 URLs are asserted by hand and must cite evidence.
 
 It also warns about SDK routes that match no documented route (typos, or endpoints Discord removed).

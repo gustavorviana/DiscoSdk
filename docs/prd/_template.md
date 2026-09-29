@@ -46,8 +46,10 @@ and `Src/`.
 
 - **Discord key**: one or more backticked keys. Use `METHOD /path` (placeholders written as `{}`),
   `event:NAME`, `op:N`, `close:N`, `intent:NAME`, `perm:NAME`, `component:N`, `itype:N`, `callback:N`,
-  `context:N`, `cmdtype:N`, `option:N`, `chtype:N`, `webhook-event:NAME`, `voice-op:N`, `voice-close:N`,
-  `cdn:NAME`, `format:NAME`, `locale:CODE` or `oauth2:NAME`. Use `—` for SDK-level behaviour that has no
+  `context:N`, `cmdtype:N`, `option:N`, `chtype:N`, `audit:N`, `msgtype:N`, `automod-trigger:N`,
+  `automod-event:N`, `automod-action:N`, `sticker-format:N`, `webhook-type:N`, `invite-target:N`,
+  `scheduled-entity:N`, `webhook-event:NAME`, `voice-op:N`, `voice-close:N`, `cdn:NAME`, `format:NAME`,
+  `locale:CODE` or `oauth2:NAME`. Use `—` for SDK-level behaviour that has no
   single Discord key.
 - **Priority**: Must / Should / Could.
 - **Status**: Implemented · Partial · Missing · Excluded (give the reason) · Deprecated (by Discord).

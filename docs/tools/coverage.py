@@ -71,6 +71,15 @@ TABLES = {
     "option": ("interactions/application-commands", "Application Command Option Type", "value"),
     "chtype": ("resources/channel", "Channel Types", "value"),
     "webhook-event": ("events/webhook-events", "Event Types", "text"),
+    "audit": ("resources/audit-log", "Audit Log Events", "value"),
+    "msgtype": ("resources/message", "Message Types", "value"),
+    "automod-trigger": ("resources/auto-moderation", "Trigger Types", "value"),
+    "automod-event": ("resources/auto-moderation", "Event Types", "value"),
+    "automod-action": ("resources/auto-moderation", "Action Types", "value"),
+    "sticker-format": ("resources/sticker", "Sticker Format Types", "value"),
+    "webhook-type": ("resources/webhook", "Webhook Types", "value"),
+    "invite-target": ("resources/invite", "Invite Target Types", "value"),
+    "scheduled-entity": ("resources/guild-scheduled-event", "Guild Scheduled Event Entity Types", "value"),
 }
 
 # SDK enums mirroring Discord tables: category -> (C# enum name, "value" | "bit").
@@ -85,6 +94,15 @@ SDK_ENUMS = {
     "cmdtype": ("ApplicationCommandType", "value"),
     "option": ("SlashCommandOptionType", "value"),
     "chtype": ("ChannelType", "value"),
+    "audit": ("AuditLogActionType", "value"),
+    "msgtype": ("MessageType", "value"),
+    "automod-trigger": ("AutoModerationTriggerType", "value"),
+    "automod-event": ("AutoModerationEventType", "value"),
+    "automod-action": ("AutoModerationActionType", "value"),
+    "sticker-format": ("StickerFormatType", "value"),
+    "webhook-type": ("WebhookType", "value"),
+    "invite-target": ("InviteTargetType", "value"),
+    "scheduled-entity": ("ScheduledEventEntityType", "value"),
 }
 
 # Categories with no automatic SDK detection: status is asserted by hand and must cite evidence.
