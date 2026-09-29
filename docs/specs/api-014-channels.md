@@ -66,7 +66,7 @@ Wrappers are snapshots of the cached model. Managers are single-use builders.
 | Situation | Expected behaviour |
 |---|---|
 | Manager with no changes | No request (`HasChanges == false`). |
-| `GetThreadChannels()` on a forum with `archived: false` | **Current:** calls the decommissioned `/channels/{id}/threads/active` and fails. **Proposed:** filter `GET /guilds/{id}/threads/active` by parent. |
+| `GetThreadChannels()` on a forum or media channel | Lists `GET /guilds/{id}/threads/active` and keeps the threads whose `parent_id` is this channel (the per-channel route was decommissioned). |
 | Thread operations on an archived thread | Discord 400. The SDK does not unarchive implicitly. |
 
 ## 10. Observability

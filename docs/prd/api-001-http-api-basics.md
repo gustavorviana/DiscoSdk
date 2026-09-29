@@ -63,8 +63,8 @@ var text = new MessageTextBuilder()
 | ID | Capability | Discord key | Priority | Status | SDK evidence |
 |---|---|---|---|---|---|
 | HB-F01 | Bot token authentication (`Authorization: Bot <token>`) | — | Must | Implemented | `DiscordClientBuilder.Create` → `DiscordRestClient` (default `Authorization` header) |
-| HB-F02 | API versioning: every request targets an explicit version | — | Must | Partial | `DiscordClientBuilder.Build` passes `https://discord.com/api/v10` **without a trailing slash**; relative routes (`channels/…`) resolve per RFC 3986 to `/api/channels/…`, i.e. Discord's unversioned default (v6, deprecated). `DiscordWebhookClientBuilder` uses the unversioned `https://discord.com/api/`. |
-| HB-F03 | Compliant REST User-Agent `DiscordBot ($url, $version)` | — | Must | Partial | `DiscordRestClient` sends `DiscoSdk/<assembly version>` (not the documented form). The gateway uses the compliant `DiscordClientConfig.DefaultGatewayUserAgent`. |
+| HB-F02 | API versioning: every request targets an explicit version | — | Must | Implemented | `DiscordRestClient.DefaultApiUri` (`https://discord.com/api/v10/`) for the bot and webhook clients; `DiscordRestClient` appends a missing trailing slash so relative routes keep `/v10/` |
+| HB-F03 | Compliant REST User-Agent `DiscordBot ($url, $version)` | — | Must | Implemented | `DiscordRestClient.BuildUserAgent` (`DiscordBot (https://github.com/gustavorviana/DiscoSdk, <assembly version>)`); the gateway uses `DiscordClientConfig.DefaultGatewayUserAgent` |
 | HB-F04 | JSON request/response bodies (`application/json`) | — | Must | Implemented | `DiscordRestClient.SendAsync` with `JsonOptions` |
 | HB-F05 | Typed errors from HTTP status + JSON error code | — | Must | Implemented | `DiscordApiException` (`StatusCode`, `DiscordCode`), `InvalidTokenException`, `InsufficientPermissionException`, `DiscordResourceNotFoundException`, `InvalidRequestBodyException` → `DiscordErrorParser` |
 | HB-F06 | Field-level validation errors (`errors` object of 50035) | — | Must | Implemented | `DiscordApiException.ValidationErrors` (`DiscordValidationError`) → `DiscordErrorParser.Parse` |
@@ -80,7 +80,7 @@ var text = new MessageTextBuilder()
 | HB-F16 | Editing message attachments (keep/remove by `attachments[].id`) | — | Should | Implemented | `IMessage.ToBuilder` full-fidelity fork (commit 70f78e8), `MessageClient.EditAsync` |
 | HB-F17 | Signed attachment CDN URLs (`ex`/`is`/`hm` parameters) | — | Could | Missing | Attachment URLs are exposed verbatim; no expiry parsing or refresh helper. |
 | HB-F18 | Message formatting: user | `format:USER` | Must | Implemented | `Mention.FromUser` → `MessageTextBuilder.AppendMention` (`<@id>`; the legacy `<@!id>` form is not emitted, which Discord allows) |
-| HB-F19 | Message formatting: channel | `format:CHANNEL` | Must | Partial | `Mention.FromChannel` exists, but `Mention.ToString()` has no `MentionType.Channel` branch and renders `@everyone` instead of `<#id>` |
+| HB-F19 | Message formatting: channel | `format:CHANNEL` | Must | Implemented | `Mention.FromChannel`, `Mention.ToString()` renders `<#id>` |
 | HB-F20 | Message formatting: role | `format:ROLE` | Must | Implemented | `Mention.FromRole` → `MessageTextBuilder.AppendMention` (`<@&id>`) |
 | HB-F21 | Message formatting: game profile | `format:GAME_PROFILE` | Could | Missing | — |
 | HB-F22 | Message formatting: slash command | `format:SLASH_COMMAND` | Could | Missing | — |
@@ -120,7 +120,7 @@ var text = new MessageTextBuilder()
 | HB-F56 | Locale `en-GB` (English, UK) | `locale:en-GB` | Should | Implemented | `DiscordLocales` |
 | HB-F57 | Locale `en-US` (English, US) | `locale:en-US` | Should | Implemented | `DiscordLocales` |
 | HB-F58 | Locale `es-ES` (Spanish) | `locale:es-ES` | Should | Implemented | `DiscordLocales` |
-| HB-F59 | Locale `es-419` (Spanish, LATAM) | `locale:es-419` | Should | Missing | Not in `DiscordLocales`, so `es-419` localizations are rejected by `DiscordLocales.Has` |
+| HB-F59 | Locale `es-419` (Spanish, LATAM) | `locale:es-419` | Should | Implemented | `DiscordLocales` |
 | HB-F60 | Locale `fr` (French) | `locale:fr` | Should | Implemented | `DiscordLocales` |
 | HB-F61 | Locale `hr` (Croatian) | `locale:hr` | Should | Implemented | `DiscordLocales` |
 | HB-F62 | Locale `it` (Italian) | `locale:it` | Should | Implemented | `DiscordLocales` |
@@ -159,17 +159,17 @@ var text = new MessageTextBuilder()
 | Option | Default | Range | Config / builder API |
 |---|---|---|---|
 | JSON options | SDK defaults (`DiscoJson`) | any `JsonSerializerOptions` | `DiscordClientBuilder.WithJsonOptions` |
-| REST base URL | `https://discord.com/api/v10` | fixed | not configurable (tests inject a `DiscordRestClient`) |
+| REST base URL | `https://discord.com/api/v10/` (`DiscordRestClient.DefaultApiUri`) | fixed | not configurable (tests inject a `DiscordRestClient`) |
 | Webhook-only client timeout | `HttpClient` default | any `TimeSpan` | `DiscordWebhookClientBuilder` |
 
 ## 9. Compatibility
-- Discord still routes unversioned requests to the deprecated v6 default. Moving the base URL to a
-  versioned, slash-terminated URI is not breaking for callers, but it changes the payload shapes Discord
-  returns if any code relied on v6 behaviour (HB-F02).
+- Requests used to resolve to `/api/…`, which Discord routes to the deprecated v6 default. They now
+  target `/api/v10/`; callers see v10 payload shapes (HB-F02).
 - Adding exception subtypes is non-breaking: every typed exception derives from `DiscordApiException`.
 
 ## 10. Acceptance criteria
-- [ ] Every request URI starts with `/api/v10/` (HB-F02). Add a `DiscordRestClientTests` case that asserts the absolute request URI.
+- [x] Every request URI starts with `/api/v10/`, and the REST User-Agent follows Discord's format (HB-F02, HB-F03; `DiscordRestClientTests`).
+- [x] Channel mentions render `<#id>` (HB-F19; `MessageTextBuilderTests`).
 - [x] HTTP 401/403/404/400 map to `InvalidTokenException`, `InsufficientPermissionException`, `DiscordResourceNotFoundException` and `InvalidRequestBodyException` (`DiscordRestClientExceptionMappingTests`).
 - [x] Nested `errors` objects are flattened into field paths (`DiscordErrorParserTests`).
 - [x] Snowflakes round-trip as JSON strings (`SnowflakeConverterTests`).
@@ -177,7 +177,5 @@ var text = new MessageTextBuilder()
 - [ ] The default avatar index uses `(user_id >> 22) % 6` for migrated usernames (HB-F37).
 
 ## 11. Open questions
-- Should the REST User-Agent reuse `DiscordClientConfig.GatewayUserAgent`? Provisional: yes, a single
-  `DiscordBot (url, version)` string for both transports.
 - Should CDN helpers take a size and format (`?size=`, `.webp`)? Provisional: add optional `size` and
   `format` parameters to `DiscordImageUrl` when the remaining CDN endpoints are added.

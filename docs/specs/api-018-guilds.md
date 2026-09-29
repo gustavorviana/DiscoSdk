@@ -48,7 +48,6 @@ Stateless request builders; wrappers are snapshots of the returned models.
 |---|---|
 | Member list or member request without the `GUILD_MEMBERS` intent | `MissingIntentException` from `IntentGuard.Require` (`MemberPaginationAction`, `RequestGuildMembersAction`), before any request. |
 | Role above the bot's highest role | Discord 403 → `InsufficientPermissionException`. |
-| `IGuild.Delete()` / `ModifyMfaLevel()` | Fail: the endpoints are not available to applications. |
 
 ## 10. Observability
 REST metrics only (SPEC-SDK-05).
@@ -77,7 +76,6 @@ Implemented or Partial requirements without a covering test: GD-F50 – GD-F51, 
 Next steps:
 1. Add `IDiscordClient.GetGuild(id)` (cache, then REST).
 2. Add role member counts, widget settings and the widget image.
-3. Obsolete `IGuild.Delete()` and `IGuild.ModifyMfaLevel()`.
 
 ## 13. Decisions and rejected alternatives
 - **Per-resource facades** (a breaking change in `54a5c3e`) rather than 45 methods on `IGuild`: this gives discoverability, keeps the interface small, and lets each facade own its cache policy.

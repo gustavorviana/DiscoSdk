@@ -55,7 +55,7 @@ await client.WaitShutdownAsync();
 | CB-F04 | Injectable clock | — | Should | Implemented | `DiscordClientBuilder.WithTimeProvider` |
 | CB-F05 | JSON options override | — | Should | Implemented | `DiscordClientBuilder.WithJsonOptions` (defaults: `DiscoJson.Create`) |
 | CB-F06 | Event handler registration by type or instance, with constructor injection | — | Must | Implemented | `DiscordClientBuilder.AddEventHandler` → `DiscoFactory` (`ActivatorUtilities`) |
-| CB-F07 | Modules: lifetime hooks, per-event dependency-injection scope hook, command update window hook | — | Must | Implemented | `ILifetimeDiscoModule`, `IDependencyScopeDiscoModule`, `ICommandsUpdateWindowModule`, `DiscordClientBuilder.AddModule` |
+| CB-F07 | Modules: lifetime hooks, per-event dependency-injection scope hook, command update window hook | — | Must | Implemented | `ILifetimeDiscoModule`, `IDependencyScopeDiscoModule`, `ICommandsUpdateWindowModule`, `DiscordClientBuilder.AddModule`; a failing lifetime hook is logged at `Error` and the others still run |
 | CB-F08 | Register the bot author's own services into the SDK container | — | Must | Missing | The builder owns a private `ServiceCollection` with no `ConfigureServices` hook, so `[FromServices]` and handler constructors can only resolve SDK services |
 | CB-F09 | Generic Host / ASP.NET Core integration (`IServiceCollection.AddDiscoSdk`, hosted service, external `IServiceProvider`) | — | Should | Missing | — |
 | CB-F10 | Client accessor for services that are built before the client | — | Should | Implemented | `IDiscordClientAccessor` |

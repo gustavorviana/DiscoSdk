@@ -55,7 +55,7 @@ var member = await client.Members.Get(guildId, userId, MemberFetchMode.CacheThen
 | CA-F02 | Channel cache with REST fallback | — | Must | Implemented | `ChannelManager.Get` (cache, then `GET /channels/{}` with write-back) |
 | CA-F03 | User cache with REST fallback | — | Should | Implemented | `UserRepository.Get`, `UserRepository.Upsert` |
 | CA-F04 | Member cache fed by `GUILD_CREATE`, member add/update/remove and chunks | — | Must | Implemented | `MemberManager.OnGuildMembersSeed`, `MemberManager.OnMemberAddOrUpdateAsync`, `MemberManager.OnMembersChunkAsync` |
-| CA-F05 | Member cache policy presets (None, Owner, Voice, Online, All; default All) | — | Must | Partial | `MemberCachePolicy`, `MemberCachePolicyExtensions.ToPolicy`. `OnlinePolicy` caches only `Invisible` members (operator precedence bug in `is not Offline and Invisible`, locked in by `PolicyPresetsTests`). `VoicePolicy` never matches because `IMember.VoiceState` is always null (PRD-API-028). |
+| CA-F05 | Member cache policy presets (None, Owner, Voice, Online, All; default All) | — | Must | Partial | `MemberCachePolicy`, `MemberCachePolicyExtensions.ToPolicy`. `OnlinePolicy` caches Online, Idle and DoNotDisturb members. `VoicePolicy` never matches because `IMember.VoiceState` is always null (PRD-API-028). |
 | CA-F06 | Composable policy builder (all/any, owner, voice, online, boosters, pending, roles, predicate, nesting) | — | Must | Implemented | `MemberCachePolicyBuilder`, `PolicyMode` |
 | CA-F07 | Custom policy by instance or dependency-injection factory | — | Should | Implemented | `IMemberCachePolicy`, `DiscordClientBuilder.WithMemberCachePolicy` |
 | CA-F08 | Re-evaluate the member policy when presence or voice state changes | — | Should | Missing | `PRESENCE_UPDATE` only updates `PresenceManager`; no voice state cache exists, so Online/Voice decisions only change on member events |
@@ -85,16 +85,15 @@ var member = await client.Members.Get(guildId, userId, MemberFetchMode.CacheThen
 | Guild sticker cache | `None` | `StickerCacheFlag` | `WithStickerCache` |
 
 ## 9. Compatibility
-Fixing `OnlinePolicy` changes behaviour for anyone who relies on it today, but the current behaviour is
-never useful: Discord reports invisible users as offline. The fix ships together with the corrected
-`PolicyPresetsTests` expectations.
+`OnlinePolicy` used to cache only `Invisible` members (an operator precedence bug), which never matched
+because Discord reports invisible users as offline. It now caches Online, Idle and DoNotDisturb members.
 
 ## 10. Acceptance criteria
 - [x] Policy presets and builder (`PolicyPresetsTests`, `MemberCachePolicyBuilderTests`).
 - [x] Member seeding and dispatch (`MemberManagerSeedTests`, `MemberCacheDispatchTests`).
 - [x] Presence flags (`PresenceManagerTests`); sticker cache (`StickerCacheDispatchTests`).
 - [x] Lookup metrics (`CacheLookupsMetricTests`); intent guard (`GuildCacheIntentGuardTests`).
-- [ ] `OnlinePolicy` caches Online, Idle and DoNotDisturb members (CA-F05).
+- [x] `OnlinePolicy` caches Online, Idle and DoNotDisturb members (CA-F05; `PolicyPresetsTests`).
 - [ ] Presence changes re-evaluate the member policy (CA-F08).
 
 ## 11. Open questions

@@ -9,7 +9,7 @@
 | **Last updated** | 2026-09-29 |
 
 ## 1. Summary
-`IGuild.Templates` (`GuildTemplatesSurface`) lists and creates templates. `GuildTemplateWrapper` (`IGuildTemplate`) provides `Sync()`, `Modify()` and `Delete()`, plus `CreateGuild()`, which targets an endpoint Discord no longer documents. `GuildTemplateClient` also hosts the onboarding routes (PRD-API-018).
+`IGuild.Templates` (`GuildTemplatesSurface`) lists and creates templates. `GuildTemplateWrapper` (`IGuildTemplate`) provides `Sync()`, `Modify()` and `Delete()`. Creating a guild from a template is not offered: Discord removed that endpoint for applications. `GuildTemplateClient` also hosts the onboarding routes (PRD-API-018).
 
 ## 2. Projects and dependencies
 `DiscoSdk` (`IGuildTemplate`, `IGuildTemplates`), and `DiscoSdk.Hosting` (`GuildTemplateClient`, `GuildTemplatesSurface`, `GuildTemplateWrapper`).
@@ -23,7 +23,7 @@ The wire template carries `code`, `name`, `description`, `usage_count`, `creator
 | `GuildTemplateClient` | Get by code (not exposed), list, create, sync, modify, delete, and create guild from template (removed). |
 
 ## 5. Public API
-`IGuild.Templates.GetAll()` / `Create(name, description)`, `IGuildTemplate.Sync()` / `Modify(…)` / `Delete()` / `CreateGuild(…)`.
+`IGuild.Templates.GetAll()` / `Create(name, description)`, `IGuildTemplate.Sync()` / `Modify(…)` / `Delete()`.
 
 ## 6. Discord surface
 Six documented routes plus one removed route (`POST /guilds/templates/{code}`). They require `MANAGE_GUILD`.
@@ -37,7 +37,6 @@ Stateless request builders; wrappers are snapshots of the returned models.
 ## 9. Errors and edge cases
 | Situation | Expected behaviour |
 |---|---|
-| `CreateGuild()` | Fails: the route is no longer served for applications. |
 | Template code already exists for the guild (one per guild) | Discord 400. |
 
 ## 10. Observability
@@ -46,7 +45,7 @@ REST metrics only (SPEC-SDK-05).
 ## 11. Tests
 | Test class | Covers |
 |---|---|
-| `GuildTemplateClientTests` | GT-F01 – GT-F06, GT-F08 |
+| `GuildTemplateClientTests` | GT-F01 – GT-F06 |
 | `GuildTemplateWrapperTests` | GT-F07 |
 
 Implemented or Partial requirements without a covering test: GT-N01.
@@ -57,7 +56,7 @@ Implemented or Partial requirements without a covering test: GT-N01.
 | `459f51c` | Guild templates REST. |
 | `4b5467a` | Onboarding inline builder overloads (shared client). |
 
-Next steps: add `IDiscordClient.GetTemplate(code)`, and obsolete `CreateGuild()`.
+Next step: add `IDiscordClient.GetTemplate(code)`.
 
 ## 13. Decisions and rejected alternatives
 - **Templates and onboarding share `GuildTemplateClient`**: a historical grouping. It should be split when onboarding grows.

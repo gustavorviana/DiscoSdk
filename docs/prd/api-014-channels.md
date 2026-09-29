@@ -84,7 +84,7 @@ var post = await forum.StartPost("Bug: crash on start").ExecuteAsync();
 | CH-F39 | Thread metadata and thread member objects | — | Must | Implemented | `IGuildThreadChannel` (archived, locked, auto-archive duration, invitable, member count) |
 | CH-F40 | Forum tags, default reaction, sort order, layout | — | Should | Implemented | `IGuildForumChannel.AvailableTags`, `IGuildForumChannel.DefaultReactionEmoji`, `IGuildForumChannel.DefaultSortOrder`, `IGuildForumChannel.DefaultLayout` |
 | CH-F41 | Channel flags (pinned, require tag, hide media download options) | — | Should | Implemented | `ChannelFlags` |
-| CH-F43 | List active threads in a channel (decommissioned per the Discord change log; replaced by `GET /guilds/{id}/threads/active`) | `GET /channels/{}/threads/active` | Should | Deprecated | Still called by the active branch of `IThreadContainer.GetThreadChannels()` → `ChannelClient.GetActiveThreadsAsync`; Discord no longer serves it, so the call fails. Use `IGuildChannels.ListActiveThreads()` (PRD-API-018). |
+| CH-F43 | List active threads in a channel (decommissioned per the Discord change log; replaced by `GET /guilds/{id}/threads/active`) | `GET /channels/{}/threads/active` | Should | Deprecated | Not called: `IThreadContainer.GetThreadChannels()` lists `GET /guilds/{id}/threads/active` (GD-F07) and keeps the threads whose parent is the channel |
 | CH-F42 | Thread auto-archive durations and thread limits (Discord threads topic) | — | Should | Implemented | `ThreadAutoArchiveDuration` |
 
 ## 7. Non-functional requirements
