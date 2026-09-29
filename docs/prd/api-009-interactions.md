@@ -37,7 +37,7 @@ interaction failed".
 ```csharp
 public sealed class SlowQuery : IApplicationCommandHandler
 {
-    public async Task HandleAsync(ICommandContext context)
+    public async Task HandleAsync(ICommandContext context, IServiceProvider services)
     {
         await context.Defer(ephemeral: true).ExecuteAsync();
         var result = await RunQueryAsync();

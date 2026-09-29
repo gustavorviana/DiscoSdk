@@ -42,7 +42,7 @@ app.MapDiscoWebhookEvents("/discord/events");
 
 public sealed class InstallTracker : IApplicationAuthorizedHandler   // (proposed)
 {
-    public Task HandleAsync(IApplicationAuthorizedContext context) => /* … */ Task.CompletedTask;
+    public Task HandleAsync(IApplicationAuthorizedContext context, IServiceProvider services) => Task.CompletedTask;
 }
 ```
 

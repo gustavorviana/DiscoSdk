@@ -22,8 +22,8 @@ interface and runs them in order (SPEC-SDK-02). `READY` and `RESUMED` are consum
 - `DiscoSdk.Hosting/Gateway/Events/*` and `DiscoSdk.Hosting/Contexts/**` (the wrappers).
 
 ## 3. Models and contracts
-- Each handler is an `IDiscordEventHandler<TContext>` with `Task HandleAsync(TContext context)`, and
-  each context implements `IContext` (`Client`).
+- Each handler is an `IDiscordEventHandler<TContext>` with `Task HandleAsync(TContext context, IServiceProvider services)`.
+  `services` is the per-invocation dependency-injection scope. Each context implements `IContext` (`Client`).
 - Contexts expose domain interfaces, never wire models: for example
   `IGuildMemberAddContext { IMember Member; IGuild Guild; }`.
 - Payloads are read through `JsonElementParser` for small events, and deserialised into

@@ -41,7 +41,7 @@ coherent before handlers run.
 ```csharp
 public sealed class Welcome : IGuildMemberAddHandler
 {
-    public async Task HandleAsync(IGuildMemberAddContext context)
+    public async Task HandleAsync(IGuildMemberAddContext context, IServiceProvider services)
     {
         var channel = context.Guild.Channels.GetSystem();
         if (channel is null)
