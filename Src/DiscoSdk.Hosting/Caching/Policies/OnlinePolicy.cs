@@ -15,5 +15,5 @@ internal sealed class OnlinePolicy : IMemberCachePolicy
 
     private OnlinePolicy() { }
 
-    public bool ShouldCache(IMember member) => member.OnlineStatus is not OnlineStatus.Offline and OnlineStatus.Invisible;
+    public bool ShouldCache(IMember member) => member.OnlineStatus is not (OnlineStatus.Offline or OnlineStatus.Invisible);
 }

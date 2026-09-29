@@ -139,10 +139,10 @@ public interface ITextBasedChannel : IChannel
 	IRestAction UnpinMessageByIdAsync(Snowflake messageId, CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// Retrieves all pinned messages in this channel.
+	/// Retrieves the pinned messages in this channel, newest pin first.
 	/// </summary>
 	/// <returns>A pagination action for retrieving pinned messages.</returns>
-	IRestAction<IMessage[]> RetrievePinnedMessages();
+	IPinnedMessagePaginationAction RetrievePinnedMessages();
 
 	/// <summary>
 	/// Edits a message by its ID.

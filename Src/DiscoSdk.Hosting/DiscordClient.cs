@@ -228,7 +228,7 @@ namespace DiscoSdk.Hosting
 
             foreach (var module in Modules.OfType<ILifetimeDiscoModule>())
             {
-                try { await module.OnPreInitializeAsync(this); } catch { }
+                await InvokeModuleHookAsync(module, nameof(ILifetimeDiscoModule.OnPreInitializeAsync), m => m.OnPreInitializeAsync(this));
                 if (module is IDiscordEventHandler handler)
                     _eventDispatcher.Add(handler);
             }
@@ -282,7 +282,7 @@ namespace DiscoSdk.Hosting
             try
             {
                 foreach (var item in Modules.OfType<ILifetimeDiscoModule>())
-                    try { await item.OnShutdownAsync(this); } catch { }
+                    await InvokeModuleHookAsync(item, nameof(ILifetimeDiscoModule.OnShutdownAsync), m => m.OnShutdownAsync(this));
 
                 await _shardPool.ClearShardsAsync();
                 _shardPool.Dispose();
@@ -591,7 +591,7 @@ namespace DiscoSdk.Hosting
                 }
 
                 foreach (var item in Modules.OfType<ILifetimeDiscoModule>())
-                    try { await item.OnGatewayReadyAsync(this); } catch { }
+                    await InvokeModuleHookAsync(item, nameof(ILifetimeDiscoModule.OnGatewayReadyAsync), m => m.OnGatewayReadyAsync(this));
 
                 await InitSlashCommandsAsync();
             }
@@ -654,6 +654,22 @@ namespace DiscoSdk.Hosting
                 var args = new GatewayDisconnectedEventArgs(shard, exception, willReconnect);
                 foreach (var handler in evt.GetInvocationList().Cast<GatewayDisconnectedEventHandler>())
                     await handler(args);
+            }
+        }
+
+        /// <summary>
+        /// Runs one lifetime hook of one module. A failing module must not stop the others or the
+        /// client lifecycle, so the exception is logged and swallowed.
+        /// </summary>
+        private async Task InvokeModuleHookAsync(ILifetimeDiscoModule module, string hook, Func<ILifetimeDiscoModule, Task> invoke)
+        {
+            try
+            {
+                await invoke(module);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log(LogLevel.Error, ex, "Module {Module} threw in {Hook}; continuing.", module.GetType().Name, hook);
             }
         }
 

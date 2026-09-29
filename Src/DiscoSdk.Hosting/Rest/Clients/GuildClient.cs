@@ -141,7 +141,7 @@ internal class GuildClient(IDiscordRestClient client)
         return response.Threads;
     }
 
-    private sealed class ActiveThreadsResponse
+    internal sealed class ActiveThreadsResponse
     {
         public Channel[] Threads { get; set; } = [];
     }
@@ -361,21 +361,6 @@ internal class GuildClient(IDiscordRestClient client)
 
         var route = new DiscordRoute("guilds/{guild_id}", guildId);
         return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync<Guild>(route, HttpMethod.Patch, request, cancellationToken) : client.SendWithReasonAsync<Guild>(route, HttpMethod.Patch, request, auditLogReason, cancellationToken));
-    }
-
-    /// <summary>
-    /// Deletes a guild.
-    /// </summary>
-    /// <param name="guildId">The ID of the guild.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    public Task DeleteAsync(Snowflake guildId, CancellationToken cancellationToken = default)
-    {
-        if (guildId == default)
-            throw new ArgumentException("Guild ID cannot be null or empty.", nameof(guildId));
-
-        var route = new DiscordRoute("guilds/{guild_id}", guildId);
-        return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
     }
 
     /// <summary>
@@ -740,15 +725,6 @@ internal class GuildClient(IDiscordRestClient client)
     {
         var route = new DiscordRoute("guilds/{guild_id}/members/{user_id}/roles/{role_id}", guildId, userId, roleId);
         return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Delete, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Delete, body: null, auditLogReason, cancellationToken));
-    }
-
-    /// <summary>
-    /// Modifies the required MFA level for the guild. Caller must be the guild owner.
-    /// </summary>
-    public Task ModifyMfaLevelAsync(Snowflake guildId, MfaLevel level, string? auditLogReason = null, CancellationToken cancellationToken = default)
-    {
-        var route = new DiscordRoute("guilds/{guild_id}/mfa", guildId);
-        return (string.IsNullOrEmpty(auditLogReason) ? client.SendAsync(route, HttpMethod.Post, new { level = (int)level }, cancellationToken) : client.SendWithReasonAsync(route, HttpMethod.Post, new { level = (int)level }, auditLogReason, cancellationToken));
     }
 
     /// <summary>

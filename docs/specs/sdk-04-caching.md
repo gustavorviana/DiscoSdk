@@ -106,7 +106,7 @@ Wrap the member, then call `ShouldCache`. If it returns true, upsert the member;
 ## 9. Errors and edge cases
 | Situation | Expected behaviour |
 |---|---|
-| `MemberCachePolicy.Online` | **Current:** matches only `Invisible` (`is not Offline and Invisible` parses as `(not Offline) and Invisible`), so in practice no one is cached. **Proposed:** `is not (Offline or Invisible)`, and fix `PolicyPresetsTests`. |
+| `MemberCachePolicy.Online` | Caches members whose presence is Online, Idle or DoNotDisturb (`is not (Offline or Invisible)`); needs `GUILD_PRESENCES` and the `ClientStatus` presence flag. |
 | `MemberCachePolicy.Voice` | Never matches: `IMember.VoiceState` is always null (SPEC-API-028). |
 | Reading the guild cache without the `Guilds` intent | A single `Warning`; lookups return empty or null. |
 | REST fallback fails | `Warning` logged; the result is `null` (no exception). |
@@ -139,11 +139,10 @@ Implemented or Partial requirements without a covering test: CA-F03, CA-F15, CA-
 | `16acd2d` | Guild sticker cache. |
 
 Next steps:
-1. Fix `OnlinePolicy` and its test.
-2. Re-evaluate the member policy on `PRESENCE_UPDATE`.
-3. Add a voice state cache (PRD-API-028), which makes `VoicePolicy` work.
-4. Record `CacheEvictions`.
-5. Add an optional bounded message cache.
+1. Re-evaluate the member policy on `PRESENCE_UPDATE`.
+2. Add a voice state cache (PRD-API-028), which makes `VoicePolicy` work.
+3. Record `CacheEvictions`.
+4. Add an optional bounded message cache.
 
 ## 13. Decisions and rejected alternatives
 - **Policy as a predicate over the wrapped member**: composable, testable with NSubstitute mocks of

@@ -149,6 +149,21 @@ public class MessageTextBuilderTests
 	}
 
 	[Fact]
+	public void AppendMention_WithChannelMention_RendersChannelLinkWithoutTrackingIt()
+	{
+		// Arrange
+		var builder = new MessageTextBuilder();
+		var channelId = new Snowflake(111111111111111111UL);
+
+		// Act
+		builder.AppendMention(Mention.FromChannel(channelId));
+
+		// Assert
+		Assert.Equal($"<#{channelId}>", builder.ToString());
+		Assert.Empty(GetMentions(builder));
+	}
+
+	[Fact]
 	public void AppendMention_WithEveryoneMention_AddsMentionToContentAndTracksIt()
 	{
 		// Arrange

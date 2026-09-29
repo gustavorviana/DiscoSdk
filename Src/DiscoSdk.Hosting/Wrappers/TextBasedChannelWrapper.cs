@@ -154,13 +154,9 @@ internal class TextBasedChannelWrapper(DiscordClient client, Channel channel)
         });
     }
 
-    public IRestAction<IMessage[]> RetrievePinnedMessages()
+    public IPinnedMessagePaginationAction RetrievePinnedMessages()
     {
-        return RestAction<IMessage[]>.Create(async cancellationToken =>
-        {
-            var messages = await _client.MessageClient.GetPinnedMessagesAsync(_channel.Id, cancellationToken);
-            return [.. messages.Select(m => new MessageWrapper(_client, this, m, null)).Cast<IMessage>()];
-        });
+        return new PinnedMessagePaginationAction(_client, this);
     }
 
     public IEditMessageRestAction EditMessageById(Snowflake messageId)

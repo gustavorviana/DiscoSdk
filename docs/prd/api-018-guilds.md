@@ -14,7 +14,7 @@ The guild resource is the largest in the API. It covers guild settings, channels
 ## 2. Goals
 - Every documented guild route is reachable from `IGuild` through per-resource facades (`Members`, `Bans`, `Roles`, `Channels`, `Prune`, `Widget`, `WelcomeScreen`, `Onboarding`, …).
 - The guild, member and role objects are exposed completely.
-- Endpoints Discord removed after bots lost guild ownership are flagged and obsoleted.
+- Endpoints Discord removed after bots lost guild ownership are not exposed.
 
 ## 3. Out of scope
 - Guild emojis, stickers, scheduled events, templates, soundboard, auto moderation, audit log, commands and webhooks have their own PRDs (017, 023, 019, 020, 024, 013, 012, 008, 026).
@@ -88,8 +88,8 @@ var count = await guild.Prune.Count(days: 30).ExecuteAsync();
 | GD-F49 | Onboarding object, prompts and prompt options | — | Should | Implemented | `IGuildOnboarding`, `OnboardingPromptBuilder`, `OnboardingMode`, `OnboardingPromptType` |
 | GD-F50 | Welcome screen and widget objects | — | Should | Implemented | `IGuildWelcomeScreen`, `IGuildWidgetSurface` |
 | GD-F51 | Unavailable guilds (outages) | — | Must | Implemented | `GuildManager` (PRD-API-003, GW-F21) |
-| GD-F52 | Delete Guild (bots can no longer own guilds) | `DELETE /guilds/{}` | Could | Deprecated | No longer in Discord's docs at the baseline (guild ownership by apps was removed, change log 2025-04-15); still exposed as `IGuild.Delete()` → `GuildClient.DeleteAsync` |
-| GD-F53 | Modify Guild MFA Level (owner-only) | `POST /guilds/{}/mfa` | Could | Deprecated | No longer in Discord's docs at the baseline; still exposed as `IGuild.ModifyMfaLevel()` → `GuildClient.ModifyMfaLevelAsync` |
+| GD-F52 | Delete Guild (bots can no longer own guilds) | `DELETE /guilds/{}` | Could | Deprecated | No longer in Discord's docs at the baseline (guild ownership by apps was removed, change log 2025-04-15); removed from the SDK |
+| GD-F53 | Modify Guild MFA Level (owner-only) | `POST /guilds/{}/mfa` | Could | Deprecated | No longer in Discord's docs at the baseline; removed from the SDK |
 
 ## 7. Non-functional requirements
 | ID | Requirement |
@@ -101,14 +101,14 @@ var count = await guild.Prune.Count(days: 30).ExecuteAsync();
 None.
 
 ## 9. Compatibility
-`IGuild.Delete()` and `IGuild.ModifyMfaLevel()` target endpoints Discord removed. Mark them `[Obsolete]` for one minor release, then delete them. The per-resource facade split (commit `54a5c3e`) was a breaking change that already shipped.
+`IGuild.Delete()` and `IGuild.ModifyMfaLevel()` were deleted because Discord removed their endpoints (breaking; the SDK is not yet released). The per-resource facade split (commit `54a5c3e`) was a breaking change that already shipped.
 
 ## 10. Acceptance criteria
 - [x] Guild routes (`GuildClientTests`, `RoleClientTests`, `AddMemberActionTests`, `ModifyMemberActionTests`, `ModifyRolePositionsActionTests`, `IntentGuardedActionsTests`).
 - [x] Wrappers (`GuildWrapperTests`, `GuildMemberWrapperTests`, `RoleWrapperTests`, `GuildOnboardingWrapperTests`, `OnboardingPromptBuilderTests`, `IntegrationWrapperTests`).
 - [ ] `IDiscordClient` exposes guild lookup (GD-F01).
 - [ ] Role member counts, widget settings and image, current-user nick (GD-F25, GD-F36, GD-F40, GD-F14).
-- [ ] `IGuild.Delete()` and `IGuild.ModifyMfaLevel()` are obsoleted (GD-F52, GD-F53).
+- [x] `IGuild.Delete()` and `IGuild.ModifyMfaLevel()` are removed (GD-F52, GD-F53).
 
 ## 11. Open questions
 - None.

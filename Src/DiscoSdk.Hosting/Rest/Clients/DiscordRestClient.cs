@@ -25,6 +25,15 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
     private const int MaxConcurrentRequests = 2048;
 
     /// <summary>
+    /// Versioned base URI of the Discord REST API. The trailing slash matters: routes are relative
+    /// (<c>channels/…</c>), and per RFC 3986 a base without it drops its last segment (<c>v10</c>).
+    /// </summary>
+    public const string DefaultApiUri = "https://discord.com/api/v10/";
+
+    /// <summary>Project URL advertised in the <c>DiscordBot ($url, $version)</c> User-Agent.</summary>
+    internal const string ProjectUrl = "https://github.com/gustavorviana/DiscoSdk";
+
+    /// <summary>
     /// How often the background sweeper walks the bucket dictionary looking for idle queues
     /// to evict. The interval is intentionally coarse — eviction is a memory-leak guard for
     /// long-running processes, not a hot-path concern.
@@ -108,20 +117,25 @@ public class DiscordRestClient : IDisposable, IDiscordRestClient
         _logger = logger;
         _timeProvider = timeProvider;
         JsonOptions = jsonOptions;
-        _http.BaseAddress = apiUri;
+        _http.BaseAddress = EnsureTrailingSlash(apiUri);
         _globalRateLimiter = new GlobalRateLimitManager(_logger, _timeProvider);
         _invalidRequestTracker = new InvalidRequestTracker(_timeProvider, _logger);
 
         // Read the SDK version from assembly metadata so the User-Agent stays in sync with
         // package releases automatically. AssemblyName.Version is preferred over the
-        // InformationalVersion attribute because it is always valid token format (digits +
-        // dots) — InformationalVersion may carry SemVer build metadata (e.g. "+gitsha")
-        // that ProductInfoHeaderValue would reject.
+        // InformationalVersion attribute because it carries no SemVer build metadata ("+gitsha").
+        // Discord requires "DiscordBot ($url, $versionNumber)"; ProductInfoHeaderValue rejects the
+        // parenthesised form, so the raw value is added without validation.
         var version = typeof(DiscordRestClient).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
-        _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(DeviceInfo.SdkName, version));
+        _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", BuildUserAgent(version));
 
         _ = Task.Run(EvictionLoopAsync);
     }
+
+    internal static string BuildUserAgent(string version) => $"DiscordBot ({ProjectUrl}, {version})";
+
+    private static Uri EnsureTrailingSlash(Uri apiUri)
+        => apiUri.AbsolutePath.EndsWith('/') ? apiUri : new Uri(apiUri.AbsoluteUri + "/");
 
     public Task<T> SendAsync<T>(DiscordRoute path, HttpMethod method, CancellationToken ct)
     {

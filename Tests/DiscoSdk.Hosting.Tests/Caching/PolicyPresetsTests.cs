@@ -84,11 +84,11 @@ public class PolicyPresetsTests
 	}
 
 	[Theory]
-	[InlineData(OnlineStatus.Online, false)]
-	[InlineData(OnlineStatus.Idle, false)]
-	[InlineData(OnlineStatus.DoNotDisturb, false)]
+	[InlineData(OnlineStatus.Online, true)]
+	[InlineData(OnlineStatus.Idle, true)]
+	[InlineData(OnlineStatus.DoNotDisturb, true)]
 	[InlineData(OnlineStatus.Offline, false)]
-	[InlineData(OnlineStatus.Invisible, true)]
+	[InlineData(OnlineStatus.Invisible, false)]
 	public void OnlinePolicy_MatchesAccordingToConfiguredStatusFilter(OnlineStatus status, bool expected)
 	{
 		Assert.Equal(expected, OnlinePolicy.Instance.ShouldCache(Member(status: status)));

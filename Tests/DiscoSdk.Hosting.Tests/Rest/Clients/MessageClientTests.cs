@@ -216,7 +216,7 @@ public class MessageClientTests
 		await _client.PinAsync(_channelId, _messageId);
 
 		await _http.Received(1).SendAsync(
-			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/pins/{_messageId}"),
+			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/messages/pins/{_messageId}"),
 			HttpMethod.Put,
 			Arg.Any<CancellationToken>());
 	}
@@ -227,24 +227,49 @@ public class MessageClientTests
 		await _client.UnpinAsync(_channelId, _messageId);
 
 		await _http.Received(1).SendAsync(
-			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/pins/{_messageId}"),
+			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/messages/pins/{_messageId}"),
 			HttpMethod.Delete,
 			Arg.Any<CancellationToken>());
 	}
 
 	[Fact]
-	public async Task GetPinnedMessagesAsync_GetsPinsRouteAsync()
+	public async Task GetPinnedMessagesAsync_GetsMessagesPinsRouteAsync()
 	{
-		_http.SendAsync<Message[]>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-			.Returns([]);
+		_http.SendAsync<MessagePinsResponse>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new MessagePinsResponse());
 
 		await _client.GetPinnedMessagesAsync(_channelId);
 
-		await _http.Received(1).SendAsync<Message[]>(
-			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/pins"),
+		await _http.Received(1).SendAsync<MessagePinsResponse>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/messages/pins"),
 			HttpMethod.Get,
 			Arg.Any<object?>(),
 			Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task GetPinnedMessagesAsync_WithBeforeAndLimit_SendsIsoTimestampQueryAsync()
+	{
+		_http.SendAsync<MessagePinsResponse>(Arg.Any<DiscordRoute>(), Arg.Any<HttpMethod>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+			.Returns(new MessagePinsResponse());
+		var before = new DateTimeOffset(2026, 9, 1, 12, 30, 0, TimeSpan.FromHours(-3));
+
+		await _client.GetPinnedMessagesAsync(_channelId, before, 10);
+
+		var expectedBefore = Uri.EscapeDataString("2026-09-01T15:30:00.0000000+00:00");
+		await _http.Received(1).SendAsync<MessagePinsResponse>(
+			Arg.Is<DiscordRoute>(r => r.ToString() == $"channels/{_channelId}/messages/pins?before={expectedBefore}&limit=10"),
+			HttpMethod.Get,
+			Arg.Any<object?>(),
+			Arg.Any<CancellationToken>());
+	}
+
+	[Theory]
+	[InlineData(0)]
+	[InlineData(51)]
+	public async Task GetPinnedMessagesAsync_WithLimitOutOfRange_ThrowsAsync(int limit)
+	{
+		await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _client.GetPinnedMessagesAsync(_channelId, limit: limit));
 	}
 
 	[Fact]

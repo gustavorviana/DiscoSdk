@@ -244,5 +244,31 @@ public enum DiscordPermission : ulong
 	/// <summary>
 	/// Allows for sending voice messages.
 	/// </summary>
-	SendVoiceMessages = 1UL << 46
+	SendVoiceMessages = 1UL << 46,
+
+	/// <summary>
+	/// Allows setting the status of a voice channel.
+	/// </summary>
+	SetVoiceChannelStatus = 1UL << 48,
+
+	/// <summary>
+	/// Allows sending polls.
+	/// </summary>
+	SendPolls = 1UL << 49,
+
+	/// <summary>
+	/// Allows user-installed apps to send public responses. When disabled, users can still use their
+	/// apps but the responses are ephemeral. Only applies to apps not also installed to the server.
+	/// </summary>
+	UseExternalApps = 1UL << 50,
+
+	/// <summary>
+	/// Allows pinning and unpinning messages.
+	/// </summary>
+	PinMessages = 1UL << 51,
+
+	/// <summary>
+	/// Allows bypassing slowmode restrictions.
+	/// </summary>
+	BypassSlowmode = 1UL << 52
 }

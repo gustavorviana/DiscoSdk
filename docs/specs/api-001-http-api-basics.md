@@ -59,8 +59,8 @@ await guild.Edit().SetIcon(icon).ExecuteAsync();
 ```
 
 ## 6. Discord surface
-- Base URL: `https://discord.com/api/v10`. See §9 for the trailing-slash defect.
-- Headers: `Authorization: Bot <token>`, `User-Agent: DiscoSdk/<version>`,
+- Base URL: `https://discord.com/api/v10/` (`DiscordRestClient.DefaultApiUri`, trailing slash enforced).
+- Headers: `Authorization: Bot <token>`, `User-Agent: DiscordBot (https://github.com/gustavorviana/DiscoSdk, <version>)`,
   `Content-Type: application/json; charset=utf-8` or multipart, and `X-Audit-Log-Reason`
   (SPEC-API-012).
 - CDN: `https://cdn.discordapp.com/` (avatars, banners, icons, splashes, discovery splashes, member avatars).
@@ -84,12 +84,12 @@ await guild.Edit().SetIcon(icon).ExecuteAsync();
 ## 9. Errors and edge cases
 | Situation | Expected behaviour |
 |---|---|
-| Base URI without trailing slash (`…/api/v10`) and relative route (`channels/1`) | **Current:** resolves to `…/api/channels/1` (unversioned → Discord default v6). **Expected:** `…/api/v10/channels/1`. Fix by ending the base URI with `/` (HB-F02). |
+| Base URI given without trailing slash (`…/api/v10`) and relative route (`channels/1`) | `DiscordRestClient` appends the slash, so the request goes to `…/api/v10/channels/1` (HB-F02). |
 | Error body is not JSON (Cloudflare HTML, empty body) | `DiscordApiException` with the HTTP status and reason phrase, `DiscordCode == null`. |
 | 2xx with a `null` JSON body where a value is expected | `DiscordApiException("Discord API returned empty JSON.")`. |
 | Audit-log reason longer than 512 characters | Truncated to 512, then URL-encoded. |
 | Multipart request retried after a 5xx | The content factory rebuilds the streams for each attempt. |
-| `Mention.FromChannel(id)` appended to text | **Current:** renders `@everyone` (HB-F19). **Expected:** `<#id>`. |
+| `Mention.FromChannel(id)` appended to text | Renders `<#id>` and is not added to allowed mentions (HB-F19). |
 | User without an avatar on the new username system | **Current:** `embed/avatars/{id % 5}` or `{discriminator % 5}`. **Expected:** `(id >> 22) % 6` (HB-F37). |
 
 ## 10. Observability
@@ -113,7 +113,7 @@ await guild.Edit().SetIcon(icon).ExecuteAsync();
 | `MessageClientTests`, `StickerClientTests`, `SoundboardSoundClientTests` | HB-F15 |
 | `SlashCommandLocalizerTests` | HB-F53 – HB-F84 (locale validation) |
 
-Gaps: no test asserts the absolute request URI (HB-F02), the REST User-Agent (HB-F03) or channel mention rendering (HB-F19).
+`DiscordRestClientTests` asserts the resolved request path and the REST User-Agent (HB-F02, HB-F03); `MessageTextBuilderTests` covers channel mention rendering (HB-F19); `DiscordLocalesTests` covers `es-419` (HB-F59).
 
 Implemented or Partial requirements without a covering test: HB-F08, HB-F13, HB-F16, HB-F39, HB-N01 – HB-N02.
 
@@ -127,11 +127,8 @@ Implemented or Partial requirements without a covering test: HB-F08, HB-F13, HB-
 | `70f78e8` | `IMessage.ToBuilder` full-fidelity fork (attachment editing). |
 
 Next steps, each a single commit:
-1. End the base URIs with `/`, so `DiscordClientBuilder` uses `https://discord.com/api/v10/` and the webhook builder uses `https://discord.com/api/v10/`, and assert the absolute URI in a test.
-2. Send `DiscordBot (https://github.com/gustavorviana/DiscoSdk, <version>)` as the REST User-Agent.
-3. Add a `MentionType.Channel` branch to `Mention.ToString()`.
-4. Add `es-419` to `DiscordLocales`, and `s`/`S` to `TimestampFormat`.
-5. Fix the default-avatar index and add CDN helpers for emoji, sticker, role icon and application icon.
+1. Add `s`/`S` to `TimestampFormat`.
+2. Fix the default-avatar index and add CDN helpers for emoji, sticker, role icon and application icon.
 
 ## 13. Decisions and rejected alternatives
 - **Static shared handler** rather than an `HttpClient` per client: this pools connections across shards and clients and refreshes DNS through `PooledConnectionLifetime`. A caller-supplied `HttpMessageHandler` was rejected to keep the rate-limit invariants inside the SDK.

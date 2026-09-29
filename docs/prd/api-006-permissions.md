@@ -98,11 +98,11 @@ if (!perms.HasFlag(DiscordPermission.ManageMessages))
 | PM-F56 | Permission `CREATE_EVENTS` (1 << 44) | `perm:CREATE_EVENTS` | Must | Implemented | `DiscordPermission.CreateEvents` |
 | PM-F57 | Permission `USE_EXTERNAL_SOUNDS` (1 << 45) | `perm:USE_EXTERNAL_SOUNDS` | Must | Implemented | `DiscordPermission.UseExternalSounds` |
 | PM-F58 | Permission `SEND_VOICE_MESSAGES` (1 << 46) | `perm:SEND_VOICE_MESSAGES` | Must | Implemented | `DiscordPermission.SendVoiceMessages` |
-| PM-F59 | Permission `SET_VOICE_CHANNEL_STATUS` (1 << 48) | `perm:SET_VOICE_CHANNEL_STATUS` | Must | Missing | Not in `DiscordPermission` |
-| PM-F60 | Permission `SEND_POLLS` (1 << 49) | `perm:SEND_POLLS` | Must | Missing | Not in `DiscordPermission` |
-| PM-F61 | Permission `USE_EXTERNAL_APPS` (1 << 50) | `perm:USE_EXTERNAL_APPS` | Must | Missing | Not in `DiscordPermission` |
-| PM-F62 | Permission `PIN_MESSAGES` (1 << 51) | `perm:PIN_MESSAGES` | Must | Missing | Not in `DiscordPermission` |
-| PM-F63 | Permission `BYPASS_SLOWMODE` (1 << 52) | `perm:BYPASS_SLOWMODE` | Must | Missing | Not in `DiscordPermission` |
+| PM-F59 | Permission `SET_VOICE_CHANNEL_STATUS` (1 << 48) | `perm:SET_VOICE_CHANNEL_STATUS` | Must | Implemented | `DiscordPermission.SetVoiceChannelStatus` |
+| PM-F60 | Permission `SEND_POLLS` (1 << 49) | `perm:SEND_POLLS` | Must | Implemented | `DiscordPermission.SendPolls` |
+| PM-F61 | Permission `USE_EXTERNAL_APPS` (1 << 50) | `perm:USE_EXTERNAL_APPS` | Must | Implemented | `DiscordPermission.UseExternalApps` |
+| PM-F62 | Permission `PIN_MESSAGES` (1 << 51) | `perm:PIN_MESSAGES` | Must | Implemented | `DiscordPermission.PinMessages` |
+| PM-F63 | Permission `BYPASS_SLOWMODE` (1 << 52) | `perm:BYPASS_SLOWMODE` | Must | Implemented | `DiscordPermission.BypassSlowmode` |
 
 ## 7. Non-functional requirements
 | ID | Requirement |

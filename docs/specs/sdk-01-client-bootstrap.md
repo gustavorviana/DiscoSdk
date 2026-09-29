@@ -77,7 +77,7 @@ See PRD §5 and §8. The events are `OnReady`, `UnhandledError`, `GatewayDisconn
 |---|---|
 | `Build()` without intents | `InvalidOperationException` ("Intents are required…"). |
 | Empty token | `ArgumentException` from the constructor. |
-| A lifetime module throws in a hook | **Current:** swallowed silently (`catch { }`), with nothing logged. **Proposed:** log at `Error` and continue. |
+| A lifetime module throws in a hook | Logged at `Error` with the module type and hook name; the remaining modules and the client lifecycle continue (`DiscordClient.InvokeModuleHookAsync`). |
 | Handler needs a bot author's service | **Current:** cannot be registered (CB-F08), so construction fails with `InvalidOperationException` from `ActivatorUtilities`. |
 
 ## 10. Observability
@@ -107,7 +107,6 @@ Next steps:
 1. Add `ConfigureServices(Action<IServiceCollection>)`.
 2. Add a `DiscoSdk.Extensions.Hosting` package with `AddDiscoSdk` and a hosted service.
 3. Add `WithLoggerFactory`.
-4. Log module hook failures.
 
 ## 13. Decisions and rejected alternatives
 - **Private container**: it keeps the SDK's services isolated. The cost is that bot authors cannot add

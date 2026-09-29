@@ -38,7 +38,7 @@ await template.Sync().ExecuteAsync();
 | GT-F05 | Modify Guild Template | `PATCH /guilds/{}/templates/{}` | Must | Implemented | `IGuildTemplate.Modify()` → `GuildTemplateClient.ModifyGuildTemplateAsync` |
 | GT-F06 | Delete Guild Template | `DELETE /guilds/{}/templates/{}` | Must | Implemented | `IGuildTemplate.Delete()` → `GuildTemplateClient.DeleteGuildTemplateAsync` |
 | GT-F07 | Template object (code, name, description, usage count, creator, source guild snapshot, is dirty) | — | Must | Implemented | `IGuildTemplate` |
-| GT-F08 | Create guild from template | `POST /guilds/templates/{}` | Should | Deprecated | No longer in Discord's docs at the baseline; guild creation by apps was removed (change log, 2025-04-15). Still exposed as `IGuildTemplate.CreateGuild()` → `GuildTemplateClient.CreateGuildFromTemplateAsync` |
+| GT-F08 | Create guild from template | `POST /guilds/templates/{}` | Should | Deprecated | No longer in Discord's docs at the baseline; guild creation by apps was removed (change log, 2025-04-15). Removed from the SDK |
 
 ## 7. Non-functional requirements
 | ID | Requirement |
@@ -49,12 +49,12 @@ await template.Sync().ExecuteAsync();
 None.
 
 ## 9. Compatibility
-`IGuildTemplate.CreateGuild()` targets an endpoint Discord removed. Mark it `[Obsolete]` for one minor release, then delete it.
+`IGuildTemplate.CreateGuild()` was deleted because Discord removed its endpoint (breaking; the SDK is not yet released).
 
 ## 10. Acceptance criteria
 - [x] Template CRUD and sync (`GuildTemplateClientTests`, `GuildTemplateWrapperTests`).
 - [ ] Get template by code is public (GT-F01).
-- [ ] `IGuildTemplate.CreateGuild()` is obsoleted (GT-F08).
+- [x] `IGuildTemplate.CreateGuild()` is removed (GT-F08).
 
 ## 11. Open questions
 - None.

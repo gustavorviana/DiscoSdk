@@ -139,6 +139,7 @@ public readonly struct Mention : IEquatable<Mention>
         {
             MentionType.User => $"<@{Id}>",
             MentionType.Role => $"<@&{Id}>",
+            MentionType.Channel => $"<#{Id}>",
             _ => "@everyone",
         };
     }

@@ -57,12 +57,12 @@ await channel.BulkDeleteMessagesAsync(spamIds).ExecuteAsync();
 | MS-F12 | Edit Message | `PATCH /channels/{}/messages/{}` | Must | Implemented | `IInteraction.Edit()`, `IMessage.Edit()` → `MessageClient.EditAsync` |
 | MS-F13 | Delete Message | `DELETE /channels/{}/messages/{}` | Must | Implemented | `IMessage.Delete()` → `MessageClient.DeleteAsync` |
 | MS-F14 | Bulk Delete Messages | `POST /channels/{}/messages/bulk-delete` | Must | Implemented | `ITextBasedChannel.BulkDeleteMessagesAsync()`, `ITextBasedChannel.PurgeMessagesAsync()` → `MessageClient.BulkDeleteMessagesAsync` |
-| MS-F15 | Get Channel Pins | `GET /channels/{}/messages/pins` | Must | Missing | The SDK still uses the deprecated `GET /channels/{id}/pins` (MS-F18) |
-| MS-F16 | Pin Message | `PUT /channels/{}/messages/pins/{}` | Must | Missing | The SDK still uses the deprecated `PUT /channels/{id}/pins/{id}` (MS-F19) |
-| MS-F17 | Unpin Message | `DELETE /channels/{}/messages/pins/{}` | Must | Missing | The SDK still uses the deprecated `DELETE /channels/{id}/pins/{id}` (MS-F20) |
-| MS-F18 | Get Pinned Messages (deprecated) | `GET /channels/{}/pins` | Should | Deprecated | Still used: `ITextBasedChannel.RetrievePinnedMessages()` → `MessageClient.GetPinnedMessagesAsync` |
-| MS-F19 | Pin Message (deprecated) | `PUT /channels/{}/pins/{}` | Should | Deprecated | Still used: `IMessage.Pin()`, `ITextBasedChannel.PinMessageByIdAsync()` → `MessageClient.PinAsync` |
-| MS-F20 | Unpin Message (deprecated) | `DELETE /channels/{}/pins/{}` | Should | Deprecated | Still used: `IMessage.Unpin()`, `ITextBasedChannel.UnpinMessageByIdAsync()` → `MessageClient.UnpinAsync` |
+| MS-F15 | Get Channel Pins | `GET /channels/{}/messages/pins` | Must | Implemented | `ITextBasedChannel.RetrievePinnedMessages()` (`IPinnedMessagePaginationAction`: `Before(DateTimeOffset)`, `Limit` 1–50; items carry `IPinnedMessage.PinnedAt`) → `MessageClient.GetPinnedMessagesAsync` |
+| MS-F16 | Pin Message | `PUT /channels/{}/messages/pins/{}` | Must | Implemented | `IMessage.Pin()`, `ITextBasedChannel.PinMessageByIdAsync()` → `MessageClient.PinAsync` |
+| MS-F17 | Unpin Message | `DELETE /channels/{}/messages/pins/{}` | Must | Implemented | `IMessage.Unpin()`, `ITextBasedChannel.UnpinMessageByIdAsync()` → `MessageClient.UnpinAsync` |
+| MS-F18 | Get Pinned Messages (deprecated) | `GET /channels/{}/pins` | Should | Deprecated | Not used; replaced by MS-F15 |
+| MS-F19 | Pin Message (deprecated) | `PUT /channels/{}/pins/{}` | Should | Deprecated | Not used; replaced by MS-F16 |
+| MS-F20 | Unpin Message (deprecated) | `DELETE /channels/{}/pins/{}` | Should | Deprecated | Not used; replaced by MS-F17 |
 | MS-F21 | Message type `DEFAULT` (0) | `msgtype:0` | Should | Implemented | `MessageType.Default` |
 | MS-F22 | Message type `RECIPIENT_ADD` (1) | `msgtype:1` | Should | Implemented | `MessageType.RecipientAdd` |
 | MS-F23 | Message type `RECIPIENT_REMOVE` (2) | `msgtype:2` | Should | Implemented | `MessageType.RecipientRemove` |
@@ -125,14 +125,15 @@ await channel.BulkDeleteMessagesAsync(spamIds).ExecuteAsync();
 None.
 
 ## 9. Compatibility
-Moving pins to `/channels/{id}/messages/pins` does not change the public API (`IMessage.Pin()` and friends
-stay the same). The new pin list is paginated, so `RetrievePinnedMessages()` should gain pagination.
+Pins moved to `/channels/{id}/messages/pins`. `IMessage.Pin()`, `Unpin()` and the by-id channel methods kept
+their signatures. `RetrievePinnedMessages()` changed from `IRestAction<IMessage[]>` to
+`IPinnedMessagePaginationAction`, whose items expose `PinnedAt` and `Message` (breaking; the SDK is not yet released).
 
 ## 10. Acceptance criteria
 - [x] Send, edit, delete, crosspost, reactions and bulk delete (`MessageClientTests`, `MessageWrapperTests`, `TextBasedChannelWrapperTests`, `GetReactionsActionTests`, `ReactionWrapperTests`).
 - [x] Embeds, mentions and text builders (`EmbedBuilderTests`, `MentionBuilderTests`, `MessageTextBuilderTests`).
 - [x] Forward serialisation (`MessageForwardSerializationTests`).
-- [ ] Pins use the current routes (MS-F15 – MS-F17).
+- [x] Pins use the current routes, with pagination (MS-F15 – MS-F17; `MessageClientTests`, `TextBasedChannelWrapperTests`, `MessagePinsResponseTests`).
 - [ ] Guild message search (MS-F02).
 - [ ] An explicit "no mentions" / `replied_user` option (MS-F60).
 

@@ -41,7 +41,8 @@ the routes; payloads with attachments use multipart (`payload_json` + `files[n]`
 ## 5. Public API
 - `ITextBasedChannel`: `SendMessage`, `GetMessages`, `GetMessageAsync`, `EditMessageById`,
   `DeleteMessageAsync`, `BulkDeleteMessagesAsync`, `PurgeMessages*`, reactions by id, pins by id,
-  `RetrievePinnedMessages`, `TriggerTypingAsync`.
+  `RetrievePinnedMessages` (`IPinnedMessagePaginationAction`: `Before(DateTimeOffset)`, `Limit` 1–50,
+  items are `IPinnedMessage { PinnedAt, Message }`), `TriggerTypingAsync`.
 - `IMessage`: `Edit`, `Delete`, `Reply`, `ForwardTo`, `ToBuilder`, `AddReaction`, `GetReactions`,
   `DeleteAllReactions*`, `Pin` / `Unpin`, `Crosspost`.
 
@@ -78,7 +79,8 @@ REST metrics only.
 ## 11. Tests
 | Test class | Covers |
 |---|---|
-| `MessageClientTests` | MS-F01, MS-F03 – MS-F14, MS-F18 – MS-F20 |
+| `MessageClientTests` | MS-F01, MS-F03 – MS-F17 |
+| `TextBasedChannelWrapperTests`, `MessagePinsResponseTests` | MS-F15 (pagination and payload shape) |
 | `MessageWrapperTests`, `TextBasedChannelWrapperTests` | MS-F04 – MS-F14, MS-F61 – MS-F63, MS-F70, MS-N02 |
 | `GetReactionsActionTests`, `ReactionWrapperTests` | MS-F06 – MS-F11, MS-F69 |
 | `EmbedBuilderTests` | MS-F59 |
@@ -97,10 +99,9 @@ Implemented or Partial requirements without a covering test: MS-N01, MS-N03.
 | `22727cf` | Components V2 in messages. |
 
 Next steps:
-1. Switch pins to `/channels/{id}/messages/pins` with pagination.
-2. Add guild message search.
-3. Support "no mentions" and `replied_user`.
-4. Honour `ReactionType` in the reaction listing.
+1. Add guild message search.
+2. Support "no mentions" and `replied_user`.
+3. Honour `ReactionType` in the reaction listing.
 5. Add a `nonce` / `enforce_nonce` setter.
 6. Add voice messages.
 

@@ -28,15 +28,6 @@ public class GuildWrapperTests : WrapperTestBase
 	// ---- Lifecycle ----
 
 	[Fact]
-	public async Task Delete_DeletesGuildAsync()
-	{
-		await _wrapper.Delete().ExecuteAsync();
-		await Http.Received(1).SendAsync(
-			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100"),
-			HttpMethod.Delete, Arg.Any<CancellationToken>());
-	}
-
-	[Fact]
 	public async Task Leave_DeletesMeGuildsRouteAsync()
 	{
 		await _wrapper.Leave().ExecuteAsync();
@@ -537,19 +528,7 @@ public class GuildWrapperTests : WrapperTestBase
 			Arg.Any<CancellationToken>());
 	}
 
-	// ---- MFA / Integrations / Incidents / Webhooks ----
-
-	[Fact]
-	public async Task ModifyMfaLevel_PostsMfaRouteAsync()
-	{
-		await _wrapper.ModifyMfaLevel(MfaLevel.Elevated).ExecuteAsync();
-
-		await Http.Received(1).SendAsync(
-			Arg.Is<DiscordRoute>(r => r.ToString() == "guilds/100/mfa"),
-			HttpMethod.Post,
-			Arg.Is<object?>(body => BodyPropertyEquals(body, "level", (int)MfaLevel.Elevated)),
-			Arg.Any<CancellationToken>());
-	}
+	// ---- Integrations / Incidents / Webhooks ----
 
 	[Fact]
 	public async Task GetIntegrations_GetsIntegrationsRouteAsync()

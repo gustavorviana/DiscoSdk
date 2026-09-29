@@ -370,7 +370,7 @@ internal class MessageClient(IDiscordRestClient client)
         if (messageId == default)
             throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
 
-        var route = new DiscordRoute("channels/{channel_id}/pins/{message_id}", channelId, messageId);
+        var route = new DiscordRoute("channels/{channel_id}/messages/pins/{message_id}", channelId, messageId);
         return client.SendAsync(route, HttpMethod.Put, cancellationToken);
     }
 
@@ -389,23 +389,37 @@ internal class MessageClient(IDiscordRestClient client)
         if (messageId == default)
             throw new ArgumentException("Message ID cannot be null or empty.", nameof(messageId));
 
-        var route = new DiscordRoute("channels/{channel_id}/pins/{message_id}", channelId, messageId);
+        var route = new DiscordRoute("channels/{channel_id}/messages/pins/{message_id}", channelId, messageId);
         return client.SendAsync(route, HttpMethod.Delete, cancellationToken);
     }
 
     /// <summary>
-    /// Gets all pinned messages in the specified channel.
+    /// Gets a page of pinned messages in the specified channel, newest pin first.
     /// </summary>
     /// <param name="channelId">The ID of the channel to get pinned messages from.</param>
+    /// <param name="before">Only messages pinned before this moment are returned.</param>
+    /// <param name="limit">Maximum number of pins to return (1-50, Discord defaults to 50).</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>An array of pinned messages.</returns>
-    public Task<Message[]> GetPinnedMessagesAsync(Snowflake channelId, CancellationToken cancellationToken = default)
+    /// <returns>The page of pins and whether more pins exist.</returns>
+    public Task<MessagePinsResponse> GetPinnedMessagesAsync(Snowflake channelId, DateTimeOffset? before = null, int? limit = null, CancellationToken cancellationToken = default)
     {
         if (channelId == default)
             throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
 
-        var route = new DiscordRoute("channels/{channel_id}/pins", channelId);
-        return client.SendAsync<Message[]>(route, HttpMethod.Get, null, cancellationToken);
+        if (limit is < 1 or > 50)
+            throw new ArgumentOutOfRangeException(nameof(limit), "Limit must be between 1 and 50.");
+
+        var queryParams = new List<string>();
+
+        if (before.HasValue)
+            queryParams.Add($"before={Uri.EscapeDataString(before.Value.ToUniversalTime().ToString("O"))}");
+
+        if (limit.HasValue)
+            queryParams.Add($"limit={limit.Value}");
+
+        var query = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
+        var route = new DiscordRoute($"channels/{{channel_id}}/messages/pins{query}", channelId);
+        return client.SendAsync<MessagePinsResponse>(route, HttpMethod.Get, null, cancellationToken);
     }
 
     /// <summary>

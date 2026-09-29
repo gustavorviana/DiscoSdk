@@ -328,22 +328,6 @@ internal class ChannelClient(IDiscordRestClient client, MessageClient messageCli
 	}
 
 	/// <summary>
-	/// Gets the active threads in a channel.
-	/// </summary>
-	/// <param name="channelId">The ID of the channel to get active threads from.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>An object containing active threads.</returns>
-	public async Task<Channel[]> GetActiveThreadsAsync(Snowflake channelId, CancellationToken cancellationToken = default)
-	{
-		if (channelId == default)
-			throw new ArgumentException("Channel ID cannot be null or empty.", nameof(channelId));
-
-		var route = new DiscordRoute("channels/{channel_id}/threads/active", channelId);
-		var response = await client.SendAsync<ThreadsResponse>(route, HttpMethod.Get, null, cancellationToken);
-		return response.Threads;
-	}
-
-	/// <summary>
 	/// Gets the public archived threads in a channel.
 	/// </summary>
 	/// <param name="channelId">The ID of the channel to get archived threads from.</param>
