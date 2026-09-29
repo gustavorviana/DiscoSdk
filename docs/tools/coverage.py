@@ -532,8 +532,8 @@ def cmd_check(args) -> int:
 
             for token in re.findall(r"`([^`]+)`", row.evidence):
                 sym = token.rstrip("()").split("(")[0]
-                if not re.fullmatch(r"[A-Z]\w*(?:\.\w+)*", sym):
-                    continue
+                if not re.fullmatch(r"[A-Z]\w*(?:\.\w+)*", sym) or re.fullmatch(r"[A-Z0-9_]+", sym):
+                    continue  # not a C# symbol, or a Discord constant such as SOUNDBOARD_SOUNDS
                 parts = sym.split(".")
                 if parts[0] not in sdk.types:
                     errors.append(f"{where}: evidence type '{parts[0]}' not found in Src/")
