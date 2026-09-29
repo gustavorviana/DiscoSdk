@@ -38,7 +38,6 @@ Stateless request builders; wrappers are snapshots of the returned models.
 | Situation | Expected behaviour |
 |---|---|
 | Consuming a non-consumable entitlement | Discord 400. |
-| Querying SKUs of an app without monetization | Returns an empty list. |
 
 ## 10. Observability
 REST metrics only (SPEC-SDK-05).

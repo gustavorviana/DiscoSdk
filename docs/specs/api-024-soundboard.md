@@ -38,7 +38,8 @@ Stateless request builders; wrappers are snapshots of the returned models.
 ## 9. Errors and edge cases
 | Situation | Expected behaviour |
 |---|---|
-| Sound over 512 KiB or 5.2 s | Discord 400. |
+| Sound over 512 KiB, or an empty buffer | `ArgumentException` from `DiscordSoundBuffer` before sending. |
+| Sound longer than 5.2 s | Discord 400. |
 | Unknown audio format | `DiscordSoundBuffer` rejects it before sending. |
 
 ## 10. Observability
