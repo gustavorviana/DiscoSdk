@@ -48,10 +48,10 @@ client.CommandsUpdateWindowOpened += async (_, session) =>
 | ID | Capability | Discord key | Priority | Status | SDK evidence |
 |---|---|---|---|---|---|
 | AC-F01 | Command naming rules (1–32 chars, lowercase, regex) validated client-side | — | Must | Implemented | `SlashCommandBuilder` validation (`SlashCommandValidationTests`) |
-| AC-F02 | Name and description localizations | — | Must | Implemented | `SlashCommand.NameLocalizations` / `DescriptionLocalizations`, `ICommandLocalizationProvider` (PRD-SDK-03) |
+| AC-F02 | Name and description localizations | — | Must | Implemented | `ApplicationCommand.NameLocalizations` / `ApplicationCommand.DescriptionLocalizations`, `ICommandLocalizationProvider` (PRD-SDK-03) |
 | AC-F03 | `default_member_permissions` | — | Must | Implemented | `SlashCommandBuilder` (`DefaultMemberPermissions`) |
 | AC-F04 | Installation contexts (`integration_types`) and interaction contexts (`contexts`) | — | Must | Implemented | `SlashCommandBuilder.WithIntegrationTypes`, `SlashCommandBuilder.WithContexts` |
-| AC-F05 | Age-restricted (`nsfw`) commands | — | Should | Implemented | `SlashCommand.Nsfw` |
+| AC-F05 | Age-restricted (`nsfw`) commands | — | Should | Implemented | `ApplicationCommand.Nsfw` |
 | AC-F06 | Subcommands and subcommand groups | — | Must | Implemented | `SlashCommandSubCommandBuilder`, `SlashCommandSubCommandGroupBuilder`, `[SubCommand]`, `[SubCommandGroup]` |
 | AC-F07 | Option constraints: choices, `min/max_value`, `min/max_length`, `channel_types`, `autocomplete`, required | — | Must | Implemented | `SlashCommandStringOptionBuilder`, `SlashCommandIntegerOptionBuilder`, `SlashCommandNumberOptionBuilder`, `SlashCommandChannelOptionBuilder`, `SlashCommandChoiceBuilder` |
 | AC-F08 | Entry point commands (`PRIMARY_ENTRY_POINT`, handler types) | — | Could | Missing | No `ApplicationCommandType` value 4 (AC-F31) and no handler-type field |

@@ -37,6 +37,7 @@ REPO = Path(__file__).resolve().parents[2]
 DOCS_DIR = REPO / "docs"
 PRD_DIR = DOCS_DIR / "prd"
 SRC_DIR = REPO / "Src"
+TESTS_DIR = REPO / "Tests"
 BASELINE_FILE = Path(__file__).resolve().parent / "baseline.json"
 DOCS_URL = "https://docs.discord.com/developers/"
 RAW_URL = "https://raw.githubusercontent.com/{repo}/{sha}/{path}"
@@ -326,6 +327,7 @@ class SdkInventory:
     enums: dict[str, dict[int, str]] = field(default_factory=dict)  # enum -> value/bit -> member
     types: set[str] = field(default_factory=set)
     words: set[str] = field(default_factory=set)
+    test_types: set[str] = field(default_factory=set)
     locales: set[str] = field(default_factory=set)
 
 
@@ -398,6 +400,8 @@ def sdk_inventory() -> SdkInventory:
     for f in (SRC_DIR / "DiscoSdk.Hosting/Gateway").rglob("*.cs"):
         for name in re.findall(r'EventType,\s*"([A-Z][A-Z_]+)"', f.read_text(encoding="utf-8-sig")):
             inv.events.setdefault(name, [f.stem])
+    for f in sorted(TESTS_DIR.rglob("*.cs")) if TESTS_DIR.is_dir() else []:
+        inv.test_types.update(re.findall(r"\bclass\s+(\w+)", f.read_text(encoding="utf-8-sig")))
     return inv
 
 
@@ -521,6 +525,21 @@ def cmd_check(args) -> int:
                 continue
             if not row.keys and "—" not in row.evidence and row.status in ("Implemented", "Partial") and not row.evidence:
                 errors.append(f"{where}: {row.status} row without Discord key needs SDK evidence")
+            # Missing/Excluded rows may name proposed or absent symbols on purpose; only claims are verified.
+            tokens = re.findall(r"`([^`]+)`", row.evidence) if row.status in ("Implemented", "Partial", "Deprecated") else []
+            for token in tokens:
+                sym = token.rstrip("()").split("(")[0].split("<")[0]
+                if not re.fullmatch(r"[A-Z]\w*(?:\.\w+)*", sym) or re.fullmatch(r"[A-Z0-9_]+", sym):
+                    continue  # not a C# symbol, or a Discord constant such as SOUNDBOARD_SOUNDS
+                parts = sym.split(".")
+                if len(parts) == 1:
+                    # A bare name may be an SDK type, a member, a BCL type used in Src/, or a test class.
+                    if sym not in sdk.types and sym not in sdk.words and sym not in sdk.test_types:
+                        errors.append(f"{where}: evidence symbol '{sym}' not found in Src/ or Tests/")
+                elif parts[0] not in sdk.types and parts[0] not in sdk.words:
+                    errors.append(f"{where}: evidence type '{parts[0]}' not found in Src/")
+                elif parts[-1] not in sdk.words:
+                    errors.append(f"{where}: evidence member '{sym}' not found in Src/")
             found_any, missing = False, []
             for key in row.keys:
                 if not KEY_RE.match(key):
@@ -554,15 +573,6 @@ def cmd_check(args) -> int:
             elif row.status == "Missing" and found_any:
                 errors.append(f"{where}: marked Missing but SDK implements {', '.join(k for k in auto if k not in missing)}")
 
-            for token in re.findall(r"`([^`]+)`", row.evidence):
-                sym = token.rstrip("()").split("(")[0]
-                if not re.fullmatch(r"[A-Z]\w*(?:\.\w+)*", sym) or re.fullmatch(r"[A-Z0-9_]+", sym):
-                    continue  # not a C# symbol, or a Discord constant such as SOUNDBOARD_SOUNDS
-                parts = sym.split(".")
-                if parts[0] not in sdk.types:
-                    errors.append(f"{where}: evidence type '{parts[0]}' not found in Src/")
-                elif len(parts) > 1 and parts[-1] not in sdk.words:
-                    errors.append(f"{where}: evidence member '{sym}' not found in Src/")
 
     for key, item in sorted(discord.items()):
         if key not in seen:

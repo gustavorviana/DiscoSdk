@@ -51,7 +51,7 @@ await client.WaitShutdownAsync();
 |---|---|---|---|---|---|
 | CB-F01 | Fluent builder with required token and intents | — | Must | Implemented | `DiscordClientBuilder.Create`, `DiscordClientBuilder.Build` (throws without intents) |
 | CB-F02 | Gateway and reconnect options (shards, compression, queue capacity, reconnect delay/attempts/auto, close timeout, User-Agent) | — | Must | Implemented | `DiscordClientBuilder.WithTotalShards`, `DiscordClientBuilder.WithGatewayCompressMode`, `DiscordClientBuilder.WithEventProcessorQueueCapacity`, `DiscordClientBuilder.WithReconnectDelay`, `DiscordClientBuilder.WithMaxReconnectAttempts`, `DiscordClientBuilder.WithAutoReconnect`, `DiscordClientBuilder.WithCloseTimeout`, `DiscordClientBuilder.WithGatewayUserAgent` |
-| CB-F03 | Logging through `Microsoft.Extensions.Logging` | — | Must | Partial | `DiscordClientBuilder.WithLogger(ILogger)` accepts a single logger, so there is no `ILoggerFactory` and no per-component categories |
+| CB-F03 | Logging through `Microsoft.Extensions.Logging` | — | Must | Partial | `DiscordClientBuilder.WithLogger(ILogger)` accepts a single logger, so there is no logger factory and no per-component categories |
 | CB-F04 | Injectable clock | — | Should | Implemented | `DiscordClientBuilder.WithTimeProvider` |
 | CB-F05 | JSON options override | — | Should | Implemented | `DiscordClientBuilder.WithJsonOptions` (defaults: `DiscoJson.Create`) |
 | CB-F06 | Event handler registration by type or instance, with constructor injection | — | Must | Implemented | `DiscordClientBuilder.AddEventHandler` → `DiscoFactory` (`ActivatorUtilities`) |
