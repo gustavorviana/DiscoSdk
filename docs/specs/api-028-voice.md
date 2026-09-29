@@ -68,8 +68,8 @@ One send loop per connection on a dedicated timer (20 ms frames). The voice gate
 ## 11. Tests
 | Test class | Covers |
 |---|---|
-| `VoiceStateManagerTests` (proposed) | VC-F46 and the voice-state cache |
-| `VoiceGatewaySocketTests` (proposed) | VC-F06 – VC-F28, VC-F47 |
+| `VoiceStateManagerTests` (proposed) | VC-F45, VC-F46 |
+| `VoiceGatewaySocketTests` (proposed) | VC-F06 – VC-F44, VC-F47 |
 | `RtpTransportTests` (proposed) | VC-F48 – VC-F50 |
 | `DaveSessionTests` (proposed) | VC-F51 |
 | Manual script in `TomoriBot` | end-to-end join, play, leave |
